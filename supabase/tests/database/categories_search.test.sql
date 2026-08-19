@@ -253,22 +253,30 @@ select throws_ok(
   $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
     select '123e4567-e89b-12d3-a456-426614174000', id, 'es-MX', 'Contexto en hoja'
     from public.categories where slug = 'celulares-y-accesorios'$$,
-  '42501', null, 'category suggestions reject an active product leaf context'
+  '23514',
+  'Category suggestions require an active product root category.',
+  'category suggestions reject an active product leaf context'
 );
 select throws_ok(
   $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
     values ('123e4567-e89b-12d3-a456-426614174000', 9001, 'es-MX', 'Contexto inactivo')$$,
-  '42501', null, 'category suggestions reject an inactive product root context'
+  '23514',
+  'Category suggestions require an active product root category.',
+  'category suggestions reject an inactive product root context'
 );
 select throws_ok(
   $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
     values ('123e4567-e89b-12d3-a456-426614174000', 9002, 'es-MX', 'Contexto de servicio')$$,
-  '42501', null, 'category suggestions reject a service root context'
+  '23514',
+  'Category suggestions require an active product root category.',
+  'category suggestions reject a service root context'
 );
 select throws_ok(
   $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
     values ('123e4567-e89b-12d3-a456-426614174000', 9003, 'es-MX', 'Contexto de restaurante')$$,
-  '42501', null, 'category suggestions reject a restaurant root context'
+  '23514',
+  'Category suggestions require an active product root category.',
+  'category suggestions reject a restaurant root context'
 );
 select lives_ok(
   $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name, context)
