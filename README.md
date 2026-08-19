@@ -78,6 +78,6 @@ Migraciones versionadas: `supabase/migrations/`.
 
 ## Alcance de esta versión
 
-Incluye registro, inicio/cierre de sesión, gestión de múltiples tiendas, ubicación por estado, borradores, publicación, imágenes, condición de producto nuevo/usado, catálogo público, búsqueda y páginas públicas de tienda/producto.
+Incluye registro, inicio/cierre de sesión, gestión de múltiples tiendas, ubicación por estado, borradores, publicación, imágenes, condición de producto nuevo/usado, catálogo público, búsqueda, páginas públicas de tienda/producto y enlaces para compartir.
 
 Fuera de alcance: carrito, checkout, pagos, pedidos, mensajería, administración global, categorías, reseñas y favoritos.
