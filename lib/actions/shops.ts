@@ -43,6 +43,8 @@ export async function createShop(
   const parsed = shopSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
+    country_code: formData.get("country_code"),
+    administrative_area_code: formData.get("administrative_area_code"),
   });
   const image = imageFrom(formData);
 
@@ -110,6 +112,8 @@ export async function updateShop(
   const parsed = shopSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description"),
+    country_code: formData.get("country_code"),
+    administrative_area_code: formData.get("administrative_area_code"),
   });
   const image = imageFrom(formData);
 

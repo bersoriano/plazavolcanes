@@ -2,12 +2,14 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(13);
+select plan(18);
 
 select has_table('public', 'shops', 'shops table exists');
 select has_table('public', 'products', 'products table exists');
 select has_column('public', 'products', 'condition', 'products have condition');
 select has_column('public', 'products', 'used_condition', 'products have used condition detail');
+select has_column('public', 'shops', 'country_code', 'shops have a country code');
+select has_column('public', 'shops', 'administrative_area_code', 'shops have an administrative area code');
 
 insert into auth.users (id, email) values
   ('123e4567-e89b-12d3-a456-426614174000', 'seller-a@test.local'),
@@ -16,6 +18,26 @@ insert into auth.users (id, email) values
 insert into public.shops (owner_id, name, slug, description) values
   ('123e4567-e89b-12d3-a456-426614174000', 'Tienda A', 'tienda-a', 'Descripción completa para la tienda A.'),
   ('987fcdeb-51a2-43d7-9012-345678901234', 'Tienda B', 'tienda-b', 'Descripción completa para la tienda B.');
+
+select results_eq(
+  $$select distinct country_code from public.shops$$,
+  array['MX'::text],
+  'existing shop inserts default to Mexico'
+);
+
+select throws_ok(
+  $$insert into public.shops (owner_id, name, slug, description, country_code) values ('123e4567-e89b-12d3-a456-426614174000', 'País inválido', 'pais-invalido', 'Descripción completa para la tienda inválida.', 'mx')$$,
+  '23514',
+  null,
+  'country code must use uppercase ISO format'
+);
+
+select throws_ok(
+  $$insert into public.shops (owner_id, name, slug, description, country_code, administrative_area_code) values ('123e4567-e89b-12d3-a456-426614174000', 'Estado inválido', 'estado-invalido', 'Descripción completa para la tienda inválida.', 'MX', 'US-CA')$$,
+  '23514',
+  null,
+  'administrative area must belong to shop country'
+);
 
 insert into public.products (shop_id, name, description, price_mxn, status) values
   (1, 'Borrador A', 'Descripción completa del borrador A.', 100, 'draft'),

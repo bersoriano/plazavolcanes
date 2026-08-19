@@ -11,6 +11,8 @@ export type Database = {
     Tables: {
       shops: {
         Row: {
+          administrative_area_code: string | null;
+          country_code: string;
           created_at: string;
           description: string;
           id: number;
@@ -21,6 +23,8 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          administrative_area_code?: string | null;
+          country_code?: string;
           created_at?: string;
           description: string;
           id?: never;
@@ -31,6 +35,8 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          administrative_area_code?: string | null;
+          country_code?: string;
           created_at?: string;
           description?: string;
           id?: never;

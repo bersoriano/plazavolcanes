@@ -9,6 +9,10 @@ import type { ActionState } from "@/lib/action-state";
 import { initialActionState } from "@/lib/action-state";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import {
+  MEXICO_ADMINISTRATIVE_AREAS,
+  SUPPORTED_COUNTRY,
+} from "@/lib/shop-location";
 
 type ShopFormProps = {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
@@ -16,6 +20,8 @@ type ShopFormProps = {
     name: string;
     description: string;
     imageUrl: string | null;
+    countryCode: string;
+    administrativeAreaCode: string | null;
   };
 };
 
@@ -64,6 +70,40 @@ export function ShopForm({ action, shop }: ShopFormProps) {
           required
         />
         {state.errors?.description?.[0] ? <p className="text-sm font-medium text-sale" id="description-error">{state.errors.description[0]}</p> : null}
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-ink" htmlFor="country">País</label>
+          <select
+            className="min-h-12 w-full cursor-not-allowed rounded-2xl border border-line bg-background px-4 text-muted"
+            disabled
+            id="country"
+            value={SUPPORTED_COUNTRY.code}
+          >
+            <option value={SUPPORTED_COUNTRY.code}>{SUPPORTED_COUNTRY.label}</option>
+          </select>
+          <input name="country_code" type="hidden" value={SUPPORTED_COUNTRY.code} />
+        </div>
+
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-ink" htmlFor="administrative-area">Estado</label>
+          <select
+            aria-describedby={state.errors?.administrative_area_code ? "administrative-area-error" : undefined}
+            aria-invalid={Boolean(state.errors?.administrative_area_code)}
+            className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none"
+            defaultValue={shop?.administrativeAreaCode ?? ""}
+            id="administrative-area"
+            name="administrative_area_code"
+            required
+          >
+            <option disabled value="">Selecciona un estado</option>
+            {MEXICO_ADMINISTRATIVE_AREAS.map((area) => (
+              <option key={area.code} value={area.code}>{area.label}</option>
+            ))}
+          </select>
+          {state.errors?.administrative_area_code?.[0] ? <p className="text-sm font-medium text-sale" id="administrative-area-error">{state.errors.administrative_area_code[0]}</p> : null}
+        </div>
       </div>
 
       <div className="space-y-2">

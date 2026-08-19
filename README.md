@@ -68,6 +68,7 @@ npx supabase test db
 ## Reglas de datos
 
 - Tiendas son públicas; solo propietario puede crearlas, editarlas o eliminarlas.
+- Tiendas guardan país y división administrativa; México y sus estados están disponibles inicialmente.
 - Productos publicados son públicos; borradores solo son visibles para propietario.
 - Imágenes aceptan JPEG, PNG o WebP hasta 5 MB.
 - Archivos se guardan bajo carpeta UUID del propietario.
@@ -77,6 +78,6 @@ Migraciones versionadas: `supabase/migrations/`.
 
 ## Alcance de esta versión
 
-Incluye registro, inicio/cierre de sesión, gestión de múltiples tiendas, borradores, publicación, imágenes, condición de producto nuevo/usado, catálogo público, búsqueda y páginas públicas de tienda/producto.
+Incluye registro, inicio/cierre de sesión, gestión de múltiples tiendas, ubicación por estado, borradores, publicación, imágenes, condición de producto nuevo/usado, catálogo público, búsqueda y páginas públicas de tienda/producto.
 
 Fuera de alcance: carrito, checkout, pagos, pedidos, mensajería, administración global, categorías, reseñas y favoritos.
