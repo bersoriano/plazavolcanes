@@ -1,0 +1,217 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+import type { ActionState } from "@/lib/action-state";
+import { uniqueShopSlug } from "@/lib/slug";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { validateImage } from "@/lib/storage";
+import { shopSchema } from "@/lib/validation/shop";
+
+const authError: ActionState = {
+  status: "error",
+  message: "Tu sesión terminó. Ingresa nuevamente.",
+};
+
+function imageFrom(formData: FormData) {
+  const value = formData.get("image");
+  return value instanceof File && value.size > 0 ? value : null;
+}
+
+function imageExtension(file: File) {
+  if (file.type === "image/jpeg") return "jpg";
+  if (file.type === "image/png") return "png";
+  return "webp";
+}
+
+async function getAuthenticatedContext() {
+  if (!isSupabaseConfigured()) return null;
+
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase.auth.getClaims();
+  const userId = typeof data?.claims?.sub === "string" ? data.claims.sub : null;
+
+  return userId ? { supabase, userId } : null;
+}
+
+export async function createShop(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = shopSchema.safeParse({
+    name: formData.get("name"),
+    description: formData.get("description"),
+  });
+  const image = imageFrom(formData);
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Revisa los campos marcados.",
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  if (image) {
+    const imageError = validateImage(image);
+    if (imageError) {
+      return { status: "error", message: imageError, errors: { image: [imageError] } };
+    }
+  }
+
+  const context = await getAuthenticatedContext();
+  if (!context) return authError;
+
+  const { supabase, userId } = context;
+  const slug = await uniqueShopSlug(parsed.data.name, async (candidate) => {
+    const { data } = await supabase
+      .from("shops")
+      .select("id")
+      .eq("slug", candidate)
+      .maybeSingle();
+    return Boolean(data);
+  });
+  let imagePath: string | null = null;
+
+  if (image) {
+    imagePath = `${userId}/shops/${crypto.randomUUID()}.${imageExtension(image)}`;
+    const { error } = await supabase.storage
+      .from("catalogo")
+      .upload(imagePath, image, { contentType: image.type, upsert: false });
+    if (error) {
+      return { status: "error", message: "No pudimos subir la imagen." };
+    }
+  }
+
+  const { data, error } = await supabase
+    .from("shops")
+    .insert({ ...parsed.data, slug, owner_id: userId, image_path: imagePath })
+    .select("id, slug")
+    .single();
+
+  if (error || !data) {
+    if (imagePath) await supabase.storage.from("catalogo").remove([imagePath]);
+    return { status: "error", message: "No pudimos crear la tienda." };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/panel");
+  revalidatePath(`/tiendas/${data.slug}`);
+  redirect(`/panel/tiendas/${data.id}?creada=1`);
+}
+
+export async function updateShop(
+  shopId: number,
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = shopSchema.safeParse({
+    name: formData.get("name"),
+    description: formData.get("description"),
+  });
+  const image = imageFrom(formData);
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Revisa los campos marcados.",
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  if (image) {
+    const imageError = validateImage(image);
+    if (imageError) {
+      return { status: "error", message: imageError, errors: { image: [imageError] } };
+    }
+  }
+
+  const context = await getAuthenticatedContext();
+  if (!context) return authError;
+  const { supabase, userId } = context;
+  const { data: existing } = await supabase
+    .from("shops")
+    .select("slug, image_path")
+    .eq("id", shopId)
+    .eq("owner_id", userId)
+    .maybeSingle();
+
+  if (!existing) {
+    return { status: "error", message: "No encontramos esa tienda." };
+  }
+
+  let nextImagePath = existing.image_path;
+  if (image) {
+    nextImagePath = `${userId}/shops/${crypto.randomUUID()}.${imageExtension(image)}`;
+    const { error } = await supabase.storage
+      .from("catalogo")
+      .upload(nextImagePath, image, { contentType: image.type, upsert: false });
+    if (error) return { status: "error", message: "No pudimos subir la imagen." };
+  }
+
+  const { error } = await supabase
+    .from("shops")
+    .update({
+      ...parsed.data,
+      image_path: nextImagePath,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", shopId)
+    .eq("owner_id", userId);
+
+  if (error) {
+    if (image && nextImagePath) {
+      await supabase.storage.from("catalogo").remove([nextImagePath]);
+    }
+    return { status: "error", message: "No pudimos guardar los cambios." };
+  }
+
+  if (image && existing.image_path) {
+    await supabase.storage.from("catalogo").remove([existing.image_path]);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/panel");
+  revalidatePath(`/panel/tiendas/${shopId}`);
+  revalidatePath(`/tiendas/${existing.slug}`);
+  return { status: "success", message: "Tienda actualizada." };
+}
+
+export async function deleteShop(shopId: number) {
+  const context = await getAuthenticatedContext();
+  if (!context) redirect("/ingresar");
+
+  const { supabase, userId } = context;
+  const { data: shop } = await supabase
+    .from("shops")
+    .select("slug, image_path")
+    .eq("id", shopId)
+    .eq("owner_id", userId)
+    .maybeSingle();
+
+  if (!shop) redirect("/panel");
+
+  const { data: products } = await supabase
+    .from("products")
+    .select("image_path")
+    .eq("shop_id", shopId);
+  const { error } = await supabase
+    .from("shops")
+    .delete()
+    .eq("id", shopId)
+    .eq("owner_id", userId);
+
+  if (!error) {
+    const paths = [shop.image_path, ...(products ?? []).map((item) => item.image_path)].filter(
+      (path): path is string => Boolean(path),
+    );
+    if (paths.length) await supabase.storage.from("catalogo").remove(paths);
+  }
+
+  revalidatePath("/");
+  revalidatePath("/panel");
+  revalidatePath(`/tiendas/${shop.slug}`);
+  redirect("/panel");
+}
