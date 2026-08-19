@@ -1,9 +1,12 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, createEvent, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ProductCard } from "@/components/catalog/product-card";
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.unstubAllGlobals();
+});
 
 describe("ProductCard", () => {
   it("shows Nuevo for a new product", () => {
@@ -91,5 +94,71 @@ describe("ProductCard", () => {
       "href",
       "/productos/4?q=iphone&categoria=electronica&subcategoria=celulares-y-accesorios",
     );
+  });
+
+  it("sends one keepalive selection event when a tracked result is clicked", () => {
+    const fetchSpy = vi.fn(() => Promise.resolve());
+    vi.stubGlobal("fetch", fetchSpy);
+
+    render(
+      <ProductCard
+        eventId="1f505b54-3e35-4d7c-9a22-472920dfd72b"
+        position={2}
+        product={{
+          id: 5,
+          image_path: null,
+          name: "Maceta de barro",
+          price_mxn: 249,
+          currency_code: "MXN",
+          category_id: 11,
+          condition: "new",
+          used_condition: null,
+          shop: { name: "Tierra Viva" },
+        }}
+      />,
+    );
+
+    const click = createEvent.click(screen.getByRole("link", { name: /Maceta de barro/ }));
+    click.preventDefault();
+    fireEvent(screen.getByRole("link", { name: /Maceta de barro/ }), click);
+
+    expect(fetchSpy).toHaveBeenCalledOnce();
+    expect(fetchSpy).toHaveBeenCalledWith("/api/search-events/selection", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        eventId: "1f505b54-3e35-4d7c-9a22-472920dfd72b",
+        productId: 5,
+        position: 2,
+      }),
+      keepalive: true,
+    });
+  });
+
+  it("does not send a selection event when the result is untracked", () => {
+    const fetchSpy = vi.fn(() => Promise.resolve());
+    vi.stubGlobal("fetch", fetchSpy);
+
+    render(
+      <ProductCard
+        product={{
+          id: 6,
+          image_path: null,
+          name: "Cuenco de piedra",
+          price_mxn: 310,
+          currency_code: "MXN",
+          category_id: 11,
+          condition: "new",
+          used_condition: null,
+          shop: { name: "Taller Cantera" },
+        }}
+      />,
+    );
+
+    const click = createEvent.click(screen.getByRole("link", { name: /Cuenco de piedra/ }));
+    click.preventDefault();
+    fireEvent(screen.getByRole("link", { name: /Cuenco de piedra/ }), click);
+
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

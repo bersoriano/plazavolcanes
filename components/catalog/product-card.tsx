@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ImageIcon } from "lucide-react";
 
@@ -23,14 +25,25 @@ type ProductCardProps = {
   position?: number;
 };
 
-export function ProductCard({ product, categoryName, catalogHref }: ProductCardProps) {
+export function ProductCard({ product, categoryName, catalogHref, eventId, position }: ProductCardProps) {
   const catalogQuery = catalogHref?.includes("?")
     ? catalogHref.slice(catalogHref.indexOf("?"))
     : "";
   const currencyCode = product.currency_code ?? DEFAULT_CATALOG_CURRENCY;
 
+  function recordSelection() {
+    if (!eventId || position == null || !Number.isInteger(position) || position < 1) return;
+
+    void fetch("/api/search-events/selection", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ eventId, productId: product.id, position }),
+      keepalive: true,
+    }).catch(() => {});
+  }
+
   return (
-    <Link className="group block" href={`/productos/${product.id}${catalogQuery}`}>
+    <Link className="group block" href={`/productos/${product.id}${catalogQuery}`} onClick={recordSelection}>
       <div className="relative aspect-[4/3] overflow-hidden rounded-[1.4rem] bg-[#eee8e1]">
         <span className="absolute left-3 top-3 z-10 rounded-full bg-surface/95 px-3 py-1.5 text-xs font-semibold text-brand shadow-sm">
           {formatProductCondition(product.condition, product.used_condition)}
