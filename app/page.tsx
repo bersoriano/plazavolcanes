@@ -33,7 +33,9 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
   } = await getHomeCatalog(filters);
   const activeCategorySlug = invalidCategorySelection ? undefined : selectedCategory?.slug;
   const activeSubcategorySlug = invalidCategorySelection ? undefined : selectedSubcategory?.slug;
-  const activeCategoryName = selectedSubcategory?.name ?? selectedCategory?.name;
+  const activeCategoryName = invalidCategorySelection
+    ? undefined
+    : (selectedSubcategory?.name ?? selectedCategory?.name);
   const catalogHref = buildCatalogHref({
     query: filters.query,
     categorySlug: activeCategorySlug,
