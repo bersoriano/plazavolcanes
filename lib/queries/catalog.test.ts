@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeCatalogFilters, normalizeSearchQuery } from "@/lib/queries/catalog";
+import {
+  escapePostgresLikePattern,
+  normalizeCatalogFilters,
+  normalizeSearchQuery,
+} from "@/lib/queries/catalog";
+
+describe("escapePostgresLikePattern", () => {
+  it("escapes PostgreSQL LIKE wildcards", () => {
+    expect(escapePostgresLikePattern("100%_literal")).toBe(String.raw`100\%\_literal`);
+  });
+
+  it("escapes existing backslashes before LIKE wildcards", () => {
+    expect(escapePostgresLikePattern(String.raw`\%_`)).toBe(String.raw`\\\%\_`);
+  });
+});
 
 describe("normalizeCatalogFilters", () => {
   it("normalizes URL search parameters into catalog filters", () => {

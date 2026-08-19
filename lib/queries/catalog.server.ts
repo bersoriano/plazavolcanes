@@ -8,7 +8,7 @@ import {
 import type { CategoryOption, CategoryTree } from "@/lib/categories";
 import type { Product, Shop } from "@/lib/database.types";
 import type { CatalogFilters } from "@/lib/queries/catalog";
-import { normalizeSearchQuery } from "@/lib/queries/catalog";
+import { escapePostgresLikePattern, normalizeSearchQuery } from "@/lib/queries/catalog";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -202,7 +202,10 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
           .limit(24);
 
         if (normalizedFilters.query) {
-          fallbackQuery = fallbackQuery.ilike("name", `%${normalizedFilters.query}%`);
+          fallbackQuery = fallbackQuery.ilike(
+            "name",
+            `%${escapePostgresLikePattern(normalizedFilters.query)}%`,
+          );
         }
         if (!selection.invalidCategorySelection && selection.selectedCategory) {
           fallbackQuery = fallbackQuery.in("category_id", fallbackLeafIds);

@@ -36,6 +36,10 @@ export function normalizeSearchQuery(query: string | undefined) {
   return normalized || undefined;
 }
 
+export function escapePostgresLikePattern(value: string) {
+  return value.replaceAll("\\", "\\\\").replaceAll("%", "\\%").replaceAll("_", "\\_");
+}
+
 export function normalizeCatalogFilters(params: CatalogSearchParams): CatalogFilters {
   const countryCode = firstValue(params.countryCode)?.trim().toUpperCase();
 
