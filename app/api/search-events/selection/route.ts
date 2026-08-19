@@ -3,10 +3,6 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { searchEventSelectionSchema } from "@/lib/validation/search-event";
 
 export async function POST(request: Request) {
-  if (!isSupabaseConfigured()) {
-    return new Response(null, { status: 503 });
-  }
-
   let body: unknown;
   try {
     body = await request.json();
@@ -17,6 +13,10 @@ export async function POST(request: Request) {
   const parsed = searchEventSelectionSchema.safeParse(body);
   if (!parsed.success) {
     return new Response(null, { status: 400 });
+  }
+
+  if (!isSupabaseConfigured()) {
+    return new Response(null, { status: 503 });
   }
 
   try {
