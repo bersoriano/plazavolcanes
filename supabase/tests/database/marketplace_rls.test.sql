@@ -39,10 +39,10 @@ select throws_ok(
   'administrative area must belong to shop country'
 );
 
-insert into public.products (shop_id, name, description, price_mxn, status) values
-  (1, 'Borrador A', 'Descripción completa del borrador A.', 100, 'draft'),
-  (2, 'Publicado B', 'Descripción completa del producto B.', 200, 'published'),
-  (2, 'Borrador B', 'Descripción completa del borrador B.', 300, 'draft');
+insert into public.products (shop_id, name, description, price_mxn, status, category_id) values
+  (1, 'Borrador A', 'Descripción completa del borrador A.', 100, 'draft', null),
+  (2, 'Publicado B', 'Descripción completa del producto B.', 200, 'published', (select id from public.categories where slug = 'celulares-y-accesorios')),
+  (2, 'Borrador B', 'Descripción completa del borrador B.', 300, 'draft', null);
 
 set local role anon;
 
