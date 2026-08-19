@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { formatMxn } from "@/lib/format";
+import { formatCurrency, formatMxn } from "@/lib/format";
+
+describe("formatCurrency", () => {
+  it("formats the requested currency using the requested locale", () => {
+    expect(formatCurrency(1299, "USD", "en-US")).toBe("$1,299.00");
+  });
+});
 
 describe("formatMxn", () => {
   it("formats whole-number prices in Mexican pesos", () => {

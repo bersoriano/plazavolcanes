@@ -8,6 +8,9 @@ describe("productSchema", () => {
     description: "Hecha a mano en un taller local de la región.",
     price_mxn: "349.00",
     status: "draft",
+    category_id: "",
+    currency_code: "MXN",
+    content_locale: "es-MX",
   } as const;
 
   it("accepts a complete product and converts price to number", () => {
@@ -18,10 +21,20 @@ describe("productSchema", () => {
       status: "draft",
       condition: "new",
       used_condition: "",
+      category_id: "",
+      currency_code: "MXN",
+      content_locale: "es-MX",
     });
 
     expect(result.success).toBe(true);
-    if (result.success) expect(result.data.price_mxn).toBe(349);
+    if (result.success) {
+      expect(result.data).toMatchObject({
+        price_mxn: 349,
+        category_id: null,
+        currency_code: "MXN",
+        content_locale: "es-MX",
+      });
+    }
   });
 
   it("rejects short copy, negative price, and unknown status", () => {
@@ -44,6 +57,9 @@ describe("productSchema", () => {
         status: "published",
         condition: "new",
         used_condition: "",
+        category_id: "22",
+        currency_code: "MXN",
+        content_locale: "es-MX",
       }).success,
     ).toBe(false);
   });
@@ -95,6 +111,45 @@ describe("productSchema", () => {
         ...completeProduct,
         condition: "new",
         used_condition: "good",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts a draft without a category", () => {
+    const result = productSchema.safeParse({
+      ...completeProduct,
+      condition: "new",
+      used_condition: "",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.category_id).toBeNull();
+  });
+
+  it("rejects publication without a category using seller-facing copy", () => {
+    const result = productSchema.safeParse({
+      ...completeProduct,
+      status: "published",
+      condition: "new",
+      used_condition: "",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.category_id).toEqual([
+        "Selecciona una subcategoría antes de publicar.",
+      ]);
+    }
+  });
+
+  it("rejects unsupported currency and content locale values", () => {
+    expect(
+      productSchema.safeParse({
+        ...completeProduct,
+        condition: "new",
+        used_condition: "",
+        currency_code: "USD",
+        content_locale: "en-US",
       }).success,
     ).toBe(false);
   });
