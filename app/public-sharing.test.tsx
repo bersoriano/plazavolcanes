@@ -83,6 +83,33 @@ describe("public sharing controls", () => {
     expect(screen.getByText("MXN")).toBeInTheDocument();
   });
 
+  it("requests and renders approved English product content for an en-US catalog visit", async () => {
+    vi.mocked(getPublicProduct).mockResolvedValue({
+      id: 8,
+      name: "Volcanic clay mug",
+      description: "Handmade with high-temperature regional clay.",
+      price_mxn: 349,
+      currency_code: "MXN",
+      category_id: null,
+      condition: "new",
+      used_condition: null,
+      image_path: null,
+      created_at: "2026-08-19T00:00:00.000Z",
+      shop: { name: "Casa Niebla", slug: "casa-niebla" },
+    });
+
+    render(
+      await ProductPage({
+        params: Promise.resolve({ id: "8" }),
+        searchParams: Promise.resolve({ locale: "en-US" }),
+      }),
+    );
+
+    expect(getPublicProduct).toHaveBeenCalledWith(8, "en-US");
+    expect(screen.getByRole("heading", { name: "Volcanic clay mug" })).toBeInTheDocument();
+    expect(screen.getByText("Handmade with high-temperature regional clay.")).toBeInTheDocument();
+  });
+
   it("renders sharing controls on a public shop", async () => {
     vi.mocked(getPublicShop).mockResolvedValue({
       id: 3,
