@@ -43,6 +43,13 @@ as $$
       query_terms.ts_query,
       case
         when query_terms.raw_query = '' then false
+        when not coalesce(
+          leaf.is_active
+          and root.is_active
+          and leaf.listing_type = 'product'
+          and root.listing_type = 'product',
+          false
+        ) then false
         else exists (
           select 1
           from public.category_translations

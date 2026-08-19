@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(80);
+select plan(83);
 
 select has_table('public', 'categories', 'categories table exists');
 select has_table('public', 'category_translations', 'category translations table exists');
@@ -530,6 +530,11 @@ select results_eq(
   'unfiltered text search keeps a published product discoverable after category deactivation'
 );
 select results_eq(
+  $$select product_id from public.search_product_ids('laptop', 'es-MX', 'MX', null, 20)$$,
+  $$select id from public.products where false$$,
+  'anonymous search does not match an inactive category alias'
+);
+select results_eq(
   $$select count(*) from public.categories where slug = 'computacion'$$,
   array[0::bigint],
   'anonymous category navigation still hides the deactivated category'
@@ -539,6 +544,16 @@ reset role;
 set local role authenticated;
 set local request.jwt.claim.sub = '123e4567-e89b-12d3-a456-426614174000';
 
+select results_eq(
+  $$select product_id from public.search_product_ids('laptop', 'es-MX', 'MX', null, 20)$$,
+  $$select id from public.products where false$$,
+  'authenticated search does not match an inactive category alias'
+);
+select results_eq(
+  $$select product_id from public.search_product_ids('Cuaderno técnico', 'es-MX', 'MX', null, 20)$$,
+  $$select id from public.products where name = 'Cuaderno técnico'$$,
+  'authenticated text search keeps the published product discoverable after category deactivation'
+);
 select throws_ok(
   $$select * from public.search_events$$,
   '42501', null, 'authenticated sellers cannot read telemetry rows directly'
