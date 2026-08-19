@@ -29,7 +29,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={`${bricolage.variable} ${instrument.variable}`}>
+    <html
+      lang="es"
+      className={`${bricolage.variable} ${instrument.variable}`}
+      data-scroll-behavior="smooth"
+    >
       <body className="antialiased">
         <div className="flex min-h-screen flex-col">
           <SiteHeader />

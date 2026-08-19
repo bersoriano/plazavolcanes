@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Plaza Volcanes Shop
 
-## Getting Started
+Marketplace en español para descubrir productos de tiendas independientes. Cada persona puede registrarse con correo y contraseña, crear varias tiendas y publicar productos. Esta primera versión es solo catálogo: no incluye carrito, checkout, pagos ni pedidos.
 
-First, run the development server:
+## Stack
+
+- Next.js 16, React 19 y TypeScript
+- Tailwind CSS 4
+- Supabase Auth, Postgres y Storage
+- Vitest y Testing Library
+
+## Configuración
+
+Requisitos: Node.js 20 o superior, npm y un proyecto de Supabase.
+
+```bash
+npm install
+cp .env.example .env.local
+```
+
+Completa `.env.local`:
+
+```dotenv
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_SUPABASE_URL=https://TU-PROYECTO.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=TU_CLAVE_PUBLICABLE
+```
+
+Vincula Supabase y aplica esquema, políticas RLS y bucket de imágenes:
+
+```bash
+npx supabase login
+npx supabase link --project-ref TU_PROJECT_REF
+npx supabase db push
+```
+
+En Supabase Dashboard:
+
+1. Abre **Authentication → URL Configuration**.
+2. Define `http://localhost:3000` como Site URL durante desarrollo.
+3. Agrega `http://localhost:3000/auth/confirm` a Redirect URLs.
+4. En **Authentication → Providers → Email**, desactiva confirmación de correo para que una cuenta nueva pueda abrir su tienda inmediatamente. Si prefieres verificar correo, deja confirmación activa; `/auth/confirm` ya acepta ambos flujos de Supabase.
+
+Inicia proyecto:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Comandos
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run lint       # ESLint
+npm run typecheck  # TypeScript
+npm test           # pruebas unitarias y componentes
+npm run build      # build de producción
+```
 
-## Learn More
+Para probar políticas de base localmente se requiere Docker:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npx supabase start
+npx supabase test db
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Reglas de datos
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Tiendas son públicas; solo propietario puede crearlas, editarlas o eliminarlas.
+- Productos publicados son públicos; borradores solo son visibles para propietario.
+- Imágenes aceptan JPEG, PNG o WebP hasta 5 MB.
+- Archivos se guardan bajo carpeta UUID del propietario.
+- Eliminación de tienda elimina sus productos por cascada.
 
-## Deploy on Vercel
+Migración principal: `supabase/migrations/20260819065028_create_marketplace.sql`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Alcance de esta versión
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Incluye registro, inicio/cierre de sesión, gestión de múltiples tiendas, borradores, publicación, imágenes, catálogo público, búsqueda y páginas públicas de tienda/producto.
+
+Fuera de alcance: carrito, checkout, pagos, pedidos, mensajería, administración global, categorías, reseñas y favoritos.
