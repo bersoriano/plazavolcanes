@@ -40,6 +40,12 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
     query: filters.query,
     categorySlug: activeCategorySlug,
     subcategorySlug: activeSubcategorySlug,
+    locale: filters.locale,
+    countryCode: filters.countryCode,
+  });
+  const resetHref = buildCatalogHref({
+    locale: filters.locale,
+    countryCode: filters.countryCode,
   });
   const categoryNameById = new Map(
     categories.flatMap((category) => [
@@ -76,6 +82,8 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
                 categorySlug={activeCategorySlug}
                 defaultValue={filters.query}
                 subcategorySlug={activeSubcategorySlug}
+                locale={filters.locale}
+                countryCode={filters.countryCode}
               />
             </div>
             <VolcanoMark className="pointer-events-none absolute -bottom-24 left-1/2 w-[760px] max-w-none -translate-x-1/2 text-brand/8" />
@@ -85,6 +93,8 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
               activeCategorySlug={activeCategorySlug}
               activeSubcategorySlug={activeSubcategorySlug}
               query={filters.query}
+              locale={filters.locale}
+              countryCode={filters.countryCode}
               tree={categories}
             />
           </div>
@@ -108,7 +118,7 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
           </div>
           <nav aria-label="Vistas del catálogo" className="flex flex-wrap gap-2">
             {hasFilters ? (
-              <Link className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/">
+              <Link className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href={resetHref}>
                 Limpiar filtros
               </Link>
             ) : (
@@ -134,12 +144,13 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
                 key={product.id}
                 position={index + 1}
                 product={product}
+                locale={filters.locale}
               />
             ))
           ) : (
             <EmptyState
               action={
-                <Link className="inline-flex items-center gap-2 font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href={hasFilters ? "/" : "/registro"}>
+                <Link className="inline-flex items-center gap-2 font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href={hasFilters ? resetHref : "/registro"}>
                   {hasFilters ? "Limpiar filtros" : "Crear una tienda"}
                   <ArrowRight aria-hidden="true" className="size-4" />
                 </Link>

@@ -93,6 +93,28 @@ describe("CategoryNavigation", () => {
       "/?q=laptop&categoria=hogar-y-jardin",
     );
   });
+
+  it("preserves nondefault locale and country in category links", () => {
+    render(
+      <CategoryNavigation
+        activeCategorySlug="electronica"
+        activeSubcategorySlug="computacion"
+        countryCode="US"
+        locale="en-US"
+        query="laptop"
+        tree={tree}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "Todos" })).toHaveAttribute(
+      "href",
+      "/?q=laptop&locale=en-US&countryCode=US",
+    );
+    expect(screen.getByRole("link", { name: "Hogar y jardín" })).toHaveAttribute(
+      "href",
+      "/?q=laptop&categoria=hogar-y-jardin&locale=en-US&countryCode=US",
+    );
+  });
 });
 
 describe("SearchBar", () => {
@@ -110,5 +132,19 @@ describe("SearchBar", () => {
       "name",
       "subcategoria",
     );
+  });
+
+  it("keeps a nondefault locale and country when search is submitted", () => {
+    render(<SearchBar countryCode="US" locale="en-US" />);
+
+    expect(screen.getByDisplayValue("en-US")).toHaveAttribute("name", "locale");
+    expect(screen.getByDisplayValue("US")).toHaveAttribute("name", "countryCode");
+  });
+
+  it("does not add redundant hidden fields for the default locale and country", () => {
+    const { container } = render(<SearchBar countryCode="MX" locale="es-MX" />);
+
+    expect(container.querySelector('input[name="locale"]')).not.toBeInTheDocument();
+    expect(container.querySelector('input[name="countryCode"]')).not.toBeInTheDocument();
   });
 });

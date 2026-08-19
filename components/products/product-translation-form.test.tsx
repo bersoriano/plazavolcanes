@@ -9,10 +9,12 @@ const idleAction = async (): Promise<ActionState> => ({ status: "idle", message:
 afterEach(cleanup);
 
 describe("ProductTranslationForm", () => {
-  it("renders the optional English name and description", () => {
+  it("renders the optional English editor collapsed by default", () => {
     render(<ProductTranslationForm action={idleAction} />);
 
-    expect(screen.getByRole("heading", { name: "Agregar versión en inglés" })).toBeInTheDocument();
+    const summary = screen.getByText("Agregar versión en inglés");
+    expect(summary.tagName).toBe("SUMMARY");
+    expect(summary.closest("details")).not.toHaveAttribute("open");
     expect(screen.getByLabelText("Nombre en inglés")).toBeInTheDocument();
     expect(screen.getByLabelText("Descripción en inglés")).toBeInTheDocument();
   });

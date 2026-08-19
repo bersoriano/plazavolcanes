@@ -4,7 +4,11 @@ import { ArrowLeft, ChevronRight, ImageIcon, Store } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { ShareActions } from "@/components/share/share-actions";
-import { DEFAULT_CATALOG_CURRENCY } from "@/lib/catalog-locale";
+import {
+  DEFAULT_CATALOG_CURRENCY,
+  DEFAULT_CATALOG_LOCALE,
+  DEFAULT_CATALOG_MARKET,
+} from "@/lib/catalog-locale";
 import { buildCatalogHref, findCategorySelection } from "@/lib/categories";
 import { formatCurrency } from "@/lib/format";
 import { formatProductCondition } from "@/lib/product-condition";
@@ -62,9 +66,15 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     query: filters.query,
     categorySlug: filters.categorySlug,
     subcategorySlug: filters.subcategorySlug,
+    locale: filters.locale,
+    countryCode: filters.countryCode,
   });
   const hasCatalogState = Boolean(
-    filters.query || filters.categorySlug || filters.subcategorySlug,
+    filters.query ||
+      filters.categorySlug ||
+      filters.subcategorySlug ||
+      filters.locale !== DEFAULT_CATALOG_LOCALE ||
+      filters.countryCode !== DEFAULT_CATALOG_MARKET,
   );
   const currencyCode = product.currency_code ?? DEFAULT_CATALOG_CURRENCY;
 
@@ -80,7 +90,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
 
       {rootCategory ? (
         <nav aria-label="Categoría del producto" className="mt-4 flex flex-wrap items-center gap-1.5 text-sm font-medium text-muted">
-          <Link className="inline-flex min-h-11 items-center rounded-full px-3 py-2 hover:text-brand" href={buildCatalogHref({ query: filters.query, categorySlug: rootCategory.slug })}>
+          <Link className="inline-flex min-h-11 items-center rounded-full px-3 py-2 hover:text-brand" href={buildCatalogHref({ query: filters.query, categorySlug: rootCategory.slug, locale: filters.locale, countryCode: filters.countryCode })}>
             {rootCategory.name}
           </Link>
           {leafCategory ? (
@@ -93,6 +103,8 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
                   query: filters.query,
                   categorySlug: rootCategory.slug,
                   subcategorySlug: leafCategory.slug,
+                  locale: filters.locale,
+                  countryCode: filters.countryCode,
                 })}
               >
                 {leafCategory.name}
@@ -123,7 +135,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
             {formatProductCondition(product.condition, product.used_condition)}
           </p>
           <p className="mt-5 text-3xl font-semibold text-brand">
-            {formatCurrency(product.price_mxn, currencyCode)}{" "}
+            {formatCurrency(product.price_mxn, currencyCode, filters.locale)}{" "}
             <span className="text-sm font-medium text-muted">{currencyCode}</span>
           </p>
           <div className="my-7 h-px bg-line" />

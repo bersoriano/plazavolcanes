@@ -10,6 +10,7 @@ export type CatalogFilters = {
   subcategorySlug?: string;
   locale: CatalogLocale;
   countryCode: string;
+  invalidCategorySelection: boolean;
 };
 
 type CatalogSearchParams = {
@@ -42,12 +43,19 @@ export function escapePostgresLikePattern(value: string) {
 
 export function normalizeCatalogFilters(params: CatalogSearchParams): CatalogFilters {
   const countryCode = firstValue(params.countryCode)?.trim().toUpperCase();
+  const rawCategorySlug = firstValue(params.categoria)?.trim();
+  const rawSubcategorySlug = firstValue(params.subcategoria)?.trim();
+  const categorySlug = normalizeCategorySlug(params.categoria);
+  const subcategorySlug = normalizeCategorySlug(params.subcategoria);
 
   return {
     query: normalizeSearchQuery(firstValue(params.q)),
-    categorySlug: normalizeCategorySlug(params.categoria),
-    subcategorySlug: normalizeCategorySlug(params.subcategoria),
+    categorySlug,
+    subcategorySlug,
     locale: normalizeCatalogLocale(firstValue(params.locale)),
     countryCode: countryCode && /^[A-Z]{2}$/.test(countryCode) ? countryCode : DEFAULT_CATALOG_MARKET,
+    invalidCategorySelection: Boolean(
+      (rawCategorySlug && !categorySlug) || (rawSubcategorySlug && !subcategorySlug),
+    ),
   };
 }

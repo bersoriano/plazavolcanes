@@ -30,11 +30,15 @@ describe("normalizeCatalogFilters", () => {
       subcategorySlug: "celulares-y-accesorios",
       locale: "es-MX",
       countryCode: "MX",
+      invalidCategorySelection: false,
     });
   });
 
   it("rejects malformed category slugs", () => {
-    expect(normalizeCatalogFilters({ categoria: "INVALID SLUG" }).categorySlug).toBeUndefined();
+    expect(normalizeCatalogFilters({ categoria: "INVALID SLUG" })).toMatchObject({
+      categorySlug: undefined,
+      invalidCategorySelection: true,
+    });
   });
 });
 

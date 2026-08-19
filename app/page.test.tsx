@@ -64,4 +64,55 @@ describe("Home category fallback", () => {
     expect(screen.getByRole("heading", { name: "Descubrimientos de la plaza" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Productos de Electrónica" })).not.toBeInTheDocument();
   });
+
+  it("preserves locale and country when clearing filters from an empty catalog", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue({
+      products: [],
+      shops: [],
+      categories: [],
+      selectedCategory: null,
+      selectedSubcategory: null,
+      invalidCategorySelection: false,
+      searchEventId: null,
+    });
+
+    render(
+      await Home({
+        searchParams: Promise.resolve({
+          q: "camera",
+          locale: "en-US",
+          countryCode: "US",
+        }),
+      }),
+    );
+
+    expect(screen.getByDisplayValue("en-US")).toHaveAttribute("name", "locale");
+    expect(screen.getByDisplayValue("US")).toHaveAttribute("name", "countryCode");
+    for (const link of screen.getAllByRole("link", { name: "Limpiar filtros" })) {
+      expect(link).toHaveAttribute("href", "/?locale=en-US&countryCode=US");
+    }
+  });
+
+  it("passes malformed category state through so the fallback notice remains visible", async () => {
+    vi.mocked(getHomeCatalog).mockImplementation(async (filters) => ({
+      products: [],
+      shops: [],
+      categories: [],
+      selectedCategory: null,
+      selectedSubcategory: null,
+      invalidCategorySelection:
+        typeof filters === "object" && filters.invalidCategorySelection,
+      searchEventId: null,
+    }));
+
+    render(
+      await Home({
+        searchParams: Promise.resolve({ categoria: "INVALID SLUG" }),
+      }),
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Categoría no disponible. Mostramos todos los productos.",
+    );
+  });
 });

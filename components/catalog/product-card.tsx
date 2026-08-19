@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { ImageIcon } from "lucide-react";
 
-import { DEFAULT_CATALOG_CURRENCY } from "@/lib/catalog-locale";
+import {
+  DEFAULT_CATALOG_CURRENCY,
+  DEFAULT_CATALOG_LOCALE,
+  type CatalogLocale,
+} from "@/lib/catalog-locale";
 import { formatCurrency } from "@/lib/format";
 import { formatProductCondition, type ProductCondition, type UsedCondition } from "@/lib/product-condition";
 
@@ -23,9 +27,17 @@ type ProductCardProps = {
   catalogHref?: string;
   eventId?: string | null;
   position?: number;
+  locale?: CatalogLocale;
 };
 
-export function ProductCard({ product, categoryName, catalogHref, eventId, position }: ProductCardProps) {
+export function ProductCard({
+  product,
+  categoryName,
+  catalogHref,
+  eventId,
+  position,
+  locale = DEFAULT_CATALOG_LOCALE,
+}: ProductCardProps) {
   const catalogQuery = catalogHref?.includes("?")
     ? catalogHref.slice(catalogHref.indexOf("?"))
     : "";
@@ -62,7 +74,7 @@ export function ProductCard({ product, categoryName, catalogHref, eventId, posit
           {categoryName ? <><span aria-hidden="true"> · </span><span>{categoryName}</span></> : null}
         </p>
         <h3 className="mt-1 line-clamp-1 font-display text-lg font-semibold tracking-[-0.02em] text-ink">{product.name}</h3>
-        <p className="mt-1.5 font-semibold text-ink">{formatCurrency(product.price_mxn, currencyCode)} <span className="text-xs font-medium text-muted">{currencyCode}</span></p>
+        <p className="mt-1.5 font-semibold text-ink">{formatCurrency(product.price_mxn, currencyCode, locale)} <span className="text-xs font-medium text-muted">{currencyCode}</span></p>
       </div>
     </Link>
   );

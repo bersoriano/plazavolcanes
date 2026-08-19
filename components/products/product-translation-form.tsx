@@ -30,13 +30,14 @@ export function ProductTranslationForm({ action, translation }: ProductTranslati
 
   return (
     <section className="mt-8 border-t border-line pt-8">
-      <h2 className="font-display text-2xl font-semibold tracking-[-0.03em]">
-        Agregar versión en inglés
-      </h2>
-      <p className="mt-2 text-sm leading-6 text-muted">
-        Esta versión es opcional. Completa ambos campos o déjalos vacíos para eliminarla.
-      </p>
-      <form action={formAction} className="mt-6 space-y-5" noValidate>
+      <details>
+        <summary className="cursor-pointer font-display text-2xl font-semibold tracking-[-0.03em] text-ink">
+          Agregar versión en inglés
+        </summary>
+        <p className="mt-2 text-sm leading-6 text-muted">
+          Esta versión es opcional. Completa ambos campos o déjalos vacíos para eliminarla.
+        </p>
+        <form action={formAction} className="mt-6 space-y-5" noValidate>
         <Field
           defaultValue={translation?.name}
           error={state.errors?.name?.[0]}
@@ -76,7 +77,8 @@ export function ProductTranslationForm({ action, translation }: ProductTranslati
         <div className="flex justify-end">
           <SubmitButton />
         </div>
-      </form>
+        </form>
+      </details>
     </section>
   );
 }

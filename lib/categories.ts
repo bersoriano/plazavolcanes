@@ -1,3 +1,9 @@
+import {
+  DEFAULT_CATALOG_LOCALE,
+  DEFAULT_CATALOG_MARKET,
+  type CatalogLocale,
+} from "@/lib/catalog-locale";
+
 export type CategoryOption = {
   id: number;
   parentId: number | null;
@@ -63,12 +69,16 @@ type CatalogHrefFilters = {
   query?: string;
   categorySlug?: string;
   subcategorySlug?: string;
+  locale?: CatalogLocale;
+  countryCode?: string;
 };
 
 export function buildCatalogHref({
   query,
   categorySlug,
   subcategorySlug,
+  locale,
+  countryCode,
 }: CatalogHrefFilters): string {
   const searchParams = new URLSearchParams();
   const normalizedQuery = query?.trim();
@@ -76,6 +86,10 @@ export function buildCatalogHref({
   if (normalizedQuery) searchParams.set("q", normalizedQuery);
   if (categorySlug) searchParams.set("categoria", categorySlug);
   if (subcategorySlug) searchParams.set("subcategoria", subcategorySlug);
+  if (locale && locale !== DEFAULT_CATALOG_LOCALE) searchParams.set("locale", locale);
+  if (countryCode && countryCode !== DEFAULT_CATALOG_MARKET) {
+    searchParams.set("countryCode", countryCode);
+  }
 
   const queryString = searchParams.toString();
   return queryString ? `/?${queryString}` : "/";

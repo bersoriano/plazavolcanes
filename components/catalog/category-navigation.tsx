@@ -6,12 +6,15 @@ import {
   buildCatalogHref,
   type CategoryTree,
 } from "@/lib/categories";
+import type { CatalogLocale } from "@/lib/catalog-locale";
 
 type CategoryNavigationProps = {
   tree: CategoryTree[];
   activeCategorySlug?: string;
   activeSubcategorySlug?: string;
   query?: string;
+  locale?: CatalogLocale;
+  countryCode?: string;
 };
 
 export function CategoryNavigation({
@@ -19,6 +22,8 @@ export function CategoryNavigation({
   activeCategorySlug,
   activeSubcategorySlug,
   query,
+  locale,
+  countryCode,
 }: CategoryNavigationProps) {
   const activeCategory = tree.find((category) => category.slug === activeCategorySlug);
 
@@ -32,7 +37,7 @@ export function CategoryNavigation({
               ? "border border-brand bg-surface text-brand"
               : "border border-line bg-surface text-muted hover:border-brand hover:text-brand"
           }`}
-          href={buildCatalogHref({ query })}
+          href={buildCatalogHref({ query, locale, countryCode })}
         >
           Todos
           {!activeCategory ? (
@@ -53,7 +58,7 @@ export function CategoryNavigation({
                   ? "border border-brand bg-surface text-brand"
                   : "border border-line bg-surface text-muted hover:border-brand hover:text-brand"
               }`}
-              href={buildCatalogHref({ query, categorySlug: category.slug })}
+              href={buildCatalogHref({ query, categorySlug: category.slug, locale, countryCode })}
               key={category.id}
             >
               {iconName ? <CategoryIcon aria-hidden="true" className="size-5 shrink-0" name={iconName} /> : null}
@@ -83,6 +88,8 @@ export function CategoryNavigation({
                   query,
                   categorySlug: activeCategory.slug,
                   subcategorySlug: subcategory.slug,
+                  locale,
+                  countryCode,
                 })}
                 key={subcategory.id}
               >

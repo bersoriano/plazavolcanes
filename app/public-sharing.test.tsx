@@ -84,13 +84,33 @@ describe("public sharing controls", () => {
   });
 
   it("requests and renders approved English product content for an en-US catalog visit", async () => {
+    vi.mocked(getProductCategoryTree).mockResolvedValue([
+      {
+        id: 1,
+        parentId: null,
+        slug: "home-and-garden",
+        name: "Home and garden",
+        sortOrder: 1,
+        isActive: true,
+        children: [
+          {
+            id: 11,
+            parentId: 1,
+            slug: "kitchen-and-dining",
+            name: "Kitchen and dining",
+            sortOrder: 1,
+            isActive: true,
+          },
+        ],
+      },
+    ]);
     vi.mocked(getPublicProduct).mockResolvedValue({
       id: 8,
       name: "Volcanic clay mug",
       description: "Handmade with high-temperature regional clay.",
       price_mxn: 349,
       currency_code: "MXN",
-      category_id: null,
+      category_id: 11,
       condition: "new",
       used_condition: null,
       image_path: null,
@@ -101,13 +121,26 @@ describe("public sharing controls", () => {
     render(
       await ProductPage({
         params: Promise.resolve({ id: "8" }),
-        searchParams: Promise.resolve({ locale: "en-US" }),
+        searchParams: Promise.resolve({ locale: "en-US", countryCode: "US" }),
       }),
     );
 
     expect(getPublicProduct).toHaveBeenCalledWith(8, "en-US");
     expect(screen.getByRole("heading", { name: "Volcanic clay mug" })).toBeInTheDocument();
     expect(screen.getByText("Handmade with high-temperature regional clay.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Volver a resultados" })).toHaveAttribute(
+      "href",
+      "/?locale=en-US&countryCode=US",
+    );
+    expect(screen.getByRole("link", { name: "Home and garden" })).toHaveAttribute(
+      "href",
+      "/?categoria=home-and-garden&locale=en-US&countryCode=US",
+    );
+    expect(screen.getByRole("link", { name: "Kitchen and dining" })).toHaveAttribute(
+      "href",
+      "/?categoria=home-and-garden&subcategoria=kitchen-and-dining&locale=en-US&countryCode=US",
+    );
+    expect(screen.getByText("MX$349.00")).toBeInTheDocument();
   });
 
   it("renders sharing controls on a public shop", async () => {

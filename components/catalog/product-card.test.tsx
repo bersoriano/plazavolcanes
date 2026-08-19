@@ -96,6 +96,32 @@ describe("ProductCard", () => {
     );
   });
 
+  it("carries locale and country to the product and formats currency for that locale", () => {
+    render(
+      <ProductCard
+        catalogHref="/?q=camera&locale=en-US&countryCode=US"
+        locale="en-US"
+        product={{
+          id: 7,
+          image_path: null,
+          name: "Instant camera",
+          price_mxn: 42,
+          currency_code: "USD",
+          category_id: 11,
+          condition: "new",
+          used_condition: null,
+          shop: { name: "Lava Light" },
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: /Instant camera/ })).toHaveAttribute(
+      "href",
+      "/productos/7?q=camera&locale=en-US&countryCode=US",
+    );
+    expect(screen.getByText("$42.00")).toBeInTheDocument();
+  });
+
   it("sends one keepalive selection event when a tracked result is clicked", () => {
     const fetchSpy = vi.fn(() => Promise.resolve());
     vi.stubGlobal("fetch", fetchSpy);

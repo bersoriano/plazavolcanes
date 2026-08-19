@@ -6,7 +6,11 @@ import {
   findCategorySelection,
   type CategoryTree,
 } from "@/lib/categories";
-import { normalizeCatalogLocale } from "@/lib/catalog-locale";
+import {
+  DEFAULT_CATALOG_LOCALE,
+  DEFAULT_CATALOG_MARKET,
+  normalizeCatalogLocale,
+} from "@/lib/catalog-locale";
 
 const tree: CategoryTree[] = [
   {
@@ -67,6 +71,26 @@ describe("buildCatalogHref", () => {
 
   it("returns the catalog root when every filter is empty", () => {
     expect(buildCatalogHref({ query: "  " })).toBe("/");
+  });
+
+  it("preserves a nondefault locale and country alongside discovery filters", () => {
+    expect(
+      buildCatalogHref({
+        query: "iphone",
+        categorySlug: "electronica",
+        locale: "en-US",
+        countryCode: "US",
+      }),
+    ).toBe("/?q=iphone&categoria=electronica&locale=en-US&countryCode=US");
+  });
+
+  it("keeps default locale and country behavior at the catalog root", () => {
+    expect(
+      buildCatalogHref({
+        locale: DEFAULT_CATALOG_LOCALE,
+        countryCode: DEFAULT_CATALOG_MARKET,
+      }),
+    ).toBe("/");
   });
 });
 

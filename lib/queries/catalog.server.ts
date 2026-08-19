@@ -83,6 +83,7 @@ function defaultCatalogFilters(query?: string): CatalogFilters {
     query: normalizeSearchQuery(query),
     locale: DEFAULT_CATALOG_LOCALE,
     countryCode: DEFAULT_CATALOG_MARKET,
+    invalidCategorySelection: false,
   };
 }
 
@@ -94,7 +95,8 @@ function resolveCategorySelection(categories: CategoryTree[], filters: CatalogFi
       (subcategory) => subcategory.slug === filters.subcategorySlug,
     ) ?? null;
   const invalidCategorySelection = Boolean(
-    (filters.categorySlug && !selectedCategory) ||
+    filters.invalidCategorySelection ||
+      (filters.categorySlug && !selectedCategory) ||
       (filters.subcategorySlug && !selectedSubcategory),
   );
 
@@ -129,7 +131,7 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
       categories: [] as CategoryTree[],
       selectedCategory: null,
       selectedSubcategory: null,
-      invalidCategorySelection: false,
+      invalidCategorySelection: normalizedFilters.invalidCategorySelection,
       searchEventId: null as string | null,
     };
   }

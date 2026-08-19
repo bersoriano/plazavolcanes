@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(73);
+select plan(80);
 
 select has_table('public', 'categories', 'categories table exists');
 select has_table('public', 'category_translations', 'category translations table exists');
@@ -388,6 +388,15 @@ select throws_ok(
 );
 
 reset role;
+insert into public.search_events (
+  id,
+  normalized_query,
+  locale,
+  country_code,
+  result_count
+) values
+  ('00000000-0000-4000-8000-000000000001', 'funda', 'es-MX', 'MX', 1),
+  ('00000000-0000-4000-8000-000000000002', 'funda', 'es-MX', 'MX', 2);
 set local role anon;
 
 select results_eq(
@@ -459,6 +468,71 @@ select throws_ok(
   '22023',
   'Search query must not be empty.',
   'search telemetry rejects empty queries'
+);
+select throws_ok(
+  $$select public.record_search_selection(
+      '00000000-0000-4000-8000-000000000001',
+      (select id from public.products where name = 'Funda resistente'),
+      2
+    )$$,
+  '22023',
+  'Selected position must not exceed result count.',
+  'anonymous selection telemetry rejects positions beyond the recorded result count'
+);
+select throws_ok(
+  $$select public.record_search_selection(
+      '00000000-0000-4000-8000-000000000001',
+      (select id from public.products where name = 'Funda resistente'),
+      0
+    )$$,
+  '22023',
+  'Selected position must be one or greater.',
+  'anonymous selection telemetry retains positive-position validation'
+);
+select throws_ok(
+  $$select public.record_search_selection(
+      '00000000-0000-4000-8000-000000000001',
+      (select id from public.products where name = 'Borrador libre'),
+      1
+    )$$,
+  '22023',
+  'Selected product must be published.',
+  'anonymous selection telemetry retains published-product validation'
+);
+select lives_ok(
+  $$select public.record_search_selection(
+      '00000000-0000-4000-8000-000000000002',
+      (select id from public.products where name = 'Funda resistente'),
+      2
+    )$$,
+  'anonymous callers can record a valid result selection once'
+);
+select throws_ok(
+  $$select public.record_search_selection(
+      '00000000-0000-4000-8000-000000000002',
+      (select id from public.products where name = 'Funda resistente'),
+      2
+    )$$,
+  '22023',
+  'Search selection has already been recorded.',
+  'selection telemetry is write-once'
+);
+
+reset role;
+update public.categories
+set is_active = false
+where slug = 'computacion';
+set local role anon;
+
+select results_eq(
+  $$select product_id from public.search_product_ids('Cuaderno técnico', 'es-MX', 'MX', null, 20)$$,
+  $$select id from public.products where name = 'Cuaderno técnico'$$,
+  'unfiltered text search keeps a published product discoverable after category deactivation'
+);
+select results_eq(
+  $$select count(*) from public.categories where slug = 'computacion'$$,
+  array[0::bigint],
+  'anonymous category navigation still hides the deactivated category'
 );
 
 reset role;
