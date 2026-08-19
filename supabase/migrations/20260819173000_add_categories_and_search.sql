@@ -51,6 +51,33 @@ create index category_suggestions_seller_created_at_idx
 create index category_suggestions_root_category_id_idx
   on public.category_suggestions (root_category_id);
 
+create function public.validate_category_suggestion_root()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if new.root_category_id is not null and not exists (
+    select 1
+    from public.categories
+    where categories.id = new.root_category_id
+      and categories.parent_id is null
+      and categories.is_active
+      and categories.listing_type = 'product'
+  ) then
+    raise exception using
+      errcode = '23514',
+      message = 'Category suggestions require an active product root category.';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger category_suggestions_validate_root
+before insert or update of root_category_id on public.category_suggestions
+for each row execute function public.validate_category_suggestion_root();
+
 create function public.validate_category_hierarchy()
 returns trigger
 language plpgsql
@@ -607,6 +634,7 @@ end;
 $$;
 
 revoke execute on function public.validate_category_hierarchy() from public, anon, authenticated;
+revoke execute on function public.validate_category_suggestion_root() from public, anon, authenticated;
 revoke execute on function public.require_publishable_product_category() from public, anon, authenticated;
 revoke execute on function public.search_product_ids(text, text, text, bigint, integer) from public, anon, authenticated;
 revoke execute on function public.record_catalog_search(text, text, text, bigint, integer) from public, anon, authenticated;
@@ -816,6 +844,7 @@ join public.categories on categories.slug = alias_seed.slug;
 --   drop column currency_code,
 --   drop column category_id;
 -- drop table public.category_suggestions;
+-- drop function public.validate_category_suggestion_root();
 -- drop table public.category_aliases;
 -- drop table public.category_translations;
 -- drop trigger categories_validate_hierarchy on public.categories;

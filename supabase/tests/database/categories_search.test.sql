@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(58);
+select plan(65);
 
 select has_table('public', 'categories', 'categories table exists');
 select has_table('public', 'category_translations', 'category translations table exists');
@@ -184,6 +184,57 @@ values
   (9001, 'product', 'raiz-producto-inactiva', false),
   (9002, 'service', 'raiz-servicio', true),
   (9003, 'restaurant', 'raiz-restaurante', true);
+
+select throws_ok(
+  $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
+    select '123e4567-e89b-12d3-a456-426614174000', id, 'es-MX', 'Owner context leaf'
+    from public.categories where slug = 'celulares-y-accesorios'$$,
+  '23514',
+  'Category suggestions require an active product root category.',
+  'table owners cannot create suggestions with an active product leaf context'
+);
+select throws_ok(
+  $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
+    values ('123e4567-e89b-12d3-a456-426614174000', 9001, 'es-MX', 'Owner context inactive')$$,
+  '23514',
+  'Category suggestions require an active product root category.',
+  'table owners cannot create suggestions with an inactive product root context'
+);
+select throws_ok(
+  $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
+    values ('123e4567-e89b-12d3-a456-426614174000', 9002, 'es-MX', 'Owner context service')$$,
+  '23514',
+  'Category suggestions require an active product root category.',
+  'table owners cannot create suggestions with a service root context'
+);
+select throws_ok(
+  $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
+    values ('123e4567-e89b-12d3-a456-426614174000', 9003, 'es-MX', 'Owner context restaurant')$$,
+  '23514',
+  'Category suggestions require an active product root category.',
+  'table owners cannot create suggestions with a restaurant root context'
+);
+select lives_ok(
+  $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
+    select '123e4567-e89b-12d3-a456-426614174000', id, 'es-MX', 'Owner context active root'
+    from public.categories where slug = 'electronica'$$,
+  'table owners can create suggestions with an active product root context'
+);
+select lives_ok(
+  $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
+    values ('123e4567-e89b-12d3-a456-426614174000', null, 'es-MX', 'Owner context null')$$,
+  'table owners can create suggestions without a root context'
+);
+select throws_ok(
+  $$update public.category_suggestions
+    set root_category_id = (select id from public.categories where slug = 'celulares-y-accesorios')
+    where suggested_name = 'Owner context null'$$,
+  '23514',
+  'Category suggestions require an active product root category.',
+  'table owners cannot update suggestions to an invalid leaf context'
+);
+
+delete from public.category_suggestions where suggested_name like 'Owner context%';
 
 set local role authenticated;
 set local request.jwt.claim.sub = '123e4567-e89b-12d3-a456-426614174000';
