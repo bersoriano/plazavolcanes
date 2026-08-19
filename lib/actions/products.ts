@@ -13,6 +13,11 @@ const authError: ActionState = {
   status: "error",
   message: "Tu sesión terminó. Ingresa nuevamente.",
 };
+const invalidCategoryError: ActionState = {
+  status: "error",
+  message: "Revisa los campos marcados.",
+  errors: { category_id: ["Selecciona una subcategoría válida antes de publicar."] },
+};
 
 function imageFrom(formData: FormData) {
   const value = formData.get("image");
@@ -33,6 +38,34 @@ async function getAuthenticatedContext() {
   return userId ? { supabase, userId } : null;
 }
 
+async function isPublishableCategory(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  categoryId: number | null,
+) {
+  if (categoryId === null) return false;
+
+  const { data: leaf, error: leafError } = await supabase
+    .from("categories")
+    .select("parent_id")
+    .eq("id", categoryId)
+    .eq("listing_type", "product")
+    .eq("is_active", true)
+    .maybeSingle();
+  if (leafError) throw new Error("No pudimos validar la subcategoría.");
+  if (!leaf?.parent_id) return false;
+
+  const { data: root, error: rootError } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("id", leaf.parent_id)
+    .is("parent_id", null)
+    .eq("listing_type", "product")
+    .eq("is_active", true)
+    .maybeSingle();
+  if (rootError) throw new Error("No pudimos validar la subcategoría.");
+  return Boolean(root);
+}
+
 export async function createProduct(
   shopId: number,
   _previousState: ActionState,
@@ -45,6 +78,9 @@ export async function createProduct(
     status: formData.get("status"),
     condition: formData.get("condition"),
     used_condition: formData.get("used_condition"),
+    category_id: formData.get("category_id"),
+    currency_code: formData.get("currency_code"),
+    content_locale: formData.get("content_locale"),
   });
   const image = imageFrom(formData);
 
@@ -61,6 +97,13 @@ export async function createProduct(
   const { supabase, userId } = context;
   const { data: shop } = await supabase.from("shops").select("slug").eq("id", shopId).eq("owner_id", userId).maybeSingle();
   if (!shop) return { status: "error", message: "No encontramos esa tienda." };
+  if (parsed.data.status === "published") {
+    try {
+      if (!(await isPublishableCategory(supabase, parsed.data.category_id))) return invalidCategoryError;
+    } catch {
+      return { status: "error", message: "No pudimos validar la subcategoría." };
+    }
+  }
 
   let imagePath: string | null = null;
   if (image) {
@@ -97,6 +140,9 @@ export async function updateProduct(
     status: formData.get("status"),
     condition: formData.get("condition"),
     used_condition: formData.get("used_condition"),
+    category_id: formData.get("category_id"),
+    currency_code: formData.get("currency_code"),
+    content_locale: formData.get("content_locale"),
   });
   const image = imageFrom(formData);
   if (!parsed.success) return { status: "error", message: "Revisa los campos marcados.", errors: parsed.error.flatten().fieldErrors };
@@ -112,6 +158,13 @@ export async function updateProduct(
   if (!existing) return { status: "error", message: "No encontramos ese producto." };
   const { data: shop } = await supabase.from("shops").select("slug").eq("id", existing.shop_id).eq("owner_id", userId).maybeSingle();
   if (!shop) return { status: "error", message: "No puedes editar este producto." };
+  if (parsed.data.status === "published") {
+    try {
+      if (!(await isPublishableCategory(supabase, parsed.data.category_id))) return invalidCategoryError;
+    } catch {
+      return { status: "error", message: "No pudimos validar la subcategoría." };
+    }
+  }
 
   let nextImagePath = existing.image_path;
   if (image) {
@@ -140,11 +193,17 @@ export async function setProductStatus(productId: number, nextStatus: "draft" | 
   const context = await getAuthenticatedContext();
   if (!parsedStatus.success || !context) redirect("/ingresar");
   const { supabase, userId } = context;
-  const { data: product } = await supabase.from("products").select("shop_id").eq("id", productId).maybeSingle();
+  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id").eq("id", productId).maybeSingle();
+  if (productError) throw new Error("No pudimos consultar el producto.");
   if (!product) redirect("/panel");
-  const { data: shop } = await supabase.from("shops").select("slug").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
+  const { data: shop, error: shopError } = await supabase.from("shops").select("slug").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
+  if (shopError) throw new Error("No pudimos consultar la tienda.");
   if (!shop) redirect("/panel");
-  await supabase.from("products").update({ status: parsedStatus.data, updated_at: new Date().toISOString() }).eq("id", productId);
+  if (parsedStatus.data === "published" && !(await isPublishableCategory(supabase, product.category_id))) {
+    redirect(`/panel/productos/${productId}/editar?categoria=requerida=1`);
+  }
+  const { error } = await supabase.from("products").update({ status: parsedStatus.data, updated_at: new Date().toISOString() }).eq("id", productId);
+  if (error) throw new Error("No pudimos actualizar el estado del producto.");
   revalidatePath("/");
   revalidatePath(`/productos/${productId}`);
   revalidatePath(`/panel/tiendas/${product.shop_id}`);

@@ -137,7 +137,7 @@ describe("productSchema", () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.flatten().fieldErrors.category_id).toEqual([
-        "Selecciona una subcategoría antes de publicar.",
+        "Selecciona una subcategoría válida antes de publicar.",
       ]);
     }
   });

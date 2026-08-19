@@ -4,10 +4,12 @@ import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { ImagePlus } from "lucide-react";
 
+import { CategoryFields } from "@/components/products/category-fields";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import type { ActionState } from "@/lib/action-state";
 import { initialActionState } from "@/lib/action-state";
+import type { CategoryTree } from "@/lib/categories";
 import {
   USED_CONDITION_OPTIONS,
   type ProductCondition,
@@ -16,6 +18,7 @@ import {
 
 type ProductFormProps = {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
+  categories: CategoryTree[];
   product?: {
     name: string;
     description: string;
@@ -23,6 +26,7 @@ type ProductFormProps = {
     status: "draft" | "published";
     condition: ProductCondition;
     used_condition: UsedCondition | null;
+    category_id: number | null;
     imageUrl: string | null;
   };
 };
@@ -41,7 +45,7 @@ function ProductActions({ status }: { status: "draft" | "published" }) {
   );
 }
 
-export function ProductForm({ action, product }: ProductFormProps) {
+export function ProductForm({ action, categories, product }: ProductFormProps) {
   const [state, formAction] = useActionState(action, initialActionState);
   const [preview, setPreview] = useState(product?.imageUrl ?? null);
   const [condition, setCondition] = useState<ProductCondition>(product?.condition ?? "new");
@@ -52,6 +56,13 @@ export function ProductForm({ action, product }: ProductFormProps) {
 
   return (
     <form action={formAction} className="space-y-6" noValidate>
+      <input name="currency_code" type="hidden" value="MXN" />
+      <input name="content_locale" type="hidden" value="es-MX" />
+      <CategoryFields
+        categories={categories}
+        error={state.errors?.category_id?.[0]}
+        selectedLeafId={product?.category_id}
+      />
       <Field defaultValue={product?.name} error={state.errors?.name?.[0]} label="Nombre del producto" maxLength={120} name="name" placeholder="Taza de barro" required />
       <div className="space-y-2">
         <label className="block text-sm font-semibold text-ink" htmlFor="description">Descripción</label>

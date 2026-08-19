@@ -59,7 +59,7 @@ export const productSchema = z.object({
   if (product.status === "published" && product.category_id === null) {
     context.addIssue({
       code: "custom",
-      message: "Selecciona una subcategoría antes de publicar.",
+      message: "Selecciona una subcategoría válida antes de publicar.",
       path: ["category_id"],
     });
   }
