@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(52);
+select plan(58);
 
 select has_table('public', 'categories', 'categories table exists');
 select has_table('public', 'category_translations', 'category translations table exists');
@@ -177,6 +177,14 @@ select throws_ok(
 );
 
 reset role;
+
+insert into public.categories (id, listing_type, slug, is_active)
+overriding system value
+values
+  (9001, 'product', 'raiz-producto-inactiva', false),
+  (9002, 'service', 'raiz-servicio', true),
+  (9003, 'restaurant', 'raiz-restaurante', true);
+
 set local role authenticated;
 set local request.jwt.claim.sub = '123e4567-e89b-12d3-a456-426614174000';
 
@@ -189,6 +197,27 @@ select throws_ok(
   $$insert into public.category_aliases (category_id, locale, alias)
     select id, 'en-US', 'unauthorized alias' from public.categories where slug = 'categoria-inactiva'$$,
   '42501', null, 'authenticated sellers cannot write category aliases'
+);
+select throws_ok(
+  $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
+    select '123e4567-e89b-12d3-a456-426614174000', id, 'es-MX', 'Contexto en hoja'
+    from public.categories where slug = 'celulares-y-accesorios'$$,
+  '42501', null, 'category suggestions reject an active product leaf context'
+);
+select throws_ok(
+  $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
+    values ('123e4567-e89b-12d3-a456-426614174000', 9001, 'es-MX', 'Contexto inactivo')$$,
+  '42501', null, 'category suggestions reject an inactive product root context'
+);
+select throws_ok(
+  $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
+    values ('123e4567-e89b-12d3-a456-426614174000', 9002, 'es-MX', 'Contexto de servicio')$$,
+  '42501', null, 'category suggestions reject a service root context'
+);
+select throws_ok(
+  $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name)
+    values ('123e4567-e89b-12d3-a456-426614174000', 9003, 'es-MX', 'Contexto de restaurante')$$,
+  '42501', null, 'category suggestions reject a restaurant root context'
 );
 select lives_ok(
   $$insert into public.category_suggestions (seller_id, root_category_id, locale, suggested_name, context)
@@ -245,6 +274,16 @@ select results_eq(
   $$select product_id from public.search_product_ids('teléfono', 'es-MX', 'US', null, 20)$$,
   $$select id from public.products where name = 'Funda internacional'$$,
   'country filtering excludes otherwise matching products'
+);
+select results_eq(
+  $$select product_id from public.search_product_ids('%', 'es-MX', 'MX', null, 100)$$,
+  $$select id from public.products where false$$,
+  'percent signs are searched literally instead of matching the catalog as wildcards'
+);
+select results_eq(
+  $$select product_id from public.search_product_ids('_', 'es-MX', 'MX', null, 100)$$,
+  $$select id from public.products where false$$,
+  'underscores are searched literally instead of matching the catalog as wildcards'
 );
 select results_eq(
   $$select product_id

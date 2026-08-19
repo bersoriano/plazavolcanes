@@ -262,6 +262,17 @@ create policy "sellers_create_own_category_suggestions"
     and (select auth.uid()) = seller_id
     and status = 'pending'
     and reviewed_at is null
+    and (
+      root_category_id is null
+      or exists (
+        select 1
+        from public.categories
+        where categories.id = category_suggestions.root_category_id
+          and categories.parent_id is null
+          and categories.is_active
+          and categories.listing_type = 'product'
+      )
+    )
   );
 
 create policy "sellers_read_own_category_suggestions"
@@ -396,13 +407,19 @@ as $$
           from public.category_translations
           where category_translations.category_id in (leaf.id, leaf.parent_id)
             and category_translations.locale = p_locale
-            and lower(extensions.unaccent(category_translations.name)) like '%' || query_terms.normalized_query || '%'
+            and strpos(
+              lower(extensions.unaccent(category_translations.name)),
+              query_terms.normalized_query
+            ) > 0
         ) or exists (
           select 1
           from public.category_aliases
           where category_aliases.category_id in (leaf.id, leaf.parent_id)
             and category_aliases.locale = p_locale
-            and lower(extensions.unaccent(category_aliases.alias)) like '%' || query_terms.normalized_query || '%'
+            and strpos(
+              lower(extensions.unaccent(category_aliases.alias)),
+              query_terms.normalized_query
+            ) > 0
         )
       end as category_matches
     from public.products
@@ -437,11 +454,17 @@ as $$
       case
         when candidates.normalized_query = '' then 0
         when lower(extensions.unaccent(candidates.localized_name)) = candidates.normalized_query then 100
-        when lower(extensions.unaccent(candidates.localized_name)) like candidates.normalized_query || '%' then 80
+        when starts_with(
+          lower(extensions.unaccent(candidates.localized_name)),
+          candidates.normalized_query
+        ) then 80
         when to_tsvector(candidates.search_config, candidates.localized_name) @@ candidates.ts_query then 60
         when candidates.category_matches then 50
         when to_tsvector(candidates.search_config, candidates.localized_description) @@ candidates.ts_query then 30
-        when lower(extensions.unaccent(candidates.shop_name)) like '%' || candidates.normalized_query || '%' then 10
+        when strpos(
+          lower(extensions.unaccent(candidates.shop_name)),
+          candidates.normalized_query
+        ) > 0 then 10
         else 0
       end
       + case
@@ -457,13 +480,19 @@ as $$
     )::real as rank
   from candidates
   where candidates.normalized_query = ''
-    or lower(extensions.unaccent(candidates.localized_name)) like candidates.normalized_query || '%'
+    or starts_with(
+      lower(extensions.unaccent(candidates.localized_name)),
+      candidates.normalized_query
+    )
     or candidates.original_search_document @@ candidates.ts_query
     or candidates.translation_search_document @@ candidates.ts_query
     or to_tsvector(candidates.search_config, candidates.localized_name) @@ candidates.ts_query
     or candidates.category_matches
     or to_tsvector(candidates.search_config, candidates.localized_description) @@ candidates.ts_query
-    or lower(extensions.unaccent(candidates.shop_name)) like '%' || candidates.normalized_query || '%'
+    or strpos(
+      lower(extensions.unaccent(candidates.shop_name)),
+      candidates.normalized_query
+    ) > 0
   order by rank desc, candidates.created_at desc, candidates.product_id desc
   limit greatest(1, least(coalesce(p_limit, 20), 100));
 $$;
