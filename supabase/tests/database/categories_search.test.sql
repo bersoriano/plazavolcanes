@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(65);
+select plan(73);
 
 select has_table('public', 'categories', 'categories table exists');
 select has_table('public', 'category_translations', 'category translations table exists');
@@ -119,6 +119,16 @@ select id, 'product', 'categoria-inactiva', false
 from public.categories
 where slug = 'electronica';
 
+insert into public.category_translations (category_id, locale, name)
+select id, 'es-MX', 'Categoría inactiva'
+from public.categories
+where slug = 'categoria-inactiva';
+
+insert into public.category_aliases (category_id, locale, alias)
+select id, 'es-MX', 'inactiva'
+from public.categories
+where slug = 'categoria-inactiva';
+
 select throws_ok(
   $$insert into public.products (shop_id, name, description, price_mxn, status, category_id)
     select 1, 'Categoría inactiva', 'Una categoría inactiva no permite publicar productos.', 250, 'published', id
@@ -157,6 +167,21 @@ where slug = 'celulares-y-accesorios';
 set local role anon;
 
 select results_eq(
+  $$select count(*) from public.categories where slug = 'categoria-inactiva'$$,
+  array[0::bigint],
+  'anonymous visitors cannot read inactive categories'
+);
+select results_eq(
+  $$select count(*) from public.category_translations where name = 'Categoría inactiva'$$,
+  array[0::bigint],
+  'anonymous visitors cannot read inactive category translations'
+);
+select results_eq(
+  $$select count(*) from public.category_aliases where alias = 'inactiva'$$,
+  array[0::bigint],
+  'anonymous visitors cannot read inactive category aliases'
+);
+select results_eq(
   $$select count(*) from public.categories where is_active$$,
   array[57::bigint],
   'anonymous visitors can read active categories'
@@ -174,6 +199,24 @@ select results_eq(
 select throws_ok(
   $$insert into public.categories (listing_type, slug) values ('product', 'categoria-publica')$$,
   '42501', null, 'anonymous visitors cannot create categories'
+);
+select ok(
+  not exists (
+    select 1
+    from (values
+      ('public.categories', 'insert'),
+      ('public.categories', 'update'),
+      ('public.categories', 'delete'),
+      ('public.category_translations', 'insert'),
+      ('public.category_translations', 'update'),
+      ('public.category_translations', 'delete'),
+      ('public.category_aliases', 'insert'),
+      ('public.category_aliases', 'update'),
+      ('public.category_aliases', 'delete')
+    ) as taxonomy_privileges(table_name, privilege_name)
+    where has_table_privilege('anon', table_name, privilege_name)
+  ),
+  'anonymous visitors have no taxonomy write privileges'
 );
 
 reset role;
@@ -239,6 +282,39 @@ delete from public.category_suggestions where suggested_name like 'Owner context
 set local role authenticated;
 set local request.jwt.claim.sub = '123e4567-e89b-12d3-a456-426614174000';
 
+select results_eq(
+  $$select count(*) from public.categories where slug = 'categoria-inactiva'$$,
+  array[1::bigint],
+  'authenticated sellers can read inactive categories'
+);
+select results_eq(
+  $$select count(*) from public.category_translations where name = 'Categoría inactiva'$$,
+  array[1::bigint],
+  'authenticated sellers can read inactive category translations'
+);
+select results_eq(
+  $$select count(*) from public.category_aliases where alias = 'inactiva'$$,
+  array[1::bigint],
+  'authenticated sellers can read inactive category aliases'
+);
+select ok(
+  not exists (
+    select 1
+    from (values
+      ('public.categories', 'insert'),
+      ('public.categories', 'update'),
+      ('public.categories', 'delete'),
+      ('public.category_translations', 'insert'),
+      ('public.category_translations', 'update'),
+      ('public.category_translations', 'delete'),
+      ('public.category_aliases', 'insert'),
+      ('public.category_aliases', 'update'),
+      ('public.category_aliases', 'delete')
+    ) as taxonomy_privileges(table_name, privilege_name)
+    where has_table_privilege('authenticated', table_name, privilege_name)
+  ),
+  'authenticated sellers have no taxonomy write privileges'
+);
 select throws_ok(
   $$insert into public.category_translations (category_id, locale, name)
     select id, 'en-US', 'Unauthorized label' from public.categories where slug = 'categoria-inactiva'$$,

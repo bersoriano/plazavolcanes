@@ -254,12 +254,17 @@ alter table public.search_events enable row level security;
 
 create policy "active_categories_are_public"
   on public.categories for select
-  to anon, authenticated
+  to anon
   using (is_active);
+
+create policy "authenticated_categories_are_readable"
+  on public.categories for select
+  to authenticated
+  using (true);
 
 create policy "active_category_translations_are_public"
   on public.category_translations for select
-  to anon, authenticated
+  to anon
   using (
     exists (
       select 1
@@ -269,17 +274,27 @@ create policy "active_category_translations_are_public"
     )
   );
 
+create policy "authenticated_category_translations_are_readable"
+  on public.category_translations for select
+  to authenticated
+  using (true);
+
 create policy "active_category_aliases_are_public"
   on public.category_aliases for select
-  to anon, authenticated
+  to anon
   using (
     exists (
       select 1
       from public.categories
       where categories.id = category_aliases.category_id
-        and categories.is_active
+      and categories.is_active
     )
   );
+
+create policy "authenticated_category_aliases_are_readable"
+  on public.category_aliases for select
+  to authenticated
+  using (true);
 
 create policy "sellers_create_own_category_suggestions"
   on public.category_suggestions for insert
