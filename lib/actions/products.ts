@@ -43,6 +43,8 @@ export async function createProduct(
     description: formData.get("description"),
     price_mxn: formData.get("price_mxn"),
     status: formData.get("status"),
+    condition: formData.get("condition"),
+    used_condition: formData.get("used_condition"),
   });
   const image = imageFrom(formData);
 
@@ -93,6 +95,8 @@ export async function updateProduct(
     description: formData.get("description"),
     price_mxn: formData.get("price_mxn"),
     status: formData.get("status"),
+    condition: formData.get("condition"),
+    used_condition: formData.get("used_condition"),
   });
   const image = imageFrom(formData);
   if (!parsed.success) return { status: "error", message: "Revisa los campos marcados.", errors: parsed.error.flatten().fieldErrors };

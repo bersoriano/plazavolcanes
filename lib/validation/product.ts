@@ -1,6 +1,8 @@
 import { z } from "zod";
 
 export const productStatusSchema = z.enum(["draft", "published"]);
+export const productConditionSchema = z.enum(["new", "used"]);
+export const usedConditionSchema = z.enum(["mint", "good", "fair", "bad", "scrap"]);
 
 export const productSchema = z.object({
   name: z
@@ -24,6 +26,27 @@ export const productSchema = z.object({
       message: "El precio excede el máximo permitido.",
     }),
   status: productStatusSchema,
+  condition: productConditionSchema,
+  used_condition: z.preprocess(
+    (value) => (value === "" ? null : value),
+    usedConditionSchema.nullable(),
+  ),
+}).superRefine((product, context) => {
+  if (product.condition === "used" && product.used_condition === null) {
+    context.addIssue({
+      code: "custom",
+      message: "Selecciona el estado del producto usado.",
+      path: ["used_condition"],
+    });
+  }
+
+  if (product.condition === "new" && product.used_condition !== null) {
+    context.addIssue({
+      code: "custom",
+      message: "Un producto nuevo no puede tener estado de uso.",
+      path: ["used_condition"],
+    });
+  }
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

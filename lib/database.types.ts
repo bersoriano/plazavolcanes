@@ -44,6 +44,7 @@ export type Database = {
       };
       products: {
         Row: {
+          condition: "new" | "used";
           created_at: string;
           description: string;
           id: number;
@@ -53,8 +54,10 @@ export type Database = {
           shop_id: number;
           status: "draft" | "published";
           updated_at: string;
+          used_condition: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
         Insert: {
+          condition?: "new" | "used";
           created_at?: string;
           description: string;
           id?: never;
@@ -64,8 +67,10 @@ export type Database = {
           shop_id: number;
           status?: "draft" | "published";
           updated_at?: string;
+          used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
         Update: {
+          condition?: "new" | "used";
           created_at?: string;
           description?: string;
           id?: never;
@@ -75,6 +80,7 @@ export type Database = {
           shop_id?: number;
           status?: "draft" | "published";
           updated_at?: string;
+          used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
         Relationships: [
           {

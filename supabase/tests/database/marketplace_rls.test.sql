@@ -2,10 +2,12 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(8);
+select plan(13);
 
 select has_table('public', 'shops', 'shops table exists');
 select has_table('public', 'products', 'products table exists');
+select has_column('public', 'products', 'condition', 'products have condition');
+select has_column('public', 'products', 'used_condition', 'products have used condition detail');
 
 insert into auth.users (id, email) values
   ('123e4567-e89b-12d3-a456-426614174000', 'seller-a@test.local'),
@@ -60,6 +62,25 @@ select results_eq(
   $$delete from public.products where id = 3 returning id$$,
   $$select id from public.products where false$$,
   'seller A cannot delete seller B draft'
+);
+
+select lives_ok(
+  $$insert into public.products (shop_id, name, description, price_mxn, condition, used_condition) values (1, 'Usado válido', 'Descripción completa del producto usado válido.', 150, 'used', 'mint')$$,
+  'used product accepts a valid subcondition'
+);
+
+select throws_ok(
+  $$insert into public.products (shop_id, name, description, price_mxn, condition) values (1, 'Usado incompleto', 'Descripción completa del producto usado incompleto.', 150, 'used')$$,
+  '23514',
+  null,
+  'used product requires a subcondition'
+);
+
+select throws_ok(
+  $$insert into public.products (shop_id, name, description, price_mxn, condition, used_condition) values (1, 'Nuevo inválido', 'Descripción completa del producto nuevo inválido.', 150, 'new', 'good')$$,
+  '23514',
+  null,
+  'new product rejects a used subcondition'
 );
 
 select * from finish();

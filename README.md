@@ -73,10 +73,10 @@ npx supabase test db
 - Archivos se guardan bajo carpeta UUID del propietario.
 - Eliminación de tienda elimina sus productos por cascada.
 
-Migración principal: `supabase/migrations/20260819065028_create_marketplace.sql`.
+Migraciones versionadas: `supabase/migrations/`.
 
 ## Alcance de esta versión
 
-Incluye registro, inicio/cierre de sesión, gestión de múltiples tiendas, borradores, publicación, imágenes, catálogo público, búsqueda y páginas públicas de tienda/producto.
+Incluye registro, inicio/cierre de sesión, gestión de múltiples tiendas, borradores, publicación, imágenes, condición de producto nuevo/usado, catálogo público, búsqueda y páginas públicas de tienda/producto.
 
 Fuera de alcance: carrito, checkout, pagos, pedidos, mensajería, administración global, categorías, reseñas y favoritos.

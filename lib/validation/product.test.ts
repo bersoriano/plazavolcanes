@@ -3,12 +3,21 @@ import { describe, expect, it } from "vitest";
 import { productSchema, productStatusSchema } from "@/lib/validation/product";
 
 describe("productSchema", () => {
+  const completeProduct = {
+    name: "Taza de barro",
+    description: "Hecha a mano en un taller local de la región.",
+    price_mxn: "349.00",
+    status: "draft",
+  } as const;
+
   it("accepts a complete product and converts price to number", () => {
     const result = productSchema.safeParse({
       name: "Taza de barro",
       description: "Hecha a mano en un taller local de la región.",
       price_mxn: "349.00",
       status: "draft",
+      condition: "new",
+      used_condition: "",
     });
 
     expect(result.success).toBe(true);
@@ -33,6 +42,59 @@ describe("productSchema", () => {
         description: "Hecha a mano en un taller local de la región.",
         price_mxn: "349.999",
         status: "published",
+        condition: "new",
+        used_condition: "",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts a new product without a used subcondition", () => {
+    const result = productSchema.safeParse({
+      ...completeProduct,
+      condition: "new",
+      used_condition: "",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.condition).toBe("new");
+      expect(result.data.used_condition).toBeNull();
+    }
+  });
+
+  it("rejects a used product without a used subcondition", () => {
+    expect(
+      productSchema.safeParse({
+        ...completeProduct,
+        condition: "used",
+        used_condition: "",
+      }).success,
+    ).toBe(false);
+  });
+
+  it.each(["mint", "good", "fair", "bad", "scrap"] as const)(
+    "accepts used condition %s",
+    (usedCondition) => {
+      const result = productSchema.safeParse({
+        ...completeProduct,
+        condition: "used",
+        used_condition: usedCondition,
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.condition).toBe("used");
+        expect(result.data.used_condition).toBe(usedCondition);
+      }
+    },
+  );
+
+  it("rejects a used subcondition when product is new", () => {
+    expect(
+      productSchema.safeParse({
+        ...completeProduct,
+        condition: "new",
+        used_condition: "good",
       }).success,
     ).toBe(false);
   });

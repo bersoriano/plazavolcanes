@@ -8,7 +8,13 @@ import { getCatalogImageUrl } from "@/lib/storage";
 
 export type CatalogProduct = Pick<
   Product,
-  "id" | "name" | "description" | "price_mxn" | "created_at"
+  | "id"
+  | "name"
+  | "description"
+  | "price_mxn"
+  | "condition"
+  | "used_condition"
+  | "created_at"
 > & {
   image_path: string | null;
   shop: { name: string; slug: string };
@@ -17,13 +23,15 @@ export type CatalogProduct = Pick<
 export type CatalogShop = Shop & { imageUrl: string | null };
 
 const productSelection =
-  "id, name, description, price_mxn, image_path, created_at, shops!inner(name, slug)";
+  "id, name, description, price_mxn, condition, used_condition, image_path, created_at, shops!inner(name, slug)";
 
 function mapProduct(item: {
   id: number;
   name: string;
   description: string;
   price_mxn: number;
+  condition: "new" | "used";
+  used_condition: "mint" | "good" | "fair" | "bad" | "scrap" | null;
   image_path: string | null;
   created_at: string;
   shops: { name: string; slug: string };
@@ -33,6 +41,8 @@ function mapProduct(item: {
     name: item.name,
     description: item.description,
     price_mxn: item.price_mxn,
+    condition: item.condition,
+    used_condition: item.used_condition,
     image_path: getCatalogImageUrl(item.image_path),
     created_at: item.created_at,
     shop: item.shops,
