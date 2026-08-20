@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { formatCurrency, formatMxn } from "@/lib/format";
+import { formatCurrency, formatDate, formatMxn } from "@/lib/format";
 
 describe("formatCurrency", () => {
   it("formats the requested currency using the requested locale", () => {
@@ -15,5 +15,11 @@ describe("formatMxn", () => {
 
   it("formats decimal strings without losing cents", () => {
     expect(formatMxn("49.5")).toBe("$49.50");
+  });
+});
+
+describe("formatDate", () => {
+  it("formats ISO timestamps as Spanish calendar dates", () => {
+    expect(formatDate("2026-08-20T12:30:00.000Z")).toBe("20 de agosto de 2026");
   });
 });

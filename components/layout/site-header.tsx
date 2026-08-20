@@ -31,6 +31,9 @@ export async function SiteHeader() {
               <Link className="rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background" href="/panel">
                 Mi panel
               </Link>
+              <Link className="hidden rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background sm:inline-flex" href="/compras">
+                Mis compras
+              </Link>
               <SignOutButton />
             </>
           ) : (

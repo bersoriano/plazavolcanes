@@ -6,9 +6,32 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
+export type OrderStatus =
+  | "requested"
+  | "accepted"
+  | "shipped"
+  | "delivered"
+  | "completed"
+  | "rejected"
+  | "canceled_by_buyer"
+  | "canceled_by_seller"
+  | "canceled_by_admin";
+
 export type Database = {
   public: {
     Tables: {
+      cart_items: {
+        Row: { id: number; cart_id: number; product_id: number; quantity: number; created_at: string; updated_at: string };
+        Insert: { id?: never; cart_id: number; product_id: number; quantity: number; created_at?: string; updated_at?: string };
+        Update: { id?: never; cart_id?: number; product_id?: number; quantity?: number; created_at?: string; updated_at?: string };
+        Relationships: [];
+      };
+      carts: {
+        Row: { id: number; buyer_id: string; shop_id: number; created_at: string; updated_at: string };
+        Insert: { id?: never; buyer_id: string; shop_id: number; created_at?: string; updated_at?: string };
+        Update: { id?: never; buyer_id?: string; shop_id?: number; created_at?: string; updated_at?: string };
+        Relationships: [];
+      };
       categories: {
         Row: {
           created_at: string;
@@ -199,6 +222,7 @@ export type Database = {
           created_at: string;
           currency_code: string;
           description: string;
+          handling_days: number;
           id: number;
           image_path: string | null;
           name: string;
@@ -216,6 +240,7 @@ export type Database = {
           created_at?: string;
           currency_code?: string;
           description: string;
+          handling_days?: number;
           id?: never;
           image_path?: string | null;
           name: string;
@@ -232,6 +257,7 @@ export type Database = {
           created_at?: string;
           currency_code?: string;
           description?: string;
+          handling_days?: number;
           id?: never;
           image_path?: string | null;
           name?: string;
@@ -320,9 +346,13 @@ export type Database = {
           description: string;
           id: number;
           image_path: string | null;
+          listing_limit: number;
           name: string;
           owner_id: string;
           slug: string;
+          time_zone: string;
+          trust_evaluated_at: string | null;
+          trust_tier: "standard" | "reliable" | "top_rated";
           updated_at: string;
         };
         Insert: {
@@ -332,9 +362,13 @@ export type Database = {
           description: string;
           id?: never;
           image_path?: string | null;
+          listing_limit?: number;
           name: string;
           owner_id: string;
           slug: string;
+          time_zone?: string;
+          trust_evaluated_at?: string | null;
+          trust_tier?: "standard" | "reliable" | "top_rated";
           updated_at?: string;
         };
         Update: {
@@ -344,11 +378,39 @@ export type Database = {
           description?: string;
           id?: never;
           image_path?: string | null;
+          listing_limit?: number;
           name?: string;
           owner_id?: string;
           slug?: string;
+          time_zone?: string;
+          trust_evaluated_at?: string | null;
+          trust_tier?: "standard" | "reliable" | "top_rated";
           updated_at?: string;
         };
+        Relationships: [];
+      };
+      order_addresses: {
+        Row: { order_id: number; recipient: string | null; address_line1: string | null; address_line2: string | null; locality: string | null; administrative_area: string | null; postal_code: string | null; country_code: string | null; delivery_instructions: string | null; redacted_at: string | null; created_at: string };
+        Insert: { order_id: number; recipient?: string | null; address_line1?: string | null; address_line2?: string | null; locality?: string | null; administrative_area?: string | null; postal_code?: string | null; country_code?: string | null; delivery_instructions?: string | null; redacted_at?: string | null; created_at?: string };
+        Update: { order_id?: number; recipient?: string | null; address_line1?: string | null; address_line2?: string | null; locality?: string | null; administrative_area?: string | null; postal_code?: string | null; country_code?: string | null; delivery_instructions?: string | null; redacted_at?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      order_events: {
+        Row: { id: number; order_id: number; actor_id: string | null; actor_type: "buyer" | "seller" | "admin" | "system"; event_type: string; previous_status: string | null; next_status: string; metadata: Json; idempotency_key: string | null; created_at: string };
+        Insert: { id?: never; order_id: number; actor_id?: string | null; actor_type: "buyer" | "seller" | "admin" | "system"; event_type: string; previous_status?: string | null; next_status: string; metadata?: Json; idempotency_key?: string | null; created_at?: string };
+        Update: { id?: never; order_id?: number; actor_id?: string | null; actor_type?: "buyer" | "seller" | "admin" | "system"; event_type?: string; previous_status?: string | null; next_status?: string; metadata?: Json; idempotency_key?: string | null; created_at?: string };
+        Relationships: [];
+      };
+      order_items: {
+        Row: { id: number; order_id: number; product_id: number | null; product_name: string; unit_price: number; currency_code: string; quantity: number; line_total: number; handling_days: number; created_at: string };
+        Insert: { id?: never; order_id: number; product_id?: number | null; product_name: string; unit_price: number; currency_code: string; quantity: number; line_total: number; handling_days: number; created_at?: string };
+        Update: { id?: never; order_id?: number; product_id?: number | null; product_name?: string; unit_price?: number; currency_code?: string; quantity?: number; line_total?: number; handling_days?: number; created_at?: string };
+        Relationships: [];
+      };
+      orders: {
+        Row: { id: number; buyer_id: string; shop_id: number; status: OrderStatus; idempotency_key: string; currency_code: string; subtotal: number; buyer_note: string | null; handling_days: number; handling_time_zone: string; accepted_at: string | null; ship_by_at: string | null; shipped_at: string | null; delivered_at: string | null; buyer_confirmed_at: string | null; auto_completed_at: string | null; completed_at: string | null; canceled_at: string | null; canceled_by: string | null; tracking_text: string | null; created_at: string; updated_at: string };
+        Insert: { id?: never; buyer_id: string; shop_id: number; status?: OrderStatus; idempotency_key: string; currency_code: string; subtotal: number; buyer_note?: string | null; handling_days: number; handling_time_zone: string; accepted_at?: string | null; ship_by_at?: string | null; shipped_at?: string | null; delivered_at?: string | null; buyer_confirmed_at?: string | null; auto_completed_at?: string | null; completed_at?: string | null; canceled_at?: string | null; canceled_by?: string | null; tracking_text?: string | null; created_at?: string; updated_at?: string };
+        Update: { id?: never; buyer_id?: string; shop_id?: number; status?: OrderStatus; idempotency_key?: string; currency_code?: string; subtotal?: number; buyer_note?: string | null; handling_days?: number; handling_time_zone?: string; accepted_at?: string | null; ship_by_at?: string | null; shipped_at?: string | null; delivered_at?: string | null; buyer_confirmed_at?: string | null; auto_completed_at?: string | null; completed_at?: string | null; canceled_at?: string | null; canceled_by?: string | null; tracking_text?: string | null; created_at?: string; updated_at?: string };
         Relationships: [];
       };
       user_trust_profiles: {
@@ -384,6 +446,14 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      add_cart_item: {
+        Args: { p_product_id: number; p_quantity?: number };
+        Returns: number;
+      };
+      checkout_cart: {
+        Args: { p_shop_id: number; p_address: Json; p_buyer_note: string | null; p_idempotency_key: string };
+        Returns: number;
+      };
       record_catalog_search: {
         Args: {
           p_category_id: number | null;
@@ -402,6 +472,10 @@ export type Database = {
         };
         Returns: undefined;
       };
+      remove_cart_item: {
+        Args: { p_cart_item_id: number };
+        Returns: undefined;
+      };
       search_product_ids: {
         Args: {
           p_category_id: number | null;
@@ -415,6 +489,10 @@ export type Database = {
           rank: number;
         }[];
       };
+      set_cart_item_quantity: {
+        Args: { p_cart_item_id: number; p_quantity: number };
+        Returns: undefined;
+      };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
@@ -422,11 +500,17 @@ export type Database = {
 };
 
 export type Category = Database["public"]["Tables"]["categories"]["Row"];
+export type Cart = Database["public"]["Tables"]["carts"]["Row"];
+export type CartItem = Database["public"]["Tables"]["cart_items"]["Row"];
 export type CategoryAlias = Database["public"]["Tables"]["category_aliases"]["Row"];
 export type CategorySuggestion = Database["public"]["Tables"]["category_suggestions"]["Row"];
 export type CategoryTranslation = Database["public"]["Tables"]["category_translations"]["Row"];
 export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type ProductTranslation = Database["public"]["Tables"]["product_translations"]["Row"];
+export type Order = Database["public"]["Tables"]["orders"]["Row"];
+export type OrderAddress = Database["public"]["Tables"]["order_addresses"]["Row"];
+export type OrderEvent = Database["public"]["Tables"]["order_events"]["Row"];
+export type OrderItem = Database["public"]["Tables"]["order_items"]["Row"];
 export type SearchEvent = Database["public"]["Tables"]["search_events"]["Row"];
 export type Shop = Database["public"]["Tables"]["shops"]["Row"];
 export type UserTrustProfile = Database["public"]["Tables"]["user_trust_profiles"]["Row"];

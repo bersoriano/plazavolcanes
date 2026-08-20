@@ -9,6 +9,10 @@ import {
 } from "@/lib/queries/catalog.server";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 
+vi.mock("@/lib/actions/cart", () => ({
+  addToCart: vi.fn(),
+}));
+
 vi.mock("@/lib/queries/catalog.server", () => ({
   getPublicProduct: vi.fn(),
   getPublicShop: vi.fn(),
@@ -155,6 +159,10 @@ describe("public sharing controls", () => {
       description: "Objetos hechos en un taller al pie del volcán.",
       image_path: null,
       imageUrl: null,
+      listing_limit: 15,
+      time_zone: "America/Mexico_City",
+      trust_evaluated_at: null,
+      trust_tier: "standard",
       country_code: "MX",
       administrative_area_code: "MX-JAL",
       created_at: "2026-08-19T00:00:00.000Z",

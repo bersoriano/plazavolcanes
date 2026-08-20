@@ -16,3 +16,12 @@ export function formatCurrency(
 export function formatMxn(value: number | string) {
   return formatCurrency(value, "MXN");
 }
+
+export function formatDate(value: string | Date) {
+  return new Intl.DateTimeFormat("es-MX", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(typeof value === "string" ? new Date(value) : value);
+}
