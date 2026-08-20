@@ -467,6 +467,18 @@ export type Database = {
         Update: { id?: never; conversation_id?: number; order_id?: number; buyer_id?: string; triggering_seller_message_id?: number; closing_buyer_message_id?: number | null; clock_started_at?: string; replied_at?: string | null; elapsed_minutes?: number | null; answered_within_24_hours?: boolean | null; created_at?: string };
         Relationships: [];
       };
+      buyer_trust_evaluations: {
+        Row: { id: number; buyer_id: string; input: Json; output: Json; evaluator_policy_version: string; evaluated_at: string };
+        Insert: { id?: never; buyer_id: string; input: Json; output: Json; evaluator_policy_version?: string; evaluated_at?: string };
+        Update: { id?: never; buyer_id?: string; input?: Json; output?: Json; evaluator_policy_version?: string; evaluated_at?: string };
+        Relationships: [];
+      };
+      buyer_trust_profiles: {
+        Row: { buyer_id: string; buyer_trust_tier: "new" | "reliable" | "top_buyer"; output: Json | null; evaluated_at: string | null; created_at: string; updated_at: string };
+        Insert: { buyer_id: string; buyer_trust_tier?: "new" | "reliable" | "top_buyer"; output?: Json | null; evaluated_at?: string | null; created_at?: string; updated_at?: string };
+        Update: { buyer_id?: string; buyer_trust_tier?: "new" | "reliable" | "top_buyer"; output?: Json | null; evaluated_at?: string | null; created_at?: string; updated_at?: string };
+        Relationships: [];
+      };
       seller_response_events: {
         Row: { id: number; conversation_id: number; shop_id: number; triggering_buyer_message_id: number; closing_seller_message_id: number | null; clock_started_at: string; replied_at: string | null; elapsed_minutes: number | null; answered_within_24_hours: boolean | null; created_at: string };
         Insert: { id?: never; conversation_id: number; shop_id: number; triggering_buyer_message_id: number; closing_seller_message_id?: number | null; clock_started_at: string; replied_at?: string | null; elapsed_minutes?: number | null; answered_within_24_hours?: boolean | null; created_at?: string };

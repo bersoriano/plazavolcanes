@@ -531,3 +531,563 @@ end;
 $$;
 
 revoke execute on function private.record_message_evidence() from public, anon, authenticated;
+
+create function private.buyer_trust_marker(p_primary_text text, p_tooltip text, p_signal text)
+returns jsonb
+language sql
+immutable
+set search_path = ''
+as $$
+  select jsonb_build_object('primary_text', p_primary_text, 'tooltip', p_tooltip, 'signal', p_signal)
+$$;
+
+revoke execute on function private.buyer_trust_marker(text,text,text) from public, anon, authenticated;
+
+create function private.evaluate_buyer_trust(
+  p_member_since date,
+  p_verification_level text,
+  p_total_completed_purchases bigint,
+  p_buyer_completion_rate numeric,
+  p_claim_rate numeric,
+  p_seller_fault_claim_rate numeric,
+  p_cancellation_rate numeric,
+  p_payment_reliability numeric,
+  p_average_time_to_close_hours numeric,
+  p_fast_closer_rate numeric,
+  p_response_rate numeric,
+  p_average_reply_time_minutes numeric,
+  p_review_rate numeric,
+  p_last_active_days_ago integer
+)
+returns jsonb
+language plpgsql
+stable
+set search_path = ''
+as $$
+declare
+  v_top boolean;
+  v_reliable boolean;
+  v_tier text;
+  v_month text;
+  v_verification jsonb;
+  v_markers jsonb;
+  v_reasons text[] := array[]::text[];
+  v_next text[] := array[]::text[];
+  v_summary text;
+  v_purchase_signal text;
+  v_completion_signal text;
+  v_claim_signal text;
+  v_cancellation_signal text;
+  v_payment_signal text;
+  v_close_signal text;
+  v_fast_signal text;
+  v_response_signal text;
+  v_review_signal text;
+  v_activity_signal text;
+begin
+  if p_member_since is null then raise exception using errcode = '22023', message = 'Falta la fecha de registro.'; end if;
+  if p_verification_level not in ('unverified', 'basic', 'verified', 'highly_verified') then
+    raise exception using errcode = '22023', message = 'Nivel de verificación inválido.';
+  end if;
+
+  v_top := coalesce(
+    p_total_completed_purchases >= 25
+    and p_buyer_completion_rate >= 97
+    and p_claim_rate <= 2
+    and p_cancellation_rate <= 3
+    and p_payment_reliability >= 98
+    and p_average_time_to_close_hours <= 36
+    and p_fast_closer_rate >= 80
+    and p_response_rate >= 90
+    and p_last_active_days_ago <= 14,
+    false
+  );
+  v_reliable := coalesce(
+    p_total_completed_purchases >= 8
+    and p_buyer_completion_rate >= 93
+    and p_claim_rate <= 4
+    and p_cancellation_rate <= 6
+    and p_payment_reliability >= 95
+    and p_average_time_to_close_hours <= 72
+    and p_fast_closer_rate >= 60
+    and p_last_active_days_ago <= 30,
+    false
+  );
+  v_tier := case when v_top then 'Top Buyer' when v_reliable then 'Reliable' else 'New' end;
+
+  v_month := case extract(month from p_member_since)::integer
+    when 1 then 'enero' when 2 then 'febrero' when 3 then 'marzo' when 4 then 'abril'
+    when 5 then 'mayo' when 6 then 'junio' when 7 then 'julio' when 8 then 'agosto'
+    when 9 then 'septiembre' when 10 then 'octubre' when 11 then 'noviembre' else 'diciembre'
+  end;
+
+  v_verification := case p_verification_level
+    when 'unverified' then jsonb_build_object(
+      'primary_text', 'Sin verificar', 'badge_label', 'Sin verificar',
+      'tooltip', 'Este comprador aún no completa la verificación de identidad. Se recomienda precaución adicional.'
+    )
+    when 'basic' then jsonb_build_object(
+      'primary_text', 'Verificación básica', 'badge_label', 'Básica',
+      'tooltip', 'Este comprador verificó teléfono y correo. Sus documentos de identidad aún no fueron revisados por completo.'
+    )
+    when 'verified' then jsonb_build_object(
+      'primary_text', 'Comprador verificado', 'badge_label', 'Verificado',
+      'tooltip', 'Este comprador completó la verificación de identidad. Sus datos personales fueron revisados y confirmados.'
+    )
+    else jsonb_build_object(
+      'primary_text', 'Altamente verificado', 'badge_label', 'Alta verificación',
+      'tooltip', 'Este comprador completó verificación avanzada con documentos oficiales y controles adicionales de seguridad.'
+    )
+  end;
+
+  v_purchase_signal := case when p_total_completed_purchases is null then 'No data' when p_total_completed_purchases >= 25 then 'Excellent' when p_total_completed_purchases >= 8 then 'Good' when p_total_completed_purchases >= 5 then 'Average' else 'New' end;
+  v_completion_signal := case when p_buyer_completion_rate is null then 'No data' when p_buyer_completion_rate >= 97 then 'Excellent' when p_buyer_completion_rate >= 93 then 'Good' when p_buyer_completion_rate >= 85 then 'Average' else 'Needs improvement' end;
+  v_claim_signal := case when p_claim_rate is null then 'No data' when p_claim_rate <= 2 then 'Excellent' when p_claim_rate <= 4 then 'Good' when p_claim_rate <= 8 then 'Average' else 'Needs improvement' end;
+  v_cancellation_signal := case when p_cancellation_rate is null then 'No data' when p_cancellation_rate <= 3 then 'Excellent' when p_cancellation_rate <= 6 then 'Good' when p_cancellation_rate <= 10 then 'Average' else 'Needs improvement' end;
+  v_payment_signal := case when p_payment_reliability is null then 'No data' when p_payment_reliability >= 98 then 'Excellent' when p_payment_reliability >= 95 then 'Good' when p_payment_reliability >= 85 then 'Average' else 'Needs improvement' end;
+  v_close_signal := case when p_average_time_to_close_hours is null then 'No data' when p_average_time_to_close_hours <= 24 then 'Excellent' when p_average_time_to_close_hours <= 48 then 'Good' when p_average_time_to_close_hours <= 72 then 'Average' else 'Needs improvement' end;
+  v_fast_signal := case when p_fast_closer_rate is null then 'No data' when p_fast_closer_rate >= 80 then 'Excellent' when p_fast_closer_rate >= 60 then 'Good' when p_fast_closer_rate >= 40 then 'Average' else 'Needs improvement' end;
+  v_response_signal := case when p_response_rate is null then 'No data' when p_response_rate >= 90 then 'Excellent' when p_response_rate >= 75 then 'Good' when p_response_rate >= 50 then 'Average' else 'Needs improvement' end;
+  v_review_signal := case when p_review_rate is null then 'No data' when p_review_rate >= 75 then 'Excellent' when p_review_rate >= 50 then 'Good' when p_review_rate >= 25 then 'Average' else 'Needs improvement' end;
+  v_activity_signal := case when p_last_active_days_ago is null then 'No data' when p_last_active_days_ago <= 14 then 'Excellent' when p_last_active_days_ago <= 30 then 'Good' when p_last_active_days_ago <= 60 then 'Average' else 'Needs improvement' end;
+
+  v_markers := jsonb_build_object(
+    'total_completed_purchases', private.buyer_trust_marker(
+      case when p_total_completed_purchases is null then 'Sin datos' else format('%s compras completadas', p_total_completed_purchases) end,
+      'Muestra cuántas compras terminó este comprador en la plataforma.', v_purchase_signal
+    ),
+    'buyer_completion_rate', private.buyer_trust_marker(
+      case when p_buyer_completion_rate is null then 'Sin datos' else format('%s%% de compras completadas', p_buyer_completion_rate) end,
+      'Porcentaje de pedidos aceptados que terminaron correctamente.', v_completion_signal
+    ),
+    'claim_rate', private.buyer_trust_marker(
+      case when p_claim_rate is null then 'Sin datos' else format('%s%% de reclamos', p_claim_rate) end,
+      'Proporción de pedidos enviados que generaron un reclamo.', v_claim_signal
+    ),
+    'cancellation_rate', private.buyer_trust_marker(
+      case when p_cancellation_rate is null then 'Sin datos' else format('%s%% de cancelaciones', p_cancellation_rate) end,
+      'Proporción de pedidos cancelados por el comprador después de la aceptación.', v_cancellation_signal
+    ),
+    'payment_reliability', private.buyer_trust_marker(
+      case when p_payment_reliability is null then 'Sin datos' else format('%s%% de pagos confiables', p_payment_reliability) end,
+      'Compara pagos confirmados con cancelaciones confirmadas por falta de pago.', v_payment_signal
+    ),
+    'average_time_to_close', private.buyer_trust_marker(
+      case when p_average_time_to_close_hours is null then 'Sin datos' else format('%s h para pagar', p_average_time_to_close_hours) end,
+      'Tiempo promedio desde la aceptación hasta la confirmación del pago.', v_close_signal
+    ),
+    'fast_closer_rate', private.buyer_trust_marker(
+      case when p_fast_closer_rate is null then 'Sin datos' else format('%s%% paga en 48 h', p_fast_closer_rate) end,
+      'Porcentaje de pedidos pagados dentro de las primeras 48 horas.', v_fast_signal
+    ),
+    'response_rate', private.buyer_trust_marker(
+      case when p_response_rate is null then 'Sin datos' else format('%s%% de respuesta', p_response_rate) end,
+      'Porcentaje de mensajes del vendedor respondidos por el comprador en 24 horas.', v_response_signal
+    ),
+    'review_rate', private.buyer_trust_marker(
+      case when p_review_rate is null then 'Sin datos' else format('%s%% deja reseña', p_review_rate) end,
+      'Porcentaje de compras completadas que recibieron una reseña del comprador.', v_review_signal
+    ),
+    'recent_activity', private.buyer_trust_marker(
+      case when p_last_active_days_ago is null then 'Sin datos' when p_last_active_days_ago = 0 then 'Activo hoy' else format('Activo hace %s días', p_last_active_days_ago) end,
+      'Indica cuándo realizó su última acción significativa en la plataforma.', v_activity_signal
+    )
+  );
+
+  if v_top then
+    v_reasons := array[
+      format('%s compras completadas y %s%% de finalización.', p_total_completed_purchases, p_buyer_completion_rate),
+      format('%s%% de pagos confiables; %s%% pagados dentro de 48 horas.', p_payment_reliability, p_fast_closer_rate),
+      format('%s%% de reclamos y actividad hace %s días.', p_claim_rate, p_last_active_days_ago)
+    ];
+    v_summary := 'Comprador destacado con historial sólido de pagos, cierres, comunicación y baja incidencia de reclamos.';
+  elsif v_reliable then
+    v_reasons := array[
+      format('%s compras completadas con %s%% de finalización.', p_total_completed_purchases, p_buyer_completion_rate),
+      format('%s%% de pagos confiables y %s%% de cancelaciones.', p_payment_reliability, p_cancellation_rate)
+    ];
+    if p_total_completed_purchases is null or p_total_completed_purchases < 25 then v_next := array_append(v_next, format('Completa 25 compras; valor actual: %s.', coalesce(p_total_completed_purchases::text, 'sin datos'))); end if;
+    if p_buyer_completion_rate is null or p_buyer_completion_rate < 97 then v_next := array_append(v_next, format('Alcanza 97%% de finalización; valor actual: %s%%.', coalesce(p_buyer_completion_rate::text, 'sin datos'))); end if;
+    if p_claim_rate is null or p_claim_rate > 2 then v_next := array_append(v_next, format('Reduce reclamos a 2%% o menos; valor actual: %s%%.', coalesce(p_claim_rate::text, 'sin datos'))); end if;
+    if p_cancellation_rate is null or p_cancellation_rate > 3 then v_next := array_append(v_next, format('Reduce cancelaciones a 3%% o menos; valor actual: %s%%.', coalesce(p_cancellation_rate::text, 'sin datos'))); end if;
+    if p_payment_reliability is null or p_payment_reliability < 98 then v_next := array_append(v_next, format('Alcanza 98%% de pagos confiables; valor actual: %s%%.', coalesce(p_payment_reliability::text, 'sin datos'))); end if;
+    if p_average_time_to_close_hours is null or p_average_time_to_close_hours > 36 then v_next := array_append(v_next, format('Reduce el cierre a 36 horas; valor actual: %s.', coalesce(p_average_time_to_close_hours::text, 'sin datos'))); end if;
+    if p_fast_closer_rate is null or p_fast_closer_rate < 80 then v_next := array_append(v_next, format('Paga 80%% dentro de 48 horas; valor actual: %s%%.', coalesce(p_fast_closer_rate::text, 'sin datos'))); end if;
+    if p_response_rate is null or p_response_rate < 90 then v_next := array_append(v_next, format('Alcanza 90%% de respuesta; valor actual: %s%%.', coalesce(p_response_rate::text, 'sin datos'))); end if;
+    if p_last_active_days_ago is null or p_last_active_days_ago > 14 then v_next := array_append(v_next, format('Mantén actividad dentro de 14 días; valor actual: %s.', coalesce(p_last_active_days_ago::text, 'sin datos'))); end if;
+    v_summary := 'Comprador confiable con buen historial; puede avanzar al cumplir todas las metas indicadas.';
+  else
+    if p_total_completed_purchases is null or p_total_completed_purchases < 8 then v_next := array_append(v_next, format('Completa 8 compras; valor actual: %s.', coalesce(p_total_completed_purchases::text, 'sin datos'))); end if;
+    if p_buyer_completion_rate is null or p_buyer_completion_rate < 93 then v_next := array_append(v_next, format('Alcanza 93%% de finalización; valor actual: %s%%.', coalesce(p_buyer_completion_rate::text, 'sin datos'))); end if;
+    if p_claim_rate is null or p_claim_rate > 4 then v_next := array_append(v_next, format('Reduce reclamos a 4%% o menos; valor actual: %s%%.', coalesce(p_claim_rate::text, 'sin datos'))); end if;
+    if p_cancellation_rate is null or p_cancellation_rate > 6 then v_next := array_append(v_next, format('Reduce cancelaciones a 6%% o menos; valor actual: %s%%.', coalesce(p_cancellation_rate::text, 'sin datos'))); end if;
+    if p_payment_reliability is null or p_payment_reliability < 95 then v_next := array_append(v_next, format('Alcanza 95%% de pagos confiables; valor actual: %s%%.', coalesce(p_payment_reliability::text, 'sin datos'))); end if;
+    if p_average_time_to_close_hours is null or p_average_time_to_close_hours > 72 then v_next := array_append(v_next, format('Reduce el cierre a 72 horas; valor actual: %s.', coalesce(p_average_time_to_close_hours::text, 'sin datos'))); end if;
+    if p_fast_closer_rate is null or p_fast_closer_rate < 60 then v_next := array_append(v_next, format('Paga 60%% dentro de 48 horas; valor actual: %s%%.', coalesce(p_fast_closer_rate::text, 'sin datos'))); end if;
+    if p_last_active_days_ago is null or p_last_active_days_ago > 30 then v_next := array_append(v_next, format('Mantén actividad dentro de 30 días; valor actual: %s.', coalesce(p_last_active_days_ago::text, 'sin datos'))); end if;
+    v_reasons := case when cardinality(v_next) > 0 then v_next[1:least(3, cardinality(v_next))] else array['Aún no reúne evidencia suficiente para un nivel superior.'] end;
+    v_summary := 'Comprador nuevo o con evidencia insuficiente para cumplir todos los requisitos del nivel Confiable.';
+  end if;
+
+  if p_seller_fault_claim_rate is not null then
+    v_reasons := array_append(v_reasons, format('%s%% de reclamos atribuidos al vendedor.', p_seller_fault_claim_rate));
+  end if;
+  if p_average_reply_time_minutes is not null then
+    v_reasons := array_append(v_reasons, format('Tiempo promedio de respuesta: %s minutos.', p_average_reply_time_minutes));
+  end if;
+
+  return jsonb_build_object(
+    'member_since', jsonb_build_object(
+      'primary_text', format('Miembro desde %s de %s', v_month, extract(year from p_member_since)::integer),
+      'tooltip', 'La antigüedad muestra cuánto tiempo lleva esta cuenta activa en la plataforma.'
+    ),
+    'verification_level', v_verification,
+    'buyer_trust_tier', v_tier,
+    'markers', v_markers,
+    'summary', v_summary,
+    'reasons', to_jsonb(v_reasons),
+    'next_tier_requirements', to_jsonb(v_next)
+  );
+end;
+$$;
+
+revoke execute on function private.evaluate_buyer_trust(date,text,bigint,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,numeric,integer) from public, anon, authenticated;
+
+create table public.buyer_trust_profiles (
+  buyer_id uuid primary key references auth.users (id) on delete cascade,
+  buyer_trust_tier text not null default 'new' check (buyer_trust_tier in ('new', 'reliable', 'top_buyer')),
+  output jsonb,
+  evaluated_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table public.buyer_trust_evaluations (
+  id bigint generated always as identity primary key,
+  buyer_id uuid not null references auth.users (id) on delete cascade,
+  input jsonb not null check (jsonb_typeof(input) = 'object'),
+  output jsonb not null check (jsonb_typeof(output) = 'object'),
+  evaluator_policy_version text not null default '2026-08-20-v1',
+  evaluated_at timestamptz not null default now()
+);
+
+create table private.buyer_trust_evaluation_queue (
+  buyer_id uuid primary key references auth.users (id) on delete cascade,
+  dirty_at timestamptz not null default now(),
+  next_attempt_at timestamptz not null default now(),
+  attempt_count integer not null default 0 check (attempt_count >= 0),
+  last_error text,
+  locked_at timestamptz,
+  last_success_at timestamptz
+);
+
+create index buyer_trust_evaluations_buyer_time_idx on public.buyer_trust_evaluations (buyer_id, evaluated_at desc);
+create index buyer_trust_queue_ready_idx on private.buyer_trust_evaluation_queue (next_attempt_at, dirty_at);
+
+revoke all on table public.buyer_trust_profiles, public.buyer_trust_evaluations from public, anon, authenticated;
+revoke all on table private.buyer_trust_evaluation_queue from public, anon, authenticated;
+grant select on table public.buyer_trust_profiles, public.buyer_trust_evaluations to authenticated;
+
+alter table public.buyer_trust_profiles enable row level security;
+alter table public.buyer_trust_evaluations enable row level security;
+alter table private.buyer_trust_evaluation_queue enable row level security;
+
+create policy buyer_trust_profiles_participants_select on public.buyer_trust_profiles
+for select to authenticated
+using (
+  buyer_id = (select auth.uid())
+  or exists (
+    select 1 from public.orders o join public.shops s on s.id = o.shop_id
+    where o.buyer_id = buyer_trust_profiles.buyer_id and s.owner_id = (select auth.uid())
+  )
+  or (select public.is_current_user_admin())
+);
+
+create policy buyer_trust_evaluations_participants_select on public.buyer_trust_evaluations
+for select to authenticated
+using (
+  buyer_id = (select auth.uid())
+  or exists (
+    select 1 from public.orders o join public.shops s on s.id = o.shop_id
+    where o.buyer_id = buyer_trust_evaluations.buyer_id and s.owner_id = (select auth.uid())
+  )
+  or (select public.is_current_user_admin())
+);
+
+create function private.enqueue_buyer_trust_evaluation(p_buyer_id uuid)
+returns void
+language sql
+security definer
+set search_path = ''
+as $$
+  insert into private.buyer_trust_evaluation_queue (
+    buyer_id, dirty_at, next_attempt_at, attempt_count, last_error, locked_at
+  ) values (p_buyer_id, now(), now(), 0, null, null)
+  on conflict (buyer_id) do update
+  set dirty_at = excluded.dirty_at,
+      next_attempt_at = least(private.buyer_trust_evaluation_queue.next_attempt_at, excluded.next_attempt_at),
+      attempt_count = 0,
+      last_error = null,
+      locked_at = null
+$$;
+
+revoke execute on function private.enqueue_buyer_trust_evaluation(uuid) from public, anon, authenticated;
+
+create function private.create_buyer_trust_profile()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.buyer_trust_profiles (buyer_id) values (new.user_id)
+  on conflict (buyer_id) do nothing;
+  perform private.enqueue_buyer_trust_evaluation(new.user_id);
+  return new;
+end;
+$$;
+
+revoke execute on function private.create_buyer_trust_profile() from public, anon, authenticated;
+
+create trigger create_buyer_trust_profile
+after insert on public.user_trust_profiles
+for each row execute function private.create_buyer_trust_profile();
+
+insert into public.buyer_trust_profiles (buyer_id)
+select user_id from public.user_trust_profiles
+on conflict (buyer_id) do nothing;
+
+insert into private.buyer_trust_evaluation_queue (buyer_id)
+select buyer_id from public.buyer_trust_profiles
+on conflict (buyer_id) do nothing;
+
+create function private.mark_buyer_trust_dirty()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_buyer_id uuid;
+begin
+  if tg_table_name = 'user_trust_profiles' then
+    v_buyer_id := coalesce(new.user_id, old.user_id);
+  else
+    v_buyer_id := coalesce(new.buyer_id, old.buyer_id);
+  end if;
+  if v_buyer_id is not null then perform private.enqueue_buyer_trust_evaluation(v_buyer_id); end if;
+  return coalesce(new, old);
+end;
+$$;
+
+revoke execute on function private.mark_buyer_trust_dirty() from public, anon, authenticated;
+
+create trigger dirty_buyer_trust_from_user_profile after update of verification_level on public.user_trust_profiles for each row execute function private.mark_buyer_trust_dirty();
+create trigger dirty_buyer_trust_from_orders after insert or update on public.orders for each row execute function private.mark_buyer_trust_dirty();
+create trigger dirty_buyer_trust_from_responses after insert or update on public.buyer_response_events for each row execute function private.mark_buyer_trust_dirty();
+create trigger dirty_buyer_trust_from_activity after insert on public.buyer_activity_events for each row execute function private.mark_buyer_trust_dirty();
+create trigger dirty_buyer_trust_from_reviews after insert or update or delete on public.order_reviews for each row execute function private.mark_buyer_trust_dirty();
+create trigger dirty_buyer_trust_from_disputes after insert or update or delete on public.order_disputes for each row execute function private.mark_buyer_trust_dirty();
+
+create function private.evaluate_buyer_trust_profile(p_buyer_id uuid)
+returns bigint
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_member_since date;
+  v_verification_level text;
+  v_total_completed bigint;
+  v_completed_90 bigint;
+  v_buyer_canceled_90 bigint;
+  v_non_payment_90 bigint;
+  v_outcome_denominator bigint;
+  v_completion_rate numeric;
+  v_cancellation_rate numeric;
+  v_paid_90 bigint;
+  v_payment_reliability numeric;
+  v_average_close numeric;
+  v_fast_closer numeric;
+  v_shipment_cohort bigint;
+  v_claimed_orders bigint;
+  v_seller_fault_claimed bigint;
+  v_claim_rate numeric;
+  v_seller_fault_claim_rate numeric;
+  v_response_rate numeric;
+  v_average_reply numeric;
+  v_completed_review_cohort bigint;
+  v_reviewed_completed bigint;
+  v_review_rate numeric;
+  v_last_active integer;
+  v_input jsonb;
+  v_output jsonb;
+  v_tier_key text;
+  v_id bigint;
+  v_window timestamptz := now() - interval '90 days';
+begin
+  select joined_on, verification_level into v_member_since, v_verification_level
+  from public.user_trust_profiles where user_id = p_buyer_id;
+  if v_member_since is null then raise exception using errcode = 'P0002', message = 'Perfil de comprador no encontrado.'; end if;
+
+  select count(*) filter (where status = 'completed') into v_total_completed
+  from public.orders where buyer_id = p_buyer_id;
+
+  select
+    count(*) filter (where status = 'completed' and completed_at >= v_window),
+    count(*) filter (where status = 'canceled_by_buyer' and accepted_at is not null and canceled_at >= v_window),
+    count(*) filter (where status = 'canceled_by_seller' and seller_cancellation_reason = 'buyer_non_payment' and canceled_at >= v_window)
+  into v_completed_90, v_buyer_canceled_90, v_non_payment_90
+  from public.orders where buyer_id = p_buyer_id;
+  v_outcome_denominator := v_completed_90 + v_buyer_canceled_90 + v_non_payment_90;
+  v_completion_rate := 100.0 * v_completed_90 / nullif(v_outcome_denominator, 0);
+  v_cancellation_rate := 100.0 * v_buyer_canceled_90 / nullif(v_outcome_denominator, 0);
+
+  select count(*) into v_paid_90 from public.orders
+  where buyer_id = p_buyer_id and payment_completed_at >= v_window;
+  v_payment_reliability := 100.0 * v_paid_90 / nullif(v_paid_90 + v_non_payment_90, 0);
+
+  select
+    avg(extract(epoch from (payment_completed_at - accepted_at)) / 3600.0),
+    100.0 * count(*) filter (where payment_completed_at <= accepted_at + interval '48 hours') / nullif(count(*), 0)
+  into v_average_close, v_fast_closer
+  from public.orders
+  where buyer_id = p_buyer_id and payment_completed_at >= v_window and accepted_at is not null
+    and status not in ('rejected', 'canceled_by_buyer', 'canceled_by_seller', 'canceled_by_admin');
+
+  with shipped as (
+    select order_id, min(created_at) as first_shipped_at
+    from public.order_events where event_type = 'shipped' group by order_id
+  ), cohort as (
+    select o.id from public.orders o join shipped s on s.order_id = o.id
+    where o.buyer_id = p_buyer_id and s.first_shipped_at >= v_window
+  )
+  select count(*), count(*) filter (where exists (select 1 from public.order_disputes d where d.order_id = cohort.id)),
+    count(*) filter (where exists (select 1 from public.order_disputes d where d.order_id = cohort.id and d.status = 'resolved' and d.seller_fault))
+  into v_shipment_cohort, v_claimed_orders, v_seller_fault_claimed from cohort;
+  v_claim_rate := 100.0 * v_claimed_orders / nullif(v_shipment_cohort, 0);
+  v_seller_fault_claim_rate := 100.0 * v_seller_fault_claimed / nullif(v_shipment_cohort, 0);
+
+  select
+    100.0 * count(*) filter (where replied_at is not null and answered_within_24_hours)
+      / nullif(count(*) filter (where replied_at is not null or clock_started_at <= now() - interval '24 hours'), 0),
+    avg(elapsed_minutes) filter (where replied_at is not null)
+  into v_response_rate, v_average_reply
+  from public.buyer_response_events
+  where buyer_id = p_buyer_id and clock_started_at >= v_window;
+
+  select count(*), count(*) filter (where exists (select 1 from public.order_reviews r where r.order_id = o.id))
+  into v_completed_review_cohort, v_reviewed_completed
+  from public.orders o where o.buyer_id = p_buyer_id and o.status = 'completed' and o.completed_at >= v_window;
+  v_review_rate := 100.0 * v_reviewed_completed / nullif(v_completed_review_cohort, 0);
+
+  select floor(extract(epoch from (now() - max(created_at))) / 86400)::integer into v_last_active
+  from public.buyer_activity_events where buyer_id = p_buyer_id;
+
+  v_input := jsonb_build_object(
+    'member_since', v_member_since,
+    'verification_level', v_verification_level,
+    'total_completed_purchases', v_total_completed,
+    'buyer_completion_rate', v_completion_rate,
+    'claim_rate', v_claim_rate,
+    'seller_fault_claim_rate', v_seller_fault_claim_rate,
+    'cancellation_rate', v_cancellation_rate,
+    'payment_reliability', v_payment_reliability,
+    'average_time_to_close_hours', v_average_close,
+    'fast_closer_rate', v_fast_closer,
+    'response_rate', v_response_rate,
+    'average_reply_time_minutes', v_average_reply,
+    'review_rate', v_review_rate,
+    'last_active_days_ago', v_last_active
+  );
+  v_output := private.evaluate_buyer_trust(
+    v_member_since, v_verification_level, v_total_completed, v_completion_rate,
+    v_claim_rate, v_seller_fault_claim_rate, v_cancellation_rate, v_payment_reliability,
+    v_average_close, v_fast_closer, v_response_rate, v_average_reply, v_review_rate, v_last_active
+  );
+  v_tier_key := case v_output->>'buyer_trust_tier' when 'Top Buyer' then 'top_buyer' when 'Reliable' then 'reliable' else 'new' end;
+
+  insert into public.buyer_trust_evaluations (buyer_id, input, output)
+  values (p_buyer_id, v_input, v_output) returning id into v_id;
+  update public.buyer_trust_profiles
+  set buyer_trust_tier = v_tier_key, output = v_output, evaluated_at = now(), updated_at = now()
+  where buyer_id = p_buyer_id;
+  return v_id;
+end;
+$$;
+
+revoke execute on function private.evaluate_buyer_trust_profile(uuid) from public, anon, authenticated;
+
+create function private.process_buyer_trust_queue(p_limit integer default 50)
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_item record;
+  v_processed integer := 0;
+begin
+  for v_item in
+    select buyer_id from private.buyer_trust_evaluation_queue
+    where next_attempt_at <= now()
+    order by dirty_at
+    limit greatest(1, least(p_limit, 200))
+    for update skip locked
+  loop
+    begin
+      update private.buyer_trust_evaluation_queue set locked_at = now() where buyer_id = v_item.buyer_id;
+      perform private.evaluate_buyer_trust_profile(v_item.buyer_id);
+      delete from private.buyer_trust_evaluation_queue where buyer_id = v_item.buyer_id;
+      v_processed := v_processed + 1;
+    exception when others then
+      update private.buyer_trust_evaluation_queue
+      set attempt_count = attempt_count + 1,
+          next_attempt_at = now() + make_interval(mins => least(60, power(2, least(attempt_count + 1, 6))::integer)),
+          last_error = left(sqlerrm, 1000),
+          locked_at = null
+      where buyer_id = v_item.buyer_id;
+    end;
+  end loop;
+  return v_processed;
+end;
+$$;
+
+create function private.enqueue_all_buyer_trust_profiles()
+returns integer
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_count integer;
+begin
+  insert into private.buyer_trust_evaluation_queue (
+    buyer_id, dirty_at, next_attempt_at, attempt_count, last_error, locked_at
+  )
+  select buyer_id, now(), now(), 0, null, null from public.buyer_trust_profiles
+  on conflict (buyer_id) do update
+  set dirty_at = excluded.dirty_at,
+      next_attempt_at = excluded.next_attempt_at,
+      attempt_count = 0,
+      last_error = null,
+      locked_at = null;
+  get diagnostics v_count = row_count;
+  return v_count;
+end;
+$$;
+
+revoke execute on function private.process_buyer_trust_queue(integer) from public, anon, authenticated;
+revoke execute on function private.enqueue_all_buyer_trust_profiles() from public, anon, authenticated;
+
+select cron.schedule(
+  'plaza-process-buyer-trust-queue',
+  '*/5 * * * *',
+  'select private.process_buyer_trust_queue()'
+);
+
+select cron.schedule(
+  'plaza-refresh-all-buyer-trust',
+  '30 0 * * *',
+  'select private.enqueue_all_buyer_trust_profiles()'
+);
