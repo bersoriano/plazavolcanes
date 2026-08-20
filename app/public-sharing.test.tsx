@@ -21,6 +21,7 @@ vi.mock("@/lib/queries/categories.server", () => ({
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  vi.useRealTimers();
 });
 
 describe("public sharing controls", () => {
@@ -144,6 +145,8 @@ describe("public sharing controls", () => {
   });
 
   it("renders sharing controls on a public shop", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-02-28T12:00:00.000Z"));
     vi.mocked(getPublicShop).mockResolvedValue({
       id: 3,
       owner_id: "123e4567-e89b-12d3-a456-426614174000",
@@ -156,6 +159,10 @@ describe("public sharing controls", () => {
       administrative_area_code: "MX-JAL",
       created_at: "2026-08-19T00:00:00.000Z",
       updated_at: "2026-08-19T00:00:00.000Z",
+      trust_profile: {
+        joined_on: "2024-02-29",
+        verification_level: "unverified",
+      },
       products: [],
     });
 
@@ -164,5 +171,18 @@ describe("public sharing controls", () => {
     expect(screen.getByRole("group", { name: "Compartir tienda" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Compartir" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Compartir por WhatsApp" })).toBeInTheDocument();
+    expect(screen.getByText("Miembro desde febrero de 2024")).toBeInTheDocument();
+    expect(screen.getByText("Vendedor establecido")).toBeInTheDocument();
+    expect(screen.getAllByText("Sin verificar")).toHaveLength(2);
+    expect(
+      screen.getByText(
+        "La antigüedad muestra cuánto tiempo lleva este vendedor activo en Plaza Volcanes y ayuda a evaluar su trayectoria.",
+      ),
+    ).toHaveAttribute("role", "tooltip");
+    expect(
+      screen.getByText(
+        "Este vendedor aún no completa la verificación de identidad. Recomendamos tomar precauciones adicionales.",
+      ),
+    ).toHaveAttribute("role", "tooltip");
   });
 });

@@ -67,9 +67,9 @@ select results_eq(
   'the exact localized aliases are seeded'
 );
 
-insert into auth.users (id, email) values
-  ('123e4567-e89b-12d3-a456-426614174000', 'taxonomy-seller-a@test.local'),
-  ('987fcdeb-51a2-43d7-9012-345678901234', 'taxonomy-seller-b@test.local');
+insert into auth.users (id, email, created_at) values
+  ('123e4567-e89b-12d3-a456-426614174000', 'taxonomy-seller-a@test.local', '2026-08-19 10:00:00+00'),
+  ('987fcdeb-51a2-43d7-9012-345678901234', 'taxonomy-seller-b@test.local', '2026-08-19 11:00:00+00');
 
 insert into public.shops (owner_id, name, slug, description, country_code) values
   ('123e4567-e89b-12d3-a456-426614174000', 'Tecnología Volcanes', 'tecnologia-volcanes', 'Productos tecnológicos desde México.', 'MX'),
@@ -77,7 +77,7 @@ insert into public.shops (owner_id, name, slug, description, country_code) value
 
 alter table public.products disable trigger products_require_publishable_category;
 insert into public.products (shop_id, name, description, price_mxn, status)
-values (1, 'Publicación heredada', 'Producto publicado antes de existir la taxonomía.', 100, 'published');
+values ((select id from public.shops where slug = 'tecnologia-volcanes'), 'Publicación heredada', 'Producto publicado antes de existir la taxonomía.', 100, 'published');
 alter table public.products enable trigger products_require_publishable_category;
 
 select lives_ok(
@@ -85,11 +85,11 @@ select lives_ok(
   'legacy uncategorized publications remain readable'
 );
 select throws_ok(
-  $$insert into public.products (shop_id, name, description, price_mxn, status) values (1, 'Sin categoría', 'Descripción suficientemente larga para probar.', 100, 'published')$$,
+  $$insert into public.products (shop_id, name, description, price_mxn, status) values ((select id from public.shops where slug = 'tecnologia-volcanes'), 'Sin categoría', 'Descripción suficientemente larga para probar.', 100, 'published')$$,
   '23514', null, 'new publications require a category'
 );
 select lives_ok(
-  $$insert into public.products (shop_id, name, description, price_mxn, status) values (1, 'Borrador libre', 'Descripción suficientemente larga para probar.', 100, 'draft')$$,
+  $$insert into public.products (shop_id, name, description, price_mxn, status) values ((select id from public.shops where slug = 'tecnologia-volcanes'), 'Borrador libre', 'Descripción suficientemente larga para probar.', 100, 'draft')$$,
   'drafts may omit category'
 );
 select throws_ok(
@@ -101,13 +101,13 @@ select throws_ok(
 
 select lives_ok(
   $$insert into public.products (shop_id, name, description, price_mxn, status, category_id)
-    select 1, 'Funda resistente', 'Protección durable para equipos de uso diario.', 250, 'published', id
+    select (select id from public.shops where slug = 'tecnologia-volcanes'), 'Funda resistente', 'Protección durable para equipos de uso diario.', 250, 'published', id
     from public.categories where slug = 'celulares-y-accesorios'$$,
   'published products accept an active product leaf category'
 );
 select throws_ok(
   $$insert into public.products (shop_id, name, description, price_mxn, status, category_id)
-    select 1, 'Raíz inválida', 'Una categoría principal no puede clasificar productos.', 250, 'published', id
+    select (select id from public.shops where slug = 'tecnologia-volcanes'), 'Raíz inválida', 'Una categoría principal no puede clasificar productos.', 250, 'published', id
     from public.categories where slug = 'electronica'$$,
   '23514',
   'Published products require an active product leaf category.',
@@ -131,7 +131,7 @@ where slug = 'categoria-inactiva';
 
 select throws_ok(
   $$insert into public.products (shop_id, name, description, price_mxn, status, category_id)
-    select 1, 'Categoría inactiva', 'Una categoría inactiva no permite publicar productos.', 250, 'published', id
+    select (select id from public.shops where slug = 'tecnologia-volcanes'), 'Categoría inactiva', 'Una categoría inactiva no permite publicar productos.', 250, 'published', id
     from public.categories where slug = 'categoria-inactiva'$$,
   '23514',
   'Published products require an active product leaf category.',
@@ -155,12 +155,12 @@ select throws_ok(
 );
 
 insert into public.products (shop_id, name, description, price_mxn, status, category_id)
-select 1, 'Cuaderno técnico', 'Equipo portátil potente para jugar y trabajar.', 15000, 'published', id
+select (select id from public.shops where slug = 'tecnologia-volcanes'), 'Cuaderno técnico', 'Equipo portátil potente para jugar y trabajar.', 15000, 'published', id
 from public.categories
 where slug = 'computacion';
 
 insert into public.products (shop_id, name, description, price_mxn, status, category_id)
-select 2, 'Funda internacional', 'Protección durable para teléfonos vendidos en Estados Unidos.', 30, 'published', id
+select (select id from public.shops where slug = 'us-catalog-shop'), 'Funda internacional', 'Protección durable para teléfonos vendidos en Estados Unidos.', 30, 'published', id
 from public.categories
 where slug = 'celulares-y-accesorios';
 

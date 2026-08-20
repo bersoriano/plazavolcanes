@@ -351,6 +351,36 @@ export type Database = {
         };
         Relationships: [];
       };
+      user_trust_profiles: {
+        Row: {
+          joined_on: string;
+          user_id: string;
+          verification_level:
+            | "unverified"
+            | "basic"
+            | "verified"
+            | "highly_verified";
+        };
+        Insert: {
+          joined_on: string;
+          user_id: string;
+          verification_level?:
+            | "unverified"
+            | "basic"
+            | "verified"
+            | "highly_verified";
+        };
+        Update: {
+          joined_on?: string;
+          user_id?: string;
+          verification_level?:
+            | "unverified"
+            | "basic"
+            | "verified"
+            | "highly_verified";
+        };
+        Relationships: [];
+      };
     };
     Views: Record<never, never>;
     Functions: {
@@ -399,3 +429,4 @@ export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type ProductTranslation = Database["public"]["Tables"]["product_translations"]["Row"];
 export type SearchEvent = Database["public"]["Tables"]["search_events"]["Row"];
 export type Shop = Database["public"]["Tables"]["shops"]["Row"];
+export type UserTrustProfile = Database["public"]["Tables"]["user_trust_profiles"]["Row"];

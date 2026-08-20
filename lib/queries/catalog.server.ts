@@ -6,7 +6,7 @@ import {
   type CatalogLocale,
 } from "@/lib/catalog-locale";
 import type { CategoryOption, CategoryTree } from "@/lib/categories";
-import type { Product, Shop } from "@/lib/database.types";
+import type { Product, Shop, UserTrustProfile } from "@/lib/database.types";
 import type { CatalogFilters } from "@/lib/queries/catalog";
 import { escapePostgresLikePattern, normalizeSearchQuery } from "@/lib/queries/catalog";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
@@ -278,16 +278,27 @@ export async function getPublicShop(
   const { data: shop } = await supabase.from("shops").select("*").eq("slug", slug).maybeSingle();
   if (!shop) return null;
 
-  const { data: products } = await supabase
-    .from("products")
-    .select(productSelection)
-    .eq("shop_id", shop.id)
-    .eq("status", "published")
-    .order("created_at", { ascending: false });
+  const [{ data: products }, { data: trustProfile }] = await Promise.all([
+    supabase
+      .from("products")
+      .select(productSelection)
+      .eq("shop_id", shop.id)
+      .eq("status", "published")
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("user_trust_profiles")
+      .select("joined_on, verification_level")
+      .eq("user_id", shop.owner_id)
+      .maybeSingle(),
+  ]);
 
   return {
     ...shop,
     imageUrl: getCatalogImageUrl(shop.image_path),
+    trust_profile: trustProfile as Pick<
+      UserTrustProfile,
+      "joined_on" | "verification_level"
+    > | null,
     products: ((products ?? []) as unknown as ProductQueryRow[]).map((product) =>
       mapProduct(product, locale),
     ),
