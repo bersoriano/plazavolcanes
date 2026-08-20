@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(26);
+select plan(36);
 
 select has_table('public', 'shop_trust_evaluation_queue', 'trust evaluation queue exists');
 select has_table('public', 'shop_trust_evaluations', 'trust evaluation history exists');
@@ -94,6 +94,55 @@ select ok(
   'Standard output explains missing evidence'
 );
 
+select results_eq(
+  $$select tier from (values
+    ('activity', private.evaluate_trust_tier(120,96,97,96,98,1.3,80,4.8,25,15)->>'trust_tier'),
+    ('accuracy', private.evaluate_trust_tier(120,96,96.99,96,98,1.3,80,4.8,25,14)->>'trust_tier'),
+    ('completion', private.evaluate_trust_tier(120,96,97,96,97.99,1.3,80,4.8,25,14)->>'trust_tier'),
+    ('disputes', private.evaluate_trust_tier(120,96,97,96,98,1.31,80,4.8,25,14)->>'trust_tier'),
+    ('orders', private.evaluate_trust_tier(120,96,97,96,98,1.3,79,4.8,25,14)->>'trust_tier'),
+    ('rating', private.evaluate_trust_tier(120,96,97,96,98,1.3,80,4.79,25,14)->>'trust_tier'),
+    ('reply', private.evaluate_trust_tier(121,96,97,96,98,1.3,80,4.8,25,14)->>'trust_tier'),
+    ('response', private.evaluate_trust_tier(120,95.99,97,96,98,1.3,80,4.8,25,14)->>'trust_tier'),
+    ('shipping', private.evaluate_trust_tier(120,96,97,95.99,98,1.3,80,4.8,25,14)->>'trust_tier')
+  ) cases(name, tier) order by name$$,
+  $$select 'Reliable'::text from generate_series(1, 9)$$,
+  'each Top Rated threshold fails on the immediately lower side'
+);
+
+select results_eq(
+  $$select tier from (values
+    ('activity', private.evaluate_trust_tier(360,90,95,92,95,2.5,25,4.6,10,22)->>'trust_tier'),
+    ('accuracy', private.evaluate_trust_tier(360,90,94.99,92,95,2.5,25,4.6,10,21)->>'trust_tier'),
+    ('completion', private.evaluate_trust_tier(360,90,95,92,94.99,2.5,25,4.6,10,21)->>'trust_tier'),
+    ('disputes', private.evaluate_trust_tier(360,90,95,92,95,2.51,25,4.6,10,21)->>'trust_tier'),
+    ('orders', private.evaluate_trust_tier(360,90,95,92,95,2.5,24,4.6,10,21)->>'trust_tier'),
+    ('rating', private.evaluate_trust_tier(360,90,95,92,95,2.5,25,4.59,10,21)->>'trust_tier'),
+    ('reply', private.evaluate_trust_tier(361,90,95,92,95,2.5,25,4.6,10,21)->>'trust_tier'),
+    ('response', private.evaluate_trust_tier(360,89.99,95,92,95,2.5,25,4.6,10,21)->>'trust_tier'),
+    ('shipping', private.evaluate_trust_tier(360,90,95,91.99,95,2.5,25,4.6,10,21)->>'trust_tier')
+  ) cases(name, tier) order by name$$,
+  $$select 'Standard'::text from generate_series(1, 9)$$,
+  'each Reliable threshold fails on the immediately lower side'
+);
+
+select results_eq(
+  $$select tier from (values
+    ('activity', private.evaluate_trust_tier(360,90,95,92,95,2.5,25,4.6,10,null)->>'trust_tier'),
+    ('accuracy', private.evaluate_trust_tier(360,90,null,92,95,2.5,25,4.6,10,21)->>'trust_tier'),
+    ('completion', private.evaluate_trust_tier(360,90,95,92,null,2.5,25,4.6,10,21)->>'trust_tier'),
+    ('disputes', private.evaluate_trust_tier(360,90,95,92,95,null,25,4.6,10,21)->>'trust_tier'),
+    ('orders', private.evaluate_trust_tier(360,90,95,92,95,2.5,null,4.6,10,21)->>'trust_tier'),
+    ('rating', private.evaluate_trust_tier(360,90,95,92,95,2.5,25,null,10,21)->>'trust_tier'),
+    ('reply', private.evaluate_trust_tier(null,90,95,92,95,2.5,25,4.6,10,21)->>'trust_tier'),
+    ('response', private.evaluate_trust_tier(360,null,95,92,95,2.5,25,4.6,10,21)->>'trust_tier'),
+    ('reviews', private.evaluate_trust_tier(360,90,95,92,95,2.5,25,4.6,null,21)->>'trust_tier'),
+    ('shipping', private.evaluate_trust_tier(360,90,95,null,95,2.5,25,4.6,10,21)->>'trust_tier')
+  ) cases(name, tier) order by name$$,
+  $$select 'Standard'::text from generate_series(1, 10)$$,
+  'each missing input fails directly applicable Reliable requirements'
+);
+
 insert into auth.users (id, email, created_at) values
   ('40000000-0000-4000-8000-000000000001', 'tier-seller@test.local', now()),
   ('40000000-0000-4000-8000-000000000002', 'tier-buyer@test.local', now()),
@@ -127,6 +176,50 @@ select results_eq(
   array['standard:15'::text],
   'empty shop evaluates to Standard 15'
 );
+
+select private.enqueue_shop_trust_evaluation((select id from public.shops where slug = 'nivel-uno'));
+select private.enqueue_shop_trust_evaluation((select id from public.shops where slug = 'nivel-uno'));
+
+select results_eq(
+  $$select count(*) from public.shop_trust_evaluation_queue where shop_id = (select id from public.shops where slug = 'nivel-uno')$$,
+  array[1::bigint],
+  'dirty queue deduplicates repeated evaluation requests'
+);
+
+create function private.test_reject_trust_evaluation()
+returns trigger language plpgsql set search_path = '' as $$
+begin
+  raise exception 'forced evaluator failure';
+end;
+$$;
+
+create trigger test_reject_trust_evaluation
+before insert on public.shop_trust_evaluations
+for each row execute function private.test_reject_trust_evaluation();
+
+select is(private.process_shop_trust_queue(), 0, 'failed evaluation is not counted as processed');
+
+select results_eq(
+  $$select count(*) from public.shop_trust_evaluations where shop_id = (select id from public.shops where slug = 'nivel-uno')$$,
+  array[1::bigint],
+  'failed evaluation preserves last history snapshot'
+);
+
+select results_eq(
+  $$select trust_tier || ':' || listing_limit from public.shops where slug = 'nivel-uno'$$,
+  array['standard:15'::text],
+  'failed evaluation preserves cached tier and limit'
+);
+
+select results_eq(
+  $$select attempt_count from public.shop_trust_evaluation_queue where shop_id = (select id from public.shops where slug = 'nivel-uno') and last_error like '%forced evaluator failure%'$$,
+  array[1],
+  'failed evaluation remains queued with retry evidence'
+);
+
+drop trigger test_reject_trust_evaluation on public.shop_trust_evaluations;
+drop function private.test_reject_trust_evaluation();
+delete from public.shop_trust_evaluation_queue;
 
 insert into public.orders (
   buyer_id, shop_id, status, idempotency_key, currency_code, subtotal,
@@ -186,6 +279,20 @@ select results_eq(
   $$select count(*) from public.shop_trust_evaluations where shop_id = (select id from public.shops where slug = 'nivel-uno')$$,
   array[3::bigint],
   'each successful evaluation preserves append-only history'
+);
+
+select private.enqueue_all_shops();
+
+select results_eq(
+  $$select count(*) from public.shop_trust_evaluation_queue$$,
+  $$select count(*) from public.shops$$,
+  'daily sweep function deduplicates and queues every shop'
+);
+
+select results_eq(
+  $$select jobname || ':' || schedule from cron.job where jobname in ('plaza-process-trust-queue', 'plaza-refresh-all-shop-trust') order by jobname$$,
+  array['plaza-process-trust-queue:*/5 * * * *'::text, 'plaza-refresh-all-shop-trust:15 0 * * *'::text],
+  'named queue and daily refresh schedules are active'
 );
 
 select * from finish();
