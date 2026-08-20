@@ -80,7 +80,7 @@ export async function checkoutCart(
   const supabase = await authenticatedClient();
   if (!supabase) return sessionError;
   const { buyer_note, idempotency_key, ...address } = parsed.data;
-  const { data: orderId, error } = await supabase.rpc("checkout_cart", {
+  const { data: orderId, error } = await supabase.rpc("checkout_cart_v2", {
     p_shop_id: shopId,
     p_address: address,
     p_buyer_note: buyer_note,

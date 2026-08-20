@@ -18,3 +18,7 @@ export const shipmentSchema = z.object({
 export const transitionSchema = z.object({
   idempotency_key: idempotencyKey,
 });
+
+export const sellerCancellationSchema = transitionSchema.extend({
+  reason: z.enum(["buyer_non_payment", "inventory_unavailable", "seller_unavailable", "other"]),
+});
