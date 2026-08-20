@@ -37,6 +37,10 @@ export const productSchema = z.object({
     (value) => (value === "" || value == null ? null : value),
     z.coerce.number().int().positive().nullable(),
   ),
+  handling_days: z.preprocess(
+    (value) => (value == null || value === "" ? 3 : value),
+    z.coerce.number().int().min(1, "El tiempo mínimo es un día hábil.").max(30, "El tiempo máximo es 30 días hábiles."),
+  ),
   currency_code: z.literal(DEFAULT_CATALOG_CURRENCY).default(DEFAULT_CATALOG_CURRENCY),
   content_locale: z.literal(DEFAULT_CATALOG_LOCALE).default(DEFAULT_CATALOG_LOCALE),
 }).superRefine((product, context) => {

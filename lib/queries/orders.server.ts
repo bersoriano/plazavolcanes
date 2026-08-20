@@ -22,12 +22,21 @@ export type OrderSummary = {
 
 export type OrderDetail = OrderSummary & {
   buyer_id: string;
+  current_user_id: string;
+  viewer_role: "buyer" | "seller";
   buyer_note: string | null;
   handling_days: number;
   handling_time_zone: string;
+  accepted_at: string | null;
+  ship_by_at: string | null;
+  shipped_at: string | null;
+  delivered_at: string | null;
+  completed_at: string | null;
+  tracking_text: string | null;
   items: { id: number; product_name: string; unit_price: number; quantity: number; line_total: number }[];
   address: { recipient: string | null; address_line1: string | null; address_line2: string | null; locality: string | null; administrative_area: string | null; postal_code: string | null; country_code: string | null; delivery_instructions: string | null; redacted_at: string | null } | null;
   events: { id: number; event_type: string; previous_status: string | null; next_status: string; created_at: string }[];
+  conversation: { id: number; messages: { id: number; sender_id: string; body: string; created_at: string }[] } | null;
 };
 
 async function clientAndUser() {
@@ -72,10 +81,11 @@ export async function getOrderDetail(orderId: number): Promise<OrderDetail | nul
   if (!context) return null;
   const { data } = await context.supabase
     .from("orders")
-    .select("id, buyer_id, status, subtotal, currency_code, buyer_note, handling_days, handling_time_zone, created_at, shops!inner(id, name, slug), order_items(id, product_name, unit_price, quantity, line_total), order_addresses(recipient, address_line1, address_line2, locality, administrative_area, postal_code, country_code, delivery_instructions, redacted_at), order_events(id, event_type, previous_status, next_status, created_at)")
+    .select("id, buyer_id, status, subtotal, currency_code, buyer_note, handling_days, handling_time_zone, accepted_at, ship_by_at, shipped_at, delivered_at, completed_at, tracking_text, created_at, shops!inner(id, name, slug), order_items(id, product_name, unit_price, quantity, line_total), order_addresses(recipient, address_line1, address_line2, locality, administrative_area, postal_code, country_code, delivery_instructions, redacted_at), order_events(id, event_type, previous_status, next_status, created_at), conversations(id, messages(id, sender_id, body, created_at))")
     .eq("id", orderId)
     .maybeSingle();
   if (!data) return null;
-  const row = data as unknown as Omit<OrderDetail, "shop" | "items" | "address" | "events"> & { shops: OrderDetail["shop"]; order_items: OrderDetail["items"]; order_addresses: OrderDetail["address"][]; order_events: OrderDetail["events"] };
-  return { ...row, shop: row.shops, items: row.order_items, address: row.order_addresses[0] ?? null, events: [...row.order_events].sort((a, b) => a.created_at.localeCompare(b.created_at)) };
+  const row = data as unknown as Omit<OrderDetail, "shop" | "items" | "address" | "events" | "conversation" | "current_user_id" | "viewer_role"> & { shops: OrderDetail["shop"]; order_items: OrderDetail["items"]; order_addresses: OrderDetail["address"][]; order_events: OrderDetail["events"]; conversations: { id: number; messages: { id: number; sender_id: string; body: string; created_at: string }[] }[] };
+  const conversation = row.conversations[0] ?? null;
+  return { ...row, current_user_id: context.userId, viewer_role: row.buyer_id === context.userId ? "buyer" : "seller", shop: row.shops, items: row.order_items, address: row.order_addresses[0] ?? null, events: [...row.order_events].sort((a, b) => a.created_at.localeCompare(b.created_at)), conversation: conversation ? { ...conversation, messages: [...conversation.messages].sort((a, b) => a.created_at.localeCompare(b.created_at)) } : null };
 }

@@ -3,6 +3,37 @@ import { describe, expect, it } from "vitest";
 import { productSchema, productStatusSchema } from "@/lib/validation/product";
 
 describe("productSchema", () => {
+  it.each([1, 30])("accepts handling promise of %i business days", (handlingDays) => {
+    const result = productSchema.safeParse({
+      name: "Taza volcánica",
+      description: "Taza hecha a mano con barro de alta temperatura.",
+      price_mxn: "349.00",
+      status: "draft",
+      condition: "new",
+      used_condition: "",
+      category_id: "",
+      handling_days: String(handlingDays),
+      currency_code: "MXN",
+      content_locale: "es-MX",
+    });
+    expect(result.success && result.data.handling_days).toBe(handlingDays);
+  });
+
+  it.each([0, 31])("rejects handling promise of %i business days", (handlingDays) => {
+    const result = productSchema.safeParse({
+      name: "Taza volcánica",
+      description: "Taza hecha a mano con barro de alta temperatura.",
+      price_mxn: "349.00",
+      status: "draft",
+      condition: "new",
+      used_condition: "",
+      category_id: "",
+      handling_days: String(handlingDays),
+      currency_code: "MXN",
+      content_locale: "es-MX",
+    });
+    expect(result.success).toBe(false);
+  });
   const completeProduct = {
     name: "Taza de barro",
     description: "Hecha a mano en un taller local de la región.",

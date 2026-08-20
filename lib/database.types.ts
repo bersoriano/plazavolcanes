@@ -32,6 +32,12 @@ export type Database = {
         Update: { id?: never; buyer_id?: string; shop_id?: number; created_at?: string; updated_at?: string };
         Relationships: [];
       };
+      conversations: {
+        Row: { id: number; shop_id: number; buyer_id: string; order_id: number | null; type: "pre_sale" | "order"; created_at: string; updated_at: string };
+        Insert: { id?: never; shop_id: number; buyer_id: string; order_id?: number | null; type: "pre_sale" | "order"; created_at?: string; updated_at?: string };
+        Update: { id?: never; shop_id?: number; buyer_id?: string; order_id?: number | null; type?: "pre_sale" | "order"; created_at?: string; updated_at?: string };
+        Relationships: [];
+      };
       categories: {
         Row: {
           created_at: string;
@@ -395,6 +401,12 @@ export type Database = {
         Update: { order_id?: number; recipient?: string | null; address_line1?: string | null; address_line2?: string | null; locality?: string | null; administrative_area?: string | null; postal_code?: string | null; country_code?: string | null; delivery_instructions?: string | null; redacted_at?: string | null; created_at?: string };
         Relationships: [];
       };
+      messages: {
+        Row: { id: number; conversation_id: number; sender_id: string; body: string; idempotency_key: string; created_at: string };
+        Insert: { id?: never; conversation_id: number; sender_id: string; body: string; idempotency_key: string; created_at?: string };
+        Update: { id?: never; conversation_id?: number; sender_id?: string; body?: string; idempotency_key?: string; created_at?: string };
+        Relationships: [];
+      };
       order_events: {
         Row: { id: number; order_id: number; actor_id: string | null; actor_type: "buyer" | "seller" | "admin" | "system"; event_type: string; previous_status: string | null; next_status: string; metadata: Json; idempotency_key: string | null; created_at: string };
         Insert: { id?: never; order_id: number; actor_id?: string | null; actor_type: "buyer" | "seller" | "admin" | "system"; event_type: string; previous_status?: string | null; next_status: string; metadata?: Json; idempotency_key?: string | null; created_at?: string };
@@ -411,6 +423,18 @@ export type Database = {
         Row: { id: number; buyer_id: string; shop_id: number; status: OrderStatus; idempotency_key: string; currency_code: string; subtotal: number; buyer_note: string | null; handling_days: number; handling_time_zone: string; accepted_at: string | null; ship_by_at: string | null; shipped_at: string | null; delivered_at: string | null; buyer_confirmed_at: string | null; auto_completed_at: string | null; completed_at: string | null; canceled_at: string | null; canceled_by: string | null; tracking_text: string | null; created_at: string; updated_at: string };
         Insert: { id?: never; buyer_id: string; shop_id: number; status?: OrderStatus; idempotency_key: string; currency_code: string; subtotal: number; buyer_note?: string | null; handling_days: number; handling_time_zone: string; accepted_at?: string | null; ship_by_at?: string | null; shipped_at?: string | null; delivered_at?: string | null; buyer_confirmed_at?: string | null; auto_completed_at?: string | null; completed_at?: string | null; canceled_at?: string | null; canceled_by?: string | null; tracking_text?: string | null; created_at?: string; updated_at?: string };
         Update: { id?: never; buyer_id?: string; shop_id?: number; status?: OrderStatus; idempotency_key?: string; currency_code?: string; subtotal?: number; buyer_note?: string | null; handling_days?: number; handling_time_zone?: string; accepted_at?: string | null; ship_by_at?: string | null; shipped_at?: string | null; delivered_at?: string | null; buyer_confirmed_at?: string | null; auto_completed_at?: string | null; completed_at?: string | null; canceled_at?: string | null; canceled_by?: string | null; tracking_text?: string | null; created_at?: string; updated_at?: string };
+        Relationships: [];
+      };
+      seller_activity_events: {
+        Row: { id: number; shop_id: number; actor_id: string; activity_type: string; related_entity_type: string | null; related_entity_id: number | null; created_at: string };
+        Insert: { id?: never; shop_id: number; actor_id: string; activity_type: string; related_entity_type?: string | null; related_entity_id?: number | null; created_at?: string };
+        Update: { id?: never; shop_id?: number; actor_id?: string; activity_type?: string; related_entity_type?: string | null; related_entity_id?: number | null; created_at?: string };
+        Relationships: [];
+      };
+      seller_response_events: {
+        Row: { id: number; conversation_id: number; shop_id: number; triggering_buyer_message_id: number; closing_seller_message_id: number | null; clock_started_at: string; replied_at: string | null; elapsed_minutes: number | null; answered_within_24_hours: boolean | null; created_at: string };
+        Insert: { id?: never; conversation_id: number; shop_id: number; triggering_buyer_message_id: number; closing_seller_message_id?: number | null; clock_started_at: string; replied_at?: string | null; elapsed_minutes?: number | null; answered_within_24_hours?: boolean | null; created_at?: string };
+        Update: { id?: never; conversation_id?: number; shop_id?: number; triggering_buyer_message_id?: number; closing_seller_message_id?: number | null; clock_started_at?: string; replied_at?: string | null; elapsed_minutes?: number | null; answered_within_24_hours?: boolean | null; created_at?: string };
         Relationships: [];
       };
       user_trust_profiles: {
@@ -446,6 +470,7 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      accept_order: { Args: { p_order_id: number; p_idempotency_key: string }; Returns: undefined };
       add_cart_item: {
         Args: { p_product_id: number; p_quantity?: number };
         Returns: number;
@@ -454,6 +479,9 @@ export type Database = {
         Args: { p_shop_id: number; p_address: Json; p_buyer_note: string | null; p_idempotency_key: string };
         Returns: number;
       };
+      confirm_order_received: { Args: { p_order_id: number; p_idempotency_key: string }; Returns: undefined };
+      confirm_order_satisfied: { Args: { p_order_id: number; p_idempotency_key: string }; Returns: undefined };
+      mark_order_shipped: { Args: { p_order_id: number; p_tracking_text: string | null; p_idempotency_key: string }; Returns: undefined };
       record_catalog_search: {
         Args: {
           p_category_id: number | null;
@@ -476,6 +504,8 @@ export type Database = {
         Args: { p_cart_item_id: number };
         Returns: undefined;
       };
+      reject_order: { Args: { p_order_id: number; p_idempotency_key: string }; Returns: undefined };
+      send_conversation_message: { Args: { p_conversation_id: number; p_body: string; p_idempotency_key: string }; Returns: number };
       search_product_ids: {
         Args: {
           p_category_id: number | null;
@@ -493,6 +523,7 @@ export type Database = {
         Args: { p_cart_item_id: number; p_quantity: number };
         Returns: undefined;
       };
+      start_pre_sale_conversation: { Args: { p_shop_id: number }; Returns: number };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
