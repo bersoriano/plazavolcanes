@@ -413,10 +413,22 @@ export type Database = {
         Update: { id?: never; order_id?: number; actor_id?: string | null; actor_type?: "buyer" | "seller" | "admin" | "system"; event_type?: string; previous_status?: string | null; next_status?: string; metadata?: Json; idempotency_key?: string | null; created_at?: string };
         Relationships: [];
       };
+      order_disputes: {
+        Row: { id: number; order_id: number; shop_id: number; buyer_id: string; reason: "item_not_received" | "item_not_as_described" | "damaged_item" | "other"; status: "open" | "seller_responded" | "resolved"; buyer_statement: string; buyer_evidence: Json; seller_response: string | null; seller_evidence: Json; admin_resolver_id: string | null; resolution: "buyer_favor" | "seller_favor" | "dismissed" | null; resolution_notes: string | null; seller_fault: boolean | null; opened_at: string; responded_at: string | null; resolved_at: string | null };
+        Insert: { id?: never; order_id: number; shop_id: number; buyer_id: string; reason: "item_not_received" | "item_not_as_described" | "damaged_item" | "other"; status?: "open" | "seller_responded" | "resolved"; buyer_statement: string; buyer_evidence?: Json; seller_response?: string | null; seller_evidence?: Json; admin_resolver_id?: string | null; resolution?: "buyer_favor" | "seller_favor" | "dismissed" | null; resolution_notes?: string | null; seller_fault?: boolean | null; opened_at?: string; responded_at?: string | null; resolved_at?: string | null };
+        Update: { id?: never; order_id?: number; shop_id?: number; buyer_id?: string; reason?: "item_not_received" | "item_not_as_described" | "damaged_item" | "other"; status?: "open" | "seller_responded" | "resolved"; buyer_statement?: string; buyer_evidence?: Json; seller_response?: string | null; seller_evidence?: Json; admin_resolver_id?: string | null; resolution?: "buyer_favor" | "seller_favor" | "dismissed" | null; resolution_notes?: string | null; seller_fault?: boolean | null; opened_at?: string; responded_at?: string | null; resolved_at?: string | null };
+        Relationships: [];
+      };
       order_items: {
         Row: { id: number; order_id: number; product_id: number | null; product_name: string; unit_price: number; currency_code: string; quantity: number; line_total: number; handling_days: number; created_at: string };
         Insert: { id?: never; order_id: number; product_id?: number | null; product_name: string; unit_price: number; currency_code: string; quantity: number; line_total: number; handling_days: number; created_at?: string };
         Update: { id?: never; order_id?: number; product_id?: number | null; product_name?: string; unit_price?: number; currency_code?: string; quantity?: number; line_total?: number; handling_days?: number; created_at?: string };
+        Relationships: [];
+      };
+      order_reviews: {
+        Row: { id: number; order_id: number; buyer_id: string; shop_id: number; rating: number; matched_description: boolean; comment: string | null; created_at: string };
+        Insert: { id?: never; order_id: number; buyer_id: string; shop_id: number; rating: number; matched_description: boolean; comment?: string | null; created_at?: string };
+        Update: { id?: never; order_id?: number; buyer_id?: string; shop_id?: number; rating?: number; matched_description?: boolean; comment?: string | null; created_at?: string };
         Relationships: [];
       };
       orders: {
@@ -481,7 +493,10 @@ export type Database = {
       };
       confirm_order_received: { Args: { p_order_id: number; p_idempotency_key: string }; Returns: undefined };
       confirm_order_satisfied: { Args: { p_order_id: number; p_idempotency_key: string }; Returns: undefined };
+      create_order_review: { Args: { p_order_id: number; p_rating: number; p_matched_description: boolean; p_comment: string | null }; Returns: number };
+      is_current_user_admin: { Args: Record<never, never>; Returns: boolean };
       mark_order_shipped: { Args: { p_order_id: number; p_tracking_text: string | null; p_idempotency_key: string }; Returns: undefined };
+      open_order_dispute: { Args: { p_order_id: number; p_reason: string; p_statement: string; p_evidence: Json }; Returns: number };
       record_catalog_search: {
         Args: {
           p_category_id: number | null;
@@ -505,6 +520,8 @@ export type Database = {
         Returns: undefined;
       };
       reject_order: { Args: { p_order_id: number; p_idempotency_key: string }; Returns: undefined };
+      resolve_order_dispute: { Args: { p_dispute_id: number; p_resolution: string; p_seller_fault: boolean; p_notes: string }; Returns: undefined };
+      respond_to_dispute: { Args: { p_dispute_id: number; p_response: string; p_evidence: Json }; Returns: undefined };
       send_conversation_message: { Args: { p_conversation_id: number; p_body: string; p_idempotency_key: string }; Returns: number };
       search_product_ids: {
         Args: {
