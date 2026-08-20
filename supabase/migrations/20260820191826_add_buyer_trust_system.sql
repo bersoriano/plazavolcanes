@@ -275,3 +275,259 @@ grant execute on function public.checkout_cart_v2(bigint,jsonb,text,uuid) to aut
 grant execute on function public.confirm_order_payment(bigint,uuid) to authenticated;
 grant execute on function public.cancel_order_by_buyer(bigint,uuid) to authenticated;
 grant execute on function public.cancel_order_by_seller(bigint,text,uuid) to authenticated;
+
+create table public.buyer_response_events (
+  id bigint generated always as identity primary key,
+  conversation_id bigint not null references public.conversations (id) on delete restrict,
+  order_id bigint not null references public.orders (id) on delete restrict,
+  buyer_id uuid not null references auth.users (id) on delete restrict,
+  triggering_seller_message_id bigint not null references public.messages (id) on delete restrict,
+  closing_buyer_message_id bigint references public.messages (id) on delete restrict,
+  clock_started_at timestamptz not null,
+  replied_at timestamptz,
+  elapsed_minutes integer check (elapsed_minutes is null or elapsed_minutes >= 0),
+  answered_within_24_hours boolean,
+  created_at timestamptz not null default now()
+);
+
+create unique index buyer_response_events_one_open_clock_idx
+on public.buyer_response_events (conversation_id)
+where replied_at is null;
+
+create index buyer_response_events_buyer_started_idx
+on public.buyer_response_events (buyer_id, clock_started_at desc);
+
+create table public.buyer_activity_events (
+  id bigint generated always as identity primary key,
+  buyer_id uuid not null references auth.users (id) on delete restrict,
+  order_id bigint not null references public.orders (id) on delete restrict,
+  activity_type text not null check (activity_type in (
+    'checkout', 'payment_completed', 'buyer_message', 'receipt_confirmed',
+    'order_completed', 'review_submitted', 'claim_submitted', 'accepted_order_canceled'
+  )),
+  related_entity_type text not null check (related_entity_type in ('order', 'message', 'review', 'dispute')),
+  related_entity_id bigint not null,
+  created_at timestamptz not null default now(),
+  unique (buyer_id, activity_type, related_entity_type, related_entity_id)
+);
+
+create index buyer_activity_events_buyer_created_idx
+on public.buyer_activity_events (buyer_id, created_at desc);
+
+revoke all on table public.buyer_response_events, public.buyer_activity_events from public, anon, authenticated;
+grant select on table public.buyer_response_events, public.buyer_activity_events to authenticated;
+
+alter table public.buyer_response_events enable row level security;
+alter table public.buyer_activity_events enable row level security;
+
+create policy buyer_response_participants_select on public.buyer_response_events
+for select to authenticated
+using (
+  buyer_id = (select auth.uid())
+  or exists (
+    select 1 from public.orders o
+    join public.shops s on s.id = o.shop_id
+    where o.id = buyer_response_events.order_id and s.owner_id = (select auth.uid())
+  )
+  or (select public.is_current_user_admin())
+);
+
+create policy buyer_activity_participants_select on public.buyer_activity_events
+for select to authenticated
+using (
+  buyer_id = (select auth.uid())
+  or exists (
+    select 1 from public.orders o
+    join public.shops s on s.id = o.shop_id
+    where o.id = buyer_activity_events.order_id and s.owner_id = (select auth.uid())
+  )
+  or (select public.is_current_user_admin())
+);
+
+create function private.record_buyer_activity(
+  p_buyer_id uuid,
+  p_order_id bigint,
+  p_activity_type text,
+  p_related_entity_type text,
+  p_related_entity_id bigint,
+  p_created_at timestamptz default now()
+)
+returns void
+language sql
+security definer
+set search_path = ''
+as $$
+  insert into public.buyer_activity_events (
+    buyer_id, order_id, activity_type, related_entity_type, related_entity_id, created_at
+  ) values (
+    p_buyer_id, p_order_id, p_activity_type, p_related_entity_type, p_related_entity_id, p_created_at
+  )
+  on conflict (buyer_id, activity_type, related_entity_type, related_entity_id) do nothing
+$$;
+
+revoke execute on function private.record_buyer_activity(uuid,bigint,text,text,bigint,timestamptz) from public, anon, authenticated;
+
+create function private.record_buyer_checkout_activity()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  perform private.record_buyer_activity(new.buyer_id, new.id, 'checkout', 'order', new.id, new.created_at);
+  return new;
+end;
+$$;
+
+revoke execute on function private.record_buyer_checkout_activity() from public, anon, authenticated;
+
+create trigger record_buyer_checkout_activity
+after insert on public.orders
+for each row execute function private.record_buyer_checkout_activity();
+
+create function private.record_buyer_order_event_activity()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_buyer_id uuid;
+  v_activity_type text;
+begin
+  if new.event_type = 'payment_confirmed' then
+    v_activity_type := 'payment_completed';
+  elsif new.event_type = 'delivered' and new.actor_type = 'buyer' then
+    v_activity_type := 'receipt_confirmed';
+  elsif new.event_type = 'completed' and new.actor_type = 'buyer' then
+    v_activity_type := 'order_completed';
+  elsif new.event_type = 'canceled_by_buyer' and new.previous_status = 'accepted' then
+    v_activity_type := 'accepted_order_canceled';
+  else
+    return new;
+  end if;
+
+  select buyer_id into v_buyer_id from public.orders where id = new.order_id;
+  perform private.record_buyer_activity(v_buyer_id, new.order_id, v_activity_type, 'order', new.order_id, new.created_at);
+  return new;
+end;
+$$;
+
+revoke execute on function private.record_buyer_order_event_activity() from public, anon, authenticated;
+
+create trigger record_buyer_order_event_activity
+after insert on public.order_events
+for each row execute function private.record_buyer_order_event_activity();
+
+create function private.record_buyer_review_activity()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  perform private.record_buyer_activity(new.buyer_id, new.order_id, 'review_submitted', 'review', new.id, new.created_at);
+  return new;
+end;
+$$;
+
+create function private.record_buyer_claim_activity()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  perform private.record_buyer_activity(new.buyer_id, new.order_id, 'claim_submitted', 'dispute', new.id, new.opened_at);
+  return new;
+end;
+$$;
+
+revoke execute on function private.record_buyer_review_activity() from public, anon, authenticated;
+revoke execute on function private.record_buyer_claim_activity() from public, anon, authenticated;
+
+create trigger record_buyer_review_activity
+after insert on public.order_reviews
+for each row execute function private.record_buyer_review_activity();
+
+create trigger record_buyer_claim_activity
+after insert on public.order_disputes
+for each row execute function private.record_buyer_claim_activity();
+
+create or replace function private.record_message_evidence()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_conversation public.conversations%rowtype;
+  v_owner_id uuid;
+  v_event_id bigint;
+  v_elapsed integer;
+begin
+  select * into v_conversation from public.conversations where id = new.conversation_id;
+  select owner_id into v_owner_id from public.shops where id = v_conversation.shop_id;
+
+  if new.sender_id = v_conversation.buyer_id and new.sender_id <> v_owner_id then
+    insert into public.seller_response_events (
+      conversation_id, shop_id, triggering_buyer_message_id, clock_started_at
+    ) values (new.conversation_id, v_conversation.shop_id, new.id, new.created_at)
+    on conflict (conversation_id) where replied_at is null do nothing;
+
+    if v_conversation.type = 'order' then
+      select id, greatest(0, floor(extract(epoch from (new.created_at - clock_started_at)) / 60)::integer)
+      into v_event_id, v_elapsed
+      from public.buyer_response_events
+      where conversation_id = new.conversation_id and replied_at is null
+      order by clock_started_at
+      limit 1
+      for update;
+
+      if v_event_id is not null then
+        update public.buyer_response_events
+        set closing_buyer_message_id = new.id,
+            replied_at = new.created_at,
+            elapsed_minutes = v_elapsed,
+            answered_within_24_hours = v_elapsed <= 1440
+        where id = v_event_id;
+      end if;
+      perform private.record_buyer_activity(
+        v_conversation.buyer_id, v_conversation.order_id, 'buyer_message', 'message', new.id, new.created_at
+      );
+    end if;
+  elsif new.sender_id = v_owner_id then
+    select id, greatest(0, floor(extract(epoch from (new.created_at - clock_started_at)) / 60)::integer)
+    into v_event_id, v_elapsed
+    from public.seller_response_events
+    where conversation_id = new.conversation_id and replied_at is null
+    order by clock_started_at
+    limit 1
+    for update;
+
+    if v_event_id is not null then
+      update public.seller_response_events
+      set closing_seller_message_id = new.id,
+          replied_at = new.created_at,
+          elapsed_minutes = v_elapsed,
+          answered_within_24_hours = v_elapsed <= 1440
+      where id = v_event_id;
+    end if;
+
+    if v_conversation.type = 'order' then
+      insert into public.buyer_response_events (
+        conversation_id, order_id, buyer_id, triggering_seller_message_id, clock_started_at
+      ) values (
+        new.conversation_id, v_conversation.order_id, v_conversation.buyer_id, new.id, new.created_at
+      )
+      on conflict (conversation_id) where replied_at is null do nothing;
+    end if;
+    perform private.record_seller_activity(v_conversation.shop_id, new.sender_id, 'seller_message', 'message', new.id);
+  end if;
+
+  update public.conversations set updated_at = new.created_at where id = new.conversation_id;
+  return new;
+end;
+$$;
+
+revoke execute on function private.record_message_evidence() from public, anon, authenticated;

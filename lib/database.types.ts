@@ -455,6 +455,18 @@ export type Database = {
         Update: { id?: never; shop_id?: number; actor_id?: string; activity_type?: string; related_entity_type?: string | null; related_entity_id?: number | null; created_at?: string };
         Relationships: [];
       };
+      buyer_activity_events: {
+        Row: { id: number; buyer_id: string; order_id: number; activity_type: "checkout" | "payment_completed" | "buyer_message" | "receipt_confirmed" | "order_completed" | "review_submitted" | "claim_submitted" | "accepted_order_canceled"; related_entity_type: "order" | "message" | "review" | "dispute"; related_entity_id: number; created_at: string };
+        Insert: { id?: never; buyer_id: string; order_id: number; activity_type: "checkout" | "payment_completed" | "buyer_message" | "receipt_confirmed" | "order_completed" | "review_submitted" | "claim_submitted" | "accepted_order_canceled"; related_entity_type: "order" | "message" | "review" | "dispute"; related_entity_id: number; created_at?: string };
+        Update: { id?: never; buyer_id?: string; order_id?: number; activity_type?: "checkout" | "payment_completed" | "buyer_message" | "receipt_confirmed" | "order_completed" | "review_submitted" | "claim_submitted" | "accepted_order_canceled"; related_entity_type?: "order" | "message" | "review" | "dispute"; related_entity_id?: number; created_at?: string };
+        Relationships: [];
+      };
+      buyer_response_events: {
+        Row: { id: number; conversation_id: number; order_id: number; buyer_id: string; triggering_seller_message_id: number; closing_buyer_message_id: number | null; clock_started_at: string; replied_at: string | null; elapsed_minutes: number | null; answered_within_24_hours: boolean | null; created_at: string };
+        Insert: { id?: never; conversation_id: number; order_id: number; buyer_id: string; triggering_seller_message_id: number; closing_buyer_message_id?: number | null; clock_started_at: string; replied_at?: string | null; elapsed_minutes?: number | null; answered_within_24_hours?: boolean | null; created_at?: string };
+        Update: { id?: never; conversation_id?: number; order_id?: number; buyer_id?: string; triggering_seller_message_id?: number; closing_buyer_message_id?: number | null; clock_started_at?: string; replied_at?: string | null; elapsed_minutes?: number | null; answered_within_24_hours?: boolean | null; created_at?: string };
+        Relationships: [];
+      };
       seller_response_events: {
         Row: { id: number; conversation_id: number; shop_id: number; triggering_buyer_message_id: number; closing_seller_message_id: number | null; clock_started_at: string; replied_at: string | null; elapsed_minutes: number | null; answered_within_24_hours: boolean | null; created_at: string };
         Insert: { id?: never; conversation_id: number; shop_id: number; triggering_buyer_message_id: number; closing_seller_message_id?: number | null; clock_started_at: string; replied_at?: string | null; elapsed_minutes?: number | null; answered_within_24_hours?: boolean | null; created_at?: string };

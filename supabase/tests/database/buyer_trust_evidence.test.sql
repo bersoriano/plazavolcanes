@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(28);
+select plan(50);
 
 select has_column('public', 'orders', 'payment_confirmation_required', 'orders identify payment-required checkout');
 select has_column('public', 'orders', 'payment_completed_at', 'orders store seller-confirmed payment time');
@@ -167,6 +167,125 @@ select results_eq(
   $$select seller_cancellation_reason from public.orders where status = 'canceled_by_seller' order by id desc limit 1$$,
   array['buyer_non_payment'::text],
   'non-payment cancellation stores structured evidence'
+);
+
+select has_table('public', 'buyer_response_events', 'buyer response clock table exists');
+select has_table('public', 'buyer_activity_events', 'meaningful buyer activity table exists');
+select has_column('public', 'buyer_response_events', 'order_id', 'buyer response clocks identify order');
+
+select lives_ok(
+  $$select public.send_conversation_message(
+    (select c.id from public.conversations c join public.orders o on o.id = c.order_id where o.payment_confirmation_required limit 1),
+    '¿Confirmas la entrega?',
+    '50000000-0000-4000-8000-000000000151'
+  )$$,
+  'seller order message starts buyer response clock'
+);
+select lives_ok(
+  $$select public.send_conversation_message(
+    (select c.id from public.conversations c join public.orders o on o.id = c.order_id where o.payment_confirmation_required limit 1),
+    'Segundo mensaje',
+    '50000000-0000-4000-8000-000000000152'
+  )$$,
+  'repeated seller order message is accepted'
+);
+select results_eq(
+  $$select count(*) from public.buyer_response_events where replied_at is null$$,
+  array[1::bigint],
+  'repeated seller messages share one buyer clock'
+);
+
+set local request.jwt.claim.sub = '50000000-0000-4000-8000-000000000002';
+select lives_ok(
+  $$select public.send_conversation_message(
+    (select c.id from public.conversations c join public.orders o on o.id = c.order_id where o.payment_confirmation_required limit 1),
+    'Sí, recibido.',
+    '50000000-0000-4000-8000-000000000153'
+  )$$,
+  'buyer reply closes response clock'
+);
+select results_eq(
+  $$select count(*) from public.buyer_response_events where replied_at is not null and elapsed_minutes >= 0$$,
+  array[1::bigint],
+  'closed buyer clock stores elapsed minutes'
+);
+select lives_ok(
+  $$select public.start_pre_sale_conversation((select id from public.shops where slug = 'pagos-uno'))$$,
+  'buyer starts pre-sale conversation'
+);
+
+set local request.jwt.claim.sub = '50000000-0000-4000-8000-000000000001';
+select lives_ok(
+  $$select public.send_conversation_message(
+    (select id from public.conversations where type = 'pre_sale' and buyer_id = '50000000-0000-4000-8000-000000000002'),
+    'Respuesta preventa',
+    '50000000-0000-4000-8000-000000000154'
+  )$$,
+  'seller can reply in pre-sale conversation'
+);
+select results_eq(
+  $$select count(*) from public.buyer_response_events$$,
+  array[1::bigint],
+  'pre-sale messages never create buyer clocks'
+);
+
+set local request.jwt.claim.sub = '50000000-0000-4000-8000-000000000002';
+select lives_ok(
+  $$select public.confirm_order_received((select id from public.orders where payment_confirmation_required and status = 'shipped'), '50000000-0000-4000-8000-000000000161')$$,
+  'receipt confirmation creates buyer activity'
+);
+select lives_ok(
+  $$select public.confirm_order_satisfied((select id from public.orders where payment_confirmation_required and status = 'delivered'), '50000000-0000-4000-8000-000000000162')$$,
+  'order completion creates buyer activity'
+);
+select lives_ok(
+  $$select public.create_order_review((select id from public.orders where payment_confirmation_required and status = 'completed'), 5, true, 'Todo bien')$$,
+  'review submission creates buyer activity'
+);
+select lives_ok(
+  $$select public.open_order_dispute((select id from public.orders where not payment_confirmation_required and status = 'shipped'), 'other', 'Necesito ayuda', '[]'::jsonb)$$,
+  'claim submission creates buyer activity'
+);
+select results_eq(
+  $$select distinct activity_type from public.buyer_activity_events order by activity_type$$,
+  array[
+    'accepted_order_canceled'::text, 'buyer_message'::text, 'checkout'::text,
+    'claim_submitted'::text, 'order_completed'::text, 'payment_completed'::text,
+    'receipt_confirmed'::text, 'review_submitted'::text
+  ],
+  'only approved meaningful buyer activity types are recorded'
+);
+select results_eq(
+  $$select count(*) from public.buyer_activity_events where buyer_id = auth.uid()$$,
+  $$select count(*) from public.buyer_activity_events$$,
+  'buyer can read own activity'
+);
+
+set local request.jwt.claim.sub = '50000000-0000-4000-8000-000000000001';
+select results_eq(
+  $$select count(*) from public.buyer_activity_events$$,
+  $$select count(*) from public.buyer_activity_events where buyer_id = '50000000-0000-4000-8000-000000000002'$$,
+  'shared-order seller can read buyer activity'
+);
+select results_eq(
+  $$select count(*) from public.buyer_response_events$$,
+  array[1::bigint],
+  'shared-order seller can read buyer response clocks'
+);
+
+set local request.jwt.claim.sub = '50000000-0000-4000-8000-000000000003';
+select is_empty(
+  $$select * from public.buyer_activity_events$$,
+  'unrelated user cannot read buyer activity'
+);
+select is_empty(
+  $$select * from public.buyer_response_events$$,
+  'unrelated user cannot read buyer response clocks'
+);
+select results_eq(
+  $$select count(*) from public.buyer_activity_events where activity_type = 'login'$$,
+  array[0::bigint],
+  'login is not meaningful buyer activity'
 );
 
 select * from finish();
