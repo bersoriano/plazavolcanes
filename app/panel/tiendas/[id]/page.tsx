@@ -3,9 +3,11 @@ import { ArrowLeft, ExternalLink, PackageOpen, Plus, Trash2 } from "lucide-react
 import { notFound, redirect } from "next/navigation";
 
 import { ShopForm } from "@/components/shops/shop-form";
+import { TrustDashboardCard } from "@/components/shops/trust-dashboard-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProductRow } from "@/components/products/product-row";
 import { deleteShop, updateShop } from "@/lib/actions/shops";
+import { getShopTrustDashboard } from "@/lib/queries/trust.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getCatalogImageUrl } from "@/lib/storage";
@@ -22,12 +24,14 @@ export default async function ShopManagePage({ params }: { params: Promise<{ id:
   const { data: shop } = await supabase.from("shops").select("*").eq("id", shopId).eq("owner_id", userId ?? "").maybeSingle();
   if (!shop) notFound();
   const { data: products } = await supabase.from("products").select("id, name, price_mxn, image_path, status").eq("shop_id", shopId).order("created_at", { ascending: false });
+  const trustDashboard = await getShopTrustDashboard(shopId);
   const updateAction = updateShop.bind(null, shopId);
   const deleteAction = deleteShop.bind(null, shopId);
 
   return (
     <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
       <div className="mb-7 flex flex-wrap items-center justify-between gap-4"><Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand" href="/panel"><ArrowLeft aria-hidden="true" className="size-4" />Mis tiendas</Link><Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand" href={`/tiendas/${shop.slug}`}><ExternalLink aria-hidden="true" className="size-4" />Ver tienda pública</Link></div>
+      {trustDashboard ? <div className="mb-7"><TrustDashboardCard dashboard={trustDashboard} /></div> : null}
       <div className="grid gap-7 lg:grid-cols-[minmax(0,1.05fr)_minmax(320px,.95fr)]">
         <div className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8"><h1 className="font-display text-3xl font-semibold tracking-[-0.03em]">Editar {shop.name}</h1><p className="mb-7 mt-2 text-muted">Mantén clara la historia de tu tienda.</p><ShopForm action={updateAction} shop={{ name: shop.name, description: shop.description, imageUrl: getCatalogImageUrl(shop.image_path), countryCode: shop.country_code, administrativeAreaCode: shop.administrative_area_code }} /><details className="mt-8 border-t border-line pt-6"><summary className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-sale"><Trash2 aria-hidden="true" className="size-4" />Eliminar tienda</summary><div className="mt-4 rounded-2xl bg-sale/10 p-4"><p className="text-sm leading-6 text-ink">Se eliminarán también todos sus productos e imágenes. Esta acción no se puede deshacer.</p><form action={deleteAction} className="mt-3"><button className="rounded-full bg-sale px-4 py-2 text-sm font-semibold text-white" type="submit">Confirmar eliminación</button></form></div></details></div>
         <aside className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Catálogo</p><h2 className="mt-1 font-display text-2xl font-semibold">Productos</h2></div><Link className="grid size-11 place-items-center rounded-full bg-brand text-white" href={`/panel/tiendas/${shopId}/productos/nuevo`} aria-label="Agregar producto"><Plus aria-hidden="true" className="size-5" /></Link></div>

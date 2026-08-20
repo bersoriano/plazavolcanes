@@ -395,6 +395,18 @@ export type Database = {
         };
         Relationships: [];
       };
+      shop_trust_evaluation_queue: {
+        Row: { shop_id: number; dirty_at: string; next_attempt_at: string; attempt_count: number; last_error: string | null; locked_at: string | null; last_success_at: string | null };
+        Insert: { shop_id: number; dirty_at?: string; next_attempt_at?: string; attempt_count?: number; last_error?: string | null; locked_at?: string | null; last_success_at?: string | null };
+        Update: { shop_id?: number; dirty_at?: string; next_attempt_at?: string; attempt_count?: number; last_error?: string | null; locked_at?: string | null; last_success_at?: string | null };
+        Relationships: [];
+      };
+      shop_trust_evaluations: {
+        Row: { id: number; shop_id: number; average_reply_time_minutes: number | null; response_rate: number | null; description_accuracy: number | null; on_time_shipping_rate: number | null; order_completion_rate: number | null; dispute_rate: number | null; total_orders: number | null; average_rating: number | null; review_count: number | null; last_active_days_ago: number | null; open_dispute_count: number; metric_qualified_tier: "standard" | "reliable" | "top_rated"; effective_tier: "standard" | "reliable" | "top_rated"; free_listing_limit: number; reasons: Json; next_tier_requirements: Json; summary: string; evaluator_policy_version: string; evaluated_at: string };
+        Insert: { id?: never; shop_id: number; average_reply_time_minutes?: number | null; response_rate?: number | null; description_accuracy?: number | null; on_time_shipping_rate?: number | null; order_completion_rate?: number | null; dispute_rate?: number | null; total_orders?: number | null; average_rating?: number | null; review_count?: number | null; last_active_days_ago?: number | null; open_dispute_count: number; metric_qualified_tier: "standard" | "reliable" | "top_rated"; effective_tier: "standard" | "reliable" | "top_rated"; free_listing_limit: number; reasons: Json; next_tier_requirements: Json; summary: string; evaluator_policy_version?: string; evaluated_at?: string };
+        Update: { id?: never; shop_id?: number; average_reply_time_minutes?: number | null; response_rate?: number | null; description_accuracy?: number | null; on_time_shipping_rate?: number | null; order_completion_rate?: number | null; dispute_rate?: number | null; total_orders?: number | null; average_rating?: number | null; review_count?: number | null; last_active_days_ago?: number | null; open_dispute_count?: number; metric_qualified_tier?: "standard" | "reliable" | "top_rated"; effective_tier?: "standard" | "reliable" | "top_rated"; free_listing_limit?: number; reasons?: Json; next_tier_requirements?: Json; summary?: string; evaluator_policy_version?: string; evaluated_at?: string };
+        Relationships: [];
+      };
       order_addresses: {
         Row: { order_id: number; recipient: string | null; address_line1: string | null; address_line2: string | null; locality: string | null; administrative_area: string | null; postal_code: string | null; country_code: string | null; delivery_instructions: string | null; redacted_at: string | null; created_at: string };
         Insert: { order_id: number; recipient?: string | null; address_line1?: string | null; address_line2?: string | null; locality?: string | null; administrative_area?: string | null; postal_code?: string | null; country_code?: string | null; delivery_instructions?: string | null; redacted_at?: string | null; created_at?: string };

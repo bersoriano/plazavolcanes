@@ -182,6 +182,7 @@ describe("public sharing controls", () => {
     expect(screen.getByText("Miembro desde febrero de 2024")).toBeInTheDocument();
     expect(screen.getByText("Vendedor establecido")).toBeInTheDocument();
     expect(screen.getAllByText("Sin verificar")).toHaveLength(2);
+    expect(screen.getByText("Nivel Estándar")).toBeInTheDocument();
     expect(
       screen.getByText(
         "La antigüedad muestra cuánto tiempo lleva este vendedor activo en Plaza Volcanes y ayuda a evaluar su trayectoria.",

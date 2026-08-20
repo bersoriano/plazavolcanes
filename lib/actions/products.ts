@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/lib/action-state";
+import { hasListingCapacity } from "@/lib/listing-limits";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { validateImage } from "@/lib/storage";
@@ -17,6 +18,10 @@ const invalidCategoryError: ActionState = {
   status: "error",
   message: "Revisa los campos marcados.",
   errors: { category_id: ["Selecciona una subcategoría válida antes de publicar."] },
+};
+const listingLimitError: ActionState = {
+  status: "error",
+  message: "Alcanzaste el límite de publicaciones activas de tu tienda.",
 };
 
 function imageFrom(formData: FormData) {
@@ -66,6 +71,24 @@ async function isPublishableCategory(
   return Boolean(root);
 }
 
+async function shopHasListingCapacity(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  shopId: number,
+  listingLimit: number,
+) {
+  const { count, error } = await supabase
+    .from("products")
+    .select("id", { count: "exact", head: true })
+    .eq("shop_id", shopId)
+    .eq("status", "published");
+  if (error) throw new Error("No pudimos consultar las publicaciones activas.");
+  return hasListingCapacity(count ?? 0, listingLimit);
+}
+
+function isListingLimitDatabaseError(error: { message?: string } | null) {
+  return error?.message?.includes("Límite de publicaciones alcanzado") ?? false;
+}
+
 export async function createProduct(
   shopId: number,
   _previousState: ActionState,
@@ -96,13 +119,14 @@ export async function createProduct(
   const context = await getAuthenticatedContext();
   if (!context) return authError;
   const { supabase, userId } = context;
-  const { data: shop } = await supabase.from("shops").select("slug").eq("id", shopId).eq("owner_id", userId).maybeSingle();
+  const { data: shop } = await supabase.from("shops").select("slug, listing_limit").eq("id", shopId).eq("owner_id", userId).maybeSingle();
   if (!shop) return { status: "error", message: "No encontramos esa tienda." };
   if (parsed.data.status === "published") {
     try {
       if (!(await isPublishableCategory(supabase, parsed.data.category_id))) return invalidCategoryError;
+      if (!(await shopHasListingCapacity(supabase, shopId, shop.listing_limit))) return listingLimitError;
     } catch {
-      return { status: "error", message: "No pudimos validar la subcategoría." };
+      return { status: "error", message: "No pudimos validar esta publicación." };
     }
   }
 
@@ -120,6 +144,7 @@ export async function createProduct(
     .single();
   if (error || !data) {
     if (imagePath) await supabase.storage.from("catalogo").remove([imagePath]);
+    if (isListingLimitDatabaseError(error)) return listingLimitError;
     return { status: "error", message: "No pudimos crear el producto." };
   }
 
@@ -156,15 +181,16 @@ export async function updateProduct(
   const context = await getAuthenticatedContext();
   if (!context) return authError;
   const { supabase, userId } = context;
-  const { data: existing } = await supabase.from("products").select("shop_id, image_path").eq("id", productId).maybeSingle();
+  const { data: existing } = await supabase.from("products").select("shop_id, image_path, status").eq("id", productId).maybeSingle();
   if (!existing) return { status: "error", message: "No encontramos ese producto." };
-  const { data: shop } = await supabase.from("shops").select("slug").eq("id", existing.shop_id).eq("owner_id", userId).maybeSingle();
+  const { data: shop } = await supabase.from("shops").select("slug, listing_limit").eq("id", existing.shop_id).eq("owner_id", userId).maybeSingle();
   if (!shop) return { status: "error", message: "No puedes editar este producto." };
   if (parsed.data.status === "published") {
     try {
       if (!(await isPublishableCategory(supabase, parsed.data.category_id))) return invalidCategoryError;
+      if (existing.status !== "published" && !(await shopHasListingCapacity(supabase, existing.shop_id, shop.listing_limit))) return listingLimitError;
     } catch {
-      return { status: "error", message: "No pudimos validar la subcategoría." };
+      return { status: "error", message: "No pudimos validar esta publicación." };
     }
   }
 
@@ -178,6 +204,7 @@ export async function updateProduct(
   const { error } = await supabase.from("products").update({ ...parsed.data, image_path: nextImagePath, updated_at: new Date().toISOString() }).eq("id", productId);
   if (error) {
     if (image && nextImagePath) await supabase.storage.from("catalogo").remove([nextImagePath]);
+    if (isListingLimitDatabaseError(error)) return listingLimitError;
     return { status: "error", message: "No pudimos guardar el producto." };
   }
   if (image && existing.image_path) await supabase.storage.from("catalogo").remove([existing.image_path]);
@@ -195,16 +222,20 @@ export async function setProductStatus(productId: number, nextStatus: "draft" | 
   const context = await getAuthenticatedContext();
   if (!parsedStatus.success || !context) redirect("/ingresar");
   const { supabase, userId } = context;
-  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id").eq("id", productId).maybeSingle();
+  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, status").eq("id", productId).maybeSingle();
   if (productError) throw new Error("No pudimos consultar el producto.");
   if (!product) redirect("/panel");
-  const { data: shop, error: shopError } = await supabase.from("shops").select("slug").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
+  const { data: shop, error: shopError } = await supabase.from("shops").select("slug, listing_limit").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
   if (shopError) throw new Error("No pudimos consultar la tienda.");
   if (!shop) redirect("/panel");
   if (parsedStatus.data === "published" && !(await isPublishableCategory(supabase, product.category_id))) {
     redirect(`/panel/productos/${productId}/editar?categoria=requerida=1`);
   }
+  if (parsedStatus.data === "published" && product.status !== "published" && !(await shopHasListingCapacity(supabase, product.shop_id, shop.listing_limit))) {
+    redirect(`/panel/productos/${productId}/editar?limite=alcanzado`);
+  }
   const { error } = await supabase.from("products").update({ status: parsedStatus.data, updated_at: new Date().toISOString() }).eq("id", productId);
+  if (isListingLimitDatabaseError(error)) redirect(`/panel/productos/${productId}/editar?limite=alcanzado`);
   if (error) throw new Error("No pudimos actualizar el estado del producto.");
   revalidatePath("/");
   revalidatePath(`/productos/${productId}`);
