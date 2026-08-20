@@ -27,6 +27,9 @@ export type OrderDetail = OrderSummary & {
   buyer_note: string | null;
   handling_days: number;
   handling_time_zone: string;
+  payment_confirmation_required: boolean;
+  payment_completed_at: string | null;
+  seller_cancellation_reason: "buyer_non_payment" | "inventory_unavailable" | "seller_unavailable" | "other" | null;
   accepted_at: string | null;
   ship_by_at: string | null;
   shipped_at: string | null;
@@ -83,7 +86,7 @@ export async function getOrderDetail(orderId: number): Promise<OrderDetail | nul
   if (!context) return null;
   const { data } = await context.supabase
     .from("orders")
-    .select("id, buyer_id, status, subtotal, currency_code, buyer_note, handling_days, handling_time_zone, accepted_at, ship_by_at, shipped_at, delivered_at, completed_at, tracking_text, created_at, shops!inner(id, name, slug), order_items(id, product_name, unit_price, quantity, line_total), order_addresses(recipient, address_line1, address_line2, locality, administrative_area, postal_code, country_code, delivery_instructions, redacted_at), order_events(id, event_type, previous_status, next_status, created_at), conversations(id, messages(id, sender_id, body, created_at)), order_reviews(id, rating, matched_description, comment, created_at), order_disputes(id, reason, status, buyer_statement, seller_response, resolution, resolution_notes, seller_fault, opened_at)")
+    .select("id, buyer_id, status, subtotal, currency_code, buyer_note, handling_days, handling_time_zone, payment_confirmation_required, payment_completed_at, seller_cancellation_reason, accepted_at, ship_by_at, shipped_at, delivered_at, completed_at, tracking_text, created_at, shops!inner(id, name, slug), order_items(id, product_name, unit_price, quantity, line_total), order_addresses(recipient, address_line1, address_line2, locality, administrative_area, postal_code, country_code, delivery_instructions, redacted_at), order_events(id, event_type, previous_status, next_status, created_at), conversations(id, messages(id, sender_id, body, created_at)), order_reviews(id, rating, matched_description, comment, created_at), order_disputes(id, reason, status, buyer_statement, seller_response, resolution, resolution_notes, seller_fault, opened_at)")
     .eq("id", orderId)
     .maybeSingle();
   if (!data) return null;

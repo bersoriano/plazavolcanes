@@ -64,7 +64,7 @@ function revalidateOrder(orderId: number) {
   revalidatePath("/panel/pedidos");
 }
 
-export async function confirmOrderPayment(orderId: number, formData: FormData): Promise<ActionState> {
+export async function confirmOrderPayment(orderId: number, _previousState: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = transitionSchema.safeParse({ idempotency_key: formData.get("idempotency_key") });
   if (!parsed.success) return { status: "error", message: "Revisa los datos de la acción." };
   const supabase = await authenticatedOrderClient();
@@ -75,7 +75,7 @@ export async function confirmOrderPayment(orderId: number, formData: FormData): 
   return { status: "success", message: "Pago confirmado." };
 }
 
-export async function cancelOrderAsBuyer(orderId: number, formData: FormData): Promise<ActionState> {
+export async function cancelOrderAsBuyer(orderId: number, _previousState: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = transitionSchema.safeParse({ idempotency_key: formData.get("idempotency_key") });
   if (!parsed.success) return { status: "error", message: "Revisa los datos de la acción." };
   const supabase = await authenticatedOrderClient();
@@ -86,7 +86,7 @@ export async function cancelOrderAsBuyer(orderId: number, formData: FormData): P
   return { status: "success", message: "Pedido cancelado." };
 }
 
-export async function cancelOrderAsSeller(orderId: number, formData: FormData): Promise<ActionState> {
+export async function cancelOrderAsSeller(orderId: number, _previousState: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = sellerCancellationSchema.safeParse({ reason: formData.get("reason"), idempotency_key: formData.get("idempotency_key") });
   if (!parsed.success) return { status: "error", message: "Selecciona una razón válida." };
   const supabase = await authenticatedOrderClient();
