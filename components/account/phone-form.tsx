@@ -1,10 +1,9 @@
 "use client";
 
-import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import type { ActionState } from "@/lib/action-state";
-import { initialActionState } from "@/lib/action-state";
+import { useFormAction } from "@/lib/use-form-action";
 import { Button } from "@/components/ui/button";
 
 function SaveButton() {
@@ -24,7 +23,7 @@ export function PhoneForm({
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   phone: string | null;
 }) {
-  const [state, formAction] = useActionState(action, initialActionState);
+  const [state, formAction] = useFormAction(action);
   // Accounts created before the phone requirement have nothing stored yet.
   const nationalNumber = phone?.replace(/^\+52/, "") ?? "";
 
@@ -47,7 +46,7 @@ export function PhoneForm({
             aria-invalid={Boolean(state.errors?.phone?.[0])}
             autoComplete="tel-national"
             className="min-h-12 w-full bg-transparent text-ink outline-none placeholder:text-muted/70"
-            defaultValue={nationalNumber}
+            defaultValue={state.values?.phone ?? nationalNumber}
             id="phone"
             inputMode="numeric"
             maxLength={16}

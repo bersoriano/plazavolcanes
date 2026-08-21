@@ -1,11 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { signIn, signUp } from "@/lib/actions/auth";
-import { initialActionState } from "@/lib/action-state";
+import { useFormAction } from "@/lib/use-form-action";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 
@@ -22,13 +21,14 @@ function SubmitButton({ mode }: { mode: "signin" | "signup" }) {
 
 export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
   const action = mode === "signin" ? signIn : signUp;
-  const [state, formAction] = useActionState(action, initialActionState);
+  const [state, formAction] = useFormAction(action);
   const signingIn = mode === "signin";
 
   return (
     <form action={formAction} className="space-y-5" noValidate>
       <Field
         autoComplete="email"
+        defaultValue={state.values?.email}
         error={state.errors?.email?.[0]}
         label="Correo electrónico"
         name="email"
@@ -48,6 +48,7 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
               aria-invalid={Boolean(state.errors?.phone?.[0])}
               autoComplete="tel-national"
               className="min-h-12 w-full bg-transparent text-ink outline-none placeholder:text-muted/70"
+              defaultValue={state.values?.phone}
               id="phone"
               inputMode="numeric"
               maxLength={16}

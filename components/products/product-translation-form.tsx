@@ -1,11 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { initialActionState, type ActionState } from "@/lib/action-state";
+import type { ActionState } from "@/lib/action-state";
+import { useFormAction } from "@/lib/use-form-action";
 
 type ProductTranslationFormProps = {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
@@ -26,7 +26,7 @@ function SubmitButton() {
 }
 
 export function ProductTranslationForm({ action, translation }: ProductTranslationFormProps) {
-  const [state, formAction] = useActionState(action, initialActionState);
+  const [state, formAction] = useFormAction(action);
 
   return (
     <section className="mt-8 border-t border-line pt-8">
@@ -39,10 +39,10 @@ export function ProductTranslationForm({ action, translation }: ProductTranslati
         </p>
         <form action={formAction} className="mt-6 space-y-5" noValidate>
         <Field
-          defaultValue={translation?.name}
           error={state.errors?.name?.[0]}
           label="Nombre en inglés"
           maxLength={120}
+          defaultValue={state.values?.name ?? translation?.name}
           name="name"
           placeholder="Clay coffee mug"
         />
@@ -54,9 +54,9 @@ export function ProductTranslationForm({ action, translation }: ProductTranslati
             aria-describedby={state.errors?.description ? "english-description-error" : undefined}
             aria-invalid={Boolean(state.errors?.description)}
             className="min-h-36 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none"
-            defaultValue={translation?.description}
             id="english-description"
             maxLength={3000}
+            defaultValue={state.values?.description ?? translation?.description}
             name="description"
             placeholder="Materials, process, dimensions, and other useful details."
           />

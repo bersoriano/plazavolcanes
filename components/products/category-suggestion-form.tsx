@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { initialActionState, type ActionState } from "@/lib/action-state";
+import type { ActionState } from "@/lib/action-state";
+import { useFormAction } from "@/lib/use-form-action";
 import type { CategoryTree } from "@/lib/categories";
 
 type CategorySuggestionFormProps = {
@@ -25,7 +26,7 @@ function SubmitButton() {
 
 export function CategorySuggestionForm({ action, categories }: CategorySuggestionFormProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [state, formAction] = useActionState(action, initialActionState);
+  const [state, formAction] = useFormAction(action);
   const activeRoots = categories.filter((category) => category.isActive);
 
   return (
@@ -47,6 +48,7 @@ export function CategorySuggestionForm({ action, categories }: CategorySuggestio
             error={state.errors?.suggested_name?.[0]}
             label="Categoría sugerida"
             maxLength={80}
+            defaultValue={state.values?.suggested_name}
             name="suggested_name"
             required
           />
@@ -60,6 +62,7 @@ export function CategorySuggestionForm({ action, categories }: CategorySuggestio
               className="min-h-28 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none"
               id="suggestion-context"
               maxLength={500}
+              defaultValue={state.values?.context}
               name="context"
               placeholder="Ejemplo: instrumentos para principiantes."
             />
@@ -74,6 +77,8 @@ export function CategorySuggestionForm({ action, categories }: CategorySuggestio
               aria-invalid={Boolean(state.errors?.root_category_id)}
               className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none"
               id="suggestion-root-category"
+              defaultValue={state.values?.root_category_id}
+              key={`root-category-${state.values?.root_category_id ?? ""}`}
               name="root_category_id"
             >
               <option value="">Sin categoría principal</option>

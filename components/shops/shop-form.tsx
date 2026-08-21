@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { ImagePlus } from "lucide-react";
 
 import type { ActionState } from "@/lib/action-state";
-import { initialActionState } from "@/lib/action-state";
+import { useFormAction } from "@/lib/use-form-action";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import {
@@ -37,7 +36,7 @@ function SaveButton({ editing }: { editing: boolean }) {
 }
 
 export function ShopForm({ action, shop }: ShopFormProps) {
-  const [state, formAction] = useActionState(action, initialActionState);
+  const [state, formAction] = useFormAction(action);
   const [preview, setPreview] = useState(shop?.imageUrl ?? null);
   const [primaryArea, setPrimaryArea] = useState(shop?.administrativeAreaCodes?.[0] ?? "");
   const [secondaryArea, setSecondaryArea] = useState(shop?.administrativeAreaCodes?.[1] ?? "");
@@ -51,7 +50,7 @@ export function ShopForm({ action, shop }: ShopFormProps) {
   return (
     <form action={formAction} className="space-y-6" noValidate>
       <Field
-        defaultValue={shop?.name}
+        defaultValue={state.values?.name ?? shop?.name}
         error={state.errors?.name?.[0]}
         label="Nombre de la tienda"
         maxLength={80}
@@ -66,7 +65,7 @@ export function ShopForm({ action, shop }: ShopFormProps) {
           aria-describedby={state.errors?.description ? "description-error" : undefined}
           aria-invalid={Boolean(state.errors?.description)}
           className="min-h-36 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none"
-          defaultValue={shop?.description}
+          defaultValue={state.values?.description ?? shop?.description}
           id="description"
           maxLength={1200}
           name="description"
