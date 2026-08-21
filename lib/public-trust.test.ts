@@ -114,9 +114,23 @@ describe("PUBLIC_TRUST_MARKERS measured state", () => {
     expect(marker("response_rate").measured(busy)).toBe(true);
   });
 
-  it("reports nothing measured without an evaluation at all", () => {
+  it("reports nothing measured without an evaluation, except a clean dispute record", () => {
     for (const entry of PUBLIC_TRUST_MARKERS) {
-      expect(entry.measured(null)).toBe(false);
+      expect(entry.measured(null)).toBe(entry.key === "dispute_rate");
     }
+  });
+
+  it("treats a shop with no disputes as earning the badge, evaluated or not", () => {
+    expect(marker("dispute_rate").measured(null)).toBe(true);
+    expect(marker("dispute_rate").value(null)).toBe("0%");
+    expect(marker("dispute_rate").measured({ ...zeroed, disputeRate: null })).toBe(true);
+    expect(marker("dispute_rate").value({ ...zeroed, disputeRate: null })).toBe("0%");
+  });
+
+  it("still reports a real dispute rate when there is one", () => {
+    const disputed = { ...zeroed, disputeRate: 12 };
+
+    expect(marker("dispute_rate").measured(disputed)).toBe(true);
+    expect(marker("dispute_rate").value(disputed)).toBe("12%");
   });
 });

@@ -103,8 +103,10 @@ export const PUBLIC_TRUST_MARKERS: PublicTrustMarker[] = [
     key: "dispute_rate",
     label: "Disputas",
     explanation: "Pedidos que terminaron en una disputa. Más bajo es mejor.",
-    value: (metrics) => formatTrustPercentage(metrics?.disputeRate ?? null),
-    measured: (metrics) => hasValue(formatTrustPercentage(metrics?.disputeRate ?? null)),
+    // No disputes is the achievement, so a shop with none earns the badge whether
+    // or not it has been evaluated yet.
+    value: (metrics) => formatTrustPercentage(metrics?.disputeRate ?? 0),
+    measured: () => true,
   },
   {
     key: "total_orders",

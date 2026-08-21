@@ -47,11 +47,23 @@ describe("TrustBadges", () => {
     render(<TrustBadges metrics={null} profile={profile} />);
 
     for (const marker of PUBLIC_TRUST_MARKERS) {
+      // A clean dispute record is earned by default, so it is never greyed.
+      if (marker.key === "dispute_rate") continue;
+
       const badge = screen.getByTestId(`trust-badge-${marker.key}`);
 
       expect(badge).toHaveAttribute("data-state", "unmeasured");
       expect(badge).toHaveTextContent("Sin datos");
     }
+  });
+
+  it("gives a shop with no disputes the badge even before any evaluation", () => {
+    render(<TrustBadges metrics={null} profile={profile} />);
+
+    const badge = screen.getByTestId("trust-badge-dispute_rate");
+
+    expect(badge).toHaveAttribute("data-state", "measured");
+    expect(badge).toHaveTextContent("0%");
   });
 
   it("keeps membership and verification active when the profile exists", () => {
