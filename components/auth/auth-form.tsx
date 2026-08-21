@@ -36,6 +36,34 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
         required
         type="email"
       />
+      {signingIn ? null : (
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-ink" htmlFor="phone">
+            Teléfono móvil
+          </label>
+          <div className="flex items-center gap-2 rounded-2xl border border-line bg-surface px-4 focus-within:border-brand">
+            <span className="text-sm font-semibold text-muted">+52</span>
+            <input
+              aria-describedby={state.errors?.phone?.[0] ? "phone-error" : undefined}
+              aria-invalid={Boolean(state.errors?.phone?.[0])}
+              autoComplete="tel-national"
+              className="min-h-12 w-full bg-transparent text-ink outline-none placeholder:text-muted/70"
+              id="phone"
+              inputMode="numeric"
+              maxLength={16}
+              name="phone"
+              placeholder="33 1234 5678"
+              required
+              type="tel"
+            />
+          </div>
+          {state.errors?.phone?.[0] ? (
+            <p className="text-sm font-medium text-sale" id="phone-error">{state.errors.phone[0]}</p>
+          ) : (
+            <p className="text-xs text-muted">Lo usamos para contactarte sobre tus pedidos. No es público.</p>
+          )}
+        </div>
+      )}
       <Field
         autoComplete={signingIn ? "current-password" : "new-password"}
         error={state.errors?.password?.[0]}

@@ -488,6 +488,27 @@ export type Database = {
         Update: { id?: never; conversation_id?: number; shop_id?: number; triggering_buyer_message_id?: number; closing_seller_message_id?: number | null; clock_started_at?: string; replied_at?: string | null; elapsed_minutes?: number | null; answered_within_24_hours?: boolean | null; created_at?: string };
         Relationships: [];
       };
+      user_contact_details: {
+        Row: {
+          created_at: string;
+          phone: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          phone?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          phone?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       user_trust_profiles: {
         Row: {
           joined_on: string;

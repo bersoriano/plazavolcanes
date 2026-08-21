@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { authSchema } from "@/lib/validation/auth";
+import { authSchema, phoneSchema, signUpSchema } from "@/lib/validation/auth";
 
 function parseCredentials(formData: FormData) {
   return authSchema.safeParse({
@@ -57,7 +57,11 @@ export async function signUp(
   _previousState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const parsed = parseCredentials(formData);
+  const parsed = signUpSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    phone: formData.get("phone"),
+  });
 
   if (!parsed.success) {
     return {
@@ -75,9 +79,14 @@ export async function signUp(
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
     "http://localhost:3000";
+  const { email, password, phone } = parsed.data;
   const { data, error } = await supabase.auth.signUp({
-    ...parsed.data,
+    email,
+    password,
     options: {
+      // A trigger copies this into user_contact_details, which works whether or not
+      // email confirmation leaves the new account with a session.
+      data: { phone },
       emailRedirectTo: `${siteUrl}/auth/confirm`,
     },
   });
@@ -112,4 +121,41 @@ export async function signOut() {
 
   revalidatePath("/", "layout");
   redirect("/");
+}
+
+export async function updatePhone(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = phoneSchema.safeParse({ phone: formData.get("phone") });
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Revisa los campos marcados.",
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  if (!isSupabaseConfigured()) return setupError;
+
+  const supabase = await createServerSupabaseClient();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const userId = typeof claimsData?.claims?.sub === "string" ? claimsData.claims.sub : null;
+
+  if (!userId) {
+    return { status: "error", message: "Tu sesión terminó. Ingresa nuevamente." };
+  }
+
+  const { error } = await supabase
+    .from("user_contact_details")
+    .update({ phone: parsed.data.phone, updated_at: new Date().toISOString() })
+    .eq("user_id", userId);
+
+  if (error) {
+    return { status: "error", message: "No pudimos guardar tu teléfono." };
+  }
+
+  revalidatePath("/panel/cuenta");
+  return { status: "success", message: "Teléfono actualizado." };
 }
