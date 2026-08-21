@@ -57,7 +57,7 @@ export type PublicTrustMarker = {
 export const PUBLIC_TRUST_MARKERS: PublicTrustMarker[] = [
   {
     key: "response_rate",
-    label: "Tasa de respuesta",
+    label: "Respuesta",
     explanation: "Cuántas conversaciones de compradores contesta esta tienda.",
     value: (metrics) => formatTrustPercentage(metrics?.responseRate ?? null),
   },
@@ -69,7 +69,7 @@ export const PUBLIC_TRUST_MARKERS: PublicTrustMarker[] = [
   },
   {
     key: "description_accuracy",
-    label: "Precisión de la descripción",
+    label: "Precisión",
     explanation: "Qué tan seguido lo recibido coincide con lo publicado, según quienes compraron.",
     value: (metrics) => formatTrustPercentage(metrics?.descriptionAccuracy ?? null),
   },
@@ -87,13 +87,13 @@ export const PUBLIC_TRUST_MARKERS: PublicTrustMarker[] = [
   },
   {
     key: "dispute_rate",
-    label: "Tasa de disputas",
+    label: "Disputas",
     explanation: "Pedidos que terminaron en una disputa. Más bajo es mejor.",
     value: (metrics) => formatTrustPercentage(metrics?.disputeRate ?? null),
   },
   {
     key: "total_orders",
-    label: "Pedidos atendidos",
+    label: "Pedidos",
     explanation: "Cuánta experiencia acumula esta tienda dentro de la plaza.",
     value: (metrics) => formatOrderCount(metrics?.totalOrders ?? null),
   },
@@ -105,14 +105,14 @@ export const PUBLIC_TRUST_MARKERS: PublicTrustMarker[] = [
   },
   {
     key: "review_count",
-    label: "Reseñas recibidas",
+    label: "Reseñas",
     explanation: "Cuántas personas ya calificaron una compra en esta tienda.",
     value: (metrics) =>
       metrics?.reviewCount == null ? NO_DATA_LABEL : String(metrics.reviewCount),
   },
   {
     key: "last_active",
-    label: "Última actividad",
+    label: "Actividad",
     explanation: "Cuándo atendió esta tienda un pedido o mensaje por última vez.",
     value: (metrics) => formatLastActive(metrics?.lastActiveDaysAgo ?? null),
   },

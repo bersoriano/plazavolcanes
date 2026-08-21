@@ -190,19 +190,21 @@ describe("public sharing controls", () => {
     expect(screen.getByRole("button", { name: "Compartir" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Compartir por WhatsApp" })).toBeInTheDocument();
     expect(screen.getByText("Miembro desde febrero de 2024")).toBeInTheDocument();
-    expect(screen.getByText("Vendedor establecido")).toBeInTheDocument();
-    expect(screen.getAllByText("Sin verificar")).toHaveLength(2);
+    expect(screen.getByTestId("trust-badge-membership")).toHaveAttribute(
+      "title",
+      expect.stringContaining("Vendedor establecido"),
+    );
+    expect(screen.getByTestId("trust-badge-verification")).toHaveTextContent("Sin verificar");
+    expect(screen.getByTestId("trust-badge-verification")).toHaveAttribute(
+      "title",
+      "Este vendedor aún no completa la verificación de identidad. Recomendamos tomar precauciones adicionales.",
+    );
     expect(screen.getByText("Nivel Estándar")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "La antigüedad muestra cuánto tiempo lleva este vendedor activo en Plaza Volcanes y ayuda a evaluar su trayectoria.",
-      ),
-    ).toHaveAttribute("role", "tooltip");
-    expect(
-      screen.getByText(
-        "Este vendedor aún no completa la verificación de identidad. Recomendamos tomar precauciones adicionales.",
-      ),
-    ).toHaveAttribute("role", "tooltip");
+    // A shop with no evaluation still shows every signal, greyed out.
+    expect(screen.getByTestId("trust-badge-response_rate")).toHaveAttribute(
+      "data-state",
+      "unmeasured",
+    );
   });
 });
 
