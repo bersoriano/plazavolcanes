@@ -43,20 +43,17 @@ function buildBadges(metrics: PublicTrustMetrics | null, profile: TrustProfile |
       value: verification?.primary_text ?? NO_DATA_LABEL,
       explanation:
         verification?.tooltip ?? "El nivel de verificación resume qué datos confirmó el vendedor.",
-      measured: Boolean(verification),
+      // "Sin verificar" is a level, not an achievement: it stays greyed.
+      measured: Boolean(verification) && profile?.verificationLevel !== "unverified",
       icon: <BadgeCheck aria-hidden="true" className="size-3.5" />,
     },
-    ...PUBLIC_TRUST_MARKERS.map((marker) => {
-      const value = marker.value(metrics);
-
-      return {
-        key: marker.key,
-        label: marker.label,
-        value,
-        explanation: marker.explanation,
-        measured: value !== NO_DATA_LABEL,
-      };
-    }),
+    ...PUBLIC_TRUST_MARKERS.map((marker) => ({
+      key: marker.key,
+      label: marker.label,
+      value: marker.value(metrics),
+      explanation: marker.explanation,
+      measured: marker.measured(metrics),
+    })),
   ];
 }
 
@@ -91,7 +88,7 @@ export function TrustBadges({
             )}
             {badge.label}
             <span className={badge.measured ? "font-bold text-accent" : "font-medium text-muted/80"}>
-              {badge.measured ? badge.value : "Sin datos"}
+              {badge.value === NO_DATA_LABEL ? "Sin datos" : badge.value}
             </span>
             <span className="sr-only"> — {badge.explanation}</span>
           </span>

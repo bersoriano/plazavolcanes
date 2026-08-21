@@ -90,3 +90,67 @@ describe("TrustBadges", () => {
     expect(badge).toHaveTextContent(explanation);
   });
 });
+
+describe("TrustBadges absence versus achievement", () => {
+  const emptyShop = {
+    averageReplyTimeMinutes: null,
+    responseRate: null,
+    descriptionAccuracy: null,
+    onTimeShippingRate: null,
+    orderCompletionRate: null,
+    disputeRate: 0,
+    totalOrders: 0,
+    averageRating: null,
+    reviewCount: 0,
+    lastActiveDaysAgo: null,
+    evaluatedAt: "2026-08-20T00:00:00.000Z",
+  };
+
+  it("greys a zero order and review count while keeping the number visible", () => {
+    render(<TrustBadges metrics={emptyShop} profile={profile} />);
+
+    for (const key of ["total_orders", "review_count"]) {
+      const badge = screen.getByTestId(`trust-badge-${key}`);
+
+      expect(badge).toHaveAttribute("data-state", "unmeasured");
+      expect(badge).toHaveTextContent("0");
+    }
+  });
+
+  it("keeps a zero dispute rate filled in, because it was earned", () => {
+    render(<TrustBadges metrics={emptyShop} profile={profile} />);
+
+    const badge = screen.getByTestId("trust-badge-dispute_rate");
+
+    expect(badge).toHaveAttribute("data-state", "measured");
+    expect(badge).toHaveTextContent("0%");
+  });
+
+  it("greys an unverified account while naming its level", () => {
+    render(
+      <TrustBadges
+        metrics={emptyShop}
+        profile={{ joinedOn: "2026-02-01", verificationLevel: "unverified" }}
+      />,
+    );
+
+    const badge = screen.getByTestId("trust-badge-verification");
+
+    expect(badge).toHaveAttribute("data-state", "unmeasured");
+    expect(badge).toHaveTextContent("Sin verificar");
+  });
+
+  it("fills the badge in once the account is verified", () => {
+    render(
+      <TrustBadges
+        metrics={emptyShop}
+        profile={{ joinedOn: "2026-02-01", verificationLevel: "verified" }}
+      />,
+    );
+
+    expect(screen.getByTestId("trust-badge-verification")).toHaveAttribute(
+      "data-state",
+      "measured",
+    );
+  });
+});

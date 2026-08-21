@@ -71,3 +71,52 @@ describe("PUBLIC_TRUST_MARKERS", () => {
     }
   });
 });
+
+describe("PUBLIC_TRUST_MARKERS measured state", () => {
+  const zeroed = {
+    averageReplyTimeMinutes: null,
+    responseRate: null,
+    descriptionAccuracy: null,
+    onTimeShippingRate: null,
+    orderCompletionRate: null,
+    disputeRate: 0,
+    totalOrders: 0,
+    averageRating: null,
+    reviewCount: 0,
+    lastActiveDaysAgo: null,
+    evaluatedAt: "2026-08-20T00:00:00.000Z",
+  };
+
+  function marker(key: string) {
+    return PUBLIC_TRUST_MARKERS.find((entry) => entry.key === key)!;
+  }
+
+  it("treats a shop with no orders or reviews as unmeasured on those signals", () => {
+    expect(marker("total_orders").measured(zeroed)).toBe(false);
+    expect(marker("review_count").measured(zeroed)).toBe(false);
+  });
+
+  it("still shows the real zero rather than hiding it", () => {
+    expect(marker("total_orders").value(zeroed)).toBe("0");
+    expect(marker("review_count").value(zeroed)).toBe("0");
+  });
+
+  it("keeps a zero dispute rate as a genuine measurement", () => {
+    expect(marker("dispute_rate").measured(zeroed)).toBe(true);
+    expect(marker("dispute_rate").value(zeroed)).toBe("0%");
+  });
+
+  it("counts a signal as measured once it carries a value", () => {
+    const busy = { ...zeroed, totalOrders: 34, reviewCount: 12, responseRate: 98 };
+
+    expect(marker("total_orders").measured(busy)).toBe(true);
+    expect(marker("review_count").measured(busy)).toBe(true);
+    expect(marker("response_rate").measured(busy)).toBe(true);
+  });
+
+  it("reports nothing measured without an evaluation at all", () => {
+    for (const entry of PUBLIC_TRUST_MARKERS) {
+      expect(entry.measured(null)).toBe(false);
+    }
+  });
+});
