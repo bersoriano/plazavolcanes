@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getCatalogImageUrl, validateImage } from "@/lib/storage";
+import { getCatalogImageUrl, validateImage, validateProductImages } from "@/lib/storage";
 
 describe("validateImage", () => {
   it("accepts JPEG, PNG, and WebP up to 5 MB", () => {
@@ -40,5 +40,46 @@ describe("getCatalogImageUrl", () => {
 
   it("returns null without an image path", () => {
     expect(getCatalogImageUrl(null)).toBeNull();
+  });
+});
+
+describe("validateProductImages", () => {
+  function imageOf(bytes: number, type = "image/jpeg") {
+    return new File([new Uint8Array(bytes)], "producto.jpg", { type });
+  }
+
+  it("accepts up to five images of two megabytes each", () => {
+    const files = Array.from({ length: 5 }, () => imageOf(2 * 1024 * 1024));
+
+    expect(validateProductImages(files)).toBeNull();
+  });
+
+  it("rejects a sixth image", () => {
+    const files = Array.from({ length: 6 }, () => imageOf(1024));
+
+    expect(validateProductImages(files)).toBe("Puedes subir hasta 5 imágenes.");
+  });
+
+  it("rejects an image above two megabytes", () => {
+    expect(validateProductImages([imageOf(2 * 1024 * 1024 + 1)])).toBe(
+      "Cada imagen debe pesar 2 MB o menos.",
+    );
+  });
+
+  it("rejects an unsupported format", () => {
+    expect(validateProductImages([imageOf(1024, "image/gif")])).toBe(
+      "Usa una imagen JPEG, PNG o WebP.",
+    );
+  });
+
+  it("counts images already stored against the limit", () => {
+    const files = Array.from({ length: 3 }, () => imageOf(1024));
+
+    expect(validateProductImages(files, 3)).toBe("Puedes subir hasta 5 imágenes.");
+    expect(validateProductImages(files, 2)).toBeNull();
+  });
+
+  it("accepts an empty selection", () => {
+    expect(validateProductImages([])).toBeNull();
   });
 });

@@ -392,6 +392,21 @@ export async function getPublicProduct(
     .eq("slug", slug)
     .eq("status", "published")
     .maybeSingle();
+  if (!data) return null;
 
-  return data ? mapProduct(data as unknown as ProductQueryRow, locale) : null;
+  const product = mapProduct(data as unknown as ProductQueryRow, locale);
+  const { data: gallery } = await supabase
+    .from("product_images")
+    .select("storage_path, position")
+    .eq("product_id", product.id)
+    .order("position");
+  const images = (gallery ?? [])
+    .map((image) => getCatalogImageUrl(image.storage_path))
+    .filter((url): url is string => url !== null);
+
+  // A product from before galleries existed still has its single cover image.
+  return {
+    ...product,
+    images: images.length ? images : product.image_path ? [product.image_path] : [],
+  };
 }

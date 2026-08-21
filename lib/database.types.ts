@@ -220,6 +220,38 @@ export type Database = {
           },
         ];
       };
+      product_images: {
+        Row: {
+          id: number;
+          product_id: number;
+          storage_path: string;
+          position: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: never;
+          product_id: number;
+          storage_path: string;
+          position: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: never;
+          product_id?: number;
+          storage_path?: string;
+          position?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "product_images_product_id_fkey";
+            columns: ["product_id"];
+            isOneToOne: false;
+            referencedRelation: "products";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       products: {
         Row: {
           category_id: number | null;

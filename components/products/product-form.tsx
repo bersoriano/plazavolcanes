@@ -7,6 +7,7 @@ import { ImagePlus } from "lucide-react";
 import { CategoryFields } from "@/components/products/category-fields";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { MAX_PRODUCT_IMAGES } from "@/lib/storage";
 import type { ActionState } from "@/lib/action-state";
 import { initialActionState } from "@/lib/action-state";
 import type { CategoryTree } from "@/lib/categories";
@@ -31,7 +32,10 @@ type ProductFormProps = {
     units_available?: number;
     imageUrl: string | null;
   };
+  images?: ProductImage[];
 };
+
+export type ProductImage = { id: number; url: string | null; position: number };
 
 function ProductActions({ status }: { status: "draft" | "published" }) {
   const { pending } = useFormStatus();
@@ -47,7 +51,7 @@ function ProductActions({ status }: { status: "draft" | "published" }) {
   );
 }
 
-export function ProductForm({ action, categories, product }: ProductFormProps) {
+export function ProductForm({ action, categories, product, images = [] }: ProductFormProps) {
   const [state, formAction] = useActionState(action, initialActionState);
   const [preview, setPreview] = useState(product?.imageUrl ?? null);
   const [condition, setCondition] = useState<ProductCondition>(product?.condition ?? "new");
@@ -99,13 +103,44 @@ export function ProductForm({ action, categories, product }: ProductFormProps) {
       ) : null}
 
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-ink" htmlFor="product-image">Imagen del producto <span className="font-normal text-muted">(opcional)</span></label>
-        <label className="flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed border-line bg-background p-4 transition-colors hover:border-brand" htmlFor="product-image"><span className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface text-brand">{preview ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img alt="Vista previa" className="size-full object-cover" src={preview} />
-        ) : <ImagePlus aria-hidden="true" className="size-6" />}</span><span><strong className="block text-sm text-ink">Elige una imagen</strong><span className="mt-1 block text-xs text-muted">JPEG, PNG o WebP · máximo 5 MB</span></span></label>
-        <input accept="image/jpeg,image/png,image/webp" className="sr-only" id="product-image" name="image" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (file) setPreview(URL.createObjectURL(file)); }} type="file" />
-        {state.errors?.image?.[0] ? <p className="text-sm font-medium text-sale">{state.errors.image[0]}</p> : null}
+        <label className="block text-sm font-semibold text-ink" htmlFor="product-images">Imágenes del producto <span className="font-normal text-muted">(opcional)</span></label>
+
+        {images.length ? (
+          <ul className="flex flex-wrap gap-3">
+            {images.map((image, index) => (
+              <li className="relative" key={image.id}>
+                <span className="block size-24 overflow-hidden rounded-xl bg-background">
+                  {image.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img alt={`Imagen ${index + 1}`} className="size-full object-cover" src={image.url} />
+                  ) : null}
+                </span>
+                {index === 0 ? (
+                  <span className="absolute left-1 top-1 rounded-full bg-accent px-2 py-0.5 text-[0.65rem] font-bold text-brand-hover">Portada</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        <label className="flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed border-line bg-background p-4 transition-colors hover:border-brand" htmlFor="product-images">
+          <span className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface text-brand">
+            {preview ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt="Vista previa" className="size-full object-cover" src={preview} />
+            ) : <ImagePlus aria-hidden="true" className="size-6" />}
+          </span>
+          <span>
+            <strong className="block text-sm text-ink">Elige tus imágenes</strong>
+            <span className="mt-1 block text-xs text-muted">JPEG, PNG o WebP · hasta 5 imágenes · máximo 2 MB cada una</span>
+            <span className="mt-1 block text-xs text-muted">La primera imagen es la portada.</span>
+          </span>
+        </label>
+        <input accept="image/jpeg,image/png,image/webp" className="sr-only" id="product-images" multiple name="images" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (file) setPreview(URL.createObjectURL(file)); }} type="file" />
+        {images.length ? (
+          <p className="text-xs text-muted">{`Quedan ${MAX_PRODUCT_IMAGES - images.length} espacios de ${MAX_PRODUCT_IMAGES}.`}</p>
+        ) : null}
+        {state.errors?.images?.[0] ? <p className="text-sm font-medium text-sale">{state.errors.images[0]}</p> : null}
       </div>
       {state.message ? <p className={`rounded-2xl px-4 py-3 text-sm font-medium ${state.status === "success" ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"}`} role="status">{state.message}</p> : null}
       <ProductActions status={product?.status ?? "draft"} />

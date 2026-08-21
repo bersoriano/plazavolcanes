@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, ImageIcon, Store } from "lucide-react";
+import { ArrowLeft, ChevronRight, Store } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import { ProductGallery } from "@/components/catalog/product-gallery";
 import { ShareActions } from "@/components/share/share-actions";
 import { AddToCartForm } from "@/components/orders/add-to-cart-form";
 import {
@@ -108,16 +109,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
       ) : null}
 
       <div className="mt-7 grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:gap-12">
-        <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-[#eee8e1]">
-          {product.image_path ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img alt={product.name} className="size-full object-cover" src={product.image_path} />
-          ) : (
-            <div className="grid size-full place-items-center text-brand/30">
-              <ImageIcon aria-hidden="true" className="size-16" />
-            </div>
-          )}
-        </div>
+        <ProductGallery images={product.images} name={product.name} />
         <div className="flex flex-col justify-center">
           <Link className="inline-flex w-fit items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-sm font-semibold text-brand-hover" href={`/tiendas/${product.shop.slug}`}>
             <Store aria-hidden="true" className="size-4" />

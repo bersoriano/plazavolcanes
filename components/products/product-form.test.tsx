@@ -174,3 +174,44 @@ describe("ProductForm units available", () => {
     expect(screen.getByLabelText("Unidades disponibles")).toHaveValue(4);
   });
 });
+
+describe("ProductForm gallery", () => {
+  it("accepts several images at once and states the limits", () => {
+    render(<ProductForm action={action} categories={[]} />);
+
+    const input = screen.getByLabelText(/Imágenes del producto/);
+
+    expect(input).toHaveAttribute("multiple");
+    expect(input).toHaveAttribute("name", "images");
+    expect(screen.getByText(/hasta 5 im[áa]genes/i)).toBeInTheDocument();
+    expect(screen.getByText(/2 MB/)).toBeInTheDocument();
+  });
+
+  it("shows the images the product already holds", () => {
+    render(
+      <ProductForm
+        action={action}
+        categories={[]}
+        images={[
+          { id: 1, url: "https://example.test/a.jpg", position: 0 },
+          { id: 2, url: "https://example.test/b.jpg", position: 1 },
+        ]}
+        product={{
+          name: "Taza volcánica",
+          description: "Taza hecha a mano con barro de alta temperatura.",
+          price_mxn: 349,
+          status: "draft",
+          condition: "new",
+          used_condition: null,
+          category_id: null,
+          units_available: 1,
+          imageUrl: null,
+        }}
+      />,
+    );
+
+    expect(screen.getAllByRole("img", { name: /Imagen \d/ })).toHaveLength(2);
+    expect(screen.getByText("Portada")).toBeInTheDocument();
+    expect(screen.getByText("Quedan 3 espacios de 5.")).toBeInTheDocument();
+  });
+});
