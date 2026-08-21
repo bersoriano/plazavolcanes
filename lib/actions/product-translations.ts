@@ -12,9 +12,14 @@ const saveError: ActionState = {
   message: "No pudimos guardar la versión en inglés.",
 };
 
-function revalidateTranslationPaths(productId: number, shopId: number, shopSlug: string) {
+function revalidateTranslationPaths(
+  productId: number,
+  productSlug: string,
+  shopId: number,
+  shopSlug: string,
+) {
   revalidatePath("/");
-  revalidatePath(`/productos/${productId}`);
+  revalidatePath(`/productos/${productSlug}`);
   revalidatePath(`/tiendas/${shopSlug}`);
   revalidatePath(`/panel/productos/${productId}/editar`);
   revalidatePath(`/panel/tiendas/${shopId}`);
@@ -45,7 +50,7 @@ export async function saveEnglishProductTranslation(
 
   const { data: product, error: productError } = await supabase
     .from("products")
-    .select("shop_id")
+    .select("shop_id, slug")
     .eq("id", productId)
     .maybeSingle();
   if (productError || !product) return saveError;
@@ -66,7 +71,7 @@ export async function saveEnglishProductTranslation(
       .eq("locale", "en-US");
     if (error) return saveError;
 
-    revalidateTranslationPaths(productId, shop.id, shop.slug);
+    revalidateTranslationPaths(productId, product.slug, shop.id, shop.slug);
     return { status: "success", message: "Versión en inglés eliminada." };
   }
 
@@ -84,6 +89,6 @@ export async function saveEnglishProductTranslation(
   );
   if (error) return saveError;
 
-  revalidateTranslationPaths(productId, shop.id, shop.slug);
+  revalidateTranslationPaths(productId, product.slug, shop.id, shop.slug);
   return { status: "success", message: "Versión en inglés guardada." };
 }

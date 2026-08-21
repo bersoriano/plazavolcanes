@@ -7,11 +7,10 @@ export function slugify(value: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-export async function uniqueShopSlug(
-  name: string,
+export async function uniqueSlug(
+  base: string,
   exists: (slug: string) => Promise<boolean>,
 ) {
-  const base = slugify(name) || "tienda";
   let candidate = base;
   let suffix = 2;
 
@@ -21,4 +20,18 @@ export async function uniqueShopSlug(
   }
 
   return candidate;
+}
+
+export async function uniqueShopSlug(
+  name: string,
+  exists: (slug: string) => Promise<boolean>,
+) {
+  return uniqueSlug(slugify(name) || "tienda", exists);
+}
+
+export async function uniqueProductSlug(
+  name: string,
+  exists: (slug: string) => Promise<boolean>,
+) {
+  return uniqueSlug(slugify(name) || "producto", exists);
 }

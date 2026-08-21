@@ -235,6 +235,7 @@ export type Database = {
           price_mxn: number;
           search_document: unknown;
           shop_id: number;
+          slug: string;
           status: "draft" | "published";
           updated_at: string;
           used_condition: "mint" | "good" | "fair" | "bad" | "scrap" | null;
@@ -252,6 +253,7 @@ export type Database = {
           name: string;
           price_mxn: number;
           shop_id: number;
+          slug: string;
           status?: "draft" | "published";
           updated_at?: string;
           used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
@@ -269,6 +271,7 @@ export type Database = {
           name?: string;
           price_mxn?: number;
           shop_id?: number;
+          slug?: string;
           status?: "draft" | "published";
           updated_at?: string;
           used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;

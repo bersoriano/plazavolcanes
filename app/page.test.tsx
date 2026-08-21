@@ -139,6 +139,7 @@ function catalogResult(
 function sampleProduct() {
   return {
     id: 7,
+    slug: "taza-de-barro-negro",
     name: "Taza de barro negro",
     description: "Pieza hecha a mano en Oaxaca.",
     price_mxn: 480,

@@ -17,6 +17,7 @@ import { getCatalogImageUrl } from "@/lib/storage";
 export type CatalogProduct = Pick<
   Product,
   | "id"
+  | "slug"
   | "name"
   | "description"
   | "price_mxn"
@@ -33,10 +34,11 @@ export type CatalogProduct = Pick<
 export type CatalogShop = Shop & { imageUrl: string | null };
 
 const productSelection =
-  "id, name, description, price_mxn, condition, used_condition, image_path, created_at, category_id, currency_code, shops!inner(name, slug, country_code), product_translations(locale, name, description, review_status)";
+  "id, slug, name, description, price_mxn, condition, used_condition, image_path, created_at, category_id, currency_code, shops!inner(name, slug, country_code), product_translations(locale, name, description, review_status)";
 
 type ProductQueryRow = {
   id: number;
+  slug: string;
   name: string;
   description: string;
   price_mxn: number;
@@ -65,6 +67,7 @@ function mapProduct(item: ProductQueryRow, locale: CatalogLocale): CatalogProduc
 
   return {
     id: item.id,
+    slug: item.slug,
     name: translation?.name ?? item.name,
     description: translation?.description ?? item.description,
     price_mxn: item.price_mxn,
@@ -343,7 +346,7 @@ export async function getPublicShop(
 }
 
 export async function getPublicProduct(
-  id: number,
+  slug: string,
   locale: CatalogLocale = DEFAULT_CATALOG_LOCALE,
 ) {
   if (!isSupabaseConfigured()) return null;
@@ -351,7 +354,7 @@ export async function getPublicProduct(
   const { data } = await supabase
     .from("products")
     .select(productSelection)
-    .eq("id", id)
+    .eq("slug", slug)
     .eq("status", "published")
     .maybeSingle();
 

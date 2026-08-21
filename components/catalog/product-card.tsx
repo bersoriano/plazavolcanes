@@ -14,6 +14,7 @@ import { formatProductCondition, type ProductCondition, type UsedCondition } fro
 type ProductCardProps = {
   product: {
     id: number;
+    slug: string;
     image_path: string | null;
     name: string;
     price_mxn: number | string;
@@ -55,7 +56,7 @@ export function ProductCard({
   }
 
   return (
-    <Link className="group block" href={`/productos/${product.id}${catalogQuery}`} onClick={recordSelection}>
+    <Link className="group block" href={`/productos/${product.slug}${catalogQuery}`} onClick={recordSelection}>
       <div className="relative aspect-[4/3] overflow-hidden rounded-[1.4rem] bg-[#eee8e1]">
         <span className="absolute left-3 top-3 z-10 rounded-full bg-surface/95 px-3 py-1.5 text-xs font-semibold text-brand shadow-sm">
           {formatProductCondition(product.condition, product.used_condition)}

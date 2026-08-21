@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import ProductPage from "@/app/productos/[id]/page";
+import ProductPage from "@/app/productos/[slug]/page";
 import PublicShopPage from "@/app/tiendas/[slug]/page";
 import {
   getPublicProduct,
@@ -21,6 +21,9 @@ vi.mock("@/lib/queries/catalog.server", () => ({
 vi.mock("@/lib/queries/categories.server", () => ({
   getProductCategoryTree: vi.fn(),
 }));
+
+const notFound = vi.hoisted(() => vi.fn());
+vi.mock("next/navigation", () => ({ notFound, redirect: vi.fn() }));
 
 afterEach(() => {
   cleanup();
@@ -52,6 +55,7 @@ describe("public sharing controls", () => {
     ]);
     vi.mocked(getPublicProduct).mockResolvedValue({
       id: 8,
+      slug: "taza-volcanica",
       name: "Taza volcánica",
       description: "Taza hecha a mano con barro de alta temperatura.",
       price_mxn: 349,
@@ -66,7 +70,7 @@ describe("public sharing controls", () => {
 
     render(
       await ProductPage({
-        params: Promise.resolve({ id: "8" }),
+        params: Promise.resolve({ slug: "taza-volcanica" }),
         searchParams: Promise.resolve({
           q: "taza",
           categoria: "hogar-y-jardin",
@@ -111,6 +115,7 @@ describe("public sharing controls", () => {
     ]);
     vi.mocked(getPublicProduct).mockResolvedValue({
       id: 8,
+      slug: "taza-volcanica",
       name: "Volcanic clay mug",
       description: "Handmade with high-temperature regional clay.",
       price_mxn: 349,
@@ -125,12 +130,12 @@ describe("public sharing controls", () => {
 
     render(
       await ProductPage({
-        params: Promise.resolve({ id: "8" }),
+        params: Promise.resolve({ slug: "taza-volcanica" }),
         searchParams: Promise.resolve({ locale: "en-US", countryCode: "US" }),
       }),
     );
 
-    expect(getPublicProduct).toHaveBeenCalledWith(8, "en-US");
+    expect(getPublicProduct).toHaveBeenCalledWith("taza-volcanica", "en-US");
     expect(screen.getByRole("heading", { name: "Volcanic clay mug" })).toBeInTheDocument();
     expect(screen.getByText("Handmade with high-temperature regional clay.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Volver a resultados" })).toHaveAttribute(
@@ -193,5 +198,47 @@ describe("public sharing controls", () => {
         "Este vendedor aún no completa la verificación de identidad. Recomendamos tomar precauciones adicionales.",
       ),
     ).toHaveAttribute("role", "tooltip");
+  });
+});
+
+describe("product slug routing", () => {
+  it("looks the product up by the slug in the path", async () => {
+    vi.mocked(getProductCategoryTree).mockResolvedValue([]);
+    vi.mocked(getPublicProduct).mockResolvedValue({
+      id: 8,
+      slug: "motorola-razr-5g",
+      name: "Motorola Razr 5G",
+      description: "Teléfono plegable en excelente estado general.",
+      price_mxn: 8999,
+      currency_code: "MXN",
+      category_id: null,
+      condition: "used",
+      used_condition: "good",
+      image_path: null,
+      created_at: "2026-08-19T00:00:00.000Z",
+      shop: { name: "Tecno Plaza", slug: "tecno-plaza" },
+    });
+
+    render(
+      await ProductPage({
+        params: Promise.resolve({ slug: "motorola-razr-5g" }),
+        searchParams: Promise.resolve({}),
+      }),
+    );
+
+    expect(vi.mocked(getPublicProduct).mock.calls[0][0]).toBe("motorola-razr-5g");
+    expect(screen.getByRole("heading", { level: 1, name: "Motorola Razr 5G" })).toBeInTheDocument();
+  });
+
+  it("does not resolve a product from a numeric path", async () => {
+    vi.mocked(getProductCategoryTree).mockResolvedValue([]);
+    vi.mocked(getPublicProduct).mockResolvedValue(null);
+
+    await ProductPage({
+      params: Promise.resolve({ slug: "8" }),
+      searchParams: Promise.resolve({}),
+    }).catch(() => undefined);
+
+    expect(notFound).toHaveBeenCalled();
   });
 });

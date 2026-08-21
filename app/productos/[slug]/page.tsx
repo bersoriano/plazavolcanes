@@ -27,33 +27,23 @@ type ProductSearchParams = Promise<{
 }>;
 
 type ProductPageProps = {
-  params: Promise<{ id: string }>;
+  params: Promise<{ slug: string }>;
   searchParams?: ProductSearchParams;
 };
 
-function parseProductId(id: string) {
-  const value = Number(id);
-  return Number.isSafeInteger(value) && value > 0 ? value : null;
-}
-
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params;
-  const productId = parseProductId(id);
-  if (!productId) return { title: "Producto no encontrado" };
-  const product = await getPublicProduct(productId);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const product = await getPublicProduct(slug);
   return product ? { title: product.name, description: product.description } : { title: "Producto no encontrado" };
 }
 
 export default async function ProductPage({ params, searchParams }: ProductPageProps) {
-  const [{ id }, rawSearchParams] = await Promise.all([
+  const [{ slug }, rawSearchParams] = await Promise.all([
     params,
     searchParams ?? Promise.resolve({}),
   ]);
-  const productId = parseProductId(id);
-  if (!productId) notFound();
-
   const filters = normalizeCatalogFilters(rawSearchParams);
-  const product = await getPublicProduct(productId, filters.locale);
+  const product = await getPublicProduct(slug, filters.locale);
   if (!product) notFound();
 
   const categories = product.category_id

@@ -9,6 +9,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { validateImage } from "@/lib/storage";
 import { productSchema, productStatusSchema } from "@/lib/validation/product";
+import { uniqueProductSlug } from "@/lib/slug";
 
 const authError: ActionState = {
   status: "error",
@@ -89,6 +90,20 @@ function isListingLimitDatabaseError(error: { message?: string } | null) {
   return error?.message?.includes("Límite de publicaciones alcanzado") ?? false;
 }
 
+async function nextProductSlug(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  name: string,
+) {
+  return uniqueProductSlug(name, async (candidate) => {
+    const { data } = await supabase
+      .from("products")
+      .select("id")
+      .eq("slug", candidate)
+      .maybeSingle();
+    return Boolean(data);
+  });
+}
+
 export async function createProduct(
   shopId: number,
   _previousState: ActionState,
@@ -137,9 +152,10 @@ export async function createProduct(
     if (error) return { status: "error", message: "No pudimos subir la imagen." };
   }
 
+  const slug = await nextProductSlug(supabase, parsed.data.name);
   const { data, error } = await supabase
     .from("products")
-    .insert({ ...parsed.data, shop_id: shopId, image_path: imagePath })
+    .insert({ ...parsed.data, shop_id: shopId, slug, image_path: imagePath })
     .select("id")
     .single();
   if (error || !data) {
@@ -181,7 +197,7 @@ export async function updateProduct(
   const context = await getAuthenticatedContext();
   if (!context) return authError;
   const { supabase, userId } = context;
-  const { data: existing } = await supabase.from("products").select("shop_id, image_path, status").eq("id", productId).maybeSingle();
+  const { data: existing } = await supabase.from("products").select("shop_id, image_path, status, slug").eq("id", productId).maybeSingle();
   if (!existing) return { status: "error", message: "No encontramos ese producto." };
   const { data: shop } = await supabase.from("shops").select("slug, listing_limit").eq("id", existing.shop_id).eq("owner_id", userId).maybeSingle();
   if (!shop) return { status: "error", message: "No puedes editar este producto." };
@@ -201,7 +217,11 @@ export async function updateProduct(
     if (error) return { status: "error", message: "No pudimos subir la imagen." };
   }
 
-  const { error } = await supabase.from("products").update({ ...parsed.data, image_path: nextImagePath, updated_at: new Date().toISOString() }).eq("id", productId);
+  // A published slug is already out in the world, so only drafts may regenerate one.
+  const slug = existing.status === "published"
+    ? existing.slug
+    : await nextProductSlug(supabase, parsed.data.name);
+  const { error } = await supabase.from("products").update({ ...parsed.data, slug, image_path: nextImagePath, updated_at: new Date().toISOString() }).eq("id", productId);
   if (error) {
     if (image && nextImagePath) await supabase.storage.from("catalogo").remove([nextImagePath]);
     if (isListingLimitDatabaseError(error)) return listingLimitError;
@@ -210,7 +230,7 @@ export async function updateProduct(
   if (image && existing.image_path) await supabase.storage.from("catalogo").remove([existing.image_path]);
 
   revalidatePath("/");
-  revalidatePath(`/productos/${productId}`);
+  revalidatePath(`/productos/${slug}`);
   revalidatePath(`/panel/productos/${productId}/editar`);
   revalidatePath(`/panel/tiendas/${existing.shop_id}`);
   revalidatePath(`/tiendas/${shop.slug}`);
@@ -222,7 +242,7 @@ export async function setProductStatus(productId: number, nextStatus: "draft" | 
   const context = await getAuthenticatedContext();
   if (!parsedStatus.success || !context) redirect("/ingresar");
   const { supabase, userId } = context;
-  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, status").eq("id", productId).maybeSingle();
+  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, status, slug").eq("id", productId).maybeSingle();
   if (productError) throw new Error("No pudimos consultar el producto.");
   if (!product) redirect("/panel");
   const { data: shop, error: shopError } = await supabase.from("shops").select("slug, listing_limit").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
@@ -238,7 +258,7 @@ export async function setProductStatus(productId: number, nextStatus: "draft" | 
   if (isListingLimitDatabaseError(error)) redirect(`/panel/productos/${productId}/editar?limite=alcanzado`);
   if (error) throw new Error("No pudimos actualizar el estado del producto.");
   revalidatePath("/");
-  revalidatePath(`/productos/${productId}`);
+  revalidatePath(`/productos/${product.slug}`);
   revalidatePath(`/panel/tiendas/${product.shop_id}`);
   revalidatePath(`/tiendas/${shop.slug}`);
 }

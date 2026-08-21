@@ -14,6 +14,7 @@ describe("ProductCard", () => {
       <ProductCard
         product={{
           id: 1,
+          slug: "producto-1",
           image_path: null,
           name: "Taza volcánica",
           price_mxn: 349,
@@ -34,6 +35,7 @@ describe("ProductCard", () => {
       <ProductCard
         product={{
           id: 2,
+          slug: "producto-2",
           image_path: null,
           name: "Lámpara antigua",
           price_mxn: 890,
@@ -55,6 +57,7 @@ describe("ProductCard", () => {
         categoryName="Electrónica"
         product={{
           id: 3,
+          slug: "producto-3",
           image_path: null,
           name: "Cámara instantánea",
           price_mxn: 42,
@@ -82,6 +85,7 @@ describe("ProductCard", () => {
           name: "Funda para celular",
           price_mxn: 199,
           currency_code: "MXN",
+          slug: "funda-para-celular",
           category_id: 11,
           condition: "new",
           used_condition: null,
@@ -92,7 +96,7 @@ describe("ProductCard", () => {
 
     expect(screen.getByRole("link", { name: /Funda para celular/ })).toHaveAttribute(
       "href",
-      "/productos/4?q=iphone&categoria=electronica&subcategoria=celulares-y-accesorios",
+      "/productos/funda-para-celular?q=iphone&categoria=electronica&subcategoria=celulares-y-accesorios",
     );
   });
 
@@ -105,6 +109,7 @@ describe("ProductCard", () => {
           id: 7,
           image_path: null,
           name: "Instant camera",
+          slug: "instant-camera",
           price_mxn: 42,
           currency_code: "USD",
           category_id: 11,
@@ -117,7 +122,7 @@ describe("ProductCard", () => {
 
     expect(screen.getByRole("link", { name: /Instant camera/ })).toHaveAttribute(
       "href",
-      "/productos/7?q=camera&locale=en-US&countryCode=US",
+      "/productos/instant-camera?q=camera&locale=en-US&countryCode=US",
     );
     expect(screen.getByText("$42.00")).toBeInTheDocument();
   });
@@ -132,6 +137,7 @@ describe("ProductCard", () => {
         position={2}
         product={{
           id: 5,
+          slug: "producto-5",
           image_path: null,
           name: "Maceta de barro",
           price_mxn: 249,
@@ -169,6 +175,7 @@ describe("ProductCard", () => {
       <ProductCard
         product={{
           id: 6,
+          slug: "producto-6",
           image_path: null,
           name: "Cuenco de piedra",
           price_mxn: 310,
