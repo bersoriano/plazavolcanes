@@ -84,6 +84,7 @@ function defaultCatalogFilters(query?: string): CatalogFilters {
     locale: DEFAULT_CATALOG_LOCALE,
     countryCode: DEFAULT_CATALOG_MARKET,
     invalidCategorySelection: false,
+    invalidAreaSelection: false,
   };
 }
 
@@ -141,13 +142,20 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
     getProductCategoryTree(normalizedFilters.locale),
   ]);
   const selection = resolveCategorySelection(categories, normalizedFilters);
-  const hasCatalogFilter = Boolean(normalizedFilters.query || selection.categoryId);
-  const shopsQuery = supabase
+  const areaCode = normalizedFilters.administrativeAreaCode ?? null;
+  const hasCatalogFilter = Boolean(
+    normalizedFilters.query || selection.categoryId || areaCode,
+  );
+  let shopsQuery = supabase
     .from("shops")
     .select("*")
     .eq("country_code", normalizedFilters.countryCode)
     .order("created_at", { ascending: false })
     .limit(8);
+
+  if (areaCode) {
+    shopsQuery = shopsQuery.overlaps("administrative_area_codes", [areaCode]);
+  }
   let productRows: ProductQueryRow[] = [];
 
   if (hasCatalogFilter) {
@@ -159,6 +167,7 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
         p_query: normalizedFilters.query ?? "",
         p_locale: normalizedFilters.locale,
         p_country_code: normalizedFilters.countryCode,
+        p_administrative_area_code: areaCode,
         p_category_id: selection.categoryId,
         p_limit: 24,
       });
@@ -203,6 +212,9 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
           .order("created_at", { ascending: false })
           .limit(24);
 
+        if (areaCode) {
+          fallbackQuery = fallbackQuery.overlaps("shops.administrative_area_codes", [areaCode]);
+        }
         if (normalizedFilters.query) {
           fallbackQuery = fallbackQuery.ilike(
             "name",
@@ -267,6 +279,31 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
     invalidCategorySelection: selection.invalidCategorySelection,
     searchEventId,
   };
+}
+
+export type CatalogStateCount = { code: string; count: number };
+
+export async function getCatalogStateCounts(
+  countryCode: string = DEFAULT_CATALOG_MARKET,
+): Promise<CatalogStateCount[]> {
+  if (!isSupabaseConfigured()) return [];
+
+  const supabase = await createServerSupabaseClient();
+
+  try {
+    const { data, error } = await supabase.rpc("catalog_state_counts", {
+      p_country_code: countryCode,
+    });
+    if (error) return [];
+
+    return (data ?? []).map((row) => ({
+      code: row.administrative_area_code,
+      count: Number(row.product_count),
+    }));
+  } catch {
+    // Discovery counts are decoration; the catalog must render without them.
+    return [];
+  }
 }
 
 export async function getPublicShop(

@@ -13,6 +13,7 @@ type CategoryNavigationProps = {
   activeCategorySlug?: string;
   activeSubcategorySlug?: string;
   query?: string;
+  stateSlug?: string;
   locale?: CatalogLocale;
   countryCode?: string;
 };
@@ -22,6 +23,7 @@ export function CategoryNavigation({
   activeCategorySlug,
   activeSubcategorySlug,
   query,
+  stateSlug,
   locale,
   countryCode,
 }: CategoryNavigationProps) {
@@ -37,7 +39,7 @@ export function CategoryNavigation({
               ? "border border-brand bg-surface text-brand"
               : "border border-line bg-surface text-muted hover:border-brand hover:text-brand"
           }`}
-          href={buildCatalogHref({ query, locale, countryCode })}
+          href={buildCatalogHref({ query, stateSlug, locale, countryCode })}
         >
           Todos
           {!activeCategory ? (
@@ -58,7 +60,7 @@ export function CategoryNavigation({
                   ? "border border-brand bg-surface text-brand"
                   : "border border-line bg-surface text-muted hover:border-brand hover:text-brand"
               }`}
-              href={buildCatalogHref({ query, categorySlug: category.slug, locale, countryCode })}
+              href={buildCatalogHref({ query, categorySlug: category.slug, stateSlug, locale, countryCode })}
               key={category.id}
             >
               {iconName ? <CategoryIcon aria-hidden="true" className="size-5 shrink-0" name={iconName} /> : null}
@@ -88,6 +90,7 @@ export function CategoryNavigation({
                   query,
                   categorySlug: activeCategory.slug,
                   subcategorySlug: subcategory.slug,
+                  stateSlug,
                   locale,
                   countryCode,
                 })}

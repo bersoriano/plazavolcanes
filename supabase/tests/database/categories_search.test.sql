@@ -19,7 +19,7 @@ select has_column('public', 'products', 'search_document', 'products have a sear
 select has_function(
   'public',
   'search_product_ids',
-  array['text', 'text', 'text', 'bigint', 'integer'],
+  array['text', 'text', 'text', 'text', 'bigint', 'integer'],
   'search product ids RPC exists with its public signature'
 );
 select has_function(
@@ -36,7 +36,7 @@ select has_function(
 );
 
 select results_eq(
-  $$select pg_get_function_result('public.search_product_ids(text,text,text,bigint,integer)'::regprocedure)$$,
+  $$select pg_get_function_result('public.search_product_ids(text,text,text,text,bigint,integer)'::regprocedure)$$,
   array['TABLE(product_id bigint, rank real)'::text],
   'search RPC returns ranked product ids'
 );
@@ -405,27 +405,27 @@ select results_eq(
   'anonymous visitors can read approved translations of published products'
 );
 select results_eq(
-  $$select product_id from public.search_product_ids('teléfono', 'es-MX', 'MX', null, 20)$$,
+  $$select product_id from public.search_product_ids('teléfono', 'es-MX', 'MX', null, null, 20)$$,
   $$select id from public.products where name = 'Funda resistente'$$,
   'Spanish alias search finds the categorized product'
 );
 select results_eq(
-  $$select product_id from public.search_product_ids('Gaming laptop', 'en-US', 'MX', null, 20)$$,
+  $$select product_id from public.search_product_ids('Gaming laptop', 'en-US', 'MX', null, null, 20)$$,
   $$select id from public.products where name = 'Cuaderno técnico'$$,
   'English translation search finds the original product'
 );
 select results_eq(
-  $$select product_id from public.search_product_ids('teléfono', 'es-MX', 'US', null, 20)$$,
+  $$select product_id from public.search_product_ids('teléfono', 'es-MX', 'US', null, null, 20)$$,
   $$select id from public.products where name = 'Funda internacional'$$,
   'country filtering excludes otherwise matching products'
 );
 select results_eq(
-  $$select product_id from public.search_product_ids('%', 'es-MX', 'MX', null, 100)$$,
+  $$select product_id from public.search_product_ids('%', 'es-MX', 'MX', null, null, 100)$$,
   $$select id from public.products where false$$,
   'percent signs are searched literally instead of matching the catalog as wildcards'
 );
 select results_eq(
-  $$select product_id from public.search_product_ids('_', 'es-MX', 'MX', null, 100)$$,
+  $$select product_id from public.search_product_ids('_', 'es-MX', 'MX', null, null, 100)$$,
   $$select id from public.products where false$$,
   'underscores are searched literally instead of matching the catalog as wildcards'
 );
@@ -435,6 +435,7 @@ select results_eq(
       '',
       'es-MX',
       'MX',
+      null,
       (select id from public.categories where slug = 'electronica'),
       100
     )
@@ -447,7 +448,7 @@ select results_eq(
 );
 select results_eq(
   $$select product_id
-    from public.search_product_ids('', 'es-MX', 'MX', null, 100)
+    from public.search_product_ids('', 'es-MX', 'MX', null, null, 100)
     order by product_id$$,
   $$select id
     from public.products
@@ -525,12 +526,12 @@ where slug = 'computacion';
 set local role anon;
 
 select results_eq(
-  $$select product_id from public.search_product_ids('Cuaderno técnico', 'es-MX', 'MX', null, 20)$$,
+  $$select product_id from public.search_product_ids('Cuaderno técnico', 'es-MX', 'MX', null, null, 20)$$,
   $$select id from public.products where name = 'Cuaderno técnico'$$,
   'unfiltered text search keeps a published product discoverable after category deactivation'
 );
 select results_eq(
-  $$select product_id from public.search_product_ids('laptop', 'es-MX', 'MX', null, 20)$$,
+  $$select product_id from public.search_product_ids('laptop', 'es-MX', 'MX', null, null, 20)$$,
   $$select id from public.products where false$$,
   'anonymous search does not match an inactive category alias'
 );
@@ -545,12 +546,12 @@ set local role authenticated;
 set local request.jwt.claim.sub = '123e4567-e89b-12d3-a456-426614174000';
 
 select results_eq(
-  $$select product_id from public.search_product_ids('laptop', 'es-MX', 'MX', null, 20)$$,
+  $$select product_id from public.search_product_ids('laptop', 'es-MX', 'MX', null, null, 20)$$,
   $$select id from public.products where false$$,
   'authenticated search does not match an inactive category alias'
 );
 select results_eq(
-  $$select product_id from public.search_product_ids('Cuaderno técnico', 'es-MX', 'MX', null, 20)$$,
+  $$select product_id from public.search_product_ids('Cuaderno técnico', 'es-MX', 'MX', null, null, 20)$$,
   $$select id from public.products where name = 'Cuaderno técnico'$$,
   'authenticated text search keeps the published product discoverable after category deactivation'
 );

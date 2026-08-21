@@ -111,3 +111,20 @@ describe("CATEGORY_ICON_BY_ROOT_SLUG", () => {
     });
   });
 });
+
+describe("buildCatalogHref state paths", () => {
+  it("puts the state in the path and refinements in the query", () => {
+    expect(buildCatalogHref({ stateSlug: "jalisco" })).toBe("/estado/jalisco");
+    expect(buildCatalogHref({ stateSlug: "jalisco", query: "taza" })).toBe(
+      "/estado/jalisco?q=taza",
+    );
+    expect(
+      buildCatalogHref({ stateSlug: "jalisco", categorySlug: "electronica" }),
+    ).toBe("/estado/jalisco?categoria=electronica");
+  });
+
+  it("returns the national catalog when no state is selected", () => {
+    expect(buildCatalogHref({ query: "taza" })).toBe("/?q=taza");
+    expect(buildCatalogHref({})).toBe("/");
+  });
+});

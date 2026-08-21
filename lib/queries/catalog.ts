@@ -1,4 +1,7 @@
 import {
+  findAdministrativeAreaBySlug,
+} from "@/lib/shop-location";
+import {
   DEFAULT_CATALOG_MARKET,
   normalizeCatalogLocale,
   type CatalogLocale,
@@ -8,15 +11,19 @@ export type CatalogFilters = {
   query?: string;
   categorySlug?: string;
   subcategorySlug?: string;
+  administrativeAreaSlug?: string;
+  administrativeAreaCode?: string;
   locale: CatalogLocale;
   countryCode: string;
   invalidCategorySelection: boolean;
+  invalidAreaSelection: boolean;
 };
 
 type CatalogSearchParams = {
   q?: string | string[];
   categoria?: string | string[];
   subcategoria?: string | string[];
+  estado?: string | string[];
   locale?: string | string[];
   countryCode?: string | string[];
 };
@@ -47,15 +54,20 @@ export function normalizeCatalogFilters(params: CatalogSearchParams): CatalogFil
   const rawSubcategorySlug = firstValue(params.subcategoria)?.trim();
   const categorySlug = normalizeCategorySlug(params.categoria);
   const subcategorySlug = normalizeCategorySlug(params.subcategoria);
+  const rawAreaSlug = firstValue(params.estado)?.trim();
+  const area = findAdministrativeAreaBySlug(normalizeCategorySlug(params.estado));
 
   return {
     query: normalizeSearchQuery(firstValue(params.q)),
     categorySlug,
     subcategorySlug,
+    administrativeAreaSlug: area?.slug,
+    administrativeAreaCode: area?.code,
     locale: normalizeCatalogLocale(firstValue(params.locale)),
     countryCode: countryCode && /^[A-Z]{2}$/.test(countryCode) ? countryCode : DEFAULT_CATALOG_MARKET,
     invalidCategorySelection: Boolean(
       (rawCategorySlug && !categorySlug) || (rawSubcategorySlug && !subcategorySlug),
     ),
+    invalidAreaSelection: Boolean(rawAreaSlug && !area),
   };
 }

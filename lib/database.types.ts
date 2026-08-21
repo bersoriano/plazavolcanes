@@ -566,8 +566,16 @@ export type Database = {
       resolve_order_dispute: { Args: { p_dispute_id: number; p_resolution: string; p_seller_fault: boolean; p_notes: string }; Returns: undefined };
       respond_to_dispute: { Args: { p_dispute_id: number; p_response: string; p_evidence: Json }; Returns: undefined };
       send_conversation_message: { Args: { p_conversation_id: number; p_body: string; p_idempotency_key: string }; Returns: number };
+      catalog_state_counts: {
+        Args: { p_country_code: string | null };
+        Returns: {
+          administrative_area_code: string;
+          product_count: number;
+        }[];
+      };
       search_product_ids: {
         Args: {
+          p_administrative_area_code: string | null;
           p_category_id: number | null;
           p_country_code: string | null;
           p_limit: number;

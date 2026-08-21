@@ -28,9 +28,12 @@ describe("normalizeCatalogFilters", () => {
       query: "iphone",
       categorySlug: "electronica",
       subcategorySlug: "celulares-y-accesorios",
+      administrativeAreaSlug: undefined,
+      administrativeAreaCode: undefined,
       locale: "es-MX",
       countryCode: "MX",
       invalidCategorySelection: false,
+      invalidAreaSelection: false,
     });
   });
 
@@ -54,5 +57,31 @@ describe("normalizeSearchQuery", () => {
 
   it("caps a query at 80 characters", () => {
     expect(normalizeSearchQuery("a".repeat(100))).toHaveLength(80);
+  });
+});
+
+describe("normalizeCatalogFilters state selection", () => {
+  it("keeps a supported state slug", () => {
+    expect(normalizeCatalogFilters({ estado: "jalisco" })).toMatchObject({
+      administrativeAreaSlug: "jalisco",
+      administrativeAreaCode: "MX-JAL",
+      invalidAreaSelection: false,
+    });
+  });
+
+  it("flags a state outside the supported catalog", () => {
+    expect(normalizeCatalogFilters({ estado: "california" })).toMatchObject({
+      administrativeAreaSlug: undefined,
+      administrativeAreaCode: undefined,
+      invalidAreaSelection: true,
+    });
+  });
+
+  it("leaves the state empty when the parameter is absent", () => {
+    expect(normalizeCatalogFilters({})).toMatchObject({
+      administrativeAreaSlug: undefined,
+      administrativeAreaCode: undefined,
+      invalidAreaSelection: false,
+    });
   });
 });

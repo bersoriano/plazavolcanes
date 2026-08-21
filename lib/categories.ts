@@ -69,6 +69,7 @@ type CatalogHrefFilters = {
   query?: string;
   categorySlug?: string;
   subcategorySlug?: string;
+  stateSlug?: string;
   locale?: CatalogLocale;
   countryCode?: string;
 };
@@ -77,6 +78,7 @@ export function buildCatalogHref({
   query,
   categorySlug,
   subcategorySlug,
+  stateSlug,
   locale,
   countryCode,
 }: CatalogHrefFilters): string {
@@ -91,6 +93,11 @@ export function buildCatalogHref({
     searchParams.set("countryCode", countryCode);
   }
 
+  // The state is a place, so it owns the path; everything else refines it.
+  const basePath = stateSlug ? `/estado/${stateSlug}` : "/";
   const queryString = searchParams.toString();
-  return queryString ? `/?${queryString}` : "/";
+
+  if (!queryString) return basePath;
+
+  return basePath === "/" ? `/?${queryString}` : `${basePath}?${queryString}`;
 }
