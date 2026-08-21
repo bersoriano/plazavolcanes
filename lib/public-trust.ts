@@ -35,9 +35,16 @@ export function formatRating(average: number | null, reviewCount: number | null)
   return average.toFixed(1);
 }
 
+/** A seller counts as active when they have used the plaza within this window. */
+export const ACTIVE_WITHIN_DAYS = 3;
+
+export function isRecentlyActive(daysAgo: number | null) {
+  return daysAgo !== null && daysAgo <= ACTIVE_WITHIN_DAYS;
+}
+
 export function formatLastActive(daysAgo: number | null) {
   if (daysAgo === null) return NO_DATA_LABEL;
-  if (daysAgo <= 0) return "Hoy";
+  if (isRecentlyActive(daysAgo)) return "Activo recientemente";
   return daysAgo === 1 ? "Hace 1 día" : `Hace ${daysAgo} días`;
 }
 
@@ -133,8 +140,10 @@ export const PUBLIC_TRUST_MARKERS: PublicTrustMarker[] = [
   {
     key: "last_active",
     label: "Actividad",
-    explanation: "Cuándo atendió esta tienda un pedido o mensaje por última vez.",
+    explanation:
+      "Activo recientemente. Medimos si la persona vendedora sigue presente en la plaza: entra a su cuenta y atiende sus pedidos.",
     value: (metrics) => formatLastActive(metrics?.lastActiveDaysAgo ?? null),
-    measured: (metrics) => hasValue(formatLastActive(metrics?.lastActiveDaysAgo ?? null)),
+    // Presence is only worth marking while it is current.
+    measured: (metrics) => isRecentlyActive(metrics?.lastActiveDaysAgo ?? null),
   },
 ];
