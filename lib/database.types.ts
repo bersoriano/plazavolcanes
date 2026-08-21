@@ -597,6 +597,22 @@ export type Database = {
           product_count: number;
         }[];
       };
+      shop_public_trust_metrics: {
+        Args: { p_shop_id: number };
+        Returns: {
+          average_reply_time_minutes: number | null;
+          response_rate: number | null;
+          description_accuracy: number | null;
+          on_time_shipping_rate: number | null;
+          order_completion_rate: number | null;
+          dispute_rate: number | null;
+          total_orders: number | null;
+          average_rating: number | null;
+          review_count: number | null;
+          last_active_days_ago: number | null;
+          evaluated_at: string | null;
+        }[];
+      };
       search_product_ids: {
         Args: {
           p_administrative_area_code: string | null;

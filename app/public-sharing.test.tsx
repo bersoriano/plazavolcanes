@@ -167,6 +167,7 @@ describe("public sharing controls", () => {
       listing_limit: 15,
       time_zone: "America/Mexico_City",
       trust_evaluated_at: null,
+      trust_metrics: null,
       trust_tier: "standard",
       country_code: "MX",
       administrative_area_codes: ["MX-JAL"],

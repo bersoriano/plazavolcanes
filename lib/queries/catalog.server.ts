@@ -13,6 +13,7 @@ import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getCatalogImageUrl } from "@/lib/storage";
+import type { PublicTrustMetrics } from "@/lib/public-trust";
 
 export type CatalogProduct = Pick<
   Product,
@@ -309,6 +310,35 @@ export async function getCatalogStateCounts(
   }
 }
 
+async function getPublicTrustMetrics(shopId: number): Promise<PublicTrustMetrics | null> {
+  const supabase = await createServerSupabaseClient();
+
+  try {
+    const { data, error } = await supabase.rpc("shop_public_trust_metrics", {
+      p_shop_id: shopId,
+    });
+    const row = data?.[0];
+    if (error || !row) return null;
+
+    return {
+      averageReplyTimeMinutes: row.average_reply_time_minutes,
+      responseRate: row.response_rate,
+      descriptionAccuracy: row.description_accuracy,
+      onTimeShippingRate: row.on_time_shipping_rate,
+      orderCompletionRate: row.order_completion_rate,
+      disputeRate: row.dispute_rate,
+      totalOrders: row.total_orders,
+      averageRating: row.average_rating,
+      reviewCount: row.review_count,
+      lastActiveDaysAgo: row.last_active_days_ago,
+      evaluatedAt: row.evaluated_at,
+    };
+  } catch {
+    // The panel explains what is tracked even when the values cannot be read.
+    return null;
+  }
+}
+
 export async function getPublicShop(
   slug: string,
   locale: CatalogLocale = DEFAULT_CATALOG_LOCALE,
@@ -318,7 +348,7 @@ export async function getPublicShop(
   const { data: shop } = await supabase.from("shops").select("*").eq("slug", slug).maybeSingle();
   if (!shop) return null;
 
-  const [{ data: products }, { data: trustProfile }] = await Promise.all([
+  const [{ data: products }, { data: trustProfile }, trustMetrics] = await Promise.all([
     supabase
       .from("products")
       .select(productSelection)
@@ -330,11 +360,13 @@ export async function getPublicShop(
       .select("joined_on, verification_level")
       .eq("user_id", shop.owner_id)
       .maybeSingle(),
+    getPublicTrustMetrics(shop.id),
   ]);
 
   return {
     ...shop,
     imageUrl: getCatalogImageUrl(shop.image_path),
+    trust_metrics: trustMetrics,
     trust_profile: trustProfile as Pick<
       UserTrustProfile,
       "joined_on" | "verification_level"
