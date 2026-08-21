@@ -193,3 +193,56 @@ describe("productStatusSchema", () => {
     expect(productStatusSchema.safeParse("archived").success).toBe(false);
   });
 });
+
+describe("productSchema units available", () => {
+  const base = {
+    name: "Taza volcánica",
+    description: "Taza hecha a mano con barro de alta temperatura.",
+    price_mxn: "349.00",
+    status: "draft",
+    condition: "new",
+    used_condition: "",
+    category_id: "",
+    handling_days: "3",
+    currency_code: "MXN",
+    content_locale: "es-MX",
+  };
+
+  it.each([1, 10])("accepts %i units", (units) => {
+    const result = productSchema.safeParse({ ...base, units_available: String(units) });
+
+    expect(result.success && result.data.units_available).toBe(units);
+  });
+
+  it("defaults to a single unit when the field is absent", () => {
+    const result = productSchema.safeParse(base);
+
+    expect(result.success && result.data.units_available).toBe(1);
+  });
+
+  it("rejects zero units", () => {
+    const result = productSchema.safeParse({ ...base, units_available: "0" });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.units_available?.[0]).toBe(
+        "Publica al menos 1 unidad.",
+      );
+    }
+  });
+
+  it("rejects more than ten units", () => {
+    const result = productSchema.safeParse({ ...base, units_available: "11" });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.units_available?.[0]).toBe(
+        "El máximo es 10 unidades.",
+      );
+    }
+  });
+
+  it("rejects a fractional unit count", () => {
+    expect(productSchema.safeParse({ ...base, units_available: "2.5" }).success).toBe(false);
+  });
+});

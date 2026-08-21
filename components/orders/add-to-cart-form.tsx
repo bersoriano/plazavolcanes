@@ -12,7 +12,15 @@ function SubmitButton() {
   return <button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-brand px-6 font-semibold text-white hover:bg-brand-hover disabled:opacity-60" disabled={pending} type="submit"><ShoppingBag aria-hidden="true" className="size-5" />{pending ? "Agregando…" : "Solicitar compra"}</button>;
 }
 
-export function AddToCartForm({ action }: { action: (state: ActionState, formData: FormData) => Promise<ActionState> }) {
+export function AddToCartForm({
+  action,
+  unitsAvailable,
+}: {
+  action: (state: ActionState, formData: FormData) => Promise<ActionState>;
+  unitsAvailable: number;
+}) {
   const [state, formAction] = useActionState(action, initialActionState);
-  return <form action={formAction} className="mt-7 flex flex-wrap items-end gap-3"><label className="space-y-1 text-sm font-semibold text-ink">Cantidad<input className="block w-24 rounded-xl border border-line bg-surface px-3 py-2" defaultValue="1" max="99" min="1" name="quantity" type="number" /></label><SubmitButton />{state.message ? <p className="w-full text-sm font-medium text-sale" role="status">{state.message}</p> : null}</form>;
+  const remaining = unitsAvailable === 1 ? "Queda 1 unidad" : `Quedan ${unitsAvailable} unidades`;
+
+  return <form action={formAction} className="mt-7 flex flex-wrap items-end gap-3"><label className="space-y-1 text-sm font-semibold text-ink">Cantidad<input className="block w-24 rounded-xl border border-line bg-surface px-3 py-2" defaultValue="1" max={unitsAvailable} min="1" name="quantity" type="number" /></label><SubmitButton /><p className="text-sm font-medium text-muted">{remaining}</p>{state.message ? <p className="w-full text-sm font-medium text-sale" role="status">{state.message}</p> : null}</form>;
 }

@@ -237,6 +237,7 @@ export type Database = {
           shop_id: number;
           slug: string;
           status: "draft" | "published";
+          units_available: number;
           updated_at: string;
           used_condition: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
@@ -255,6 +256,7 @@ export type Database = {
           shop_id: number;
           slug: string;
           status?: "draft" | "published";
+          units_available?: number;
           updated_at?: string;
           used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
@@ -273,6 +275,7 @@ export type Database = {
           shop_id?: number;
           slug?: string;
           status?: "draft" | "published";
+          units_available?: number;
           updated_at?: string;
           used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };

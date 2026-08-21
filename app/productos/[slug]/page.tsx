@@ -133,7 +133,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           </p>
           <div className="my-7 h-px bg-line" />
           <p className="whitespace-pre-wrap text-base leading-8 text-muted">{product.description}</p>
-          <AddToCartForm action={addToCartAction} />
+          <AddToCartForm action={addToCartAction} unitsAvailable={product.units_available} />
           <div className="mt-7"><ShareActions label="Compartir producto" title={product.name} /></div>
           <p className="mt-8 rounded-2xl border border-line bg-surface p-4 text-sm leading-6 text-muted">
             Producto publicado por una tienda independiente de Plaza Volcanes.

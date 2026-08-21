@@ -24,9 +24,9 @@ insert into auth.users (id, email, created_at) values
 insert into public.shops (owner_id, name, slug, description)
 values ('10000000-0000-4000-8000-000000000001', 'Comercio Uno', 'comercio-uno', 'Descripción completa para probar pedidos y límites.');
 
-insert into public.products (shop_id, name, description, price_mxn, status, category_id)
+insert into public.products (shop_id, name, description, price_mxn, status, category_id, units_available)
 select s.id, 'Producto ' || n, 'Descripción suficientemente larga para producto ' || n, 10 * n, 'draft',
-  (select id from public.categories where slug = 'celulares-y-accesorios')
+  (select id from public.categories where slug = 'celulares-y-accesorios'), 10
 from public.shops s cross join generate_series(1, 16) n
 where s.slug = 'comercio-uno';
 

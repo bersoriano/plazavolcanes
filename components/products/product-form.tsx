@@ -28,6 +28,7 @@ type ProductFormProps = {
     used_condition: UsedCondition | null;
     category_id: number | null;
     handling_days?: number;
+    units_available?: number;
     imageUrl: string | null;
   };
 };
@@ -72,6 +73,7 @@ export function ProductForm({ action, categories, product }: ProductFormProps) {
       </div>
       <Field defaultValue={product?.price_mxn} error={state.errors?.price_mxn?.[0]} inputMode="decimal" label="Precio en MXN" min="0" name="price_mxn" placeholder="349.00" required step="0.01" type="number" />
       <Field defaultValue={product?.handling_days ?? 3} error={state.errors?.handling_days?.[0]} inputMode="numeric" label="Tiempo de preparación (días hábiles)" max="30" min="1" name="handling_days" required type="number" />
+      <Field defaultValue={product?.units_available ?? 1} error={state.errors?.units_available?.[0]} inputMode="numeric" label="Unidades disponibles" max="10" min="1" name="units_available" required type="number" />
 
       <fieldset className="space-y-3">
         <legend className="text-sm font-semibold text-ink">Condición</legend>

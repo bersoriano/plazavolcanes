@@ -139,3 +139,38 @@ describe("ProductForm", () => {
     expect(form?.elements.namedItem("content_locale")).toHaveValue("es-MX");
   });
 });
+
+describe("ProductForm units available", () => {
+  it("offers a single unit by default", () => {
+    render(<ProductForm action={action} categories={[]} />);
+
+    const units = screen.getByLabelText("Unidades disponibles");
+
+    expect(units).toHaveValue(1);
+    expect(units).toHaveAttribute("min", "1");
+    expect(units).toHaveAttribute("max", "10");
+    expect(units).toBeRequired();
+  });
+
+  it("keeps the stated units while editing", () => {
+    render(
+      <ProductForm
+        action={action}
+        categories={[]}
+        product={{
+          name: "Taza volcánica",
+          description: "Taza hecha a mano con barro de alta temperatura.",
+          price_mxn: 349,
+          status: "draft",
+          condition: "new",
+          used_condition: null,
+          category_id: null,
+          units_available: 4,
+          imageUrl: null,
+        }}
+      />,
+    );
+
+    expect(screen.getByLabelText("Unidades disponibles")).toHaveValue(4);
+  });
+});

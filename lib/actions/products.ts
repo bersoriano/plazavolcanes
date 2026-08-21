@@ -118,6 +118,7 @@ export async function createProduct(
     used_condition: formData.get("used_condition"),
     category_id: formData.get("category_id"),
     handling_days: formData.get("handling_days"),
+    units_available: formData.get("units_available"),
     currency_code: formData.get("currency_code"),
     content_locale: formData.get("content_locale"),
   });
@@ -184,6 +185,7 @@ export async function updateProduct(
     used_condition: formData.get("used_condition"),
     category_id: formData.get("category_id"),
     handling_days: formData.get("handling_days"),
+    units_available: formData.get("units_available"),
     currency_code: formData.get("currency_code"),
     content_locale: formData.get("content_locale"),
   });

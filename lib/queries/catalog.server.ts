@@ -20,6 +20,7 @@ export type CatalogProduct = Pick<
   | "id"
   | "slug"
   | "name"
+  | "units_available"
   | "description"
   | "price_mxn"
   | "condition"
@@ -35,12 +36,13 @@ export type CatalogProduct = Pick<
 export type CatalogShop = Shop & { imageUrl: string | null };
 
 const productSelection =
-  "id, slug, name, description, price_mxn, condition, used_condition, image_path, created_at, category_id, currency_code, shops!inner(name, slug, country_code), product_translations(locale, name, description, review_status)";
+  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, shops!inner(name, slug, country_code), product_translations(locale, name, description, review_status)";
 
 type ProductQueryRow = {
   id: number;
   slug: string;
   name: string;
+  units_available: number;
   description: string;
   price_mxn: number;
   condition: "new" | "used";
@@ -69,6 +71,7 @@ function mapProduct(item: ProductQueryRow, locale: CatalogLocale): CatalogProduc
   return {
     id: item.id,
     slug: item.slug,
+    units_available: item.units_available,
     name: translation?.name ?? item.name,
     description: translation?.description ?? item.description,
     price_mxn: item.price_mxn,
