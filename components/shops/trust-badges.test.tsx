@@ -17,6 +17,7 @@ const fullMetrics = {
   averageRating: 4.8,
   reviewCount: 12,
   lastActiveDaysAgo: 1,
+  sellerActiveDaysAgo: null,
   evaluatedAt: "2026-08-20T00:00:00.000Z",
 };
 
@@ -115,6 +116,7 @@ describe("TrustBadges absence versus achievement", () => {
     averageRating: null,
     reviewCount: 0,
     lastActiveDaysAgo: null,
+    sellerActiveDaysAgo: null,
     evaluatedAt: "2026-08-20T00:00:00.000Z",
   };
 

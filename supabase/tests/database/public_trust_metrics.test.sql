@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(7);
+select plan(11);
 
 select has_function(
   'public',
@@ -18,6 +18,16 @@ insert into auth.users (id, email, created_at) values
 insert into public.shops (owner_id, name, slug, description, country_code, administrative_area_codes) values
   ('aaaa1111-aaaa-4aaa-8aaa-aaaa11111111', 'Medida', 'medida', 'Descripción completa de la tienda medida.', 'MX', array['MX-JAL']),
   ('aaaa1111-aaaa-4aaa-8aaa-aaaa11111111', 'Sin medir', 'sin-medir', 'Descripción completa de la tienda sin evaluar.', 'MX', array['MX-JAL']);
+
+select results_eq(
+  $$select count(*) from public.user_activity where user_id in ('aaaa1111-aaaa-4aaa-8aaa-aaaa11111111', 'bbbb2222-bbbb-4bbb-8bbb-bbbb22222222')$$,
+  array[2::bigint],
+  'a new account gets a presence row without visiting anything'
+);
+
+insert into public.user_activity (user_id, last_seen_at) values
+  ('aaaa1111-aaaa-4aaa-8aaa-aaaa11111111', now())
+on conflict (user_id) do update set last_seen_at = excluded.last_seen_at;
 
 insert into public.shop_trust_evaluations (
   shop_id, average_reply_time_minutes, response_rate, description_accuracy,
@@ -42,8 +52,29 @@ select results_eq(
 
 select results_eq(
   $$select count(*) from public.shop_public_trust_metrics((select id from public.shops where slug = 'sin-medir'))$$,
-  array[0::bigint],
-  'a shop that was never evaluated returns no metrics'
+  array[1::bigint],
+  'a shop that was never evaluated still reports a row, so presence can be shown'
+);
+
+select results_eq(
+  $$select response_rate is null and total_orders is null
+    from public.shop_public_trust_metrics((select id from public.shops where slug = 'sin-medir'))$$,
+  array[true],
+  'that row carries no invented measurements'
+);
+
+select results_eq(
+  $$select seller_active_days_ago
+    from public.shop_public_trust_metrics((select id from public.shops where slug = 'medida'))$$,
+  array[0],
+  'the seller who was just seen reads as active today'
+);
+
+select throws_ok(
+  $$select count(*) from public.user_activity$$,
+  '42501',
+  null,
+  'anonymous visitors never read presence timestamps'
 );
 
 select throws_ok(

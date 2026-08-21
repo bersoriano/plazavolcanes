@@ -334,6 +334,7 @@ async function getPublicTrustMetrics(shopId: number): Promise<PublicTrustMetrics
       averageRating: row.average_rating,
       reviewCount: row.review_count,
       lastActiveDaysAgo: row.last_active_days_ago,
+      sellerActiveDaysAgo: row.seller_active_days_ago,
       evaluatedAt: row.evaluated_at,
     };
   } catch {

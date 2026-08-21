@@ -51,9 +51,14 @@ describe("formatRating", () => {
 });
 
 describe("formatLastActive", () => {
-  it("names today, yesterday and older activity", () => {
-    expect(formatLastActive(0)).toBe("Hoy");
-    expect(formatLastActive(1)).toBe("Hace 1 día");
+  it("calls a seller seen within three days recently active", () => {
+    expect(formatLastActive(0)).toBe("Activo recientemente");
+    expect(formatLastActive(1)).toBe("Activo recientemente");
+    expect(formatLastActive(3)).toBe("Activo recientemente");
+  });
+
+  it("reports how long it has been once the window has passed", () => {
+    expect(formatLastActive(4)).toBe("Hace 4 días");
     expect(formatLastActive(9)).toBe("Hace 9 días");
   });
 
@@ -84,12 +89,28 @@ describe("PUBLIC_TRUST_MARKERS measured state", () => {
     averageRating: null,
     reviewCount: 0,
     lastActiveDaysAgo: null,
+    sellerActiveDaysAgo: null,
     evaluatedAt: "2026-08-20T00:00:00.000Z",
   };
 
   function marker(key: string) {
     return PUBLIC_TRUST_MARKERS.find((entry) => entry.key === key)!;
   }
+
+  it("marks the seller active only while their presence is current", () => {
+    expect(marker("last_active").measured({ ...zeroed, sellerActiveDaysAgo: 2 })).toBe(true);
+    expect(marker("last_active").value({ ...zeroed, sellerActiveDaysAgo: 2 })).toBe(
+      "Activo recientemente",
+    );
+    expect(marker("last_active").measured({ ...zeroed, sellerActiveDaysAgo: 9 })).toBe(false);
+    expect(marker("last_active").value({ ...zeroed, sellerActiveDaysAgo: 9 })).toBe("Hace 9 días");
+  });
+
+  it("reads the seller's own presence, not the shop's order activity", () => {
+    const busyShopAbsentSeller = { ...zeroed, lastActiveDaysAgo: 1, sellerActiveDaysAgo: 30 };
+
+    expect(marker("last_active").measured(busyShopAbsentSeller)).toBe(false);
+  });
 
   it("treats a shop with no orders or reviews as unmeasured on those signals", () => {
     expect(marker("total_orders").measured(zeroed)).toBe(false);

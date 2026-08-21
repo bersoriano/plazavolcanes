@@ -20,5 +20,13 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   const { data } = await supabase.auth.getClaims();
   if (!data?.claims) redirect("/ingresar?continuar=/panel");
 
+  // Opening the panel is itself a sign of presence, and the RPC throttles the write.
+  // A failure here must never keep somebody out of their own panel.
+  try {
+    await supabase.rpc("touch_user_activity");
+  } catch {
+    // Presence is decoration; the panel matters more.
+  }
+
   return <>{children}</>;
 }

@@ -523,6 +523,12 @@ export type Database = {
         Update: { id?: never; conversation_id?: number; shop_id?: number; triggering_buyer_message_id?: number; closing_seller_message_id?: number | null; clock_started_at?: string; replied_at?: string | null; elapsed_minutes?: number | null; answered_within_24_hours?: boolean | null; created_at?: string };
         Relationships: [];
       };
+      user_activity: {
+        Row: { user_id: string; last_seen_at: string };
+        Insert: { user_id: string; last_seen_at?: string };
+        Update: { user_id?: string; last_seen_at?: string };
+        Relationships: [];
+      };
       user_contact_details: {
         Row: {
           created_at: string;
@@ -632,6 +638,7 @@ export type Database = {
           product_count: number;
         }[];
       };
+      touch_user_activity: { Args: Record<string, never>; Returns: undefined };
       shop_public_trust_metrics: {
         Args: { p_shop_id: number };
         Returns: {
@@ -645,6 +652,7 @@ export type Database = {
           average_rating: number | null;
           review_count: number | null;
           last_active_days_ago: number | null;
+          seller_active_days_ago: number | null;
           evaluated_at: string | null;
         }[];
       };

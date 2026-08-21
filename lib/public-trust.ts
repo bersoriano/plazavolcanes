@@ -9,6 +9,8 @@ export type PublicTrustMetrics = {
   averageRating: number | null;
   reviewCount: number | null;
   lastActiveDaysAgo: number | null;
+  /** How long since the seller themselves used the plaza. */
+  sellerActiveDaysAgo: number | null;
   evaluatedAt: string | null;
 };
 
@@ -142,8 +144,8 @@ export const PUBLIC_TRUST_MARKERS: PublicTrustMarker[] = [
     label: "Actividad",
     explanation:
       "Activo recientemente. Medimos si la persona vendedora sigue presente en la plaza: entra a su cuenta y atiende sus pedidos.",
-    value: (metrics) => formatLastActive(metrics?.lastActiveDaysAgo ?? null),
+    value: (metrics) => formatLastActive(metrics?.sellerActiveDaysAgo ?? null),
     // Presence is only worth marking while it is current.
-    measured: (metrics) => isRecentlyActive(metrics?.lastActiveDaysAgo ?? null),
+    measured: (metrics) => isRecentlyActive(metrics?.sellerActiveDaysAgo ?? null),
   },
 ];
