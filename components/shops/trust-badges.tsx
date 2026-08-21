@@ -76,7 +76,7 @@ export function TrustBadges({
           <span
             className={
               badge.measured
-                ? "inline-flex items-center gap-2 rounded-full bg-brand px-3.5 py-2 text-xs font-semibold text-white"
+                ? "inline-flex items-center gap-2 rounded-full border border-transparent bg-brand px-3.5 py-2 text-xs font-semibold text-white"
                 : "inline-flex items-center gap-2 rounded-full border border-dashed border-line bg-transparent px-3.5 py-2 text-xs font-semibold text-muted"
             }
             data-state={badge.measured ? "measured" : "unmeasured"}

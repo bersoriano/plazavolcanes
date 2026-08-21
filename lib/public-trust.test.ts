@@ -35,12 +35,13 @@ describe("formatReplyTime", () => {
 });
 
 describe("formatRating", () => {
-  it("pairs the average with its review count", () => {
-    expect(formatRating(4.82, 12)).toBe("4.8 · 12 reseñas");
+  it("shows one decimal of the average", () => {
+    expect(formatRating(4.82, 12)).toBe("4.8");
+    expect(formatRating(5, 1)).toBe("5.0");
   });
 
-  it("keeps a single review singular", () => {
-    expect(formatRating(5, 1)).toBe("5.0 · 1 reseña");
+  it("says so when the average exists but nobody has reviewed", () => {
+    expect(formatRating(4.5, 0)).toBe("Sin datos aún");
   });
 
   it("says so before the first review", () => {

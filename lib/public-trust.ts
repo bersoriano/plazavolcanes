@@ -30,9 +30,9 @@ export function formatReplyTime(minutes: number | null) {
 }
 
 export function formatRating(average: number | null, reviewCount: number | null) {
+  // The review count has a badge of its own, so the rating stays a bare average.
   if (average === null || !reviewCount) return NO_DATA_LABEL;
-  const reviews = reviewCount === 1 ? "1 reseña" : `${reviewCount} reseñas`;
-  return `${average.toFixed(1)} · ${reviews}`;
+  return average.toFixed(1);
 }
 
 export function formatLastActive(daysAgo: number | null) {
@@ -43,7 +43,7 @@ export function formatLastActive(daysAgo: number | null) {
 
 export function formatOrderCount(total: number | null) {
   if (total === null) return NO_DATA_LABEL;
-  return total === 1 ? "1 pedido" : `${total} pedidos`;
+  return String(total);
 }
 
 export type PublicTrustMarker = {
