@@ -346,7 +346,7 @@ export type Database = {
       };
       shops: {
         Row: {
-          administrative_area_code: string | null;
+          administrative_area_codes: string[] | null;
           country_code: string;
           created_at: string;
           description: string;
@@ -362,7 +362,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
-          administrative_area_code?: string | null;
+          administrative_area_codes?: string[] | null;
           country_code?: string;
           created_at?: string;
           description: string;
@@ -378,7 +378,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
-          administrative_area_code?: string | null;
+          administrative_area_codes?: string[] | null;
           country_code?: string;
           created_at?: string;
           description?: string;

@@ -14,6 +14,8 @@ import {
   SUPPORTED_COUNTRY,
 } from "@/lib/shop-location";
 
+const AREA_FIELD_NAME = "administrative_area_codes";
+
 type ShopFormProps = {
   action: (state: ActionState, formData: FormData) => Promise<ActionState>;
   shop?: {
@@ -21,7 +23,7 @@ type ShopFormProps = {
     description: string;
     imageUrl: string | null;
     countryCode: string;
-    administrativeAreaCode: string | null;
+    administrativeAreaCodes: string[];
   };
 };
 
@@ -37,6 +39,8 @@ function SaveButton({ editing }: { editing: boolean }) {
 export function ShopForm({ action, shop }: ShopFormProps) {
   const [state, formAction] = useActionState(action, initialActionState);
   const [preview, setPreview] = useState(shop?.imageUrl ?? null);
+  const [primaryArea, setPrimaryArea] = useState(shop?.administrativeAreaCodes?.[0] ?? "");
+  const [secondaryArea, setSecondaryArea] = useState(shop?.administrativeAreaCodes?.[1] ?? "");
 
   useEffect(() => {
     return () => {
@@ -87,22 +91,50 @@ export function ShopForm({ action, shop }: ShopFormProps) {
         </div>
 
         <div className="space-y-2">
-          <label className="block text-sm font-semibold text-ink" htmlFor="administrative-area">Estado</label>
+          <label className="block text-sm font-semibold text-ink" htmlFor="administrative-area">Estado principal</label>
           <select
-            aria-describedby={state.errors?.administrative_area_code ? "administrative-area-error" : undefined}
-            aria-invalid={Boolean(state.errors?.administrative_area_code)}
+            aria-describedby={state.errors?.administrative_area_codes ? "administrative-area-error" : undefined}
+            aria-invalid={Boolean(state.errors?.administrative_area_codes)}
             className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none"
-            defaultValue={shop?.administrativeAreaCode ?? ""}
             id="administrative-area"
-            name="administrative_area_code"
+            name={AREA_FIELD_NAME}
+            onChange={(event) => {
+              setPrimaryArea(event.target.value);
+              // The second select must never repeat the primary state.
+              if (event.target.value === secondaryArea) setSecondaryArea("");
+            }}
             required
+            value={primaryArea}
           >
             <option disabled value="">Selecciona un estado</option>
             {MEXICO_ADMINISTRATIVE_AREAS.map((area) => (
               <option key={area.code} value={area.code}>{area.label}</option>
             ))}
           </select>
-          {state.errors?.administrative_area_code?.[0] ? <p className="text-sm font-medium text-sale" id="administrative-area-error">{state.errors.administrative_area_code[0]}</p> : null}
+        </div>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-2">
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-ink" htmlFor="secondary-administrative-area">Segundo estado (opcional)</label>
+          <select
+            aria-describedby={state.errors?.administrative_area_codes ? "administrative-area-error" : undefined}
+            aria-invalid={Boolean(state.errors?.administrative_area_codes)}
+            className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none"
+            id="secondary-administrative-area"
+            name={AREA_FIELD_NAME}
+            onChange={(event) => setSecondaryArea(event.target.value)}
+            value={secondaryArea}
+          >
+            <option value="">Sin segundo estado</option>
+            {MEXICO_ADMINISTRATIVE_AREAS.filter((area) => area.code !== primaryArea).map((area) => (
+              <option key={area.code} value={area.code}>{area.label}</option>
+            ))}
+          </select>
+          <p className="text-xs text-muted">Agrega un segundo estado si también vendes o entregas ahí.</p>
+        </div>
+        <div className="space-y-2 sm:col-span-2">
+          {state.errors?.administrative_area_codes?.[0] ? <p className="text-sm font-medium text-sale" id="administrative-area-error">{state.errors.administrative_area_codes[0]}</p> : null}
         </div>
       </div>
 

@@ -15,6 +15,18 @@ const authError: ActionState = {
   message: "Tu sesión terminó. Ingresa nuevamente.",
 };
 
+function shopInputFrom(formData: FormData) {
+  return {
+    name: formData.get("name"),
+    description: formData.get("description"),
+    country_code: formData.get("country_code"),
+    // Both state selects share a field name; the optional one submits "" when unused.
+    administrative_area_codes: formData
+      .getAll("administrative_area_codes")
+      .filter((value) => typeof value === "string" && value.length > 0),
+  };
+}
+
 function imageFrom(formData: FormData) {
   const value = formData.get("image");
   return value instanceof File && value.size > 0 ? value : null;
@@ -40,12 +52,7 @@ export async function createShop(
   _previousState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const parsed = shopSchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description"),
-    country_code: formData.get("country_code"),
-    administrative_area_code: formData.get("administrative_area_code"),
-  });
+  const parsed = shopSchema.safeParse(shopInputFrom(formData));
   const image = imageFrom(formData);
 
   if (!parsed.success) {
@@ -109,12 +116,7 @@ export async function updateShop(
   _previousState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const parsed = shopSchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description"),
-    country_code: formData.get("country_code"),
-    administrative_area_code: formData.get("administrative_area_code"),
-  });
+  const parsed = shopSchema.safeParse(shopInputFrom(formData));
   const image = imageFrom(formData);
 
   if (!parsed.success) {

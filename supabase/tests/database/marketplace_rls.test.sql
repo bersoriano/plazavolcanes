@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(28);
+select plan(31);
 
 select has_table('public', 'shops', 'shops table exists');
 select has_table('public', 'products', 'products table exists');
@@ -13,7 +13,7 @@ select has_column('public', 'user_trust_profiles', 'verification_level', 'trust 
 select has_column('public', 'products', 'condition', 'products have condition');
 select has_column('public', 'products', 'used_condition', 'products have used condition detail');
 select has_column('public', 'shops', 'country_code', 'shops have a country code');
-select has_column('public', 'shops', 'administrative_area_code', 'shops have an administrative area code');
+select has_column('public', 'shops', 'administrative_area_codes', 'shops have administrative area codes');
 
 insert into auth.users (id, email, created_at) values
   ('123e4567-e89b-12d3-a456-426614174000', 'seller-a@test.local', '2024-02-29 12:30:00+00'),
@@ -58,10 +58,29 @@ select throws_ok(
 );
 
 select throws_ok(
-  $$insert into public.shops (owner_id, name, slug, description, country_code, administrative_area_code) values ('123e4567-e89b-12d3-a456-426614174000', 'Estado inválido', 'estado-invalido', 'Descripción completa para la tienda inválida.', 'MX', 'US-CA')$$,
+  $$insert into public.shops (owner_id, name, slug, description, country_code, administrative_area_codes) values ('123e4567-e89b-12d3-a456-426614174000', 'Estado inválido', 'estado-invalido', 'Descripción completa para la tienda inválida.', 'MX', array['US-CA'])$$,
   '23514',
   null,
   'administrative area must belong to shop country'
+);
+
+select throws_ok(
+  $$insert into public.shops (owner_id, name, slug, description, country_code, administrative_area_codes) values ('123e4567-e89b-12d3-a456-426614174000', 'Tres estados', 'tres-estados', 'Descripción completa para la tienda inválida.', 'MX', array['MX-JAL', 'MX-COL', 'MX-OAX'])$$,
+  '23514',
+  null,
+  'a shop may store at most two administrative areas'
+);
+
+select throws_ok(
+  $$insert into public.shops (owner_id, name, slug, description, country_code, administrative_area_codes) values ('123e4567-e89b-12d3-a456-426614174000', 'Estado repetido', 'estado-repetido', 'Descripción completa para la tienda inválida.', 'MX', array['MX-JAL', 'MX-JAL'])$$,
+  '23514',
+  null,
+  'a shop may not repeat an administrative area'
+);
+
+select lives_ok(
+  $$insert into public.shops (owner_id, name, slug, description, country_code, administrative_area_codes) values ('123e4567-e89b-12d3-a456-426614174000', 'Dos estados', 'dos-estados', 'Descripción completa para la tienda válida.', 'MX', array['MX-JAL', 'MX-COL'])$$,
+  'a shop may store two administrative areas of its country'
 );
 
 insert into public.products (shop_id, name, description, price_mxn, status, category_id) values

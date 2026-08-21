@@ -164,7 +164,7 @@ describe("public sharing controls", () => {
       trust_evaluated_at: null,
       trust_tier: "standard",
       country_code: "MX",
-      administrative_area_code: "MX-JAL",
+      administrative_area_codes: ["MX-JAL"],
       created_at: "2026-08-19T00:00:00.000Z",
       updated_at: "2026-08-19T00:00:00.000Z",
       trust_profile: {

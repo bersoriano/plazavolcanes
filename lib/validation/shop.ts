@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { MEXICO_ADMINISTRATIVE_AREA_CODES } from "@/lib/shop-location";
+import {
+  MAX_ADMINISTRATIVE_AREAS,
+  MEXICO_ADMINISTRATIVE_AREA_CODES,
+} from "@/lib/shop-location";
 
 export const shopSchema = z.object({
   name: z
@@ -16,9 +19,13 @@ export const shopSchema = z.object({
       message: "La descripción debe tener entre 20 y 1200 caracteres.",
     }),
   country_code: z.literal("MX", { error: "País no disponible." }),
-  administrative_area_code: z.enum(MEXICO_ADMINISTRATIVE_AREA_CODES, {
-    error: "Selecciona un estado.",
-  }),
+  administrative_area_codes: z
+    .array(z.enum(MEXICO_ADMINISTRATIVE_AREA_CODES, { error: "Selecciona un estado." }))
+    .min(1, { error: "Selecciona un estado." })
+    .max(MAX_ADMINISTRATIVE_AREAS, { error: "Puedes elegir hasta 2 estados." })
+    .refine((codes) => new Set(codes).size === codes.length, {
+      error: "Elige dos estados distintos.",
+    }),
 });
 
 export type ShopInput = z.infer<typeof shopSchema>;
