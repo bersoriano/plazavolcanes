@@ -20,6 +20,12 @@ function round(value: number) {
   return Math.round(value * 10) / 10;
 }
 
+/** A clean record reads as a fact, not as a rate nobody has tested. */
+export function formatDisputeRate(rate: number | null) {
+  if (!rate) return "Sin disputas";
+  return formatTrustPercentage(rate);
+}
+
 export function formatTrustPercentage(value: number | null) {
   if (value === null) return NO_DATA_LABEL;
   return `${round(value)}%`;
@@ -114,7 +120,7 @@ export const PUBLIC_TRUST_MARKERS: PublicTrustMarker[] = [
     explanation: "Pedidos que terminaron en una disputa. Más bajo es mejor.",
     // No disputes is the achievement, so a shop with none earns the badge whether
     // or not it has been evaluated yet.
-    value: (metrics) => formatTrustPercentage(metrics?.disputeRate ?? 0),
+    value: (metrics) => formatDisputeRate(metrics?.disputeRate ?? null),
     measured: () => true,
   },
   {

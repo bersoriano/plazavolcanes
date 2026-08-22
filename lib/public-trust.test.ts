@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   PUBLIC_TRUST_MARKERS,
+  formatDisputeRate,
   formatLastActive,
   formatRating,
   formatReplyTime,
@@ -124,7 +125,7 @@ describe("PUBLIC_TRUST_MARKERS measured state", () => {
 
   it("keeps a zero dispute rate as a genuine measurement", () => {
     expect(marker("dispute_rate").measured(zeroed)).toBe(true);
-    expect(marker("dispute_rate").value(zeroed)).toBe("0%");
+    expect(marker("dispute_rate").value(zeroed)).toBe("Sin disputas");
   });
 
   it("counts a signal as measured once it carries a value", () => {
@@ -143,9 +144,9 @@ describe("PUBLIC_TRUST_MARKERS measured state", () => {
 
   it("treats a shop with no disputes as earning the badge, evaluated or not", () => {
     expect(marker("dispute_rate").measured(null)).toBe(true);
-    expect(marker("dispute_rate").value(null)).toBe("0%");
+    expect(marker("dispute_rate").value(null)).toBe("Sin disputas");
     expect(marker("dispute_rate").measured({ ...zeroed, disputeRate: null })).toBe(true);
-    expect(marker("dispute_rate").value({ ...zeroed, disputeRate: null })).toBe("0%");
+    expect(marker("dispute_rate").value({ ...zeroed, disputeRate: null })).toBe("Sin disputas");
   });
 
   it("still reports a real dispute rate when there is one", () => {
@@ -153,5 +154,17 @@ describe("PUBLIC_TRUST_MARKERS measured state", () => {
 
     expect(marker("dispute_rate").measured(disputed)).toBe(true);
     expect(marker("dispute_rate").value(disputed)).toBe("12%");
+  });
+});
+
+describe("formatDisputeRate", () => {
+  it("states a clean record rather than a rate", () => {
+    expect(formatDisputeRate(null)).toBe("Sin disputas");
+    expect(formatDisputeRate(0)).toBe("Sin disputas");
+  });
+
+  it("reports the rate once disputes exist", () => {
+    expect(formatDisputeRate(12)).toBe("12%");
+    expect(formatDisputeRate(2.55)).toBe("2.6%");
   });
 });

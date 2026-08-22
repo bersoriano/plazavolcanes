@@ -64,7 +64,7 @@ describe("TrustBadges", () => {
     const badge = screen.getByTestId("trust-badge-dispute_rate");
 
     expect(badge).toHaveAttribute("data-state", "measured");
-    expect(badge).toHaveTextContent("0%");
+    expect(badge).toHaveTextContent("Sin disputas");
   });
 
   it("keeps membership and verification active when the profile exists", () => {
@@ -137,7 +137,7 @@ describe("TrustBadges absence versus achievement", () => {
     const badge = screen.getByTestId("trust-badge-dispute_rate");
 
     expect(badge).toHaveAttribute("data-state", "measured");
-    expect(badge).toHaveTextContent("0%");
+    expect(badge).toHaveTextContent("Sin disputas");
   });
 
   it("greys an unverified account while naming its level", () => {
