@@ -268,8 +268,9 @@ export type Database = {
           search_document: unknown;
           shop_id: number;
           slug: string;
-          status: "draft" | "published";
+          status: "draft" | "published" | "expired";
           units_available: number;
+          expires_at: string | null;
           updated_at: string;
           used_condition: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
@@ -287,8 +288,9 @@ export type Database = {
           price_mxn: number;
           shop_id: number;
           slug: string;
-          status?: "draft" | "published";
+          status?: "draft" | "published" | "expired";
           units_available?: number;
+          expires_at?: string | null;
           updated_at?: string;
           used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
@@ -306,8 +308,9 @@ export type Database = {
           price_mxn?: number;
           shop_id?: number;
           slug?: string;
-          status?: "draft" | "published";
+          status?: "draft" | "published" | "expired";
           units_available?: number;
+          expires_at?: string | null;
           updated_at?: string;
           used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };

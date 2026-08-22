@@ -23,7 +23,7 @@ export default async function ShopManagePage({ params }: { params: Promise<{ id:
   const userId = claimsData?.claims?.sub;
   const { data: shop } = await supabase.from("shops").select("*").eq("id", shopId).eq("owner_id", userId ?? "").maybeSingle();
   if (!shop) notFound();
-  const { data: products } = await supabase.from("products").select("id, name, price_mxn, image_path, status").eq("shop_id", shopId).order("created_at", { ascending: false });
+  const { data: products } = await supabase.from("products").select("id, name, price_mxn, image_path, status, expires_at").eq("shop_id", shopId).order("created_at", { ascending: false });
   const trustDashboard = await getShopTrustDashboard(shopId);
   const updateAction = updateShop.bind(null, shopId);
   const deleteAction = deleteShop.bind(null, shopId);
