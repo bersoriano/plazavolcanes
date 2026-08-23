@@ -36,7 +36,7 @@ export type CatalogProduct = Pick<
 export type CatalogShop = Shop & { imageUrl: string | null };
 
 const productSelection =
-  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, shops!inner(name, slug, country_code), product_translations(locale, name, description, review_status)";
+  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, shops!inner(id, owner_id, name, slug, country_code), product_translations(locale, name, description, review_status)";
 
 type ProductQueryRow = {
   id: number;
@@ -51,7 +51,7 @@ type ProductQueryRow = {
   created_at: string;
   category_id: number | null;
   currency_code: string;
-  shops: { name: string; slug: string; country_code: string };
+  shops: { id: number; owner_id: string; name: string; slug: string; country_code: string };
   product_translations: {
     locale: CatalogLocale;
     name: string;
@@ -406,8 +406,14 @@ export async function getPublicProduct(
     .filter((url): url is string => url !== null);
 
   // A product from before galleries existed still has its single cover image.
+  const row = data as unknown as ProductQueryRow;
+
   return {
     ...product,
     images: images.length ? images : product.image_path ? [product.image_path] : [],
+    // Only the detail page offers to message the shop, so the identifiers it
+    // needs stay here rather than widening the type every catalog card uses.
+    shopId: row.shops.id,
+    shopOwnerId: row.shops.owner_id,
   };
 }

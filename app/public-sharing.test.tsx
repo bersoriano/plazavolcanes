@@ -24,6 +24,15 @@ vi.mock("@/lib/queries/categories.server", () => ({
 
 const notFound = vi.hoisted(() => vi.fn());
 vi.mock("next/navigation", () => ({ notFound, redirect: vi.fn() }));
+// Both pages now resolve the viewer, to decide whether to offer the shop a
+// message. server-only does not resolve under vitest, so the client is mocked
+// rather than the pages being reshaped around the test.
+vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: () => true }));
+vi.mock("@/lib/supabase/server", () => ({
+  createServerSupabaseClient: async () => ({
+    auth: { getClaims: async () => ({ data: { claims: null } }) },
+  }),
+}));
 
 afterEach(() => {
   cleanup();
@@ -68,6 +77,8 @@ describe("public sharing controls", () => {
       image_path: null,
       created_at: "2026-08-19T00:00:00.000Z",
       shop: { name: "Casa Niebla", slug: "casa-niebla" },
+      shopId: 1,
+      shopOwnerId: "11111111-1111-4111-8111-111111111111",
     });
 
     render(
@@ -130,6 +141,8 @@ describe("public sharing controls", () => {
       image_path: null,
       created_at: "2026-08-19T00:00:00.000Z",
       shop: { name: "Casa Niebla", slug: "casa-niebla" },
+      shopId: 1,
+      shopOwnerId: "11111111-1111-4111-8111-111111111111",
     });
 
     render(
@@ -226,6 +239,8 @@ describe("product slug routing", () => {
       image_path: null,
       created_at: "2026-08-19T00:00:00.000Z",
       shop: { name: "Tecno Plaza", slug: "tecno-plaza" },
+      shopId: 1,
+      shopOwnerId: "11111111-1111-4111-8111-111111111111",
     });
 
     render(

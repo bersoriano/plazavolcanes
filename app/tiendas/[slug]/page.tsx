@@ -6,10 +6,14 @@ import { notFound } from "next/navigation";
 import { ProductCard } from "@/components/catalog/product-card";
 import { ProductGrid } from "@/components/catalog/product-grid";
 import { ShareActions } from "@/components/share/share-actions";
+import { StartConversationButton } from "@/components/messages/start-conversation-button";
 import { TrustTierBadge } from "@/components/shops/trust-tier-badge";
 import { TrustBadges } from "@/components/shops/trust-badges";
 import { EmptyState } from "@/components/ui/empty-state";
+import { openConversation } from "@/lib/actions/start-conversation";
 import { getPublicShop } from "@/lib/queries/catalog.server";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { formatShopLocation } from "@/lib/shop-location";
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -22,6 +26,15 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
   const { slug } = await params;
   const shop = await getPublicShop(slug);
   if (!shop) notFound();
+
+  let viewerId: string | null = null;
+  if (isSupabaseConfigured()) {
+    const supabase = await createServerSupabaseClient();
+    const { data } = await supabase.auth.getClaims();
+    viewerId = typeof data?.claims?.sub === "string" ? data.claims.sub : null;
+  }
+
+  const messageAction = openConversation.bind(null, shop.id);
 
   return (
     <section className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
@@ -74,7 +87,13 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
             sus propias métricas.
           </p>
 
-          <div className="mt-6">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
+            <StartConversationButton
+              action={messageAction}
+              isOwnShop={viewerId === shop.owner_id}
+              shopId={shop.id}
+              signedIn={Boolean(viewerId)}
+            />
             <ShareActions label="Compartir tienda" title={shop.name} />
           </div>
         </div>

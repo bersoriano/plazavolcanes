@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { ProductGallery } from "@/components/catalog/product-gallery";
 import { ShareActions } from "@/components/share/share-actions";
+import { StartConversationButton } from "@/components/messages/start-conversation-button";
 import { AddToCartForm } from "@/components/orders/add-to-cart-form";
 import {
   DEFAULT_CATALOG_CURRENCY,
@@ -15,8 +16,11 @@ import { buildCatalogHref, findCategorySelection } from "@/lib/categories";
 import { formatCurrency } from "@/lib/format";
 import { formatProductCondition } from "@/lib/product-condition";
 import { addToCart } from "@/lib/actions/cart";
+import { openConversation } from "@/lib/actions/start-conversation";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { normalizeCatalogFilters } from "@/lib/queries/catalog";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getPublicProduct } from "@/lib/queries/catalog.server";
 
 type ProductSearchParams = Promise<{
@@ -71,6 +75,14 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   );
   const currencyCode = product.currency_code ?? DEFAULT_CATALOG_CURRENCY;
   const addToCartAction = addToCart.bind(null, product.id);
+  const messageAction = openConversation.bind(null, product.shopId);
+
+  let viewerId: string | null = null;
+  if (isSupabaseConfigured()) {
+    const supabase = await createServerSupabaseClient();
+    const { data } = await supabase.auth.getClaims();
+    viewerId = typeof data?.claims?.sub === "string" ? data.claims.sub : null;
+  }
 
   return (
     <section className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
@@ -126,7 +138,15 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           <div className="my-7 h-px bg-line" />
           <p className="whitespace-pre-wrap text-base leading-8 text-muted">{product.description}</p>
           <AddToCartForm action={addToCartAction} unitsAvailable={product.units_available} />
-          <div className="mt-7"><ShareActions label="Compartir producto" title={product.name} /></div>
+          <div className="mt-7 flex flex-wrap items-center gap-3">
+            <StartConversationButton
+              action={messageAction}
+              isOwnShop={viewerId === product.shopOwnerId}
+              shopId={product.shopId}
+              signedIn={Boolean(viewerId)}
+            />
+            <ShareActions label="Compartir producto" title={product.name} />
+          </div>
           <p className="mt-8 rounded-2xl border border-line bg-surface p-4 text-sm leading-6 text-muted">
             Producto publicado por una tienda independiente de Plaza Volcanes.
           </p>
