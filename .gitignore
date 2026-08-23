@@ -45,3 +45,7 @@ next-env.d.ts
 
 # local worktrees
 .worktrees/
+
+# Playwright artifacts
+/test-results/
+/playwright-report/
