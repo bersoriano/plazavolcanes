@@ -7,6 +7,15 @@ import { ProductForm } from "@/components/products/product-form";
 import { ShopForm } from "@/components/shops/shop-form";
 import type { ActionState } from "@/lib/action-state";
 
+vi.mock("@/lib/supabase/client", () => ({
+  createBrowserSupabaseClient: () => ({
+    channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
+    removeChannel: vi.fn(),
+  }),
+}));
+vi.mock("@/lib/actions/messages", () => ({ markConversationRead: vi.fn() }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+
 vi.mock("@/lib/actions/auth", () => ({
   signIn: vi.fn(),
   signUp: vi.fn(async (): Promise<ActionState> => ({
@@ -130,9 +139,14 @@ describe("choices and non-text fields", () => {
   });
 
   it("keeps the message a buyer was writing", async () => {
-    const { Conversation } = await import("@/components/orders/conversation");
+    const { MessageThread } = await import("@/components/messages/message-thread");
     render(
-      <Conversation action={rejecting} currentUserId="buyer-uuid" messages={[]} />,
+      <MessageThread
+        action={rejecting}
+        conversationId={7}
+        currentUserId="buyer-uuid"
+        messages={[]}
+      />,
     );
 
     fireEvent.change(screen.getByLabelText("Mensaje"), {
