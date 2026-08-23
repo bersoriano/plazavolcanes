@@ -678,6 +678,8 @@ export type Database = {
         Returns: undefined;
       };
       start_pre_sale_conversation: { Args: { p_shop_id: number }; Returns: number };
+      set_display_name: { Args: { p_display_name: string }; Returns: undefined };
+      my_display_name: { Args: Record<string, never>; Returns: string | null };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;

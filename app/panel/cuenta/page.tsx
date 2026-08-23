@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
+import { DisplayNameForm } from "@/components/account/display-name-form";
 import { PhoneForm } from "@/components/account/phone-form";
-import { updatePhone } from "@/lib/actions/auth";
+import { updateDisplayName, updatePhone } from "@/lib/actions/auth";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -20,6 +21,7 @@ export default async function AccountPage() {
     .select("phone")
     .eq("user_id", userId ?? "")
     .maybeSingle();
+  const { data: displayName } = await supabase.rpc("my_display_name");
 
   return (
     <section className="mx-auto max-w-2xl px-5 py-10 sm:px-8 sm:py-14">
@@ -33,7 +35,11 @@ export default async function AccountPage() {
         <h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">Datos de contacto</h1>
         {email ? <p className="mb-8 mt-3 leading-7 text-muted">Tu cuenta usa {email}.</p> : null}
 
-        <PhoneForm action={updatePhone} phone={contactDetails?.phone ?? null} />
+        <DisplayNameForm action={updateDisplayName} displayName={displayName ?? null} />
+
+        <div className="mt-8 border-t border-line pt-8">
+          <PhoneForm action={updatePhone} phone={contactDetails?.phone ?? null} />
+        </div>
       </div>
     </section>
   );

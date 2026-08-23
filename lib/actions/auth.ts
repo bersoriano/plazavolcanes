@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import type { ActionState } from "@/lib/action-state";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { authSchema, phoneSchema, signUpSchema } from "@/lib/validation/auth";
+import { authSchema, displayNameSchema, phoneSchema, signUpSchema } from "@/lib/validation/auth";
 
 function parseCredentials(formData: FormData) {
   return authSchema.safeParse({
@@ -61,6 +61,7 @@ export async function signUp(
     email: formData.get("email"),
     password: formData.get("password"),
     phone: formData.get("phone"),
+    display_name: formData.get("display_name"),
   });
 
   if (!parsed.success) {
@@ -79,14 +80,15 @@ export async function signUp(
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
     "http://localhost:3000";
-  const { email, password, phone } = parsed.data;
+  const { email, password, phone, display_name: displayName } = parsed.data;
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      // A trigger copies this into user_contact_details, which works whether or not
-      // email confirmation leaves the new account with a session.
-      data: { phone },
+      // Triggers copy these into user_contact_details and user_display_names,
+      // which works whether or not email confirmation leaves the new account
+      // with a session.
+      data: { phone, display_name: displayName },
       emailRedirectTo: `${siteUrl}/auth/confirm`,
     },
   });
@@ -158,4 +160,31 @@ export async function updatePhone(
 
   revalidatePath("/panel/cuenta");
   return { status: "success", message: "Teléfono actualizado." };
+}
+
+export async function updateDisplayName(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = displayNameSchema.safeParse(formData.get("display_name"));
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Revisa los campos marcados.",
+      errors: { display_name: parsed.error.issues.map((issue) => issue.message) },
+    };
+  }
+
+  if (!isSupabaseConfigured()) return setupError;
+
+  const supabase = await createServerSupabaseClient();
+  const { error } = await supabase.rpc("set_display_name", { p_display_name: parsed.data });
+
+  if (error) {
+    return { status: "error", message: "No pudimos guardar tu nombre." };
+  }
+
+  revalidatePath("/panel/cuenta");
+  return { status: "success", message: "Nombre actualizado." };
 }

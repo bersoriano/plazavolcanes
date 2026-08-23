@@ -31,7 +31,7 @@ describe("authSchema", () => {
 });
 
 describe("signUpSchema", () => {
-  const credentials = { email: "persona@volcanes.mx", password: "secreto12" };
+  const credentials = { email: "persona@volcanes.mx", password: "secreto12", display_name: "Ana Ruiz" };
 
   it("stores a ten digit number in E.164", () => {
     const result = signUpSchema.safeParse({ ...credentials, phone: "3312345678" });
@@ -47,6 +47,22 @@ describe("signUpSchema", () => {
       expect(result.success).toBe(true);
       if (result.success) expect(result.data.phone).toBe("+523312345678");
     }
+  });
+
+  it("requires a name a shop can address them by", () => {
+    const result = signUpSchema.safeParse({
+      email: "persona@volcanes.mx",
+      password: "secreto12",
+      phone: "3312345678",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a name too short to mean anything", () => {
+    const result = signUpSchema.safeParse({ ...credentials, display_name: "A", phone: "3312345678" });
+
+    expect(result.success).toBe(false);
   });
 
   it("requires a phone number", () => {

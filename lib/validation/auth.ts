@@ -24,8 +24,15 @@ export const mexicanMobileSchema = z
   .transform((value) => normalizeMexicanMobile(value))
   .refine((value): value is string => value !== null, { error: PHONE_ERROR });
 
+export const displayNameSchema = z
+  .string()
+  .trim()
+  .min(2, "Tu nombre debe tener entre 2 y 40 caracteres.")
+  .max(40, "Tu nombre debe tener entre 2 y 40 caracteres.");
+
 export const signUpSchema = authSchema.extend({
   phone: mexicanMobileSchema,
+  display_name: displayNameSchema,
 });
 
 export const phoneSchema = z.object({ phone: mexicanMobileSchema });

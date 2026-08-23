@@ -37,6 +37,20 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
         type="email"
       />
       {signingIn ? null : (
+        <Field
+          autoComplete="name"
+          defaultValue={state.values?.display_name}
+          error={state.errors?.display_name?.[0]}
+          label="Tu nombre"
+          maxLength={40}
+          minLength={2}
+          name="display_name"
+          placeholder="Ana Ruiz"
+          required
+          type="text"
+        />
+      )}
+      {signingIn ? null : (
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-ink" htmlFor="phone">
             Teléfono móvil
