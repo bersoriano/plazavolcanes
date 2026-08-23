@@ -38,6 +38,24 @@ export type Database = {
         Update: { id?: never; shop_id?: number; buyer_id?: string; order_id?: number | null; type?: "pre_sale" | "order"; created_at?: string; updated_at?: string };
         Relationships: [];
       };
+      conversation_reads: {
+        Row: { conversation_id: number; user_id: string; last_read_message_id: number; updated_at: string };
+        Insert: { conversation_id: number; user_id: string; last_read_message_id: number; updated_at?: string };
+        Update: { conversation_id?: number; user_id?: string; last_read_message_id?: number; updated_at?: string };
+        Relationships: [];
+      };
+      user_display_names: {
+        Row: { user_id: string; display_name: string; updated_at: string };
+        Insert: { user_id: string; display_name: string; updated_at?: string };
+        Update: { user_id?: string; display_name?: string; updated_at?: string };
+        Relationships: [];
+      };
+      admin_read_events: {
+        Row: { id: number; admin_id: string; conversation_id: number; reason: string; created_at: string };
+        Insert: { id?: never; admin_id: string; conversation_id: number; reason: string; created_at?: string };
+        Update: { id?: never; admin_id?: string; conversation_id?: number; reason?: string; created_at?: string };
+        Relationships: [];
+      };
       categories: {
         Row: {
           created_at: string;
@@ -680,6 +698,28 @@ export type Database = {
       start_pre_sale_conversation: { Args: { p_shop_id: number }; Returns: number };
       set_display_name: { Args: { p_display_name: string }; Returns: undefined };
       my_display_name: { Args: Record<string, never>; Returns: string | null };
+      mark_conversation_read: { Args: { p_conversation_id: number; p_last_message_id: number }; Returns: undefined };
+      unread_message_count: { Args: Record<string, never>; Returns: number };
+      list_conversations: {
+        Args: { p_role: string };
+        Returns: {
+          conversation_id: number;
+          type: "pre_sale" | "order";
+          order_id: number | null;
+          shop_id: number;
+          shop_name: string;
+          shop_slug: string;
+          counterpart_label: string;
+          last_message_body: string | null;
+          last_message_at: string | null;
+          last_message_sender_id: string | null;
+          unread_count: number;
+        }[];
+      };
+      read_conversation_as_admin: {
+        Args: { p_conversation_id: number; p_reason: string };
+        Returns: { id: number; sender_id: string; sender_label: string; body: string; created_at: string }[];
+      };
     };
     Enums: Record<never, never>;
     CompositeTypes: Record<never, never>;
