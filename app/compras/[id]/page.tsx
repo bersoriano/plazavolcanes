@@ -22,7 +22,12 @@ export default async function PurchaseDetailPage({ params }: { params: Promise<{
   const receiveAction = transitionOrder.bind(null, order.id, "receive");
   const completeAction = transitionOrder.bind(null, order.id, "complete");
   const cancelBuyerAction = cancelOrderAsBuyer.bind(null, order.id);
-  const messageAction = order.conversation ? sendMessage.bind(null, order.conversation.id, order.id) : null;
+  const messageAction = order.conversation ? sendMessage.bind(null, order.conversation.id, [
+        `/compras/${order.id}`,
+        `/panel/pedidos/${order.id}`,
+        "/mensajes",
+        "/panel/mensajes",
+      ]) : null;
   const reviewAction = createReview.bind(null, order.id);
   const disputeAction = openDispute.bind(null, order.id);
   const canDispute = ["shipped", "delivered", "completed"].includes(order.status);
