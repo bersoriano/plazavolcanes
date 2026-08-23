@@ -3290,3 +3290,16 @@ create real accounts.
 **pgTAP assumes a clean database.** The tests insert fixed ids, so a Playwright
 run leaves rows that make three of them fail. Run `supabase db reset` before
 `supabase test db` if the app has been exercised in between.
+
+**The first realtime subscription after the Realtime service starts receives
+nothing.** On the local stack this is reproducible: run the end-to-end spec
+immediately after `supabase db reset`, or after `docker restart
+supabase_realtime_*`, and live delivery fails; run it again and it passes, every
+time. Waiting does not help, so it is not warm-up. The socket still reports
+`SUBSCRIBED`, which is why nothing falls back.
+
+The blast radius is bounded by the design rather than by the socket: durable
+history always comes from the server, so a message the socket misses still
+appears on the next render, and the unread badge still counts it. The failure
+mode is "not instant", not "lost". Run the spec twice on a freshly reset stack,
+and do not read a first-run failure as a regression without checking the second.
