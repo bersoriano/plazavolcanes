@@ -716,6 +716,7 @@ export type Database = {
           unread_count: number;
         }[];
       };
+      admin_conversation_for_order: { Args: { p_order_id: number }; Returns: number | null };
       read_conversation_as_admin: {
         Args: { p_conversation_id: number; p_reason: string };
         Returns: { id: number; sender_id: string; sender_label: string; body: string; created_at: string }[];
