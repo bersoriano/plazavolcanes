@@ -11,6 +11,8 @@ vi.mock("@/lib/supabase/client", () => ({
   createBrowserSupabaseClient: () => ({
     channel: () => ({ on: () => ({ subscribe: () => ({}) }) }),
     removeChannel: vi.fn(),
+    realtime: { setAuth: vi.fn() },
+    auth: { getSession: async () => ({ data: { session: null } }) },
   }),
 }));
 vi.mock("@/lib/actions/messages", () => ({ markConversationRead: vi.fn() }));

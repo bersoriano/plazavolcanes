@@ -4,8 +4,15 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 const channel = { on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() };
 const removeChannel = vi.fn();
 
+const setAuth = vi.fn();
+
 vi.mock("@/lib/supabase/client", () => ({
-  createBrowserSupabaseClient: () => ({ channel: () => channel, removeChannel }),
+  createBrowserSupabaseClient: () => ({
+    channel: () => channel,
+    removeChannel,
+    realtime: { setAuth },
+    auth: { getSession: async () => ({ data: { session: { access_token: "token-1" } } }) },
+  }),
 }));
 vi.mock("@/lib/actions/messages", () => ({ markConversationRead: vi.fn() }));
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
@@ -21,7 +28,13 @@ beforeEach(() => {
   channel.on.mockClear();
   channel.subscribe.mockClear();
   removeChannel.mockClear();
+  setAuth.mockClear();
 });
+
+/** The subscription is set up after an await, so tests wait for it to land. */
+async function subscribed() {
+  await vi.waitFor(() => expect(channel.subscribe).toHaveBeenCalled());
+}
 
 afterEach(cleanup);
 
@@ -50,8 +63,18 @@ test("invites a first message when the thread is empty", () => {
   expect(screen.getByText(/aún no hay mensajes/i)).toBeInTheDocument();
 });
 
-test("subscribes to new messages in this conversation only", () => {
+test("hands the session to realtime before subscribing", async () => {
   renderThread();
+  await subscribed();
+
+  // Realtime authorizes each subscriber against the row-level policy. Without
+  // the session it subscribes as anon and receives nothing.
+  expect(setAuth).toHaveBeenCalledWith("token-1");
+});
+
+test("subscribes to new messages in this conversation only", async () => {
+  renderThread();
+  await subscribed();
 
   expect(channel.on).toHaveBeenCalledWith(
     "postgres_changes",
@@ -62,6 +85,7 @@ test("subscribes to new messages in this conversation only", () => {
 
 test("appends a message that arrives over the socket", async () => {
   renderThread();
+  await subscribed();
 
   const handler = channel.on.mock.calls[0][2];
   handler({ new: { id: 3, sender_id: "them", body: "Sí, hay", created_at: "2026-08-23T12:00:00Z" } });
@@ -71,6 +95,7 @@ test("appends a message that arrives over the socket", async () => {
 
 test("ignores a message it already shows", async () => {
   renderThread();
+  await subscribed();
 
   const handler = channel.on.mock.calls[0][2];
   handler({ new: messages[1] });
@@ -78,8 +103,9 @@ test("ignores a message it already shows", async () => {
   expect(await screen.findAllByText("¿Sigue disponible?")).toHaveLength(1);
 });
 
-test("lets go of the channel when the thread closes", () => {
+test("lets go of the channel when the thread closes", async () => {
   const { unmount } = renderThread();
+  await subscribed();
   unmount();
 
   expect(removeChannel).toHaveBeenCalled();

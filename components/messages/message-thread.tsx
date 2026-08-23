@@ -53,26 +53,40 @@ export function MessageThread({
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient();
-    const channel = supabase
-      .channel(`conversation-${conversationId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload: { new: ThreadMessage }) => setLive((current) => [...current, payload.new]),
-      )
-      .subscribe((status: string) => {
-        // A dropped socket falls back to refreshing, which is how this thread
-        // behaved before live delivery existed. It must never read as empty.
-        setDegraded(status === "CHANNEL_ERROR" || status === "TIMED_OUT");
-      });
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let cancelled = false;
+
+    void (async () => {
+      // Realtime authorizes each subscriber against the row-level policy, and
+      // that policy grants the authenticated role. The socket opens with only
+      // the publishable key, so without handing it the session it subscribes as
+      // anon and is delivered nothing at all.
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+
+      supabase.realtime.setAuth(data.session?.access_token ?? null);
+      channel = supabase
+        .channel(`conversation-${conversationId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "messages",
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload: { new: ThreadMessage }) => setLive((current) => [...current, payload.new]),
+        )
+        .subscribe((status: string) => {
+          // A dropped socket falls back to refreshing, which is how this thread
+          // behaved before live delivery existed. It must never read as empty.
+          setDegraded(status === "CHANNEL_ERROR" || status === "TIMED_OUT");
+        });
+    })();
 
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
     };
   }, [conversationId]);
 

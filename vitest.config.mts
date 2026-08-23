@@ -9,5 +9,8 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
+    // Playwright owns tests/e2e. Its spec files match the default include
+    // pattern, and calling test() outside a Playwright runner throws.
+    exclude: ["node_modules/**", "tests/e2e/**"],
   },
 });

@@ -3261,3 +3261,32 @@ Expected: PASS everywhere.
 git add tests/e2e/messaging.spec.ts
 git commit -m "test: prove a question reaches a shop and the answer comes back live"
 ```
+
+---
+
+## Finding from Task 16
+
+**Realtime needs the session handed to it explicitly.** The browser client opens
+its socket with only the publishable key. Realtime authorizes each subscriber
+against the row-level policy on `public.messages`, and that policy grants the
+`authenticated` role, so a socket without a user JWT subscribes as `anon` and is
+delivered nothing — while still reporting `SUBSCRIBED`, which is what makes it
+easy to miss. Before subscribing:
+
+```ts
+const { data } = await supabase.auth.getSession();
+supabase.realtime.setAuth(data.session?.access_token ?? null);
+```
+
+No unit test catches this, because a mocked channel delivers whatever the test
+hands it. Only the end-to-end run does.
+
+**Run Playwright against the local stack.** `.env.local` in this repository
+points at the linked remote project. Next leaves variables already present in
+the environment alone, so pass the local URL and publishable key from
+`supabase status` on the command line. Running against the remote project would
+create real accounts.
+
+**pgTAP assumes a clean database.** The tests insert fixed ids, so a Playwright
+run leaves rows that make three of them fail. Run `supabase db reset` before
+`supabase test db` if the app has been exercised in between.
