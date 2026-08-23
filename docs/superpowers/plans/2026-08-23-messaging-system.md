@@ -903,6 +903,15 @@ Expected: FAIL on the first assertion — a `seller_response_events` row exists,
 
 - [ ] **Step 3: Write the migration**
 
+**Base the rewrite on the body in `20260820191826_add_buyer_trust_system.sql:457`,
+not on the one in `20260820173552_add_fulfillment_communication.sql`.** The buyer
+trust system already replaced this function to also drive buyer response clocks,
+and its buyer-side branches are already scoped to order conversations. Copying
+the older body silently reverts that work — the `buyer_trust_evidence` pgTAP file
+catches it, but only if the whole suite is run. The only edits this task makes
+are the two `if v_conversation.type = 'order'` guards around the seller-side
+effects, and keeping the `updated_at` bump unconditional.
+
 Create `supabase/migrations/20260823093000_response_clock_orders_only.sql`:
 
 ```sql
