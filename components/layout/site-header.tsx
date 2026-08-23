@@ -3,6 +3,7 @@ import { CircleUserRound } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { fetchUnreadCount } from "@/lib/queries/messages.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -14,6 +15,8 @@ export async function SiteHeader() {
     const { data } = await supabase.auth.getClaims();
     signedIn = Boolean(data?.claims);
   }
+
+  const unread = signedIn ? await fetchUnreadCount() : 0;
 
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-surface/95 backdrop-blur-lg">
@@ -33,6 +36,17 @@ export async function SiteHeader() {
               </Link>
               <Link className="hidden rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background sm:inline-flex" href="/compras">
                 Mis compras
+              </Link>
+              <Link className="relative rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background" href="/mensajes">
+                Mensajes
+                {unread > 0 ? (
+                  <span
+                    aria-label={`${unread} mensajes sin leer`}
+                    className="absolute -right-0.5 -top-0.5 grid min-w-5 place-items-center rounded-full bg-brand px-1.5 py-0.5 text-xs font-semibold text-white"
+                  >
+                    {unread}
+                  </span>
+                ) : null}
               </Link>
               <SignOutButton />
             </>
