@@ -223,6 +223,8 @@ Buyer and seller inboxes stay separate, matching the `/compras` and `/panel` div
 
 Subscription status is handled explicitly. On `CHANNEL_ERROR` or `TIMED_OUT`, the component falls back to `router.refresh()` on window focus plus a slow interval. A dropped socket degrades to today's request-response behavior rather than to a thread that appears empty or frozen.
 
+A subscription also reports `SUBSCRIBED` before the server has finished registering it, and a message sent into that window reaches no socket while the status still reads healthy. For the first thirty seconds after subscribing the thread therefore also asks the server every few seconds, then stops and trusts the socket. The window is short against a warm Realtime and several seconds against one that has just restarted, when every client reconnects at once.
+
 Marking a thread read fires when it mounts and again when a message arrives while the window is focused.
 
 ## Error Handling

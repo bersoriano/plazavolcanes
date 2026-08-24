@@ -3291,15 +3291,24 @@ create real accounts.
 run leaves rows that make three of them fail. Run `supabase db reset` before
 `supabase test db` if the app has been exercised in between.
 
-**The first realtime subscription after the Realtime service starts receives
-nothing.** On the local stack this is reproducible: run the end-to-end spec
-immediately after `supabase db reset`, or after `docker restart
-supabase_realtime_*`, and live delivery fails; run it again and it passes, every
-time. Waiting does not help, so it is not warm-up. The socket still reports
-`SUBSCRIBED`, which is why nothing falls back.
+**A subscription is not live when it says it is.** `subscribe()` reports
+`SUBSCRIBED` before the server has finished registering the postgres-changes
+subscription. The window is short against a warm Realtime and several seconds
+against one that has just started — which is exactly when every client
+reconnects at once. A message sent into that window reaches no socket, and
+because the status looks healthy, the degraded fallback never fires.
 
-The blast radius is bounded by the design rather than by the socket: durable
-history always comes from the server, so a message the socket misses still
-appears on the next render, and the unread badge still counts it. The failure
-mode is "not instant", not "lost". Run the spec twice on a freshly reset stack,
-and do not read a first-run failure as a regression without checking the second.
+Measured on the local stack: restart the Realtime container, then send a reply
+immediately after the thread subscribes and it is never delivered; wait six
+seconds first and it arrives. That is a registration lag, not a lost
+subscription.
+
+The thread therefore also asks the server every few seconds for the first thirty
+seconds after subscribing, then stops and trusts the socket. This is the same
+principle the rest of the design rests on — realtime is an accelerator, the
+server is the truth — applied to the one window where the socket lies about
+being ready.
+
+**pgTAP assumes a clean database.** The tests insert fixed ids, so a Playwright
+run leaves rows that make some of them fail. Run `supabase db reset` before
+`supabase test db` if the app has been exercised in between.

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 const channel = { on: vi.fn().mockReturnThis(), subscribe: vi.fn().mockReturnThis() };
@@ -15,7 +15,8 @@ vi.mock("@/lib/supabase/client", () => ({
   }),
 }));
 vi.mock("@/lib/actions/messages", () => ({ markConversationRead: vi.fn() }));
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
+const refresh = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
 
 import { MessageThread } from "@/components/messages/message-thread";
 
@@ -29,6 +30,7 @@ beforeEach(() => {
   channel.subscribe.mockClear();
   removeChannel.mockClear();
   setAuth.mockClear();
+  refresh.mockClear();
 });
 
 /** The subscription is set up after an await, so tests wait for it to land. */
@@ -109,4 +111,39 @@ test("lets go of the channel when the thread closes", async () => {
   unmount();
 
   expect(removeChannel).toHaveBeenCalled();
+});
+
+test("keeps asking the server while the subscription is settling", async () => {
+  renderThread();
+  await vi.waitFor(() => expect(channel.subscribe).toHaveBeenCalled());
+
+  vi.useFakeTimers();
+
+  try {
+    // A subscription reports SUBSCRIBED before the server has registered it, so
+    // a message sent into that gap arrives over no socket at all.
+    const onStatus = channel.subscribe.mock.calls[0][0];
+    await act(async () => {
+      onStatus("SUBSCRIBED");
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(9_000);
+    });
+    expect(refresh).toHaveBeenCalled();
+
+    // And it stops once the window has passed, rather than polling for as long
+    // as the thread stays open.
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(40_000);
+    });
+    refresh.mockClear();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+
+    expect(refresh).not.toHaveBeenCalled();
+  } finally {
+    vi.useRealTimers();
+  }
 });

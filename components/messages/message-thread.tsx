@@ -15,6 +15,16 @@ import { Button } from "@/components/ui/button";
 /** How often a thread with a broken socket falls back to asking the server. */
 const DEGRADED_POLL_MS = 20_000;
 
+/**
+ * A subscription reports SUBSCRIBED before the server has finished registering
+ * it, so there is a window where the socket is silently not yet live. It is
+ * short against a warm Realtime and several seconds against one that just
+ * started, which is exactly when everyone reconnects at once. For that window
+ * the thread also asks the server, so a message sent into the gap still lands.
+ */
+const CATCH_UP_MS = 4_000;
+const CATCH_UP_WINDOW_MS = 30_000;
+
 function SendButton() {
   const { pending } = useFormStatus();
 
@@ -39,6 +49,7 @@ export function MessageThread({
   const [state, formAction] = useFormAction(action);
   const [live, setLive] = useState<ThreadMessage[]>([]);
   const [degraded, setDegraded] = useState(false);
+  const [catchingUp, setCatchingUp] = useState(false);
   const router = useRouter();
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -81,6 +92,7 @@ export function MessageThread({
           // A dropped socket falls back to refreshing, which is how this thread
           // behaved before live delivery existed. It must never read as empty.
           setDegraded(status === "CHANNEL_ERROR" || status === "TIMED_OUT");
+          if (status === "SUBSCRIBED") setCatchingUp(true);
         });
     })();
 
@@ -102,6 +114,18 @@ export function MessageThread({
       window.removeEventListener("focus", refresh);
     };
   }, [degraded, router]);
+
+  useEffect(() => {
+    if (!catchingUp) return;
+
+    const timer = setInterval(() => router.refresh(), CATCH_UP_MS);
+    const stop = setTimeout(() => setCatchingUp(false), CATCH_UP_WINDOW_MS);
+
+    return () => {
+      clearInterval(timer);
+      clearTimeout(stop);
+    };
+  }, [catchingUp, router]);
 
   useEffect(() => {
     const latest = shown.at(-1);
