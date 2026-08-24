@@ -1468,7 +1468,7 @@ git commit -m "feat: record who read a conversation and why"
 ### Task 8: Retention purge and the realtime publication
 
 **Files:**
-- Create: `supabase/migrations/20260823096000_message_retention_and_realtime.sql`
+- Create: `supabase/migrations/20260823100000_message_retention_and_realtime.sql`
 - Test: `supabase/tests/database/message_retention.test.sql`
 
 **Interfaces:**
@@ -1543,7 +1543,7 @@ Expected: FAIL — `function private.purge_idle_pre_sale_conversations() does no
 
 - [ ] **Step 3: Write the migration**
 
-Create `supabase/migrations/20260823096000_message_retention_and_realtime.sql`:
+Create `supabase/migrations/20260823100000_message_retention_and_realtime.sql`:
 
 ```sql
 -- Pre-sale threads accumulate from browsing rather than from buying, so they
@@ -1611,7 +1611,7 @@ Expected: PASS, 4 tests.
 - [ ] **Step 5: Commit**
 
 ```bash
-git add supabase/migrations/20260823096000_message_retention_and_realtime.sql supabase/tests/database/message_retention.test.sql
+git add supabase/migrations/20260823100000_message_retention_and_realtime.sql supabase/tests/database/message_retention.test.sql
 git commit -m "feat: age out idle pre-sale threads and publish messages for realtime"
 ```
 

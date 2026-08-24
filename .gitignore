@@ -49,3 +49,6 @@ next-env.d.ts
 # Playwright artifacts
 /test-results/
 /playwright-report/
+
+# Local implementation notes, not for the repo
+/MESSAGING-IMPLEMENTATION.md
