@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "test:e2e": "node scripts/e2e-env.mjs npx playwright test"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.4",

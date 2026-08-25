@@ -1,14 +1,20 @@
 import { expect, test, type Page } from "@playwright/test";
 
-// Point the dev server at the local Supabase stack, never at the linked remote
-// project, or this will create real accounts:
-//
-//   NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 \
-//   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<local publishable key> \
-//   npx playwright test
-//
-// Both values come from `supabase status`. Next leaves variables already in the
-// environment alone, so these win over .env.local.
+// This spec registers accounts, creates a shop and sends messages. `.env.local`
+// points at the linked remote project, so `npm run test:e2e` routes through
+// scripts/e2e-env.mjs, which forces the local stack. Running Playwright
+// directly skips that, so the guard below refuses rather than trusting it.
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+const isLocal = /^https?:\/\/(127\.0\.0\.1|localhost|\[::1\])(:|\/|$)/.test(supabaseUrl);
+
+test.beforeAll(() => {
+  if (!isLocal) {
+    throw new Error(
+      `Refusing to run against ${supabaseUrl || "an unset NEXT_PUBLIC_SUPABASE_URL"}. ` +
+        "These tests create real accounts and shops. Use `npm run test:e2e`.",
+    );
+  }
+});
 
 /** Each run needs its own accounts, because e-mail addresses are unique. */
 const stamp = Date.now();
