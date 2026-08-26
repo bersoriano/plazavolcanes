@@ -181,6 +181,30 @@ function sampleShop() {
 }
 
 describe("Home conversion sections", () => {
+  it("sharpens the populated home hero conversion paths", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const hero = screen.getByRole("heading", {
+      name: "Encuentra productos únicos cerca de ti.",
+    }).closest("section");
+    expect(hero).not.toBeNull();
+    expect(hero).toHaveTextContent(
+      "Explora artículos nuevos y usados, revisa quién vende y acuerda pago y entrega directamente con cada tienda.",
+    );
+    expect(within(hero!).getByRole("link", { name: "Explorar productos" })).toHaveAttribute(
+      "href",
+      "#catalogo",
+    );
+    expect(within(hero!).getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
+      "href",
+      "/registro",
+    );
+  });
+
   it("prioritizes buyer discovery before trust details and the seller pitch", async () => {
     const { getCatalogStateCounts } = await import("@/lib/queries/catalog.server");
     vi.mocked(getCatalogStateCounts).mockResolvedValue([{ code: "MX-OAX", count: 1 }]);

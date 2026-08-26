@@ -69,6 +69,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   // The state scopes the page rather than filtering within it, so it never counts here.
   const hasFilters = Boolean(filters.query || activeCategorySlug);
   const coldStart = !hasFilters && products.length === 0;
+  const populatedHome = !area && !hasFilters && !coldStart;
   const placeSuffix = area ? ` en ${area.label}` : "";
   const heading = filters.query
     ? activeCategoryName
@@ -187,14 +188,18 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
                 ? `Productos en ${area.label}`
                 : coldStart
                   ? "Abre la primera tienda de la plaza."
-                  : "Una plaza llena de cosas que no encuentras en cualquier lugar."}
+                  : populatedHome
+                    ? "Encuentra productos únicos cerca de ti."
+                    : "Una plaza llena de cosas que no encuentras en cualquier lugar."}
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-muted sm:text-lg">
               {area
                 ? `Descubre lo que publican las tiendas que operan en ${area.label}.`
                 : coldStart
                   ? "Plaza Volcanes está lista para tus productos. Crea tu tienda, publica lo que haces y empieza a recibir pedidos."
-                  : "Explora productos de tiendas independientes y descubre quién está detrás de cada pieza."}
+                  : populatedHome
+                    ? "Explora artículos nuevos y usados, revisa quién vende y acuerda pago y entrega directamente con cada tienda."
+                    : "Explora productos de tiendas independientes y descubre quién está detrás de cada pieza."}
             </p>
             {area ? (
               <div className="mt-7">
@@ -221,6 +226,23 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
                   href="/ingresar"
                 >
                   Ya tengo cuenta
+                </Link>
+              </div>
+            ) : null}
+            {populatedHome ? (
+              <div className="mt-8 flex flex-wrap justify-center gap-4">
+                <Link
+                  className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-transform hover:-translate-y-0.5"
+                  href="#catalogo"
+                >
+                  Explorar productos
+                  <ArrowRight aria-hidden="true" className="size-4" />
+                </Link>
+                <Link
+                  className="inline-flex min-h-12 items-center rounded-full border border-line bg-surface px-6 font-semibold text-brand transition-colors hover:border-brand"
+                  href="/registro"
+                >
+                  Abrir mi tienda
                 </Link>
               </div>
             ) : null}
