@@ -1821,6 +1821,17 @@ const launchState = await readLaunchState();
 const missingVars = IDENTITY_VARS.filter((name) => !process.env[name]?.trim());
 const published = await readPublishedTypes();
 
+// Real drift protection for the registry: the TypeScript list and the
+// migration seed are two copies of the same truth, and only this check
+// reconciles them against the database itself.
+async function readSeededTypes(url, key) {
+  const response = await fetch(`${url}/rest/v1/legal_documents?select=type,is_required`, {
+    headers: { apikey: key, Authorization: `Bearer ${key}` },
+  });
+  if (!response.ok) return null;
+  return await response.json();
+}
+
 if (published === null) {
   const detail = "cannot reach the database to check published legal documents";
   if (launchState?.status === "pre_launch") {
@@ -1828,6 +1839,29 @@ if (published === null) {
     process.exit(0);
   }
   fail([detail, "set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"]);
+}
+
+const seeded = await readSeededTypes(
+  process.env.NEXT_PUBLIC_SUPABASE_URL.trim(),
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.trim(),
+);
+
+if (seeded) {
+  const seededRequired = seeded.filter((row) => row.is_required).map((row) => row.type).sort();
+  const expected = [...REQUIRED_TYPES].sort();
+  const drifted =
+    seededRequired.length !== expected.length ||
+    seededRequired.some((type, index) => type !== expected[index]);
+
+  if (drifted) {
+    fail([
+      "the legal document registry disagrees with the database seed:",
+      `  code:     ${expected.join(", ")}`,
+      `  database: ${seededRequired.join(", ")}`,
+      "",
+      "reconcile lib/legal/document-types.ts with the migration seed.",
+    ]);
+  }
 }
 
 const unpublished = REQUIRED_TYPES.filter((type) => !published.has(type));
@@ -1948,6 +1982,13 @@ npx vitest run scripts/legal-verify.test.ts
 
 Expected: PASS, 2 tests. If it fails, the script and the registry disagree —
 fix whichever is wrong, never loosen the test.
+
+Note what this does and does not cover. These two tests keep the script's
+copies of the lists in step with the TypeScript modules. The **database** seed
+is reconciled separately, by the drift check inside the script itself, which
+runs against the real `legal_documents` table at build time. Neither a unit
+test nor pgTAP can do that job: the first has no database, the second cannot
+read TypeScript.
 
 - [ ] **Step 7: Verify the full build still succeeds**
 
