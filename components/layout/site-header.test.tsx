@@ -22,6 +22,15 @@ async function renderHeader(signedIn: boolean) {
 }
 
 describe("SiteHeader", () => {
+  it("keeps the compact home control at least 44px in both dimensions", async () => {
+    await renderHeader(false);
+
+    expect(screen.getByRole("link", { name: "Plaza Volcanes, inicio" })).toHaveClass(
+      "min-h-11",
+      "min-w-11",
+    );
+  });
+
   it("keeps compact signed-in actions explicitly named", async () => {
     await renderHeader(true);
 

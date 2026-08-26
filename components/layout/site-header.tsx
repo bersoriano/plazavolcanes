@@ -21,7 +21,7 @@ export async function SiteHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-surface/95 backdrop-blur-lg">
       <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-1 px-3 min-[400px]:gap-5 min-[400px]:px-5 sm:px-8 lg:px-12">
-        <Link className="group flex items-center gap-2.5 text-brand" href="/" aria-label="Plaza Volcanes, inicio">
+        <Link className="group flex min-h-11 min-w-11 items-center gap-2.5 text-brand" href="/" aria-label="Plaza Volcanes, inicio">
           <span className="relative grid size-9 place-items-center overflow-hidden rounded-xl bg-brand text-accent">
             <VolcanoMark className="absolute left-1/2 top-1/2 w-12 -translate-x-1/2 -translate-y-1/2" />
           </span>

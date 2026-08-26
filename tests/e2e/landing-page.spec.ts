@@ -196,9 +196,24 @@ test.describe("landing responsive and accessibility gate", () => {
           )
           .toBeGreaterThan(0);
 
+        const catalog = page.locator("#catalogo");
+        await page.getByRole("link", { name: "Explorar productos" }).click();
+        await expect(page).toHaveURL(/#catalogo$/);
+        await expect(catalog).toBeFocused();
+        await expect
+          .poll(() =>
+            catalog.evaluate((element) => {
+              const rect = element.getBoundingClientRect();
+              return rect.top < window.innerHeight && rect.bottom > 0;
+            }),
+          )
+          .toBe(true);
+
         // The public UI cannot corrupt an uploaded object. Once hydration has
         // attached the real onError handler, make the rendered image issue a
         // real failing request instead of dispatching a synthetic error event.
+        // The client-only catalog focus transition above is the hydration proof:
+        // native hash navigation alone does not focus the target in Chromium.
         const imageSrc = await productImage.getAttribute("src");
         expect(imageSrc).not.toBeNull();
         const brokenImageUrl = new URL(imageSrc!);
@@ -216,19 +231,6 @@ test.describe("landing responsive and accessibility gate", () => {
         await expect.poll(() => failedCatalogImageRequests).toBeGreaterThan(0);
         await expect(productCard.getByRole("img", { name: productName })).toHaveCount(0);
         await expect(productCard.locator("svg.lucide-image")).toBeVisible();
-
-        const catalog = page.locator("#catalogo");
-        await page.getByRole("link", { name: "Explorar productos" }).click();
-        await expect(page).toHaveURL(/#catalogo$/);
-        await expect(catalog).toBeFocused();
-        await expect
-          .poll(() =>
-            catalog.evaluate((element) => {
-              const rect = element.getBoundingClientRect();
-              return rect.top < window.innerHeight && rect.bottom > 0;
-            }),
-          )
-          .toBe(true);
 
         const state = page.getByRole("combobox", { name: "Estado" });
         await expect(state).toBeVisible();

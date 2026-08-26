@@ -12,6 +12,45 @@
  * local keys change when the stack is recreated.
  */
 import { execFileSync, spawn } from "node:child_process";
+import { createServer } from "node:net";
+
+function isLoopbackHttpUrl(value) {
+  try {
+    const url = new URL(value);
+    return (
+      ["http:", "https:"].includes(url.protocol) &&
+      ["127.0.0.1", "localhost", "[::1]", "::1"].includes(url.hostname)
+    );
+  } catch {
+    return false;
+  }
+}
+
+function availableLoopbackPort() {
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+    server.once("error", reject);
+    server.listen({ exclusive: true, host: "127.0.0.1", port: 0 }, () => {
+      const address = server.address();
+      const port = typeof address === "object" && address ? address.port : null;
+
+      server.close((error) => {
+        if (error) reject(error);
+        else if (port === null) reject(new Error("Could not allocate a loopback port."));
+        else resolve(port);
+      });
+    });
+  });
+}
+
+const externalBaseUrl = process.env.PLAYWRIGHT_BASE_URL?.trim();
+
+if (externalBaseUrl && !isLoopbackHttpUrl(externalBaseUrl)) {
+  console.error(
+    `\n  Refusing to run against non-loopback PLAYWRIGHT_BASE_URL: ${externalBaseUrl}\n`,
+  );
+  process.exit(1);
+}
 
 function localCredentials() {
   let raw;
@@ -59,13 +98,17 @@ if (!command) {
   process.exit(1);
 }
 
+const ownedPort = externalBaseUrl ? null : await availableLoopbackPort();
+const appUrl = externalBaseUrl ?? `http://127.0.0.1:${ownedPort}`;
+
 const child = spawn(command, args, {
   stdio: "inherit",
   env: {
     ...process.env,
     NEXT_PUBLIC_SUPABASE_URL: local.url,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: local.publishableKey,
-    NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3000",
+    NEXT_PUBLIC_SITE_URL: appUrl,
+    ...(ownedPort === null ? {} : { PLAYWRIGHT_E2E_PORT: String(ownedPort) }),
   },
 });
 
