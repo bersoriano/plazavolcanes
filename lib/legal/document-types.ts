@@ -1,6 +1,9 @@
-// The database is the source of truth for which documents exist; this mirrors
-// the seed so routes, the footer and the build gate all read one list. The
-// test above fails if the two drift.
+// Routes, the footer, and the build gate all read from this registry.
+// Unit tests guarantee internal consistency: no duplicates, all labels populated,
+// exactly two types are unrouted (buyer_terms and marketplace_role).
+// Reconciliation against the database seed (public.legal_documents) happens
+// in the build gate (scripts/legal-verify.mjs), which reads the live schema
+// and fails the build when the two disagree.
 
 export const LEGAL_DOCUMENT_TYPES = [
   "platform_terms",
