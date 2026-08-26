@@ -20,33 +20,33 @@ The repository-local [Marketplace content-readiness gate](content-readiness.md) 
 
 The responsive, conversion, trust-copy, image-fallback, and accessibility implementation is materially stronger. The follow-up score is **7.4/10**, up from 5.8/10. The release is still **blocked**, because production inventory, imagery, copy quality, and merchandising variety have not been inspected or evidenced. The 8/10 overall target and the target of no category below 7/10 are therefore not met.
 
-The four screenshots below use an isolated local E2E fixture: ten products with black test images and generated test names. They verify layout and interaction states only. They are not production catalog content and are not evidence that the marketplace content-readiness gate passed.
+The four screenshots below show ten accumulated synthetic E2E fixture records with black test images and generated test names. They verify layout and interaction states only. They are not production catalog content and are not evidence that the marketplace content-readiness gate passed.
 
 ### Follow-up flow evidence
 
 #### Step 1 — Populated desktop home at 1440 px: healthy implementation, release-blocked content
 
-![Follow-up desktop home using local E2E fixtures](follow-up/01-desktop-home-1440.jpg)
+![Follow-up desktop home using accumulated synthetic E2E records](follow-up/01-desktop-home-1440.jpg)
 
-The hero now explains the buyer proposition and offers direct browse and seller actions. Products lead the page, shop cards expose stored location and the platform-computed tier, buyer education precedes a compact seller pitch, and the direct-payment/dispute limits are stated without an unsupported protection or verification claim. The ten uniform black thumbnails are test-fixture assets, so this capture cannot validate production image quality or merchandise variety.
+The hero now explains the buyer proposition and offers direct browse and seller actions. Products lead the page, shop cards expose stored location and the platform-computed tier, buyer education precedes a compact seller pitch, and the direct-payment/dispute limits are stated without an unsupported protection or verification claim. The ten uniform black thumbnails belong to accumulated synthetic E2E records, so this capture cannot validate production image quality or merchandise variety.
 
 #### Step 2 — Populated mobile home at 390 px: healthy
 
-![Follow-up mobile home at 390 px using local E2E fixtures](follow-up/02-mobile-home-390.jpg)
+![Follow-up mobile home at 390 px using accumulated synthetic E2E records](follow-up/02-mobile-home-390.jpg)
 
-Search, the state selector, category navigation, products, shops, buyer guidance, risk copy, and the compact seller call to action remain available in a single-column flow. The header and controls stay within the viewport. The long capture reflects ten fixture products stacked on mobile; it does not establish the density or quality of a production catalog.
+Search, the state selector, category navigation, products, shops, buyer guidance, risk copy, and the compact seller call to action remain available in a single-column flow. The header and controls stay within the viewport. The long capture reflects ten accumulated synthetic E2E records stacked on mobile; it does not establish the density or quality of a production catalog.
 
 #### Step 3 — Populated compact home at 320 px: healthy
 
-![Follow-up compact home at 320 px using local E2E fixtures](follow-up/03-compact-home-320.jpg)
+![Follow-up compact home at 320 px using accumulated synthetic E2E records](follow-up/03-compact-home-320.jpg)
 
 The prior 66 px document overflow is resolved. Compact account treatment fits, search retains the state selector, and horizontally scrollable category/shop rows do not widen the document. The full browser gate also verifies visible, unclipped keyboard focus at this width.
 
 #### Step 4 — Filtered search at 390 px: healthy
 
-![Follow-up filtered search at 390 px using a local E2E fixture](follow-up/04-mobile-filtered-search.jpg)
+![Follow-up filtered search at 390 px using accumulated synthetic E2E records](follow-up/04-mobile-filtered-search.jpg)
 
-The query remains visible, the selected location remains available, the result heading communicates the filtered state, and exactly one matching fixture product is shown. Browser DOM inspection confirmed the expected landmark, heading, and control structure in this state; the console contained no errors or warnings.
+The query remains visible, the selected location remains available, the result heading communicates the filtered state, and exactly one matching synthetic E2E record is shown. Current in-app-browser DOM inspection confirmed the expected landmark, heading, and control structure in this state; the current console check contained no errors or warnings.
 
 ### Follow-up scorecard
 
@@ -58,7 +58,7 @@ The query remains visible, the selected location remains available, the result h
 | Trust and reassurance | 5/10 | **7/10** | Stored location, platform-computed tier, direct-payment risk, written-record guidance, and dispute limits are visible without invented metrics or guarantees. Production evidence remains unverified. |
 | Buyer conversion | 5/10 | **8/10** | Browse and seller actions are clear, products lead the page, seller education is compact, and filtered search reaches a relevant result. |
 | Mobile responsiveness | 5/10 | **9/10** | 320/390 px captures and browser assertions show no document overflow, retained discovery controls, and usable horizontal scrollers. |
-| Accessibility readiness | 6/10 | **8/10** | Automated structure, keyboard, target-size, reflow, and diagnostic checks are strong; native assistive-technology and device checks remain unperformed. |
+| Accessibility readiness | 6/10 | **8/10** | Current DOM and E2E structure, keyboard, target-size, image-fallback, and 320/390/1440 reflow checks are strong; native assistive-technology and device checks remain unperformed. |
 
 Arithmetic mean: **7.4/10**. This is an implementation-quality improvement, not a launch-readiness pass.
 
@@ -68,10 +68,19 @@ Fresh release gates from this follow-up:
 
 - `npm run typecheck`: exit 0.
 - `npm run lint`: exit 0.
-- `npm test -- --run`: 86 test files passed, 500 tests passed, 0 failed.
+- `npx vitest run --exclude '.worktrees/**'`: 86 test files passed, 500 tests passed, 0 failed.
 - `npm run test:e2e`: 6 tests passed, 0 failed, covering the full browser suite.
 
-Accepted prior manual diagnostics for the same follow-up state:
+Current Task 9 follow-up evidence used to support the score:
+
+- Four fresh screenshots captured and inspected in the user-selected in-app browser: populated home at 1440, 390, and 320 px plus the 390 px filtered state.
+- Fresh in-app-browser DOM evidence for the expected landmarks, headings, controls, and filtered one-result state.
+- Fresh in-app-browser console check with no errors or warnings.
+- Current full E2E results above for responsive structure, keyboard flow, target sizes, image fallback, and document-width behavior.
+
+No alternate browser was used to replace the user-selected in-app-browser captures, DOM snapshot, or console check. The required full E2E suite used its configured runner.
+
+Historical Task 8 diagnostic context only — not rerun for Task 9 and explicitly excluded from support for the current follow-up score:
 
 - Lighthouse mobile accessibility, best practices, SEO, and agentic scores: 100 each.
 - Automated diagnostic checks: 55 passed, 0 failed.
@@ -81,7 +90,7 @@ Accepted prior manual diagnostics for the same follow-up state:
 - 1280-to-640 CSS-pixel zoom proxy: no horizontal overflow or lost key content.
 - Active-animation inspection: zero active animations.
 
-These results do **not** prove WCAG conformance or substitute for native VoiceOver traversal, browser-native 200% zoom, OS reduced-motion testing, or physical-device touch testing; none of those four checks was performed.
+The historical Task 8 diagnostics above are retained only for chronology. They did not raise or validate any current follow-up score. Neither the current nor historical results prove WCAG conformance or substitute for native VoiceOver traversal, browser-native 200% zoom, OS reduced-motion testing, or physical-device touch testing; none of those four checks was performed.
 
 ### Target disposition
 
@@ -106,7 +115,7 @@ These results do **not** prove WCAG conformance or substitute for native VoiceOv
 
 The detailed production thresholds and reproducible local evidence remain in the [Marketplace content-readiness gate](content-readiness.md). No production data, listing status, or storage object was changed during this follow-up.
 
-## Evidence
+## Baseline evidence
 
 ### Step 1 — Desktop landing page: needs work
 
@@ -136,7 +145,7 @@ Search for “Motorola” returns the correct product and preserves query/filter
 
 Document width is 386 px inside a 320 px viewport: 66 px horizontal overflow. Header navigation and logout control extend off-screen. Search placeholder clips and category row begins with a hard crop. This fails compact-mobile and zoom-resilience expectations.
 
-## Scorecard
+## Baseline scorecard
 
 | Area | Score | Why |
 |---|---:|---|
@@ -148,7 +157,7 @@ Document width is 386 px inside a 320 px viewport: 66 px horizontal overflow. He
 | Mobile responsiveness | 5/10 | Good at 390 px; broken at 320 px; location filter removed |
 | Accessibility readiness | 6/10 | Good semantic regions and labels; compact overflow, unnamed mobile logout, small targets/text remain |
 
-## Highest-impact changes
+## Baseline highest-impact changes
 
 ### P0 — Make marketplace feel real
 
@@ -161,7 +170,7 @@ Document width is 386 px inside a 320 px viewport: 66 px horizontal overflow. He
 
 Recommended order: hero/search → live products → trusted shops → how buying works → trust/dispute explanation → compact seller CTA.
 
-Current seller section occupies the visual climax while buyer education appears near the end. Cut landing-page height 30–40% and keep detailed seller tiers on a dedicated seller page.
+At baseline, the seller section occupied the visual climax while buyer education appeared near the end. Cut landing-page height 30–40% and keep detailed seller tiers on a dedicated seller page.
 
 ### P0 — Fix compact mobile
 
@@ -187,6 +196,6 @@ Explain direct-payment risk plainly. Clarify what arbitration can and cannot rem
 3. Increase 12 px low-opacity tier copy; verify contrast against purple surfaces.
 4. Test keyboard focus, 200% zoom, reduced motion, screen reader names/order, image alternatives, and search/filter announcements.
 
-## Evidence limits
+## Baseline evidence limits
 
 Audit used local development data and visible/DOM evidence. It does not prove production performance, analytics conversion, cross-browser behavior, full keyboard support, or WCAG compliance. Keyboard focus could not be verified reliably through current browser-control surface. Next.js development overlay was ignored.
