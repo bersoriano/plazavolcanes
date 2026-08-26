@@ -22,12 +22,9 @@ const identityLabelMap: Record<string, string> = {
   privacyContact: "Contacto de datos personales",
 };
 
-function getIdentityLabel(key: string): string {
-  return identityLabelMap[key] ?? key;
-}
-
 export function LegalDocument({ document }: { document: PublishedLegalDocument }) {
   const identity = document.issuerIdentity;
+  const hasIdentity = identity && Object.keys(identity).length > 0;
 
   return (
     <article className="mx-auto max-w-[68ch]">
@@ -42,7 +39,7 @@ export function LegalDocument({ document }: { document: PublishedLegalDocument }
         <section className="mt-10" key={section.id}>
           <h2
             className="scroll-mt-24 font-display text-2xl font-semibold text-ink"
-            id={section.id}
+            id={`seccion-${section.id}`}
           >
             {section.heading}
           </h2>
@@ -54,7 +51,7 @@ export function LegalDocument({ document }: { document: PublishedLegalDocument }
         </section>
       ))}
 
-      {identity ? (
+      {hasIdentity ? (
         <section className="mt-12 rounded-[1.5rem] border border-line bg-surface p-6">
           <h2 className="font-display text-xl font-semibold" id="responsable-identidad">
             Responsable de este documento

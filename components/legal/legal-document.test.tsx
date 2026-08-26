@@ -37,7 +37,7 @@ describe("LegalDocument", () => {
     render(<LegalDocument document={document} />);
 
     const heading = screen.getByRole("heading", { level: 2, name: "Derechos ARCO" });
-    expect(heading).toHaveAttribute("id", "arco");
+    expect(heading).toHaveAttribute("id", "seccion-arco");
   });
 
   it("renders every paragraph", () => {
@@ -62,19 +62,99 @@ describe("LegalDocument", () => {
   });
 
   it("renders known identity fields with Spanish labels, not camelCase keys", () => {
-    render(<LegalDocument document={document} />);
+    const docWithAllFields = {
+      ...document,
+      issuerIdentity: {
+        entityName: "Ejemplo S.A. de C.V.",
+        rfc: "EJE010101AB1",
+        address: "Calle Falsa 123",
+        email: "contacto@ejemplo.com",
+        phone: "+52 55 1234 5678",
+        attentionHours: "Lunes a viernes 9:00-17:00",
+        privacyContact: "privacidad@ejemplo.com",
+      },
+    };
 
-    // Should render Spanish label
+    render(<LegalDocument document={docWithAllFields} />);
+
+    // All seven Spanish labels should render
     expect(screen.getByText("Razón social:")).toBeInTheDocument();
-    // Should NOT render the raw camelCase key
-    expect(screen.queryByText("entityName:")).not.toBeInTheDocument();
-
-    // Should render RFC label
     expect(screen.getByText("RFC:")).toBeInTheDocument();
-    expect(screen.queryByText("rfc:")).not.toBeInTheDocument();
-
-    // Should render Domicilio label
     expect(screen.getByText("Domicilio:")).toBeInTheDocument();
+    expect(screen.getByText("Correo electrónico:")).toBeInTheDocument();
+    expect(screen.getByText("Teléfono:")).toBeInTheDocument();
+    expect(screen.getByText("Horario de atención:")).toBeInTheDocument();
+    expect(screen.getByText("Contacto de datos personales:")).toBeInTheDocument();
+
+    // Raw camelCase keys should NOT render
+    expect(screen.queryByText("entityName:")).not.toBeInTheDocument();
+    expect(screen.queryByText("rfc:")).not.toBeInTheDocument();
     expect(screen.queryByText("address:")).not.toBeInTheDocument();
+    expect(screen.queryByText("email:")).not.toBeInTheDocument();
+    expect(screen.queryByText("phone:")).not.toBeInTheDocument();
+    expect(screen.queryByText("attentionHours:")).not.toBeInTheDocument();
+    expect(screen.queryByText("privacyContact:")).not.toBeInTheDocument();
+  });
+
+  it("renders unknown identity fields with their raw keys as fallback", () => {
+    const docWithUnknownField = {
+      ...document,
+      issuerIdentity: {
+        entityName: "Ejemplo S.A. de C.V.",
+        rfc: "EJE010101AB1",
+        address: "Calle Falsa 123",
+        customField: "Custom Value",
+      },
+    };
+
+    render(<LegalDocument document={docWithUnknownField} />);
+
+    // Known fields should use Spanish labels
+    expect(screen.getByText("Razón social:")).toBeInTheDocument();
+    expect(screen.getByText("RFC:")).toBeInTheDocument();
+    expect(screen.getByText("Domicilio:")).toBeInTheDocument();
+
+    // Unknown field should render with raw key
+    expect(screen.getByText("customField:")).toBeInTheDocument();
+    expect(screen.getByText("Custom Value")).toBeInTheDocument();
+  });
+
+  it("does not render identity section when issuerIdentity is empty object", () => {
+    const docWithEmptyIdentity = {
+      ...document,
+      issuerIdentity: {},
+    };
+
+    render(<LegalDocument document={docWithEmptyIdentity} />);
+
+    // The "Responsable de este documento" heading should not appear
+    expect(
+      screen.queryByRole("heading", { level: 2, name: "Responsable de este documento" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("prevents id collisions between section ids and identity block id", () => {
+    const docWithCollisionId = {
+      ...document,
+      sections: [
+        { id: "responsable-identidad", heading: "A Section", paragraphs: ["Content."] },
+      ],
+      issuerIdentity: {
+        entityName: "Ejemplo S.A. de C.V.",
+        rfc: "EJE010101AB1",
+        address: "Calle Falsa 123",
+      },
+    };
+
+    render(<LegalDocument document={docWithCollisionId} />);
+
+    const headings = screen.getAllByRole("heading", { level: 2 });
+    const ids = headings.map((h) => h.id);
+
+    // Section id should be prefixed, identity id should not
+    expect(ids).toContain("seccion-responsable-identidad");
+    expect(ids).toContain("responsable-identidad");
+    // Both ids should be present and unique
+    expect(new Set(ids).size).toBe(2);
   });
 });
