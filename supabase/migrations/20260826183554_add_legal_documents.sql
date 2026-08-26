@@ -72,6 +72,14 @@ create policy admins_read_every_version on public.legal_document_versions
   for select to authenticated
   using ((select public.is_current_user_admin()));
 
+-- Guards every write path, not just UPDATE: a bare INSERT of a 'published' or
+-- 'retired' row, or an UPDATE that flips draft/approved straight to
+-- 'published', would otherwise mint a legal version with no admin check, no
+-- audit event and a content_hash that need not match the body -- reachable by
+-- service_role (which bypasses RLS) or by any future migration. The only
+-- sanctioned way to reach 'published' is through publish_legal_version, which
+-- sets a transaction-local flag around its own UPDATE for this trigger to
+-- check.
 create function private.guard_published_legal_versions()
 returns trigger
 language plpgsql
@@ -82,6 +90,15 @@ begin
       message = 'Una versión legal no se elimina.';
   end if;
 
+  if tg_op = 'INSERT' then
+    if new.status in ('published', 'retired') then
+      raise exception using errcode = '42501',
+        message = 'Una versión legal solo se publica mediante la función autorizada.';
+    end if;
+    return new;
+  end if;
+
+  -- tg_op = 'UPDATE' from here on.
   if old.status = 'retired' then
     raise exception using errcode = '42501',
       message = 'Una versión retirada es inmutable.';
@@ -89,24 +106,26 @@ begin
 
   if old.status = 'published' then
     -- The single permitted transition: retiring a version when its successor
-    -- publishes. Everything that carries meaning must be untouched.
+    -- publishes. Comparing the whole row (less the two columns that
+    -- legitimately change) is both shorter than a column allowlist and closed
+    -- against columns a later migration adds -- an allowlist would silently
+    -- let a new column through untested.
     if new.status = 'retired'
-      and new.document_type = old.document_type
-      and new.version = old.version
-      and new.title = old.title
-      and new.body = old.body
-      and new.content_hash is not distinct from old.content_hash
-      and new.issuer_identity is not distinct from old.issuer_identity
-      and new.effective_at is not distinct from old.effective_at
-      and new.published_at is not distinct from old.published_at
-      and new.approved_by is not distinct from old.approved_by
-      and new.approved_at is not distinct from old.approved_at
+      and new.retired_at is not null
+      and (to_jsonb(new) - 'status' - 'retired_at') = (to_jsonb(old) - 'status' - 'retired_at')
     then
       return new;
     end if;
 
     raise exception using errcode = '42501',
       message = 'Una versión publicada es inmutable.';
+  end if;
+
+  if new.status = 'published'
+    and coalesce(current_setting('plaza.publishing_legal_version', true), '') <> 'on'
+  then
+    raise exception using errcode = '42501',
+      message = 'Una versión legal solo se publica mediante la función autorizada.';
   end if;
 
   return new;
@@ -117,7 +136,7 @@ revoke execute on function private.guard_published_legal_versions()
   from public, anon, authenticated;
 
 create trigger guard_published_legal_versions
-  before update or delete on public.legal_document_versions
+  before insert or update or delete on public.legal_document_versions
   for each row execute function private.guard_published_legal_versions();
 
 -- Publishing records an existing audit action vocabulary, so widen it. The
@@ -198,6 +217,12 @@ begin
   where document_type = v_row.document_type and status = 'published'
   order by effective_at desc limit 1;
 
+  -- The guard trigger requires this flag on the draft/approved -> published
+  -- transition, so only this function -- never a bare UPDATE -- can publish.
+  -- It is cleared immediately after, so the window it opens is exactly this
+  -- statement, not the rest of whatever transaction called this function.
+  perform set_config('plaza.publishing_legal_version', 'on', true);
+
   update public.legal_document_versions
   set status = 'published',
       issuer_identity = p_issuer_identity,
@@ -207,6 +232,8 @@ begin
       supersedes_version_id = v_current
   where id = p_version_id
   returning * into v_row;
+
+  perform set_config('plaza.publishing_legal_version', 'off', true);
 
   if v_current is not null then
     update public.legal_document_versions
