@@ -456,13 +456,36 @@ npx supabase test db
 
 Expected: PASS, 12 of 12.
 
-- [ ] **Step 6: Run the Supabase advisors**
+- [ ] **Step 6: Verify the security posture locally**
+
+`npx supabase inspect db table-stats` connects to the **linked remote project**
+unless you pass `--local`, which the Global Constraints forbid. Verify against
+the local database instead:
 
 ```bash
-npx supabase inspect db table-stats
+npx supabase inspect db table-stats --local
 ```
 
-Then open the linked project's Advisors page, or run the MCP advisor check, and confirm no new `rls_disabled_in_public` or `security_definer_view` finding names the two new tables.
+Then confirm the posture directly, which is what the advisors would report:
+
+```bash
+psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -c "
+select relname, relrowsecurity
+from pg_class
+where relname in ('legal_documents', 'legal_document_versions');
+select proname, prosecdef, proconfig
+from pg_proc
+where proname in ('publish_legal_version', 'current_legal_document',
+                  'guard_published_legal_versions');
+"
+```
+
+Expected: `relrowsecurity` true for both tables; `publish_legal_version`
+`prosecdef` true with `search_path=` in `proconfig`; `current_legal_document`
+`prosecdef` false.
+
+Run the hosted advisors separately, against the linked project, only once this
+branch is actually deployed — not from this task.
 
 - [ ] **Step 7: Commit**
 
