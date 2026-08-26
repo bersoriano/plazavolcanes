@@ -14,7 +14,7 @@
 
 - **This is not the Next.js you know.** Read the relevant guide in `node_modules/next/dist/docs/` before writing route or metadata code. `AGENTS.md` is written by `next dev`; commit it with your work rather than reverting it.
 - **Migration filenames come from `npx supabase migration new <name>`.** Never hand-invent a timestamp.
-- **Never hand-edit `lib/database.types.ts`.** Regenerate it.
+- **`lib/database.types.ts` is hand-maintained here — do NOT run `supabase gen types` over it.** It carries a bespoke `OrderStatus` union (`orders.status` is `text` with a check constraint, which the generator renders as `string`) and fifteen exported row aliases that twelve modules import; regenerating deletes all of it and breaks the build. Add new tables and functions by hand in the file's existing compressed style.
 - **Local database only.** Never run `db reset` or `db push` against the linked project.
 - **RLS on every new table.** Ownership predicates use `(select auth.uid())`. Every `UPDATE` policy carries both `USING` and `WITH CHECK`.
 - **Functions are `security invoker`** unless they must not be. Definers live in `private`, carry `set search_path = ''`, are revoked from `public, anon`, and perform an explicit `public.is_current_user_admin()` check. Copy the shape of `private.checkout_cart_internal`.
@@ -507,14 +507,66 @@ git commit -m "feat(legal): add immutable versioned legal document registry"
 - Consumes: the tables from Task 1
 - Produces: `LEGAL_DOCUMENT_TYPES` (readonly array), `type LegalDocumentType`, `LEGAL_ROUTES` (array of `{ type, path, navLabel, title }`), `REQUIRED_LEGAL_TYPES`
 
-- [ ] **Step 1: Regenerate the database types**
+- [ ] **Step 1: Add the new tables to the database types by hand**
+
+Do **not** redirect `supabase gen types` over `lib/database.types.ts`. That file
+is hand-maintained: `orders.status` is a `text` column, so the generator emits
+`status: string` and destroys the `OrderStatus` union, and the fifteen aliases
+at the tail vanish. Twelve modules import those.
+
+To check your entries against the real schema, generate into a scratch file and
+read it — never over the tracked one:
 
 ```bash
-npx supabase gen types typescript --local > lib/database.types.ts
+npx supabase gen types typescript --local > /tmp/generated-types.ts
+```
+
+Then edit `lib/database.types.ts` by hand, matching its existing compressed
+style. Add beside `OrderStatus` near the top:
+
+```ts
+export type LegalDocumentStatus = "draft" | "approved" | "published" | "retired";
+```
+
+Add to `Tables`, in alphabetical position:
+
+```ts
+      legal_documents: {
+        Row: { type: string; is_required: boolean; public_path: string | null; sort_order: number };
+        Insert: { type: string; is_required?: boolean; public_path?: string | null; sort_order?: number };
+        Update: { type?: string; is_required?: boolean; public_path?: string | null; sort_order?: number };
+        Relationships: [];
+      };
+      legal_document_versions: {
+        Row: { id: string; document_type: string; version: number; status: LegalDocumentStatus; locale: string; title: string; body: Json; issuer_identity: Json | null; content_hash: string | null; change_summary: string; is_material: boolean; effective_at: string | null; published_at: string | null; retired_at: string | null; approved_by: string | null; approved_at: string | null; supersedes_version_id: string | null; created_at: string };
+        Insert: { id?: string; document_type: string; version: number; status?: LegalDocumentStatus; locale?: string; title: string; body?: Json; issuer_identity?: Json | null; content_hash?: string | null; change_summary: string; is_material?: boolean; effective_at?: string | null; published_at?: string | null; retired_at?: string | null; approved_by?: string | null; approved_at?: string | null; supersedes_version_id?: string | null; created_at?: string };
+        Update: { id?: string; document_type?: string; version?: number; status?: LegalDocumentStatus; locale?: string; title?: string; body?: Json; issuer_identity?: Json | null; content_hash?: string | null; change_summary?: string; is_material?: boolean; effective_at?: string | null; published_at?: string | null; retired_at?: string | null; approved_by?: string | null; approved_at?: string | null; supersedes_version_id?: string | null; created_at?: string };
+        Relationships: [];
+      };
+```
+
+Add to `Functions`, in alphabetical position:
+
+```ts
+      current_legal_document: { Args: { p_type: string }; Returns: Database["public"]["Tables"]["legal_document_versions"]["Row"] };
+      publish_legal_version: { Args: { p_version_id: string; p_issuer_identity: Json }; Returns: Database["public"]["Tables"]["legal_document_versions"]["Row"] };
+```
+
+Add to the alias block at the end of the file:
+
+```ts
+export type LegalDocument = Database["public"]["Tables"]["legal_documents"]["Row"];
+export type LegalDocumentVersion = Database["public"]["Tables"]["legal_document_versions"]["Row"];
+```
+
+Confirm your `Row` fields match the migration column-for-column against
+`/tmp/generated-types.ts`, then:
+
+```bash
 npm run typecheck
 ```
 
-Expected: no errors. If the generator reshapes unrelated types, that is expected — do not revert it by hand.
+Expected: no errors.
 
 - [ ] **Step 2: Write the failing test**
 
