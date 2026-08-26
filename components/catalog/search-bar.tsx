@@ -25,7 +25,7 @@ export function SearchBar({
   countryCode,
 }: SearchBarProps) {
   return (
-    <form action="/" className="flex items-center gap-2 rounded-full border border-line bg-surface p-2 pl-5 shadow-[0_18px_55px_rgba(50,23,77,0.14)]" role="search">
+    <form action="/" className="flex flex-wrap items-center gap-2 rounded-[1.5rem] border border-line bg-surface p-2 pl-5 shadow-[0_18px_55px_rgba(50,23,77,0.14)] sm:flex-nowrap sm:rounded-full" role="search">
       {categorySlug ? <input name="categoria" type="hidden" value={categorySlug} /> : null}
       {subcategorySlug ? <input name="subcategoria" type="hidden" value={subcategorySlug} /> : null}
       {locale && locale !== DEFAULT_CATALOG_LOCALE ? <input name="locale" type="hidden" value={locale} /> : null}
@@ -34,11 +34,11 @@ export function SearchBar({
       <label className="sr-only" htmlFor="buscar-productos">Buscar productos</label>
       <input className="min-w-0 flex-1 bg-transparent py-3 text-base text-ink outline-none placeholder:text-muted" defaultValue={defaultValue} id="buscar-productos" name="q" placeholder="¿Qué estás buscando?" type="search" />
       <span aria-hidden="true" className="hidden h-7 w-px shrink-0 bg-line sm:block" />
-      <div className="hidden shrink-0 items-center gap-1.5 pr-1 text-brand sm:flex">
+      <div className="order-3 flex min-h-11 basis-full items-center gap-2 border-t border-line px-1 pt-2 text-brand sm:order-none sm:basis-auto sm:border-l sm:border-t-0 sm:pt-0">
         <MapPin aria-hidden="true" className="size-4" />
         <label className="sr-only" htmlFor="filtrar-estado">Estado</label>
         <select
-          className="min-w-0 max-w-[10rem] cursor-pointer truncate bg-transparent py-3 text-sm font-semibold text-brand outline-none"
+          className="min-w-0 flex-1 cursor-pointer bg-transparent py-2 text-sm font-semibold text-brand outline-none sm:max-w-[10rem]"
           defaultValue={stateSlug ?? ""}
           id="filtrar-estado"
           name="estado"
