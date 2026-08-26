@@ -264,8 +264,7 @@ describe("Home conversion sections", () => {
     expect(screen.getByRole("region", { name: "Cómo comprar en la plaza" })).toBeInTheDocument();
   });
 
-  it("renders every trust tier with its free listing limit so sellers see what they unlock", async () => {
-    const { getTrustTierMarker } = await import("@/lib/trust-tiers");
+  it("keeps seller education compact on home and links to its dedicated page", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()] }),
     );
@@ -273,13 +272,12 @@ describe("Home conversion sections", () => {
     render(await Home({ searchParams: Promise.resolve({}) }));
 
     const pitch = screen.getByRole("region", { name: "Vende en Plaza Volcanes" });
-    for (const tier of ["standard", "reliable", "top_rated"] as const) {
-      const marker = getTrustTierMarker(tier);
-      expect(within(pitch).getByText(marker.label)).toBeInTheDocument();
-      expect(
-        within(pitch).getByText(`${marker.listingLimit} productos publicados`),
-      ).toBeInTheDocument();
-    }
+    expect(within(pitch).queryByRole("list")).not.toBeInTheDocument();
+    expect(pitch).not.toHaveTextContent(/Estándar|Confiable|Mejor valorada/);
+    expect(within(pitch).getByRole("link", { name: "Conoce cómo funciona" })).toHaveAttribute(
+      "href",
+      "/vender",
+    );
   });
 
   it("sends the seller call to action to registration", async () => {
