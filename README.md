@@ -57,6 +57,8 @@ El sitio vive en [plazavolcanes.com](https://plazavolcanes.com).
 2. En **Authentication → URL Configuration** de Supabase define `https://plazavolcanes.com` como Site URL y agrega `https://plazavolcanes.com/auth/confirm` a Redirect URLs, conservando las entradas de desarrollo y de vistas previas.
 3. Revisa `docs/auth-url-configuration.md` antes de cambiar de dominio: cada ajuste falla en silencio.
 
+El correo integrado de Supabase solo entrega a direcciones del equipo del proyecto y admite unos dos envíos por hora, así que la confirmación por correo necesita SMTP propio antes de activarse en producción. Ese mismo SMTP desbloquea la edición de plantillas.
+
 `/robots.txt` y `/sitemap.xml` se construyen con `NEXT_PUBLIC_SITE_URL`. Si el sitemap publica URLs de `localhost`, la variable falta en el despliegue.
 
 ## Comandos

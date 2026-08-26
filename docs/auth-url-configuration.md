@@ -85,8 +85,13 @@ per deployment that would otherwise never match:
 ```
 http://localhost:3000/**
 http://127.0.0.1:3000/**
-https://*-<team-or-account-slug>.vercel.app/**
+https://*-brilliantai.vercel.app/**
 ```
+
+The wildcard matches the Vercel **team** slug, not the project name: previews
+are served from `plazavolcanes-<hash>-brilliantai.vercel.app`. An entry built
+from the project name matches nothing, and previews then fall back to the
+production Site URL.
 
 Keep the production `*.vercel.app` entry too if anyone still reaches the site
 that way:
@@ -99,9 +104,24 @@ Wildcard semantics: `*` does not cross `.` or `/`; `**` does. So
 `http://localhost:3000/*` matches `/foo` but not `/foo/bar`. Prefer the exact
 path for the production entry and keep wildcards for previews.
 
-### 4. The email template uses `{{ .RedirectTo }}`
+### 4. The email template resolves the redirect
 
 Authentication → Email Templates → Confirm signup.
+
+On the built-in mailer this page is **read-only** — Supabase gates template
+editing behind custom SMTP, because a shared sender plus editable markup is a
+phishing vector. Locked is the safe state: the stock template links
+
+```html
+<a href="{{ .ConfirmationURL }}">Confirm your mail</a>
+```
+
+and `{{ .ConfirmationURL }}` expands to
+`{project}.supabase.co/auth/v1/verify?token=...&type=signup&redirect_to=<the
+value the code passed>`. It honours `emailRedirectTo`, as long as check 3 put
+that URL on the allowlist.
+
+The failure mode only appears once somebody edits the template:
 
 ```html
 <!-- Ignores emailRedirectTo entirely -->
@@ -111,8 +131,28 @@ Authentication → Email Templates → Confirm signup.
 <a href="{{ .RedirectTo }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">
 ```
 
-`{{ .SiteURL }}` is the project setting, not the value the code passed. A
-template left on the default silently overrides everything checks 1–3 achieve.
+`{{ .SiteURL }}` is the project setting, not the value the code passed, so a
+hand-edited template silently overrides everything checks 1-3 achieve.
+
+## The built-in mailer does not reach real users
+
+Two limits come with Supabase's shared SMTP, and neither raises an error:
+
+- roughly **two emails an hour**, project-wide;
+- delivery **only to addresses belonging to the project's team members**. A
+  stranger who registers gets nothing.
+
+So confirmation email is not something to switch on and walk away from. Either:
+
+- leave **Authentication → Sign In / Providers → Email → Confirm email** off,
+  which is how this project runs today — `/auth/confirm` still accepts both
+  flows, so turning it on later needs no code change; or
+- configure custom SMTP first (Project Settings → Authentication → SMTP
+  Settings) with a provider whose domain you verify through DNS. That lifts both
+  limits and unlocks template editing at the same time.
+
+Checks 1-3 matter either way: password recovery, magic links and any future
+email all resolve their redirect the same way.
 
 ## Do not run `supabase config push`
 
@@ -138,14 +178,19 @@ in the dashboard. Nothing in this repository reflects them.
 ## Verifying
 
 There is no way to check this from code — the allowlist is not exposed through
-the Management API or the CLI. Confirm it end to end instead:
+the Management API or the CLI.
 
-1. Register a real address on production.
+While email confirmation is off, registration never sends mail, so checks 2-4
+have nothing to exercise them. Verify them when you turn confirmation on:
+
+1. Register an address that belongs to a project team member, or a real address
+   once custom SMTP is configured.
 2. Read the confirmation email and check the link's **host** before clicking.
 3. Click it and confirm you land on `/panel` signed in.
 
 A link pointing at `localhost` means check 1 or 2. A link on the right host that
-lands signed-out means the token flow, not the URL configuration.
+lands signed-out means the token flow, not the URL configuration. No email at
+all is the shared-mailer limit above, not a URL problem.
 
 `https://plazavolcanes.com/robots.txt` is a quicker smoke test for check 1: its
 `Sitemap:` line prints whatever `NEXT_PUBLIC_SITE_URL` resolved to in the build
