@@ -54,7 +54,7 @@ export async function SiteHeader() {
             </>
           ) : (
             <>
-              <Link className="hidden rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background sm:inline-flex" href="/registro">
+              <Link className="hidden min-h-11 items-center rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background sm:inline-flex" href="/registro">
                 Publica tu tienda
               </Link>
               <Link aria-label="Ingresar" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-3.5 text-sm font-semibold text-brand transition-colors hover:border-brand sm:px-4" href="/ingresar">

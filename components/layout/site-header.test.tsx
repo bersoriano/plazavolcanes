@@ -60,4 +60,15 @@ describe("SiteHeader", () => {
       "Ingresar",
     );
   });
+
+  it("keeps the signed-out publish link at least 44px high", async () => {
+    await renderHeader(false);
+
+    expect(screen.getByRole("link", { name: "Publica tu tienda" })).toHaveClass(
+      "hidden",
+      "min-h-11",
+      "items-center",
+      "sm:inline-flex",
+    );
+  });
 });

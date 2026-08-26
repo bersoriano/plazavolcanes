@@ -234,6 +234,9 @@ test.describe("landing responsive and accessibility gate", () => {
 
         const state = page.getByRole("combobox", { name: "Estado" });
         await expect(state).toBeVisible();
+        const stateBox = await state.boundingBox();
+        expect(stateBox).not.toBeNull();
+        expect(stateBox!.height).toBeGreaterThanOrEqual(44);
         await state.selectOption("jalisco");
         await expect(state).toHaveValue("jalisco");
         await page.getByRole("searchbox", { name: "Buscar productos" }).fill(productName);

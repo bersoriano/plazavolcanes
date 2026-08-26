@@ -127,6 +127,12 @@ describe("SearchBar", () => {
     expect(stateSelectors[0].closest("div")).not.toHaveClass("hidden");
   });
 
+  it("keeps the Estado selector itself at least 44px high", () => {
+    render(<SearchBar />);
+
+    expect(screen.getByRole("combobox", { name: "Estado" })).toHaveClass("min-h-11");
+  });
+
   it("keeps active category slugs when search is submitted", () => {
     render(
       <SearchBar

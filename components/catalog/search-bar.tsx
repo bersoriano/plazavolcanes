@@ -38,7 +38,7 @@ export function SearchBar({
         <MapPin aria-hidden="true" className="size-4" />
         <label className="sr-only" htmlFor="filtrar-estado">Estado</label>
         <select
-          className="min-w-0 flex-1 cursor-pointer bg-transparent py-2 text-sm font-semibold text-brand outline-none sm:max-w-[10rem]"
+          className="min-h-11 min-w-0 flex-1 cursor-pointer bg-transparent py-2 text-sm font-semibold text-brand outline-none sm:max-w-[10rem]"
           defaultValue={stateSlug ?? ""}
           id="filtrar-estado"
           name="estado"
