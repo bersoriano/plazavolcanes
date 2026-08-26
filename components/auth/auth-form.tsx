@@ -19,13 +19,25 @@ function SubmitButton({ mode }: { mode: "signin" | "signup" }) {
   );
 }
 
-export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
+export function AuthForm({
+  continuar,
+  mode,
+}: {
+  /** An internal path to resume once authentication succeeds. */
+  continuar?: string;
+  mode: "signin" | "signup";
+}) {
   const action = mode === "signin" ? signIn : signUp;
   const [state, formAction] = useFormAction(action);
   const signingIn = mode === "signin";
+  const alternative = signingIn ? "/registro" : "/ingresar";
+  const alternativeHref = continuar
+    ? `${alternative}?continuar=${encodeURIComponent(continuar)}`
+    : alternative;
 
   return (
     <form action={formAction} className="space-y-5" noValidate>
+      {continuar ? <input name="continuar" type="hidden" value={continuar} /> : null}
       <Field
         autoComplete="email"
         defaultValue={state.values?.email}
@@ -120,7 +132,7 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
         {signingIn ? "¿Aún no tienes cuenta?" : "¿Ya tienes cuenta?"}{" "}
         <Link
           className="font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
-          href={signingIn ? "/registro" : "/ingresar"}
+          href={alternativeHref}
         >
           {signingIn ? "Regístrate" : "Ingresa"}
         </Link>

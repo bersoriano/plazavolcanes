@@ -28,6 +28,31 @@ describe("AuthForm", () => {
     expect(screen.queryByLabelText("Teléfono móvil")).not.toBeInTheDocument();
   });
 
+  it("carries a continuation through to the server action", () => {
+    render(<AuthForm continuar="/mensajes" mode="signin" />);
+
+    const field = document.querySelector('input[name="continuar"]');
+
+    expect(field).toHaveAttribute("type", "hidden");
+    expect(field).toHaveValue("/mensajes");
+  });
+
+  it("keeps the continuation when sending someone to register instead", () => {
+    render(<AuthForm continuar="/carrito/4" mode="signin" />);
+
+    expect(screen.getByRole("link", { name: "Regístrate" })).toHaveAttribute(
+      "href",
+      "/registro?continuar=%2Fcarrito%2F4",
+    );
+  });
+
+  it("links to plain registration when there is nothing to continue", () => {
+    render(<AuthForm mode="signin" />);
+
+    expect(screen.getByRole("link", { name: "Regístrate" })).toHaveAttribute("href", "/registro");
+    expect(document.querySelector('input[name="continuar"]')).toBeNull();
+  });
+
   it("points people who forgot their password at the recovery form", () => {
     render(<AuthForm mode="signin" />);
 

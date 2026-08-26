@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
 import { AuthForm } from "@/components/auth/auth-form";
+import { readPurchaseIntent } from "@/lib/purchase-intent.server";
+import { safeContinuation } from "@/lib/safe-continuation";
 
 export const metadata: Metadata = { title: "Ingresar" };
 
@@ -12,11 +14,21 @@ const NOTICES: Record<string, string> = {
   configuracion: "El acceso no está configurado todavía. Inténtalo más tarde.",
 };
 
-type SignInSearchParams = Promise<{ error?: string | string[] }>;
+const PURCHASE_NOTICE = "Ingresa o crea tu cuenta para continuar tu compra.";
+
+type SignInSearchParams = Promise<{ error?: string | string[]; continuar?: string | string[] }>;
 
 export default async function SignInPage({ searchParams }: { searchParams: SignInSearchParams }) {
-  const { error } = await searchParams;
-  const notice = typeof error === "string" ? NOTICES[error] : undefined;
+  const { error, continuar } = await searchParams;
+  // A pending purchase is the reason most signed-out buyers arrive here, and it
+  // outranks whatever a redirect put in the query string.
+  const pendingPurchase = await readPurchaseIntent();
+  const notice = pendingPurchase
+    ? PURCHASE_NOTICE
+    : typeof error === "string"
+      ? NOTICES[error]
+      : undefined;
+  const destination = safeContinuation(continuar) ?? undefined;
 
   return (
     <>
@@ -25,13 +37,15 @@ export default async function SignInPage({ searchParams }: { searchParams: SignI
       <p className="mb-8 mt-3 leading-7 text-muted">Administra tus tiendas y mantén tus productos al día.</p>
       {notice ? (
         <p
-          className="mb-6 rounded-2xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale"
+          className={`mb-6 rounded-2xl px-4 py-3 text-sm font-medium ${
+            pendingPurchase ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"
+          }`}
           role="status"
         >
           {notice}
         </p>
       ) : null}
-      <AuthForm mode="signin" />
+      <AuthForm continuar={destination} mode="signin" />
     </>
   );
 }

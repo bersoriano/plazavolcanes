@@ -1,12 +1,20 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import SignInPage from "@/app/(auth)/ingresar/page";
+const readPurchaseIntent = vi.fn();
 
 vi.mock("@/lib/actions/auth", () => ({
   signIn: vi.fn(),
   signUp: vi.fn(),
 }));
+vi.mock("@/lib/purchase-intent.server", () => ({ readPurchaseIntent }));
+
+const { default: SignInPage } = await import("@/app/(auth)/ingresar/page");
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  readPurchaseIntent.mockResolvedValue(null);
+});
 
 afterEach(cleanup);
 
@@ -29,5 +37,41 @@ describe("Sign-in page notices", () => {
     render(await SignInPage({ searchParams: Promise.resolve({}) }));
 
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+});
+
+describe("Sign-in page purchase continuation", () => {
+  it("explains why authentication is being asked for mid-purchase", async () => {
+    readPurchaseIntent.mockResolvedValue({ productId: 12, quantity: 2, productPath: "/productos/taza" });
+
+    render(await SignInPage({ searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Ingresa o crea tu cuenta para continuar tu compra.",
+    );
+  });
+
+  it("never calls a first purchase an expired session", async () => {
+    readPurchaseIntent.mockResolvedValue({ productId: 12, quantity: 2, productPath: null });
+
+    render(await SignInPage({ searchParams: Promise.resolve({}) }));
+
+    expect(screen.queryByText(/sesión terminó/)).not.toBeInTheDocument();
+  });
+
+  it("hands a validated continuation to the form", async () => {
+    render(
+      await SignInPage({ searchParams: Promise.resolve({ continuar: "/mensajes" }) }),
+    );
+
+    expect(document.querySelector('input[name="continuar"]')).toHaveValue("/mensajes");
+  });
+
+  it("drops a continuation that points at another site", async () => {
+    render(
+      await SignInPage({ searchParams: Promise.resolve({ continuar: "https://evil.example" }) }),
+    );
+
+    expect(document.querySelector('input[name="continuar"]')).toBeNull();
   });
 });

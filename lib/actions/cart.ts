@@ -4,11 +4,18 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/lib/action-state";
+import { databaseMessage, insertCartItem } from "@/lib/cart-insert";
+import { savePurchaseIntent } from "@/lib/purchase-intent.server";
+import { safeContinuation } from "@/lib/safe-continuation";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { checkoutSchema, quantitySchema } from "@/lib/validation/commerce";
 
 const sessionError: ActionState = { status: "error", message: "Tu sesión terminó. Ingresa nuevamente." };
+const setupError: ActionState = {
+  status: "error",
+  message: "El acceso no está configurado todavía. Inténtalo más tarde.",
+};
 
 async function authenticatedClient() {
   if (!isSupabaseConfigured()) return null;
@@ -17,29 +24,44 @@ async function authenticatedClient() {
   return typeof data?.claims?.sub === "string" ? supabase : null;
 }
 
-function databaseMessage(message: string | undefined, fallback: string) {
-  if (message?.includes("propia tienda")) return "No puedes solicitar productos de tu propia tienda.";
-  if (message?.includes("no están disponibles") || message?.includes("no disponible")) return "Uno o más productos ya no están disponibles.";
-  if (message?.includes("carrito está vacío")) return "Tu carrito está vacío.";
-  return fallback;
-}
-
 export async function addToCart(
   productId: number,
   _previousState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
   const quantity = quantitySchema.safeParse(formData.get("quantity"));
-  if (!quantity.success) return { status: "error", message: quantity.error.issues[0]?.message ?? "Cantidad inválida." };
-  const supabase = await authenticatedClient();
-  if (!supabase) return sessionError;
+  if (!quantity.success) {
+    return { status: "error", message: quantity.error.issues[0]?.message ?? "Cantidad inválida." };
+  }
 
-  const { data: product } = await supabase.from("products").select("shop_id").eq("id", productId).eq("status", "published").maybeSingle();
-  if (!product) return { status: "error", message: "Este producto ya no está disponible." };
-  const { error } = await supabase.rpc("add_cart_item", { p_product_id: productId, p_quantity: quantity.data });
-  if (error) return { status: "error", message: databaseMessage(error.message, "No pudimos agregar el producto.") };
-  revalidatePath(`/carrito/${product.shop_id}`);
-  redirect(`/carrito/${product.shop_id}`);
+  if (!isSupabaseConfigured()) return setupError;
+
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase.auth.getClaims();
+
+  // A first-time visitor has no session to have lost. Remember what they were
+  // buying and send them to sign in; the purchase finishes itself afterwards.
+  if (typeof data?.claims?.sub !== "string") {
+    await savePurchaseIntent({
+      productId,
+      quantity: quantity.data,
+      productPath: safeContinuation(formData.get("producto")),
+    });
+    redirect("/ingresar");
+  }
+
+  const result = await insertCartItem(supabase, productId, quantity.data);
+
+  if (result.status === "unavailable") {
+    return { status: "error", message: "Este producto ya no está disponible." };
+  }
+
+  if (result.status === "error") {
+    return { status: "error", message: result.message };
+  }
+
+  revalidatePath(`/carrito/${result.shopId}`);
+  redirect(`/carrito/${result.shopId}`);
 }
 
 export async function setCartItemQuantity(itemId: number, formData: FormData) {

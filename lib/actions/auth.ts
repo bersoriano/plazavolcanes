@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/lib/action-state";
+import { readPurchaseIntent, resumePurchaseIntent } from "@/lib/purchase-intent.server";
+import { safeContinuation } from "@/lib/safe-continuation";
 import { buildSiteUrl } from "@/lib/site-url";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -28,6 +30,22 @@ const setupError: ActionState = {
   message:
     "Conecta tu proyecto de Supabase en .env.local para activar el acceso.",
 };
+
+/**
+ * Where somebody lands once they are authenticated.
+ *
+ * A purchase interrupted by the sign-in wall finishes first and wins, because
+ * that is what the person was doing when they were sent here. Otherwise a
+ * continuation the app itself placed in the form decides, and it has to survive
+ * validation: this value becomes a redirect.
+ */
+async function destinationAfterAuth(
+  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
+  formData: FormData,
+) {
+  const resumed = await resumePurchaseIntent(supabase);
+  return resumed ?? safeContinuation(formData.get("continuar")) ?? "/panel";
+}
 
 export async function signIn(
   _previousState: ActionState,
@@ -58,7 +76,7 @@ export async function signIn(
   }
 
   revalidatePath("/", "layout");
-  redirect("/panel");
+  redirect(await destinationAfterAuth(supabase, formData));
 }
 
 export async function signUp(
@@ -107,12 +125,18 @@ export async function signUp(
 
   if (data.session) {
     revalidatePath("/", "layout");
-    redirect("/panel");
+    redirect(await destinationAfterAuth(supabase, formData));
   }
+
+  // No session means e-mail confirmation is on. The pending purchase stays in
+  // its cookie and /auth/confirm picks it up when they follow the link.
+  const pending = await readPurchaseIntent();
 
   return {
     status: "success",
-    message: "Revisa tu correo para confirmar tu cuenta.",
+    message: pending
+      ? "Revisa tu correo para confirmar tu cuenta y continuar tu compra."
+      : "Revisa tu correo para confirmar tu cuenta.",
   };
 }
 

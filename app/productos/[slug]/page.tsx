@@ -23,7 +23,14 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getPublicProduct } from "@/lib/queries/catalog.server";
 
+// Where a purchase that could not be finished sends the buyer back to.
+const PURCHASE_NOTICES: Record<string, string> = {
+  agotado: "Este producto ya no está disponible. Busca otro en la plaza.",
+  error: "No pudimos agregar el producto a tu carrito. Inténtalo de nuevo.",
+};
+
 type ProductSearchParams = Promise<{
+  compra?: string | string[];
   q?: string | string[];
   categoria?: string | string[];
   subcategoria?: string | string[];
@@ -45,7 +52,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function ProductPage({ params, searchParams }: ProductPageProps) {
   const [{ slug }, rawSearchParams] = await Promise.all([
     params,
-    searchParams ?? Promise.resolve({}),
+    searchParams ?? Promise.resolve<Awaited<ProductSearchParams>>({}),
   ]);
   const filters = normalizeCatalogFilters(rawSearchParams);
   const product = await getPublicProduct(slug, filters.locale);
@@ -75,6 +82,9 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   );
   const currencyCode = product.currency_code ?? DEFAULT_CATALOG_CURRENCY;
   const addToCartAction = addToCart.bind(null, product.id);
+  const purchaseNotice =
+    typeof rawSearchParams.compra === "string" ? PURCHASE_NOTICES[rawSearchParams.compra] : undefined;
+  const productPath = `/productos/${product.slug}`;
   const messageAction = openConversation.bind(null, product.shopId);
 
   let viewerId: string | null = null;
@@ -137,7 +147,19 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           </p>
           <div className="my-7 h-px bg-line" />
           <p className="whitespace-pre-wrap text-base leading-8 text-muted">{product.description}</p>
-          <AddToCartForm action={addToCartAction} unitsAvailable={product.units_available} />
+          {purchaseNotice ? (
+            <p
+              className="mt-7 rounded-2xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale"
+              role="status"
+            >
+              {purchaseNotice}
+            </p>
+          ) : null}
+          <AddToCartForm
+            action={addToCartAction}
+            productPath={productPath}
+            unitsAvailable={product.units_available}
+          />
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <StartConversationButton
               action={messageAction}
