@@ -14,18 +14,6 @@
 import { execFileSync, spawn } from "node:child_process";
 import { createServer } from "node:net";
 
-function isLoopbackHttpUrl(value) {
-  try {
-    const url = new URL(value);
-    return (
-      ["http:", "https:"].includes(url.protocol) &&
-      ["127.0.0.1", "localhost", "[::1]", "::1"].includes(url.hostname)
-    );
-  } catch {
-    return false;
-  }
-}
-
 function availableLoopbackPort() {
   return new Promise((resolve, reject) => {
     const server = createServer();
@@ -43,11 +31,9 @@ function availableLoopbackPort() {
   });
 }
 
-const externalBaseUrl = process.env.PLAYWRIGHT_BASE_URL?.trim();
-
-if (externalBaseUrl && !isLoopbackHttpUrl(externalBaseUrl)) {
+if (process.env.PLAYWRIGHT_BASE_URL !== undefined) {
   console.error(
-    `\n  Refusing to run against non-loopback PLAYWRIGHT_BASE_URL: ${externalBaseUrl}\n`,
+    "\n  Refusing caller-supplied PLAYWRIGHT_BASE_URL. npm run test:e2e always starts its own local app server.\n",
   );
   process.exit(1);
 }
@@ -98,8 +84,8 @@ if (!command) {
   process.exit(1);
 }
 
-const ownedPort = externalBaseUrl ? null : await availableLoopbackPort();
-const appUrl = externalBaseUrl ?? `http://127.0.0.1:${ownedPort}`;
+const ownedPort = await availableLoopbackPort();
+const appUrl = `http://127.0.0.1:${ownedPort}`;
 
 const child = spawn(command, args, {
   stdio: "inherit",
@@ -108,7 +94,7 @@ const child = spawn(command, args, {
     NEXT_PUBLIC_SUPABASE_URL: local.url,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: local.publishableKey,
     NEXT_PUBLIC_SITE_URL: appUrl,
-    ...(ownedPort === null ? {} : { PLAYWRIGHT_E2E_PORT: String(ownedPort) }),
+    PLAYWRIGHT_E2E_PORT: String(ownedPort),
   },
 });
 

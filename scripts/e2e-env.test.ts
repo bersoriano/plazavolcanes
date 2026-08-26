@@ -52,11 +52,11 @@ describe("local E2E environment wrapper", () => {
     expect(output.siteUrl).toBe(`http://127.0.0.1:${output.port}`);
   });
 
-  it("rejects an external non-loopback app URL", () => {
-    const result = runWrapper("https://example.com");
+  it("rejects a caller-supplied loopback app URL", () => {
+    const result = runWrapper("http://127.0.0.1:3000");
 
     expect(result.status).not.toBe(0);
-    expect(result.stderr).toContain("Refusing to run against non-loopback PLAYWRIGHT_BASE_URL");
+    expect(result.stderr).toContain("Refusing caller-supplied PLAYWRIGHT_BASE_URL");
     expect(result.stdout).toBe("");
   });
 });
