@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/lib/action-state";
+import { buildSiteUrl } from "@/lib/site-url";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { authSchema, displayNameSchema, phoneSchema, signUpSchema } from "@/lib/validation/auth";
@@ -77,9 +78,6 @@ export async function signUp(
   }
 
   const supabase = await createServerSupabaseClient();
-  const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
-    "http://localhost:3000";
   const { email, password, phone, display_name: displayName } = parsed.data;
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -89,7 +87,7 @@ export async function signUp(
       // which works whether or not email confirmation leaves the new account
       // with a session.
       data: { phone, display_name: displayName },
-      emailRedirectTo: `${siteUrl}/auth/confirm`,
+      emailRedirectTo: buildSiteUrl("/auth/confirm"),
     },
   });
 

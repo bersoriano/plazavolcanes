@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
+import { getSiteUrl } from "@/lib/site-url";
 
 import "./globals.css";
 
@@ -19,6 +20,8 @@ const instrument = Instrument_Sans({
 });
 
 export const metadata: Metadata = {
+  // Relative canonical and OpenGraph URLs resolve against the live domain.
+  metadataBase: new URL(getSiteUrl()),
   title: {
     default: "Plaza Volcanes",
     template: "%s | Plaza Volcanes",
