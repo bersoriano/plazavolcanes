@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleUserRound } from "lucide-react";
+import { CircleUserRound, LayoutDashboard, MessageCircle } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -20,25 +20,27 @@ export async function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-surface/95 backdrop-blur-lg">
-      <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
+      <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-1 px-3 min-[400px]:gap-5 min-[400px]:px-5 sm:px-8 lg:px-12">
         <Link className="group flex items-center gap-2.5 text-brand" href="/" aria-label="Plaza Volcanes, inicio">
           <span className="relative grid size-9 place-items-center overflow-hidden rounded-xl bg-brand text-accent">
             <VolcanoMark className="absolute left-1/2 top-1/2 w-12 -translate-x-1/2 -translate-y-1/2" />
           </span>
-          <span className="font-display text-lg font-bold tracking-[-0.03em] sm:text-xl">Plaza Volcanes</span>
+          <span className="hidden font-display text-lg font-bold tracking-[-0.03em] min-[400px]:inline sm:text-xl">Plaza Volcanes</span>
         </Link>
 
-        <nav aria-label="Navegación principal" className="flex items-center gap-2 sm:gap-3">
+        <nav aria-label="Navegación principal" className="flex items-center gap-1 min-[400px]:gap-2 sm:gap-3">
           {signedIn ? (
             <>
-              <Link className="rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background" href="/panel">
-                Mi panel
+              <Link aria-label="Mi panel" className="grid min-h-11 min-w-11 place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background min-[400px]:inline-flex min-[400px]:min-w-0 min-[400px]:px-4 min-[400px]:py-2.5" href="/panel">
+                <LayoutDashboard aria-hidden="true" className="size-5 min-[400px]:hidden" />
+                <span className="hidden min-[400px]:inline">Mi panel</span>
               </Link>
               <Link className="hidden rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background sm:inline-flex" href="/compras">
                 Mis compras
               </Link>
-              <Link className="relative rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background" href="/mensajes">
-                Mensajes
+              <Link aria-label="Mensajes" className="relative grid min-h-11 min-w-11 place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background min-[400px]:inline-flex min-[400px]:min-w-0 min-[400px]:px-4 min-[400px]:py-2.5" href="/mensajes">
+                <MessageCircle aria-hidden="true" className="size-5 min-[400px]:hidden" />
+                <span className="hidden min-[400px]:inline">Mensajes</span>
                 {unread > 0 ? (
                   <span
                     aria-label={`${unread} mensajes sin leer`}
