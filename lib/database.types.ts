@@ -17,6 +17,8 @@ export type OrderStatus =
   | "canceled_by_seller"
   | "canceled_by_admin";
 
+export type LegalDocumentStatus = "draft" | "approved" | "published" | "retired";
+
 export type Database = {
   public: {
     Tables: {
@@ -472,6 +474,18 @@ export type Database = {
         Update: { order_id?: number; recipient?: string | null; address_line1?: string | null; address_line2?: string | null; locality?: string | null; administrative_area?: string | null; postal_code?: string | null; country_code?: string | null; delivery_instructions?: string | null; redacted_at?: string | null; created_at?: string };
         Relationships: [];
       };
+      legal_documents: {
+        Row: { type: string; is_required: boolean; public_path: string | null; sort_order: number };
+        Insert: { type: string; is_required?: boolean; public_path?: string | null; sort_order?: number };
+        Update: { type?: string; is_required?: boolean; public_path?: string | null; sort_order?: number };
+        Relationships: [];
+      };
+      legal_document_versions: {
+        Row: { id: string; document_type: string; version: number; status: LegalDocumentStatus; locale: string; title: string; body: Json; issuer_identity: Json | null; content_hash: string | null; change_summary: string; is_material: boolean; effective_at: string | null; published_at: string | null; retired_at: string | null; approved_by: string | null; approved_at: string | null; supersedes_version_id: string | null; created_at: string };
+        Insert: { id?: string; document_type: string; version: number; status?: LegalDocumentStatus; locale?: string; title: string; body?: Json; issuer_identity?: Json | null; content_hash?: string | null; change_summary: string; is_material?: boolean; effective_at?: string | null; published_at?: string | null; retired_at?: string | null; approved_by?: string | null; approved_at?: string | null; supersedes_version_id?: string | null; created_at?: string };
+        Update: { id?: string; document_type?: string; version?: number; status?: LegalDocumentStatus; locale?: string; title?: string; body?: Json; issuer_identity?: Json | null; content_hash?: string | null; change_summary?: string; is_material?: boolean; effective_at?: string | null; published_at?: string | null; retired_at?: string | null; approved_by?: string | null; approved_at?: string | null; supersedes_version_id?: string | null; created_at?: string };
+        Relationships: [];
+      };
       messages: {
         Row: { id: number; conversation_id: number; sender_id: string; body: string; idempotency_key: string; created_at: string };
         Insert: { id?: never; conversation_id: number; sender_id: string; body: string; idempotency_key: string; created_at?: string };
@@ -623,9 +637,11 @@ export type Database = {
       confirm_order_received: { Args: { p_order_id: number; p_idempotency_key: string }; Returns: undefined };
       confirm_order_satisfied: { Args: { p_order_id: number; p_idempotency_key: string }; Returns: undefined };
       create_order_review: { Args: { p_order_id: number; p_rating: number; p_matched_description: boolean; p_comment: string | null }; Returns: number };
+      current_legal_document: { Args: { p_type: string }; Returns: Database["public"]["Tables"]["legal_document_versions"]["Row"] };
       is_current_user_admin: { Args: Record<never, never>; Returns: boolean };
       mark_order_shipped: { Args: { p_order_id: number; p_tracking_text: string | null; p_idempotency_key: string }; Returns: undefined };
       open_order_dispute: { Args: { p_order_id: number; p_reason: string; p_statement: string; p_evidence: Json }; Returns: number };
+      publish_legal_version: { Args: { p_version_id: string; p_issuer_identity: Json }; Returns: Database["public"]["Tables"]["legal_document_versions"]["Row"] };
       record_catalog_search: {
         Args: {
           p_category_id: number | null;
@@ -733,6 +749,8 @@ export type CartItem = Database["public"]["Tables"]["cart_items"]["Row"];
 export type CategoryAlias = Database["public"]["Tables"]["category_aliases"]["Row"];
 export type CategorySuggestion = Database["public"]["Tables"]["category_suggestions"]["Row"];
 export type CategoryTranslation = Database["public"]["Tables"]["category_translations"]["Row"];
+export type LegalDocument = Database["public"]["Tables"]["legal_documents"]["Row"];
+export type LegalDocumentVersion = Database["public"]["Tables"]["legal_document_versions"]["Row"];
 export type Product = Database["public"]["Tables"]["products"]["Row"];
 export type ProductTranslation = Database["public"]["Tables"]["product_translations"]["Row"];
 export type Order = Database["public"]["Tables"]["orders"]["Row"];
