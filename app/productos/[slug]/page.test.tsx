@@ -9,9 +9,20 @@ vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: () => false }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: vi.fn() }));
 vi.mock("@/lib/actions/cart", () => ({ addToCart: vi.fn() }));
 vi.mock("@/lib/actions/start-conversation", () => ({ openConversation: vi.fn() }));
+// The button is replaced by a stub that hands its props back, so a test can call
+// the very action the page bound and see what it was bound to.
+vi.mock("@/components/messages/start-conversation-button", () => ({
+  StartConversationButton: (props: Record<string, unknown>) => {
+    conversationButtonProps = props;
+    return null;
+  },
+}));
 vi.mock("next/navigation", () => ({ notFound: vi.fn(), redirect: vi.fn() }));
 
+let conversationButtonProps: Record<string, unknown> = {};
+
 const { default: ProductPage } = await import("@/app/productos/[slug]/page");
+const { openConversation } = await import("@/lib/actions/start-conversation");
 
 const product = {
   id: 12,
@@ -75,5 +86,28 @@ describe("Product page purchase notices", () => {
     expect(document.querySelector('input[name="producto"]')).toHaveValue(
       "/productos/taza-de-barro",
     );
+  });
+});
+
+describe("Product page messaging", () => {
+  it("binds the shop and the product it loaded, not what the browser sends", async () => {
+    render(await renderPage());
+
+    const action = conversationButtonProps.action as (
+      state: unknown,
+      formData: FormData,
+    ) => Promise<unknown>;
+    const forged = new FormData();
+    forged.set("shop_id", "999");
+    forged.set("product_id", "999");
+    await action({ status: "idle", message: "" }, forged);
+
+    expect(openConversation).toHaveBeenCalledWith(4, 12, expect.anything(), forged);
+  });
+
+  it("returns a signed-out shopper to the product they asked about", async () => {
+    render(await renderPage());
+
+    expect(conversationButtonProps.returnTo).toBe("/productos/taza-de-barro");
   });
 });

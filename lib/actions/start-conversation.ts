@@ -9,18 +9,21 @@ import { startPreSaleConversation } from "@/lib/actions/messages";
  * Opens, or re-opens, the pre-sale thread between the signed-in shopper and a
  * shop, then sends them to it.
  *
- * The shop comes from a bound argument rather than the form, so the page
- * decides which shop is being written to. The two trailing parameters are the
- * shape useActionState calls with; neither carries anything this action needs.
+ * A product page passes the product it loaded, so the thread stays about that
+ * listing; a shop page passes none, and the shopper gets the general enquiry.
+ * Both identifiers come from bound arguments rather than the form, so the page
+ * decides what is being written to and a crafted POST cannot pair a shop with
+ * somebody else's product.
  */
 export async function openConversation(
   shopId: number,
+  productId: number | null,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _previousState: ActionState,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _formData: FormData,
 ): Promise<ActionState> {
-  const result = await startPreSaleConversation(shopId);
+  const result = await startPreSaleConversation(shopId, productId);
   if ("error" in result) return { status: "error", message: result.error };
 
   redirect(`/mensajes/${result.conversationId}`);

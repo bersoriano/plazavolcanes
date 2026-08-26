@@ -70,6 +70,13 @@ export async function fetchThread(conversationId: number): Promise<Thread | null
     type: data.type,
     order_id: data.order_id,
     counterpart_label: summary?.counterpart_label ?? "Conversación",
+    shop_name: summary?.shop_name ?? "",
+    shop_slug: summary?.shop_slug ?? "",
+    // The product travels with the inbox row for the same reason the label does,
+    // and for one more: row level security hides a listing that is no longer
+    // published, so reading it through an embed here would blank out exactly the
+    // thread that needs to say the listing is gone.
+    product: summary?.product ?? null,
     current_user_id: userId,
     messages: oldestFirst(data.messages),
   };

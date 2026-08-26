@@ -7,8 +7,13 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { messageBodySchema } from "@/lib/validation/message";
 
-/** Refusals the database writes for a person to read, passed through as they are. */
-const USER_FACING_CODES = new Set(["P0001", "22023"]);
+/**
+ * Refusals the database writes for a person to read, passed through as they are.
+ * P0002 covers a shop or a listing that is not there: every reason a product is
+ * refused -- gone, another shop's, never published -- answers with one sentence,
+ * so passing it on discloses nothing the shopper could not already see.
+ */
+const USER_FACING_CODES = new Set(["P0001", "P0002", "22023"]);
 
 function readableError(error: { code?: string; message: string }, fallback: string) {
   return USER_FACING_CODES.has(error.code ?? "") ? error.message : fallback;
@@ -65,11 +70,17 @@ export async function sendMessage(
 
 export async function startPreSaleConversation(
   shopId: number,
+  productId: number | null = null,
 ): Promise<{ conversationId: number } | { error: string }> {
   if (!isSupabaseConfigured()) return { error: "Servicio no configurado." };
 
   const supabase = await createServerSupabaseClient();
-  const { data, error } = await supabase.rpc("start_pre_sale_conversation", { p_shop_id: shopId });
+  // The database re-checks that the product is this shop's and is on sale; it is
+  // the only place that decision is trusted, whatever the page believed.
+  const { data, error } = await supabase.rpc("start_pre_sale_conversation", {
+    p_shop_id: shopId,
+    p_product_id: productId,
+  });
 
   if (error) return { error: readableError(error, "No pudimos abrir la conversación.") };
 

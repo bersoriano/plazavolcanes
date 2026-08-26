@@ -34,7 +34,8 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
     viewerId = typeof data?.claims?.sub === "string" ? data.claims.sub : null;
   }
 
-  const messageAction = openConversation.bind(null, shop.id);
+  // A shop page opens the general enquiry: no product is ever attached here.
+  const messageAction = openConversation.bind(null, shop.id, null);
 
   return (
     <section className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
@@ -91,7 +92,7 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
             <StartConversationButton
               action={messageAction}
               isOwnShop={viewerId === shop.owner_id}
-              shopId={shop.id}
+              returnTo={`/tiendas/${shop.slug}`}
               signedIn={Boolean(viewerId)}
             />
             <ShareActions label="Compartir tienda" title={shop.name} />

@@ -85,6 +85,7 @@ npx supabase test db
 - Imágenes aceptan JPEG, PNG o WebP hasta 5 MB.
 - Archivos se guardan bajo carpeta UUID del propietario.
 - Eliminación de tienda elimina sus productos por cascada.
+- Eliminar un producto lo retira del catálogo y borra sus imágenes; el registro se conserva para que sus conversaciones sigan teniendo contexto.
 
 Migraciones versionadas: `supabase/migrations/`.
 

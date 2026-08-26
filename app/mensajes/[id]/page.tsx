@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { MessageThread } from "@/components/messages/message-thread";
+import { ThreadContext } from "@/components/messages/thread-context";
 import { sendMessage } from "@/lib/actions/messages";
 import { fetchThread } from "@/lib/queries/messages.server";
 
@@ -26,11 +27,13 @@ export default async function BuyerThreadPage({ params }: { params: Promise<{ id
       </Link>
 
       <h1 className="mt-5 font-display text-3xl font-semibold">{thread.counterpart_label}</h1>
-      {thread.order_id ? (
-        <Link className="mt-2 inline-flex text-sm font-semibold text-brand" href={`/compras/${thread.order_id}`}>
-          Ver el pedido #{thread.order_id}
-        </Link>
-      ) : null}
+      <ThreadContext
+        orderHref={thread.order_id ? `/compras/${thread.order_id}` : null}
+        orderId={thread.order_id}
+        product={thread.product}
+        shopName={thread.shop_name}
+        shopSlug={thread.shop_slug}
+      />
 
       <div className="mt-7">
         <MessageThread
