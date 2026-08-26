@@ -62,10 +62,13 @@ export async function getPublishedLegalDocument(
   const row = data as Record<string, unknown>;
   if (typeof row.id !== "string") return null;
 
+  const version = Number(row.version);
+  if (!Number.isInteger(version) || version <= 0) return null;
+
   return {
     id: row.id,
     type,
-    version: Number(row.version),
+    version,
     title: String(row.title ?? ""),
     sections: readSections(row.body),
     issuerIdentity:
