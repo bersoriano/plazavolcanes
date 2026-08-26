@@ -650,8 +650,16 @@ hand-invented:
 Rollback is dropping the new objects in reverse order. The added `orders`
 columns are nullable and may stay behind harmlessly; `checkout_cart_v2` remains
 in place through the rollout. Local database only — the linked project is never
-reset. `lib/database.types.ts` is regenerated after each migration, never
-hand-edited.
+reset.
+
+`lib/database.types.ts` is **hand-maintained in this repository**, not generator
+output. It carries a bespoke `OrderStatus` union — `orders.status` is a `text`
+column with a check constraint, which a generator renders as `string` — and
+fifteen exported row aliases that twelve modules import. Running
+`supabase gen types` over it deletes all of that and breaks the build. New
+tables and functions are added by hand in the file's existing compressed style;
+generate into a scratch file when you want to check your entries against the
+real schema, and never redirect the generator over the tracked file.
 
 ## 13. Tests
 
