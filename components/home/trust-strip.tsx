@@ -3,34 +3,34 @@ import { BadgeCheck, MessagesSquare, Scale, ShieldCheck } from "lucide-react";
 const signals = [
   {
     icon: ShieldCheck,
-    title: "Sin adelantos a la plaza",
+    title: "El pago es directo",
     description:
-      "Acuerdas el pago directamente con la tienda. Plaza Volcanes nunca retiene tu dinero.",
+      "Acuerdas el método de pago con la tienda y le pagas directamente. Plaza Volcanes no procesa, retiene ni puede devolver ese dinero.",
   },
   {
     icon: BadgeCheck,
-    title: "Sabes quién te vende",
+    title: "Revisa a la tienda",
     description:
-      "Cada tienda muestra su nivel de verificación y su antigüedad antes de que envíes una solicitud.",
+      "Consulta su antigüedad, actividad e indicadores disponibles antes de decidir. Estos datos ayudan a comparar; no garantizan el resultado.",
   },
   {
     icon: MessagesSquare,
-    title: "Cada pedido deja rastro",
+    title: "Deja todo por escrito",
     description:
-      "Mensajes, tiempos de respuesta, envío y entrega quedan registrados dentro del pedido.",
+      "Mensajes, acuerdos, envío y entrega quedan asociados al pedido. Usa ese registro si necesitas aclarar lo ocurrido.",
   },
   {
     icon: Scale,
-    title: "Disputas con arbitraje",
+    title: "Una disputa documenta el problema",
     description:
-      "Si algo sale mal, abres una disputa y administración revisa la evidencia de ambas partes.",
+      "Puedes abrir una disputa y adjuntar evidencia. Administración puede revisarla y registrar una resolución, pero Plaza Volcanes no controla el pago ni garantiza un reembolso.",
   },
 ];
 
 export function TrustStrip() {
   return (
     <section
-      aria-label="Compra con respaldo"
+      aria-label="Antes de acordar una compra"
       className="border-b border-line bg-background"
     >
       <div className="mx-auto grid max-w-[1440px] gap-x-8 gap-y-7 px-5 py-9 sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:px-12">

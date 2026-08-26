@@ -276,12 +276,12 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
         </>
       ) : (
         <>
-          <TrustStrip />
           {catalogSection}
           {shopsSection}
           {explorerSection}
-          <SellerPitch />
           <BuyerSteps catalogHref="#catalogo" />
+          <TrustStrip />
+          <SellerPitch />
         </>
       )}
     </>

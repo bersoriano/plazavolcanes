@@ -154,7 +154,55 @@ function sampleProduct() {
   };
 }
 
+function sampleShop() {
+  return {
+    administrative_area_codes: ["MX-OAX"],
+    country_code: "MX",
+    created_at: "2026-08-01T00:00:00.000Z",
+    description: "Piezas de barro negro hechas en Oaxaca.",
+    id: 3,
+    image_path: null,
+    imageUrl: null,
+    listing_limit: 15,
+    name: "Taller Volcán",
+    owner_id: "00000000-0000-0000-0000-000000000003",
+    slug: "taller-volcan",
+    time_zone: "America/Mexico_City",
+    trust_evaluated_at: null,
+    trust_tier: "standard" as const,
+    updated_at: "2026-08-01T00:00:00.000Z",
+  };
+}
+
 describe("Home conversion sections", () => {
+  it("prioritizes buyer discovery before trust details and the seller pitch", async () => {
+    const { getCatalogStateCounts } = await import("@/lib/queries/catalog.server");
+    vi.mocked(getCatalogStateCounts).mockResolvedValue([{ code: "MX-OAX", count: 1 }]);
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()], shops: [sampleShop()] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const orderedSections = [
+      screen.getByRole("region", { name: "Descubrimientos de la plaza" }),
+      screen.getByRole("heading", { name: "Tiendas de la plaza" }).closest("section"),
+      screen.getByRole("region", { name: "Explora por estado" }),
+      screen.getByRole("region", { name: "Cómo comprar en la plaza" }),
+      screen.getByRole("region", { name: "Antes de acordar una compra" }),
+      screen.getByRole("region", { name: "Vende en Plaza Volcanes" }),
+    ];
+
+    for (const [index, section] of orderedSections.entries()) {
+      expect(section).not.toBeNull();
+      const nextSection = orderedSections[index + 1];
+      if (nextSection) {
+        expect(section!.compareDocumentPosition(nextSection) & Node.DOCUMENT_POSITION_FOLLOWING)
+          .toBeTruthy();
+      }
+    }
+  });
+
   it("shows the buyer trust strip, the seller pitch and the buying steps when products exist", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()] }),
@@ -162,7 +210,9 @@ describe("Home conversion sections", () => {
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByRole("region", { name: "Compra con respaldo" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Antes de acordar una compra" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Vende en Plaza Volcanes" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Cómo comprar en la plaza" })).toBeInTheDocument();
   });
@@ -231,7 +281,9 @@ describe("Home conversion sections", () => {
 
     render(await Home({ searchParams: Promise.resolve({ q: "taza" }) }));
 
-    expect(screen.queryByRole("region", { name: "Compra con respaldo" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Antes de acordar una compra" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Vende en Plaza Volcanes" })).not.toBeInTheDocument();
     expect(
       screen.queryByRole("region", { name: "Cómo comprar en la plaza" }),
