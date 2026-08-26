@@ -61,4 +61,33 @@ describe("PublicShopCard", () => {
 
     expect(screen.getByText("Jalisco, México")).toBeInTheDocument();
   });
+
+  it("shows the platform-computed tier without unsupported standard-shop claims", () => {
+    render(
+      <PublicShopCard
+        shop={{
+          id: 3,
+          owner_id: "123e4567-e89b-12d3-a456-426614174000",
+          name: "Taller Volcán",
+          slug: "taller-volcan",
+          description: "Piezas de barro negro hechas en Oaxaca.",
+          image_path: null,
+          imageUrl: null,
+          listing_limit: 15,
+          time_zone: "America/Mexico_City",
+          trust_evaluated_at: null,
+          trust_tier: "standard",
+          country_code: "MX",
+          administrative_area_codes: ["MX-OAX"],
+          created_at: "2026-08-19T00:00:00.000Z",
+          updated_at: "2026-08-19T00:00:00.000Z",
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Oaxaca, México")).toBeInTheDocument();
+    expect(screen.getByText("Nivel Estándar")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Taller Volcán/ }).querySelector("button")).toBeNull();
+    expect(screen.queryByText(/verificad|calificaci|reseñas|pedidos|respuesta|envíos|recogida|garantía|protección/i)).not.toBeInTheDocument();
+  });
 });

@@ -30,13 +30,15 @@ export type CatalogProduct = Pick<
   category_id?: Product["category_id"];
   currency_code?: Product["currency_code"];
   image_path: string | null;
-  shop: { name: string; slug: string };
+  shop: Pick<Shop, "name" | "slug" | "country_code" | "trust_tier"> & {
+    administrative_area_codes: string[];
+  };
 };
 
 export type CatalogShop = Shop & { imageUrl: string | null };
 
 const productSelection =
-  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, shops!inner(id, owner_id, name, slug, country_code), product_translations(locale, name, description, review_status)";
+  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, shops!inner(id, owner_id, name, slug, country_code, administrative_area_codes, trust_tier), product_translations(locale, name, description, review_status)";
 
 type ProductQueryRow = {
   id: number;
@@ -51,7 +53,15 @@ type ProductQueryRow = {
   created_at: string;
   category_id: number | null;
   currency_code: string;
-  shops: { id: number; owner_id: string; name: string; slug: string; country_code: string };
+  shops: {
+    id: number;
+    owner_id: string;
+    name: string;
+    slug: string;
+    country_code: string;
+    administrative_area_codes: string[] | null;
+    trust_tier: Shop["trust_tier"];
+  };
   product_translations: {
     locale: CatalogLocale;
     name: string;
@@ -81,7 +91,13 @@ function mapProduct(item: ProductQueryRow, locale: CatalogLocale): CatalogProduc
     created_at: item.created_at,
     category_id: item.category_id,
     currency_code: item.currency_code,
-    shop: item.shops,
+    shop: {
+      name: item.shops.name,
+      slug: item.shops.slug,
+      country_code: item.shops.country_code,
+      administrative_area_codes: item.shops.administrative_area_codes ?? [],
+      trust_tier: item.shops.trust_tier,
+    },
   };
 }
 

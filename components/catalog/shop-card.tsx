@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowUpRight, MapPin, Store } from "lucide-react";
 
 import { CatalogImage } from "@/components/catalog/catalog-image";
+import { TrustTierBadge } from "@/components/shops/trust-tier-badge";
 import type { CatalogShop } from "@/lib/queries/catalog.server";
 import { formatShopLocation } from "@/lib/shop-location";
 
@@ -16,7 +17,7 @@ export function PublicShopCard({ shop }: { shop: CatalogShop }) {
           src={shop.imageUrl}
         />
       </div>
-      <div className="flex items-start justify-between gap-4 p-5"><div><h3 className="font-display text-xl font-semibold tracking-[-0.02em]">{shop.name}</h3><p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-muted"><MapPin aria-hidden="true" className="size-3.5" />{formatShopLocation(shop.country_code, shop.administrative_area_codes)}</p><p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">{shop.description}</p></div><ArrowUpRight aria-hidden="true" className="mt-1 size-5 shrink-0 text-brand transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></div>
+      <div className="flex items-start justify-between gap-4 p-5"><div><div className="flex flex-wrap items-center gap-2"><h3 className="font-display text-xl font-semibold tracking-[-0.02em]">{shop.name}</h3><div className="[&>div]:mt-0"><TrustTierBadge showDetails={false} tier={shop.trust_tier} /></div></div><p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-muted"><MapPin aria-hidden="true" className="size-3.5" />{formatShopLocation(shop.country_code, shop.administrative_area_codes)}</p><p className="mt-2 line-clamp-2 text-sm leading-6 text-muted">{shop.description}</p></div><ArrowUpRight aria-hidden="true" className="mt-1 size-5 shrink-0 text-brand transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" /></div>
     </Link>
   );
 }

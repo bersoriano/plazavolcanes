@@ -150,7 +150,13 @@ function sampleProduct() {
     created_at: "2026-08-01T00:00:00.000Z",
     category_id: null,
     currency_code: "MXN",
-    shop: { name: "Taller Volcán", slug: "taller-volcan" },
+    shop: {
+      name: "Taller Volcán",
+      slug: "taller-volcan",
+      country_code: "MX",
+      administrative_area_codes: ["MX-OAX"],
+      trust_tier: "standard" as const,
+    },
   };
 }
 

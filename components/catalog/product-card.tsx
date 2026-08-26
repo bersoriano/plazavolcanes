@@ -11,6 +11,8 @@ import {
 } from "@/lib/catalog-locale";
 import { formatCurrency } from "@/lib/format";
 import { formatProductCondition, type ProductCondition, type UsedCondition } from "@/lib/product-condition";
+import { formatShopLocation } from "@/lib/shop-location";
+import type { TrustTier } from "@/lib/trust-tiers";
 
 type ProductCardProps = {
   product: {
@@ -23,7 +25,12 @@ type ProductCardProps = {
     category_id?: number | null;
     condition: ProductCondition;
     used_condition: UsedCondition | null;
-    shop: { name: string };
+    shop: {
+      name: string;
+      country_code: string;
+      administrative_area_codes: string[];
+      trust_tier: TrustTier;
+    };
   };
   categoryName?: string | null;
   catalogHref?: string;
@@ -72,6 +79,8 @@ export function ProductCard({
       <div className="px-1 pt-4">
         <p className="text-sm font-medium text-muted">
           <span>{product.shop.name}</span>
+          <span aria-hidden="true"> · </span>
+          <span>{formatShopLocation(product.shop.country_code, product.shop.administrative_area_codes)}</span>
           {categoryName ? <><span aria-hidden="true"> · </span><span>{categoryName}</span></> : null}
         </p>
         <h3 className="mt-1 line-clamp-1 font-display text-lg font-semibold tracking-[-0.02em] text-ink">{product.name}</h3>

@@ -22,7 +22,7 @@ describe("ProductCard", () => {
           category_id: 11,
           condition: "new",
           used_condition: null,
-          shop: { name: "Casa Niebla" },
+          shop: { name: "Casa Niebla", country_code: "MX", administrative_area_codes: ["MX-JAL"], trust_tier: "standard" },
         }}
       />,
     );
@@ -43,7 +43,7 @@ describe("ProductCard", () => {
           category_id: 11,
           condition: "new",
           used_condition: null,
-          shop: { name: "Casa Niebla" },
+          shop: { name: "Casa Niebla", country_code: "MX", administrative_area_codes: ["MX-JAL"], trust_tier: "standard" },
         }}
       />,
     );
@@ -68,7 +68,7 @@ describe("ProductCard", () => {
           category_id: 12,
           condition: "used",
           used_condition: "fair",
-          shop: { name: "Segunda Vida" },
+          shop: { name: "Segunda Vida", country_code: "MX", administrative_area_codes: ["MX-JAL"], trust_tier: "standard" },
         }}
       />,
     );
@@ -90,7 +90,7 @@ describe("ProductCard", () => {
           category_id: 11,
           condition: "used",
           used_condition: "good",
-          shop: { name: "Luz de lava" },
+          shop: { name: "Luz de lava", country_code: "MX", administrative_area_codes: ["MX-JAL"], trust_tier: "standard" },
         }}
       />,
     );
@@ -98,6 +98,37 @@ describe("ProductCard", () => {
     expect(screen.getByText("Electrónica")).toBeInTheDocument();
     expect(screen.getByText("USD")).toBeInTheDocument();
     expect(screen.queryByText("MXN")).not.toBeInTheDocument();
+  });
+
+  it("orders the seller, stored location, category, product name, and price", () => {
+    render(
+      <ProductCard
+        categoryName="Cerámica"
+        product={{
+          id: 9,
+          slug: "taza-de-barro-negro",
+          image_path: null,
+          name: "Taza de barro negro",
+          price_mxn: 480,
+          currency_code: "MXN",
+          category_id: 11,
+          condition: "new",
+          used_condition: null,
+          shop: {
+            name: "Taller Volcán",
+            country_code: "MX",
+            administrative_area_codes: ["MX-OAX"],
+            trust_tier: "reliable",
+          },
+        }}
+      />,
+    );
+
+    const cardText = screen.getByRole("link", { name: /Taza de barro negro/ }).textContent ?? "";
+    expect(cardText.indexOf("Taller Volcán")).toBeLessThan(cardText.indexOf("Oaxaca, México"));
+    expect(cardText.indexOf("Oaxaca, México")).toBeLessThan(cardText.indexOf("Cerámica"));
+    expect(cardText.indexOf("Cerámica")).toBeLessThan(cardText.indexOf("Taza de barro negro"));
+    expect(cardText.indexOf("Taza de barro negro")).toBeLessThan(cardText.indexOf("$480.00"));
   });
 
   it("carries catalog filters to the product URL", () => {
@@ -114,7 +145,7 @@ describe("ProductCard", () => {
           category_id: 11,
           condition: "new",
           used_condition: null,
-          shop: { name: "Tecno Plaza" },
+          shop: { name: "Tecno Plaza", country_code: "MX", administrative_area_codes: ["MX-JAL"], trust_tier: "standard" },
         }}
       />,
     );
@@ -140,7 +171,7 @@ describe("ProductCard", () => {
           category_id: 11,
           condition: "new",
           used_condition: null,
-          shop: { name: "Lava Light" },
+          shop: { name: "Lava Light", country_code: "MX", administrative_area_codes: ["MX-JAL"], trust_tier: "standard" },
         }}
       />,
     );
@@ -170,7 +201,7 @@ describe("ProductCard", () => {
           category_id: 11,
           condition: "new",
           used_condition: null,
-          shop: { name: "Tierra Viva" },
+          shop: { name: "Tierra Viva", country_code: "MX", administrative_area_codes: ["MX-JAL"], trust_tier: "standard" },
         }}
       />,
     );
@@ -208,7 +239,7 @@ describe("ProductCard", () => {
           category_id: 11,
           condition: "new",
           used_condition: null,
-          shop: { name: "Taller Cantera" },
+          shop: { name: "Taller Cantera", country_code: "MX", administrative_area_codes: ["MX-JAL"], trust_tier: "standard" },
         }}
       />,
     );
