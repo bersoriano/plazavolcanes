@@ -1,8 +1,15 @@
 -- Legal documents are contracts and statutory notices. A published version is
--- evidence of what a person agreed to, so it is immutable at the table, and the
--- only path to publishing runs through an admin-gated function that records who
--- approved it. Drafts are invisible to every non-admin reader, which is what
--- keeps unreviewed text from ever reaching a buyer.
+-- evidence of what a person agreed to, so it is immutable at the table.
+-- Application roles (anon, authenticated, service_role) hold no INSERT,
+-- UPDATE or DELETE grant on either table -- that is the real boundary --
+-- so the only way any of them can change a status is through the
+-- admin-gated, security-definer publish_legal_version(), which runs as the
+-- table owner and records who approved the change. The guard trigger below
+-- is defense-in-depth on top of that grant boundary, not the boundary
+-- itself: a superuser, the table owner, or a migration run as the owner can
+-- still write around both layers, same as everywhere else in this schema.
+-- Drafts are invisible to every non-admin reader, which is what keeps
+-- unreviewed text from ever reaching a buyer.
 
 create extension if not exists pgcrypto with schema extensions;
 
@@ -48,12 +55,16 @@ create index legal_document_versions_current_idx
   on public.legal_document_versions (document_type, effective_at desc)
   where status = 'published';
 
+-- Nobody -- not anon, not authenticated, not service_role -- holds a write
+-- grant on either table. service_role bypasses RLS but not GRANTs, and it is
+-- a member of no other role, so it cannot become the table owner either.
+-- publish_legal_version() is security definer and owned by postgres (the
+-- table owner), so it keeps write access after every application role loses
+-- it. This is what actually stops a forged publish, not the trigger below.
 revoke all on table public.legal_documents, public.legal_document_versions
-  from public, anon, authenticated;
+  from public, anon, authenticated, service_role;
 grant select on table public.legal_documents, public.legal_document_versions
-  to anon, authenticated;
-grant select, insert, update, delete
-  on table public.legal_documents, public.legal_document_versions to service_role;
+  to anon, authenticated, service_role;
 
 alter table public.legal_documents enable row level security;
 alter table public.legal_document_versions enable row level security;
@@ -72,18 +83,25 @@ create policy admins_read_every_version on public.legal_document_versions
   for select to authenticated
   using ((select public.is_current_user_admin()));
 
--- Guards every write path, not just UPDATE: a bare INSERT of a 'published' or
--- 'retired' row, or an UPDATE that flips draft/approved straight to
--- 'published', would otherwise mint a legal version with no admin check, no
--- audit event and a content_hash that need not match the body -- reachable by
--- service_role (which bypasses RLS) or by any future migration. The only
--- sanctioned way to reach 'published' is through publish_legal_version, which
--- sets a transaction-local flag around its own UPDATE for this trigger to
--- check.
+-- Defense-in-depth on top of the grants above, not the boundary itself: even
+-- with every write grant removed from application roles, this still blocks
+-- a bare INSERT of a 'published' or 'retired' row, an UPDATE that flips
+-- draft/approved straight to either status, and any edit or deletion of a
+-- non-draft row. publish_legal_version() is the only code that legitimately
+-- moves a row to 'published' (and, for the row it supersedes, to 'retired'
+-- immediately after) -- and it does so running as the table owner, since it
+-- is security definer and owned by postgres. So those two specific
+-- transitions are allowed only when current_user is the table's owner,
+-- proving the write came from that function and not from a caller merely
+-- holding a grant the function itself relies on. A direct draft/approved ->
+-- 'retired' jump has no publish behind it at all (no predecessor being
+-- superseded), so it is rejected outright, with no such exception.
 create function private.guard_published_legal_versions()
 returns trigger
 language plpgsql
 as $$
+declare
+  v_is_table_owner boolean;
 begin
   if tg_op = 'DELETE' then
     raise exception using errcode = '42501',
@@ -99,6 +117,10 @@ begin
   end if;
 
   -- tg_op = 'UPDATE' from here on.
+  v_is_table_owner := current_user = (
+    select pg_get_userbyid(relowner) from pg_class where oid = tg_relid
+  );
+
   if old.status = 'retired' then
     raise exception using errcode = '42501',
       message = 'Una versión retirada es inmutable.';
@@ -112,6 +134,7 @@ begin
     -- let a new column through untested.
     if new.status = 'retired'
       and new.retired_at is not null
+      and v_is_table_owner
       and (to_jsonb(new) - 'status' - 'retired_at') = (to_jsonb(old) - 'status' - 'retired_at')
     then
       return new;
@@ -121,9 +144,17 @@ begin
       message = 'Una versión publicada es inmutable.';
   end if;
 
-  if new.status = 'published'
-    and coalesce(current_setting('plaza.publishing_legal_version', true), '') <> 'on'
-  then
+  -- old.status is 'draft' or 'approved' here. The only transition
+  -- publish_legal_version() performs from this state is to 'published', and
+  -- only as the table owner. A direct jump to 'retired' is never legitimate
+  -- from here -- there is no predecessor being superseded -- so it gets no
+  -- owner exception at all.
+  if new.status = 'retired' then
+    raise exception using errcode = '42501',
+      message = 'Una versión legal solo se publica mediante la función autorizada.';
+  end if;
+
+  if new.status = 'published' and not v_is_table_owner then
     raise exception using errcode = '42501',
       message = 'Una versión legal solo se publica mediante la función autorizada.';
   end if;
@@ -217,12 +248,6 @@ begin
   where document_type = v_row.document_type and status = 'published'
   order by effective_at desc limit 1;
 
-  -- The guard trigger requires this flag on the draft/approved -> published
-  -- transition, so only this function -- never a bare UPDATE -- can publish.
-  -- It is cleared immediately after, so the window it opens is exactly this
-  -- statement, not the rest of whatever transaction called this function.
-  perform set_config('plaza.publishing_legal_version', 'on', true);
-
   update public.legal_document_versions
   set status = 'published',
       issuer_identity = p_issuer_identity,
@@ -232,8 +257,6 @@ begin
       supersedes_version_id = v_current
   where id = p_version_id
   returning * into v_row;
-
-  perform set_config('plaza.publishing_legal_version', 'off', true);
 
   if v_current is not null then
     update public.legal_document_versions

@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(23);
 
 select has_table('public', 'legal_documents', 'the document type registry exists');
 select has_table('public', 'legal_document_versions', 'document versions exist');
@@ -28,21 +28,47 @@ values
   ('b0000000-0000-4000-8000-000000000002', 'privacy_notice', 1, 'approved',
    'Aviso aprobado', '{"sections": []}'::jsonb, 'primera version', now(), 'Lic. Prueba', now());
 
--- a version can never be minted as published (or retired) by a bare write --
--- only publish_legal_version may reach that status. This is reachable by
--- service_role or a future migration, so it is tested at the default
--- (superuser, RLS-bypassing) connection role, not through anon/authenticated.
+-- A version can never be minted as published by a bare INSERT: the trigger
+-- rejects this unconditionally, regardless of who is writing, which is why
+-- this runs at the default (table owner) connection role -- proving the
+-- trigger itself is the one stopping it here, not a missing grant.
 select throws_ok(
   $$insert into public.legal_document_versions (document_type, version, status, title, change_summary)
     values ('returns_policy', 1, 'published', 'Bypass', 'intento de bypass')$$,
   '42501', null, 'a version cannot be inserted directly as published'
 );
 
+-- A draft can never be flipped straight to retired either: there is no
+-- predecessor being superseded, so publish_legal_version() never performs
+-- this transition and the trigger grants it no owner exception at all.
 select throws_ok(
-  $$update public.legal_document_versions set status = 'published'
+  $$update public.legal_document_versions set status = 'retired'
     where id = 'b0000000-0000-4000-8000-000000000001'$$,
-  '42501', null, 'a draft cannot be flipped to published outside publish_legal_version'
+  '42501', null, 'a draft cannot be flipped straight to retired'
 );
+
+-- service_role holds no INSERT/UPDATE/DELETE grant on this table (the actual
+-- fix for the demonstrated exploit: forging a publish by setting status and
+-- issuer_identity/content_hash directly). These two fail at the grant layer
+-- -- permission denied, 42501 -- before the trigger ever runs, which is a
+-- different failure path than the owner-context checks above and needs its
+-- own coverage.
+set local role service_role;
+select throws_ok(
+  $$update public.legal_document_versions set status = 'published',
+    content_hash = 'not-a-real-hash', issuer_identity = '{"forged":true}'::jsonb
+    where id = 'b0000000-0000-4000-8000-000000000001'$$,
+  '42501', null, 'service_role cannot forge a publish directly (no write grant)'
+);
+reset role;
+
+set local role service_role;
+select throws_ok(
+  $$insert into public.legal_document_versions (document_type, version, status, title, change_summary)
+    values ('warranty_policy', 1, 'published', 'Bypass', 'intento de bypass')$$,
+  '42501', null, 'service_role cannot insert a published version directly (no write grant)'
+);
+reset role;
 
 -- anonymous visitors see nothing that is not published
 set local role anon;
