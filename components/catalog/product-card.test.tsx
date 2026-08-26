@@ -30,6 +30,31 @@ describe("ProductCard", () => {
     expect(screen.getByText("Nuevo")).toBeInTheDocument();
   });
 
+  it("replaces a failed product image without removing its link", () => {
+    const { container } = render(
+      <ProductCard
+        product={{
+          id: 8,
+          slug: "taza-volcanica",
+          image_path: "https://example.com/taza.jpg",
+          name: "Taza volcánica",
+          price_mxn: 349,
+          currency_code: "MXN",
+          category_id: 11,
+          condition: "new",
+          used_condition: null,
+          shop: { name: "Casa Niebla" },
+        }}
+      />,
+    );
+
+    fireEvent.error(screen.getByRole("img", { name: "Taza volcánica" }));
+
+    expect(screen.queryByRole("img", { name: "Taza volcánica" })).not.toBeInTheDocument();
+    expect(container.querySelector("svg.lucide-image")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Taza volcánica/ })).toHaveAttribute("href", "/productos/taza-volcanica");
+  });
+
   it("shows used subcondition instead of a generic used label", () => {
     render(
       <ProductCard
