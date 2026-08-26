@@ -71,7 +71,27 @@ DNS records in Cloudflare, and filling Project Settings → Authentication → S
 Settings. `/auth/confirm` already handles both Supabase flows, so no code
 changes.
 
-## 4. Confirm the Supabase Site URL actually saved
+## 4. Add the recovery route to the redirect allowlist
+
+**Trigger:** before anyone uses password recovery on production.
+
+Password reset sends people to `/auth/recuperar`, a different path from the
+signup confirmation, so it needs its own entry in Authentication → URL
+Configuration → Redirect URLs:
+
+```
+https://plazavolcanes.com/auth/recuperar
+```
+
+Without it Supabase drops the redirect and falls back to the Site URL, which
+lands the person on the home page still holding a recovery session and no way to
+set a password. The localhost equivalents are already in
+`supabase/config.toml`.
+
+The feature also needs custom SMTP to reach anybody, for the reason in item 3 —
+recovery is entirely email, with no confirmation-off escape hatch.
+
+## 5. Confirm the Supabase Site URL actually saved
 
 **Trigger:** now, one glance.
 

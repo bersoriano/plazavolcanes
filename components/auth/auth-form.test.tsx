@@ -27,4 +27,21 @@ describe("AuthForm", () => {
 
     expect(screen.queryByLabelText("Teléfono móvil")).not.toBeInTheDocument();
   });
+
+  it("points people who forgot their password at the recovery form", () => {
+    render(<AuthForm mode="signin" />);
+
+    expect(screen.getByRole("link", { name: "¿Olvidaste tu contraseña?" })).toHaveAttribute(
+      "href",
+      "/recuperar",
+    );
+  });
+
+  it("does not offer recovery while registering", () => {
+    render(<AuthForm mode="signup" />);
+
+    expect(
+      screen.queryByRole("link", { name: "¿Olvidaste tu contraseña?" }),
+    ).not.toBeInTheDocument();
+  });
 });

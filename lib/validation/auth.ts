@@ -1,9 +1,28 @@
 import { z } from "zod";
 
-export const authSchema = z.object({
+export const emailSchema = z.object({
   email: z.email("Escribe un correo válido."),
-  password: z.string().min(8, "Usa al menos 8 caracteres."),
 });
+
+const passwordSchema = z.string().min(8, "Usa al menos 8 caracteres.");
+
+export const authSchema = emailSchema.extend({
+  password: passwordSchema,
+});
+
+/**
+ * A password typed twice, for the recovery form. The mismatch lands on the
+ * confirmation field so the message appears under the box that has to change.
+ */
+export const newPasswordSchema = z
+  .object({
+    password: passwordSchema,
+    password_confirm: z.string(),
+  })
+  .refine((values) => values.password === values.password_confirm, {
+    error: "Las contraseñas no coinciden.",
+    path: ["password_confirm"],
+  });
 
 const PHONE_ERROR = "Escribe tu teléfono móvil a 10 dígitos.";
 

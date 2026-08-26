@@ -15,6 +15,8 @@ const PRIVATE_PATHS = [
   "/api/",
   "/ingresar",
   "/registro",
+  "/recuperar",
+  "/nueva-contrasena",
 ];
 
 export default function robots(): MetadataRoute.Robots {

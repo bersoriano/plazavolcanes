@@ -7,7 +7,14 @@ import type { ActionState } from "@/lib/action-state";
 import { buildSiteUrl } from "@/lib/site-url";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { authSchema, displayNameSchema, phoneSchema, signUpSchema } from "@/lib/validation/auth";
+import {
+  authSchema,
+  displayNameSchema,
+  emailSchema,
+  newPasswordSchema,
+  phoneSchema,
+  signUpSchema,
+} from "@/lib/validation/auth";
 
 function parseCredentials(formData: FormData) {
   return authSchema.safeParse({
@@ -107,6 +114,85 @@ export async function signUp(
     status: "success",
     message: "Revisa tu correo para confirmar tu cuenta.",
   };
+}
+
+export async function requestPasswordReset(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = emailSchema.safeParse({ email: formData.get("email") });
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Revisa los campos marcados.",
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  if (!isSupabaseConfigured()) {
+    return setupError;
+  }
+
+  const supabase = await createServerSupabaseClient();
+  // Whether the address has an account is not something a stranger gets to
+  // learn here, so the reply below is the same either way and Supabase's answer
+  // goes unread.
+  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+    redirectTo: buildSiteUrl("/auth/recuperar"),
+  });
+
+  return {
+    status: "success",
+    message:
+      "Si esa dirección tiene cuenta, te enviamos un enlace para crear una contraseña nueva.",
+  };
+}
+
+export async function updatePassword(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = newPasswordSchema.safeParse({
+    password: formData.get("password"),
+    password_confirm: formData.get("password_confirm"),
+  });
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Revisa los campos marcados.",
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  if (!isSupabaseConfigured()) {
+    return setupError;
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase.auth.getClaims();
+
+  // Recovery links are single use and time limited. Without the session one
+  // established, updateUser would change nobody's password.
+  if (!data?.claims) {
+    return {
+      status: "error",
+      message: "Tu enlace de recuperación expiró. Pide uno nuevo.",
+    };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+
+  if (error) {
+    return {
+      status: "error",
+      message: "No pudimos guardar la contraseña. Intenta con otra.",
+    };
+  }
+
+  revalidatePath("/", "layout");
+  redirect("/panel");
 }
 
 export async function signOut() {

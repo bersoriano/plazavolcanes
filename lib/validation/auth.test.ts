@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { authSchema, normalizeMexicanMobile, signUpSchema } from "@/lib/validation/auth";
+import {
+  authSchema,
+  emailSchema,
+  newPasswordSchema,
+  normalizeMexicanMobile,
+  signUpSchema,
+} from "@/lib/validation/auth";
 
 describe("authSchema", () => {
   it("accepts a valid email and eight-character password", () => {
@@ -104,5 +110,54 @@ describe("normalizeMexicanMobile", () => {
 
   it("returns the E.164 form when they can", () => {
     expect(normalizeMexicanMobile("33 1234 5678")).toBe("+523312345678");
+  });
+});
+
+describe("emailSchema", () => {
+  it("accepts an address on its own", () => {
+    expect(emailSchema.safeParse({ email: "ana@correo.com" }).success).toBe(true);
+  });
+
+  it("rejects a malformed address", () => {
+    const result = emailSchema.safeParse({ email: "ana" });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.email?.[0]).toBe("Escribe un correo válido.");
+    }
+  });
+});
+
+describe("newPasswordSchema", () => {
+  it("accepts two matching passwords", () => {
+    const result = newPasswordSchema.safeParse({
+      password: "volcanes2026",
+      password_confirm: "volcanes2026",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("reports a mismatch on the confirmation field", () => {
+    const result = newPasswordSchema.safeParse({
+      password: "volcanes2026",
+      password_confirm: "volcanes2027",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.password_confirm?.[0]).toBe(
+        "Las contraseñas no coinciden.",
+      );
+    }
+  });
+
+  it("keeps the eight-character minimum the sign-up form uses", () => {
+    const result = newPasswordSchema.safeParse({ password: "corta", password_confirm: "corta" });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.password?.[0]).toBe("Usa al menos 8 caracteres.");
+    }
   });
 });

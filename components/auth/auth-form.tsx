@@ -90,6 +90,17 @@ export function AuthForm({ mode }: { mode: "signin" | "signup" }) {
         type="password"
       />
 
+      {signingIn ? (
+        <p className="text-right text-sm">
+          <Link
+            className="font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
+            href="/recuperar"
+          >
+            ¿Olvidaste tu contraseña?
+          </Link>
+        </p>
+      ) : null}
+
       {state.message ? (
         <p
           className={`rounded-2xl px-4 py-3 text-sm font-medium ${
