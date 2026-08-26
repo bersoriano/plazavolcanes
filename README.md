@@ -37,7 +37,7 @@ npx supabase db push
 En Supabase Dashboard:
 
 1. Abre **Authentication → URL Configuration**.
-2. Define `http://localhost:3000` como Site URL durante desarrollo.
+2. Define `http://localhost:3000` como Site URL durante desarrollo; en producción es el dominio real.
 3. Agrega `http://localhost:3000/auth/confirm` a Redirect URLs.
 4. En **Authentication → Providers → Email**, desactiva confirmación de correo para que una cuenta nueva pueda abrir su tienda inmediatamente. Si prefieres verificar correo, deja confirmación activa; `/auth/confirm` ya acepta ambos flujos de Supabase.
 
@@ -48,6 +48,16 @@ npm run dev
 ```
 
 Abre [http://localhost:3000](http://localhost:3000).
+
+## Producción
+
+El sitio vive en [plazavolcanes.com](https://plazavolcanes.com).
+
+1. En Vercel define `NEXT_PUBLIC_SITE_URL=https://plazavolcanes.com` y vuelve a desplegar: las variables `NEXT_PUBLIC_*` se incrustan durante el build, así que un cambio no surte efecto hasta el siguiente despliegue.
+2. En **Authentication → URL Configuration** de Supabase define `https://plazavolcanes.com` como Site URL y agrega `https://plazavolcanes.com/auth/confirm` a Redirect URLs, conservando las entradas de desarrollo y de vistas previas.
+3. Revisa `docs/auth-url-configuration.md` antes de cambiar de dominio: cada ajuste falla en silencio.
+
+`/robots.txt` y `/sitemap.xml` se construyen con `NEXT_PUBLIC_SITE_URL`. Si el sitemap publica URLs de `localhost`, la variable falta en el despliegue.
 
 ## Comandos
 

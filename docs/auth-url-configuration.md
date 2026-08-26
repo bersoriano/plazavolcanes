@@ -5,14 +5,23 @@ different places. Every one of them fails **silently** — no error, no log, jus
 link pointing somewhere wrong. This is the list to walk when auth email links
 misbehave, and after any domain change.
 
+The production domain is `https://plazavolcanes.com`. The Vercel-assigned
+`*.vercel.app` URL still resolves, and preview deployments always will, which is
+why the allowlist below keeps entries for both.
+
 ## How the pieces fit
 
-`lib/actions/auth.ts` builds the link target:
+`lib/site-url.ts` resolves the origin once:
 
 ```ts
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "http://localhost:3000";
-// ...
-emailRedirectTo: `${siteUrl}/auth/confirm`
+const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+if (!configured) return "http://localhost:3000";
+```
+
+`lib/actions/auth.ts` builds the link target from it:
+
+```ts
+emailRedirectTo: buildSiteUrl("/auth/confirm")
 ```
 
 Supabase then checks that URL against an allowlist. If it is not on the list,
@@ -21,6 +30,10 @@ complaining. `app/auth/confirm/route.ts` handles both the `code` and
 `token_hash` flows, so a misrouted link still *works* — it just works on the
 wrong host, which is why this breaks quietly.
 
+`NEXT_PUBLIC_SITE_URL` is also what `metadataBase`, `app/robots.ts` and
+`app/sitemap.ts` build absolute URLs from, so a wrong value there leaks into
+canonical URLs and the sitemap as well as into email.
+
 ## The four checks
 
 ### 1. Vercel has `NEXT_PUBLIC_SITE_URL`
@@ -28,22 +41,30 @@ wrong host, which is why this breaks quietly.
 Vercel → Settings → Environment Variables:
 
 ```
-NEXT_PUBLIC_SITE_URL = https://plazavolcanes.vercel.app
+NEXT_PUBLIC_SITE_URL = https://plazavolcanes.com
 ```
 
 `.env.local` is matched by `.env*` in `.gitignore` and never reaches Vercel. If
 this is unset in production, the fallback above makes every production
 confirmation email point at `http://localhost:3000`.
 
-Include the scheme. `plazavolcanes.vercel.app/auth/confirm` with no `https://`
-is not a valid absolute URL and will not match the allowlist.
+`NEXT_PUBLIC_*` values are inlined at build time. Changing this variable does
+nothing until the next deploy — **redeploy after saving it**.
+
+Include the scheme. `plazavolcanes.com/auth/confirm` with no `https://` is not a
+valid absolute URL; `getSiteUrl()` assumes `https://` for a bare host, but
+nothing repairs a typo in the host itself.
+
+Point it at whichever host Vercel serves as canonical — apex or `www`, not both.
+Vercel 308-redirects the other one, and a redirect in the middle of the auth
+callback can drop the `code` or `token_hash` query parameter.
 
 ### 2. Site URL in the Supabase dashboard
 
 Authentication → URL Configuration → **Site URL**:
 
 ```
-https://plazavolcanes.vercel.app
+https://plazavolcanes.com
 ```
 
 This is the default target when no `redirectTo` is passed, and it fills
@@ -55,7 +76,7 @@ users land whenever check 3 fails.
 Authentication → URL Configuration → **Redirect URLs**:
 
 ```
-https://plazavolcanes.vercel.app/auth/confirm
+https://plazavolcanes.com/auth/confirm
 ```
 
 Add wildcard entries for local work and Vercel previews, which get a unique URL
@@ -65,6 +86,13 @@ per deployment that would otherwise never match:
 http://localhost:3000/**
 http://127.0.0.1:3000/**
 https://*-<team-or-account-slug>.vercel.app/**
+```
+
+Keep the production `*.vercel.app` entry too if anyone still reaches the site
+that way:
+
+```
+https://plazavolcanes.vercel.app/auth/confirm
 ```
 
 Wildcard semantics: `*` does not cross `.` or `/`; `**` does. So
@@ -118,3 +146,7 @@ the Management API or the CLI. Confirm it end to end instead:
 
 A link pointing at `localhost` means check 1 or 2. A link on the right host that
 lands signed-out means the token flow, not the URL configuration.
+
+`https://plazavolcanes.com/robots.txt` is a quicker smoke test for check 1: its
+`Sitemap:` line prints whatever `NEXT_PUBLIC_SITE_URL` resolved to in the build
+that is live.
