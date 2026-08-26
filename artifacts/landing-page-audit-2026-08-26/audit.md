@@ -10,6 +10,10 @@ Strong brand foundation; not world class yet. Overall: **5.8/10**.
 
 Main constraint is marketplace credibility, not visual style. Page looks intentional, but only two products, two shops, one missing product image, repeated imagery, weak seller evidence, and long buyer journey make the experience feel like a polished prototype.
 
+## Landing release control
+
+The repository-local [Marketplace content-readiness gate](content-readiness.md) is the release checklist for this audit. It is currently blocked; do not treat the landing as launch-ready until its production evidence requirements are complete.
+
 ## Evidence
 
 ### Step 1 — Desktop landing page: needs work
