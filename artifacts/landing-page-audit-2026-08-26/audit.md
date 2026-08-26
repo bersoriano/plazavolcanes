@@ -1,10 +1,10 @@
 # Plaza Volcanes landing-page audit
 
 Date: 2026-08-26  
-Scope: logged-in landing page at desktop, 390 px mobile, 320 px compact mobile, and product search.  
+Scope: baseline logged-in landing page plus signed-out follow-up at desktop, 390 px mobile, 320 px compact mobile, and product search.
 Goal: help shoppers understand the marketplace, trust sellers, and reach a relevant product quickly.
 
-## Verdict
+## Baseline verdict
 
 Strong brand foundation; not world class yet. Overall: **5.8/10**.
 
@@ -13,6 +13,98 @@ Main constraint is marketplace credibility, not visual style. Page looks intenti
 ## Landing release control
 
 The repository-local [Marketplace content-readiness gate](content-readiness.md) is the release checklist for this audit. It is currently blocked; do not treat the landing as launch-ready until its production evidence requirements are complete.
+
+## Follow-up audit — 2026-08-26
+
+### Verdict
+
+The responsive, conversion, trust-copy, image-fallback, and accessibility implementation is materially stronger. The follow-up score is **7.4/10**, up from 5.8/10. The release is still **blocked**, because production inventory, imagery, copy quality, and merchandising variety have not been inspected or evidenced. The 8/10 overall target and the target of no category below 7/10 are therefore not met.
+
+The four screenshots below use an isolated local E2E fixture: ten products with black test images and generated test names. They verify layout and interaction states only. They are not production catalog content and are not evidence that the marketplace content-readiness gate passed.
+
+### Follow-up flow evidence
+
+#### Step 1 — Populated desktop home at 1440 px: healthy implementation, release-blocked content
+
+![Follow-up desktop home using local E2E fixtures](follow-up/01-desktop-home-1440.jpg)
+
+The hero now explains the buyer proposition and offers direct browse and seller actions. Products lead the page, shop cards expose stored location and the platform-computed tier, buyer education precedes a compact seller pitch, and the direct-payment/dispute limits are stated without an unsupported protection or verification claim. The ten uniform black thumbnails are test-fixture assets, so this capture cannot validate production image quality or merchandise variety.
+
+#### Step 2 — Populated mobile home at 390 px: healthy
+
+![Follow-up mobile home at 390 px using local E2E fixtures](follow-up/02-mobile-home-390.jpg)
+
+Search, the state selector, category navigation, products, shops, buyer guidance, risk copy, and the compact seller call to action remain available in a single-column flow. The header and controls stay within the viewport. The long capture reflects ten fixture products stacked on mobile; it does not establish the density or quality of a production catalog.
+
+#### Step 3 — Populated compact home at 320 px: healthy
+
+![Follow-up compact home at 320 px using local E2E fixtures](follow-up/03-compact-home-320.jpg)
+
+The prior 66 px document overflow is resolved. Compact account treatment fits, search retains the state selector, and horizontally scrollable category/shop rows do not widen the document. The full browser gate also verifies visible, unclipped keyboard focus at this width.
+
+#### Step 4 — Filtered search at 390 px: healthy
+
+![Follow-up filtered search at 390 px using a local E2E fixture](follow-up/04-mobile-filtered-search.jpg)
+
+The query remains visible, the selected location remains available, the result heading communicates the filtered state, and exactly one matching fixture product is shown. Browser DOM inspection confirmed the expected landmark, heading, and control structure in this state; the console contained no errors or warnings.
+
+### Follow-up scorecard
+
+| Area | Baseline | Follow-up | Evidence and remaining constraint |
+|---|---:|---:|---|
+| Brand and visual direction | 8/10 | **8/10** | The existing purple/lime system remains coherent across all four captures. |
+| Value-proposition clarity | 6/10 | **8/10** | The populated hero now says what buyers can find and that payment/delivery are agreed directly with each shop. |
+| Merchandising | 3/10 | **4/10** | The layout now handles a denser populated catalog, but production inventory, imagery, mix, and copy remain unverified. Local fixture content cannot raise this to launch quality. |
+| Trust and reassurance | 5/10 | **7/10** | Stored location, platform-computed tier, direct-payment risk, written-record guidance, and dispute limits are visible without invented metrics or guarantees. Production evidence remains unverified. |
+| Buyer conversion | 5/10 | **8/10** | Browse and seller actions are clear, products lead the page, seller education is compact, and filtered search reaches a relevant result. |
+| Mobile responsiveness | 5/10 | **9/10** | 320/390 px captures and browser assertions show no document overflow, retained discovery controls, and usable horizontal scrollers. |
+| Accessibility readiness | 6/10 | **8/10** | Automated structure, keyboard, target-size, reflow, and diagnostic checks are strong; native assistive-technology and device checks remain unperformed. |
+
+Arithmetic mean: **7.4/10**. This is an implementation-quality improvement, not a launch-readiness pass.
+
+### Release and diagnostic evidence
+
+Fresh release gates from this follow-up:
+
+- `npm run typecheck`: exit 0.
+- `npm run lint`: exit 0.
+- `npm test -- --run`: 86 test files passed, 500 tests passed, 0 failed.
+- `npm run test:e2e`: 6 tests passed, 0 failed, covering the full browser suite.
+
+Accepted prior manual diagnostics for the same follow-up state:
+
+- Lighthouse mobile accessibility, best practices, SEO, and agentic scores: 100 each.
+- Automated diagnostic checks: 55 passed, 0 failed.
+- Accessibility-tree inspection: landmark, heading, name, and order structure clean.
+- In-app browser DOM: expected landmark, heading, and control structure, including the filtered one-result state.
+- Browser console: no errors or warnings.
+- 1280-to-640 CSS-pixel zoom proxy: no horizontal overflow or lost key content.
+- Active-animation inspection: zero active animations.
+
+These results do **not** prove WCAG conformance or substitute for native VoiceOver traversal, browser-native 200% zoom, OS reduced-motion testing, or physical-device touch testing; none of those four checks was performed.
+
+### Target disposition
+
+| Target | Result |
+|---|---|
+| No score below 7/10 | **Not met** — merchandising is 4/10 while production content is unverified. |
+| Mobile responsiveness at least 8/10 | **Met** — 9/10. |
+| Buyer conversion at least 8/10 | **Met** — 8/10. |
+| Overall at least 8/10 | **Not met** — 7.4/10. |
+| Content-readiness gate complete | **Not met / blocked**. |
+| No unsupported protection or verification claim | **Met in the audited implementation and fixture states**. |
+
+### Remaining blockers, owners, and completion criteria
+
+| Status | Finding / dependency | Owner | Completion criteria |
+|---|---|---|---|
+| **Release blocker** | Production inventory minimum is not evidenced. | Unassigned | Record production read-only evidence of 24–40 published MX products, 8–12 public MX shops, at least 4 populated root categories, and at least 3 represented Mexican states. |
+| **Release blocker** | Production listing completeness, image quality, copy normalization, and first-row merchandising mix are unverified. | Unassigned | Audit every published listing for required metadata and a loadable primary image; resolve unrelated image reuse; review visible copy; then capture representative 1440 px and 390 px production rows. |
+| Verification gap | Native accessibility and resilience checks remain unperformed. | Unassigned | Record native VoiceOver traversal, browser-native 200% zoom, OS reduced-motion, and physical-device touch results. These are required before claiming full manual accessibility coverage, not proof of production content readiness. |
+| Deferred engineering hygiene | Local E2E runs leave uniquely named isolated fixture records. | Unassigned | Add safe local-only teardown that removes only the run-owned fixture account, shop, product, and upload without weakening test isolation. |
+| Deferred P2 dependency | Ratings, orders, response time, fulfillment, or similar trust metrics lack mature data and review. | Unassigned | Create the separate batched Supabase plan only after real transaction volume supports minimum sample thresholds and legal/product review; omit signals until then. |
+
+The detailed production thresholds and reproducible local evidence remain in the [Marketplace content-readiness gate](content-readiness.md). No production data, listing status, or storage object was changed during this follow-up.
 
 ## Evidence
 
