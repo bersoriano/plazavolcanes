@@ -119,6 +119,23 @@ describe("Home category fallback", () => {
       "Categoría no disponible. Mostramos todos los productos.",
     );
   });
+
+  it("keeps the fallback hero when an invalid category still returns products", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()], invalidCategorySelection: true }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({ categoria: "no-existe" }) }));
+
+    const hero = screen
+      .getByRole("heading", {
+        name: "Una plaza llena de cosas que no encuentras en cualquier lugar.",
+      })
+      .closest("section");
+    expect(hero).not.toBeNull();
+    expect(within(hero!).queryByRole("link", { name: "Explorar productos" })).not.toBeInTheDocument();
+    expect(within(hero!).queryByRole("link", { name: "Abrir mi tienda" })).not.toBeInTheDocument();
+  });
 });
 
 function catalogResult(
@@ -349,6 +366,21 @@ describe("Home state parameter", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "Estado no disponible. Mostramos todo México.",
     );
+  });
+
+  it("keeps the fallback hero when an invalid state still returns products", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products: [sampleProduct()] }));
+
+    render(await Home({ searchParams: Promise.resolve({ estado: "california" }) }));
+
+    const hero = screen
+      .getByRole("heading", {
+        name: "Una plaza llena de cosas que no encuentras en cualquier lugar.",
+      })
+      .closest("section");
+    expect(hero).not.toBeNull();
+    expect(within(hero!).queryByRole("link", { name: "Explorar productos" })).not.toBeInTheDocument();
+    expect(within(hero!).queryByRole("link", { name: "Abrir mi tienda" })).not.toBeInTheDocument();
   });
 
   it("offers the state explorer on the national catalog", async () => {

@@ -69,7 +69,8 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   // The state scopes the page rather than filtering within it, so it never counts here.
   const hasFilters = Boolean(filters.query || activeCategorySlug);
   const coldStart = !hasFilters && products.length === 0;
-  const populatedHome = !area && !hasFilters && !coldStart;
+  const populatedHome =
+    !area && !hasFilters && !coldStart && !invalidCategorySelection && !filters.invalidAreaSelection;
   const placeSuffix = area ? ` en ${area.label}` : "";
   const heading = filters.query
     ? activeCategoryName
