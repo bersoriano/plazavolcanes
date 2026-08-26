@@ -34,7 +34,7 @@ export function CategoryNavigation({
     <nav aria-label="Categorías de productos">
       <span className="sr-only" id={scrollGuidanceId}>Desliza para ver más categorías</span>
       <div className="relative">
-        <div aria-describedby={scrollGuidanceId} className="flex gap-2 overflow-x-auto pb-2 pr-10 [scrollbar-width:thin]">
+        <div aria-describedby={scrollGuidanceId} className="flex gap-2 overflow-x-auto p-2 pr-10 [scrollbar-width:thin]">
           <Link
             aria-current={!activeCategory ? "page" : undefined}
             className={`relative flex min-h-11 min-w-[5.5rem] shrink-0 items-center justify-center rounded-2xl px-4 text-sm font-semibold transition-colors ${

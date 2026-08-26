@@ -3,6 +3,7 @@ import { ArrowRight, MapPin, SearchX, Sparkles, Store } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { CategoryNavigation } from "@/components/catalog/category-navigation";
+import { CatalogJumpLink } from "@/components/catalog/catalog-jump-link";
 import { ProductCard } from "@/components/catalog/product-card";
 import { ProductGrid } from "@/components/catalog/product-grid";
 import { SearchBar } from "@/components/catalog/search-bar";
@@ -87,6 +88,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
       aria-labelledby="catalogo-heading"
       className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12"
       id="catalogo"
+      tabIndex={-1}
     >
       <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
@@ -232,13 +234,12 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
             ) : null}
             {populatedHome ? (
               <div className="mt-8 flex flex-wrap justify-center gap-4">
-                <Link
+                <CatalogJumpLink
                   className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-transform hover:-translate-y-0.5"
-                  href="#catalogo"
                 >
                   Explorar productos
                   <ArrowRight aria-hidden="true" className="size-4" />
-                </Link>
+                </CatalogJumpLink>
                 <Link
                   className="inline-flex min-h-12 items-center rounded-full border border-line bg-surface px-6 font-semibold text-brand transition-colors hover:border-brand"
                   href="/registro"
