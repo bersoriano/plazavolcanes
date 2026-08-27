@@ -713,4 +713,19 @@ failing.
   admin-reviewed.
 - **The platform floor is recorded, not enforced**, against seller policies —
   inherited from the landed-cost spec, and Q4.
+- **The claims-audit guard covers code, not documents.** `tests/claims-audit.test.ts`
+  scans `.ts`/`.tsx` under `app`, `components` and `lib`. The eight policy
+  documents are database-driven — their text lives in
+  `legal_document_versions.body` and is published through the admin workflow, so
+  the scanner structurally cannot see it. The most plausible route for a removed
+  claim to return is therefore a counsel-drafted document body, and no automated
+  check stands in its way.
+
+  This is deliberate, not an oversight. A counsel-approved document may
+  legitimately need to name a forbidden phrase in order to disclaim it — "Plaza
+  Volcanes no ofrece compra protegida" is correct legal writing that a publish-time
+  ban would reject. The division of responsibility is: the test guards code, and
+  the human approval recorded in `approved_by` guards document text. Counsel
+  reviewing a document body is the control, and it is the only one.
+
 - **Technical implementation does not establish legal compliance.**
