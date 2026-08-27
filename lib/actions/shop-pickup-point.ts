@@ -25,6 +25,27 @@ export function pickupPointFrom(formData: FormData) {
 }
 
 /**
+ * Shapes a failed `pickupPointSchema` parse into the error `ActionState` the
+ * form expects, prefixing every field key with `pickup_` so it lines up with
+ * the input names `ShopForm` renders (`pickup_address_line1`, etc.).
+ *
+ * Shared so `createShop` can reject bad pickup input before it ever inserts
+ * the shop row, and `savePickupPoint` can reuse the exact same shaping.
+ */
+export function pickupValidationError(
+  parsed: ReturnType<typeof pickupPointSchema.safeParse> | null,
+): ActionState {
+  const fieldErrors = parsed && !parsed.success ? parsed.error.flatten().fieldErrors : {};
+  return {
+    status: "error",
+    message: "Revisa los datos de recolección.",
+    errors: Object.fromEntries(
+      Object.entries(fieldErrors).map(([key, value]) => [`pickup_${key}`, value]),
+    ),
+  };
+}
+
+/**
  * Writes or removes a shop's pickup point.
  *
  * Called before the shop row is saved, so that a rejected address never leaves
@@ -44,16 +65,7 @@ export async function savePickupPoint(
   }
 
   if (!parsed?.success) {
-    return {
-      status: "error",
-      message: "Revisa los datos de recolección.",
-      errors: Object.fromEntries(
-        Object.entries(parsed?.error.flatten().fieldErrors ?? {}).map(([key, value]) => [
-          `pickup_${key}`,
-          value,
-        ]),
-      ),
-    };
+    return pickupValidationError(parsed);
   }
 
   const { error } = await supabase

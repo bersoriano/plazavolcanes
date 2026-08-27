@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/lib/action-state";
-import { savePickupPoint } from "@/lib/actions/shop-pickup-point";
+import {
+  pickupPointFrom,
+  pickupValidationError,
+  savePickupPoint,
+} from "@/lib/actions/shop-pickup-point";
 import { uniqueShopSlug } from "@/lib/slug";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -71,6 +75,15 @@ export async function createShop(
     }
   }
 
+  // The shop row must exist before a pickup point can reference it, so its
+  // insert necessarily comes first below — but bad pickup input is rejected
+  // here, before that insert, so a mistyped postal code never leaves a
+  // pickup-less shop behind for the seller to accidentally duplicate.
+  const pickup = pickupPointFrom(formData);
+  if (pickup.offered && !pickup.parsed?.success) {
+    return pickupValidationError(pickup.parsed);
+  }
+
   const context = await getAuthenticatedContext();
   if (!context) return authError;
 
@@ -106,8 +119,17 @@ export async function createShop(
     return { status: "error", message: "No pudimos crear la tienda." };
   }
 
+  // Pickup input is already known valid at this point, so the only way this
+  // fails now is a genuine database error — the shop itself is created, so
+  // the message must say so rather than implying nothing was saved.
   const pickupError = await savePickupPoint(supabase, data.id, formData);
-  if (pickupError) return pickupError;
+  if (pickupError) {
+    return {
+      status: "error",
+      message:
+        "Creamos tu tienda, pero no pudimos guardar la recolección. Agrégala editando la tienda.",
+    };
+  }
 
   revalidatePath("/");
   revalidatePath("/panel");
