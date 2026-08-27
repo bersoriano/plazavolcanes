@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(8);
+select plan(12);
 
 insert into auth.users (id, email, created_at) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'buyer@test.local', now()),
@@ -104,6 +104,42 @@ select throws_ok(
   '22023',
   'Elige recolección o envío.',
   'an unknown fulfillment method is refused'
+);
+
+-- 6. A phone or note with nobody's name attached is refused.
+select public.add_cart_item(820, 1);
+
+select throws_ok(
+  $$select public.checkout_cart_v3(920, 'pickup', null, '{"phone":"+523312345678"}'::jsonb, null, gen_random_uuid())$$,
+  '22023',
+  'Escribe el nombre de la otra persona.',
+  'an alternate contact phone without a name is refused'
+);
+
+-- 7. A too-short alternate contact name is refused in Spanish, not as a raw
+-- constraint violation.
+select throws_ok(
+  $$select public.checkout_cart_v3(920, 'pickup', null, '{"name":"A"}'::jsonb, null, gen_random_uuid())$$,
+  '22023',
+  'El nombre de la otra persona debe tener entre 2 y 80 caracteres.',
+  'a too-short alternate contact name is refused'
+);
+
+-- 8. A phone missing the +52 prefix is refused in Spanish. This is the case a
+-- buyer is most likely to hit, typing ten digits with no country code.
+select throws_ok(
+  $$select public.checkout_cart_v3(920, 'pickup', null, '{"name":"Luis Ruiz","phone":"3312345678"}'::jsonb, null, gen_random_uuid())$$,
+  '22023',
+  'El teléfono debe tener 10 dígitos.',
+  'an alternate contact phone missing the +52 prefix is refused'
+);
+
+-- 9. A too-long alternate contact note is refused in Spanish.
+select throws_ok(
+  $$select public.checkout_cart_v3(920, 'pickup', null, jsonb_build_object('name', 'Luis Ruiz', 'note', repeat('a', 201)), null, gen_random_uuid())$$,
+  '22023',
+  'La nota no puede pasar de 200 caracteres.',
+  'a too-long alternate contact note is refused'
 );
 
 select * from finish();

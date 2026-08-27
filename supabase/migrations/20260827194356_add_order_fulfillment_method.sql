@@ -150,6 +150,8 @@ declare
   v_handling_days integer;
   v_item_count bigint;
   v_contact_name text := nullif(btrim(p_alt_contact->>'name'), '');
+  v_contact_phone text := nullif(btrim(p_alt_contact->>'phone'), '');
+  v_contact_note text := nullif(btrim(p_alt_contact->>'note'), '');
 begin
   if v_user is null then raise exception using errcode = '42501', message = 'Debes iniciar sesión.'; end if;
   if p_idempotency_key is null then raise exception using errcode = '22023', message = 'Falta la clave de confirmación.'; end if;
@@ -193,9 +195,22 @@ begin
   end if;
 
   if v_contact_name is null
-    and (nullif(btrim(p_alt_contact->>'phone'), '') is not null
-      or nullif(btrim(p_alt_contact->>'note'), '') is not null) then
+    and (v_contact_phone is not null or v_contact_note is not null) then
     raise exception using errcode = '22023', message = 'Escribe el nombre de la otra persona.';
+  end if;
+
+  -- The check constraints below are the backstop. A buyer should meet these
+  -- messages, in Spanish, before ever reaching a raw constraint violation.
+  if v_contact_name is not null and length(v_contact_name) not between 2 and 80 then
+    raise exception using errcode = '22023', message = 'El nombre de la otra persona debe tener entre 2 y 80 caracteres.';
+  end if;
+
+  if v_contact_phone is not null and v_contact_phone !~ '^\+52[0-9]{10}$' then
+    raise exception using errcode = '22023', message = 'El teléfono debe tener 10 dígitos.';
+  end if;
+
+  if v_contact_note is not null and length(v_contact_note) > 200 then
+    raise exception using errcode = '22023', message = 'La nota no puede pasar de 200 caracteres.';
   end if;
 
   insert into public.orders (
@@ -206,9 +221,7 @@ begin
     v_user, p_shop_id, p_idempotency_key, 'MXN', v_subtotal,
     nullif(btrim(p_buyer_note), ''), v_handling_days, v_time_zone,
     p_payment_confirmation_required,
-    p_fulfillment_method, v_contact_name,
-    nullif(btrim(p_alt_contact->>'phone'), ''),
-    nullif(btrim(p_alt_contact->>'note'), '')
+    p_fulfillment_method, v_contact_name, v_contact_phone, v_contact_note
   ) returning id into v_order_id;
 
   insert into public.order_items (
