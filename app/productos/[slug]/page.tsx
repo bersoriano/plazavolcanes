@@ -85,7 +85,10 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   const purchaseNotice =
     typeof rawSearchParams.compra === "string" ? PURCHASE_NOTICES[rawSearchParams.compra] : undefined;
   const productPath = `/productos/${product.slug}`;
-  const messageAction = openConversation.bind(null, product.shopId);
+  // Shop and product are bound here, from the listing this page loaded, so the
+  // thread is about what the shopper is looking at and nothing the browser sends
+  // can change either one.
+  const messageAction = openConversation.bind(null, product.shopId, product.id);
 
   let viewerId: string | null = null;
   if (isSupabaseConfigured()) {
@@ -164,7 +167,8 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
             <StartConversationButton
               action={messageAction}
               isOwnShop={viewerId === product.shopOwnerId}
-              shopId={product.shopId}
+              label="Preguntar por este producto"
+              returnTo={productPath}
               signedIn={Boolean(viewerId)}
             />
             <ShareActions label="Compartir producto" title={product.name} />

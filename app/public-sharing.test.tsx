@@ -76,7 +76,13 @@ describe("public sharing controls", () => {
       used_condition: null,
       image_path: null,
       created_at: "2026-08-19T00:00:00.000Z",
-      shop: { name: "Casa Niebla", slug: "casa-niebla" },
+      shop: {
+        name: "Casa Niebla",
+        slug: "casa-niebla",
+        country_code: "MX",
+        administrative_area_codes: ["MX-JAL"],
+        trust_tier: "standard",
+      },
       shopId: 1,
       shopOwnerId: "11111111-1111-4111-8111-111111111111",
     });
@@ -140,7 +146,13 @@ describe("public sharing controls", () => {
       used_condition: null,
       image_path: null,
       created_at: "2026-08-19T00:00:00.000Z",
-      shop: { name: "Casa Niebla", slug: "casa-niebla" },
+      shop: {
+        name: "Casa Niebla",
+        slug: "casa-niebla",
+        country_code: "MX",
+        administrative_area_codes: ["MX-JAL"],
+        trust_tier: "standard",
+      },
       shopId: 1,
       shopOwnerId: "11111111-1111-4111-8111-111111111111",
     });
@@ -233,7 +245,13 @@ describe("product slug routing", () => {
       used_condition: "good",
       image_path: null,
       created_at: "2026-08-19T00:00:00.000Z",
-      shop: { name: "Tecno Plaza", slug: "tecno-plaza" },
+      shop: {
+        name: "Tecno Plaza",
+        slug: "tecno-plaza",
+        country_code: "MX",
+        administrative_area_codes: ["MX-JAL"],
+        trust_tier: "standard",
+      },
       shopId: 1,
       shopOwnerId: "11111111-1111-4111-8111-111111111111",
     });

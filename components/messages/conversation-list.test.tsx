@@ -2,7 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, expect, test } from "vitest";
 
 import { ConversationList } from "@/components/messages/conversation-list";
-import type { ConversationSummary } from "@/lib/queries/messages";
+import type { ConversationProduct, ConversationSummary } from "@/lib/queries/messages";
 
 afterEach(cleanup);
 
@@ -14,6 +14,7 @@ const conversation: ConversationSummary = {
   shop_name: "Tienda Prueba",
   shop_slug: "tienda-prueba",
   counterpart_label: "Ana Ruiz",
+  product: null,
   unread_count: 2,
   last_message: {
     body: "¿Sigue disponible?",
@@ -21,6 +22,18 @@ const conversation: ConversationSummary = {
     sender_id: "them",
   },
 };
+
+const product: ConversationProduct = {
+  id: 12,
+  name: "Taza de barro",
+  image_url: "https://cdn.test/taza.jpg",
+  price: 250,
+  currency_code: "MXN",
+  is_available: true,
+  href: "/productos/taza-de-barro",
+};
+
+const productThread: ConversationSummary = { ...conversation, product };
 
 test("links each thread to its own page", () => {
   render(<ConversationList basePath="/mensajes" conversations={[conversation]} />);
@@ -50,28 +63,89 @@ test("marks which threads belong to an order", () => {
     />,
   );
 
-  expect(screen.getByText(/pedido #12/i)).toBeInTheDocument();
+  expect(screen.getByText("Pedido #12")).toBeInTheDocument();
 });
 
-test("says so when a thread has no messages yet", () => {
+test("says a thread with no product is a general enquiry", () => {
+  render(<ConversationList basePath="/mensajes" conversations={[conversation]} />);
+
+  expect(screen.getByText("Consulta general")).toBeInTheDocument();
+});
+
+test("shows the listing a product thread is about", () => {
+  render(<ConversationList basePath="/mensajes" conversations={[productThread]} />);
+
+  expect(screen.getByAltText("Taza de barro")).toHaveAttribute("src", "https://cdn.test/taza.jpg");
+  expect(screen.getByText("Taza de barro")).toBeInTheDocument();
+  expect(screen.getByText("$250.00")).toBeInTheDocument();
+  expect(screen.queryByText("Consulta general")).not.toBeInTheDocument();
+});
+
+test("shows the price the listing carries today", () => {
   render(
-    <ConversationList basePath="/mensajes" conversations={[{ ...conversation, last_message: null }]} />,
+    <ConversationList
+      basePath="/mensajes"
+      conversations={[{ ...productThread, product: { ...product, price: 275 } }]}
+    />,
   );
 
-  expect(screen.getByText(/sin mensajes todavía/i)).toBeInTheDocument();
+  expect(screen.getByText("$275.00")).toBeInTheDocument();
 });
 
-test("explains an empty inbox instead of showing nothing", () => {
-  render(<ConversationList basePath="/mensajes" conversations={[]} />);
-
-  expect(screen.getByText(/no tienes conversaciones/i)).toBeInTheDocument();
-});
-
-test("uses the base path it was given, so the seller inbox links into the panel", () => {
-  render(<ConversationList basePath="/panel/mensajes" conversations={[conversation]} />);
-
-  expect(screen.getByRole("link", { name: /Ana Ruiz/ })).toHaveAttribute(
-    "href",
-    "/panel/mensajes/7",
+test("says in words when a listing is no longer available", () => {
+  render(
+    <ConversationList
+      basePath="/mensajes"
+      conversations={[
+        { ...productThread, product: { ...product, is_available: false, href: null } },
+      ]}
+    />,
   );
+
+  expect(screen.getByText("Ya no disponible")).toBeInTheDocument();
+});
+
+test("falls back to a placeholder when the listing has no image", () => {
+  render(
+    <ConversationList
+      basePath="/mensajes"
+      conversations={[{ ...productThread, product: { ...product, image_url: null } }]}
+    />,
+  );
+
+  expect(screen.queryByRole("img")).not.toBeInTheDocument();
+  expect(screen.getByText("Taza de barro")).toBeInTheDocument();
+});
+
+test("names the shop to a buyer and the person to a seller", () => {
+  // One field, filled by the inbox query according to who is asking. The list
+  // renders whichever identity arrived, in either inbox.
+  const { unmount } = render(
+    <ConversationList
+      basePath="/mensajes"
+      conversations={[{ ...productThread, counterpart_label: "Tienda Prueba" }]}
+    />,
+  );
+
+  expect(screen.getByText("Tienda Prueba")).toBeInTheDocument();
+  unmount();
+
+  render(<ConversationList basePath="/panel/mensajes" conversations={[productThread]} />);
+
+  expect(screen.getByText("Ana Ruiz")).toBeInTheDocument();
+});
+
+test("keeps every kind of thread reachable from one list", () => {
+  render(
+    <ConversationList
+      basePath="/panel/mensajes"
+      conversations={[
+        productThread,
+        { ...conversation, id: 8 },
+        { ...conversation, id: 9, type: "order", order_id: 12 },
+      ]}
+    />,
+  );
+
+  expect(screen.getAllByRole("link")).toHaveLength(3);
 });

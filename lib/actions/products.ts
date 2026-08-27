@@ -239,7 +239,7 @@ export async function updateProduct(
   if (!context) return authError;
   const { supabase, userId } = context;
   const { data: existing } = await supabase.from("products").select("shop_id, image_path, status, slug").eq("id", productId).maybeSingle();
-  if (!existing) return { status: "error", message: "No encontramos ese producto." };
+  if (!existing || existing.status === "deleted") return { status: "error", message: "No encontramos ese producto." };
   const { data: shop } = await supabase.from("shops").select("slug, listing_limit").eq("id", existing.shop_id).eq("owner_id", userId).maybeSingle();
   if (!shop) return { status: "error", message: "No puedes editar este producto." };
   if (parsed.data.status === "published") {
@@ -285,7 +285,8 @@ export async function setProductStatus(productId: number, nextStatus: "draft" | 
   const { supabase, userId } = context;
   const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, status, slug").eq("id", productId).maybeSingle();
   if (productError) throw new Error("No pudimos consultar el producto.");
-  if (!product) redirect("/panel");
+  // Retiring a listing is one way: it stays out of the catalogue for good.
+  if (!product || product.status === "deleted") redirect("/panel");
   const { data: shop, error: shopError } = await supabase.from("shops").select("slug, listing_limit").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
   if (shopError) throw new Error("No pudimos consultar la tienda.");
   if (!shop) redirect("/panel");
@@ -304,17 +305,37 @@ export async function setProductStatus(productId: number, nextStatus: "draft" | 
   revalidatePath(`/tiendas/${shop.slug}`);
 }
 
+/**
+ * Removing a listing retires it instead of erasing the row.
+ *
+ * A conversation points at the product it is about and reads it live, so a deleted
+ * row would either take the thread with it or leave it talking about nothing. The
+ * record stays, hidden from the catalogue by its status; the images go, because
+ * nothing shows them any more.
+ */
 export async function deleteProduct(productId: number) {
   const context = await getAuthenticatedContext();
   if (!context) redirect("/ingresar");
   const { supabase, userId } = context;
-  const { data: product } = await supabase.from("products").select("shop_id, image_path").eq("id", productId).maybeSingle();
+  const { data: product } = await supabase.from("products").select("shop_id, image_path, slug").eq("id", productId).maybeSingle();
   if (!product) redirect("/panel");
   const { data: shop } = await supabase.from("shops").select("slug").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
   if (!shop) redirect("/panel");
-  const { error } = await supabase.from("products").delete().eq("id", productId);
-  if (!error && product.image_path) await supabase.storage.from("catalogo").remove([product.image_path]);
+  const { data: gallery } = await supabase.from("product_images").select("storage_path").eq("product_id", productId);
+  // Dropping the gallery rows clears products.image_path through the cover trigger.
+  await supabase.from("product_images").delete().eq("product_id", productId);
+  const { error } = await supabase
+    .from("products")
+    .update({ status: "deleted", image_path: null, updated_at: new Date().toISOString() })
+    .eq("id", productId);
+  if (!error) {
+    const paths = [...(gallery ?? []).map((image) => image.storage_path), product.image_path].filter(
+      (path): path is string => Boolean(path),
+    );
+    if (paths.length) await supabase.storage.from("catalogo").remove(paths);
+  }
   revalidatePath("/");
+  revalidatePath(`/productos/${product.slug}`);
   revalidatePath(`/panel/tiendas/${product.shop_id}`);
   revalidatePath(`/tiendas/${shop.slug}`);
   redirect(`/panel/tiendas/${product.shop_id}`);

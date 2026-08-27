@@ -12,6 +12,31 @@
  * local keys change when the stack is recreated.
  */
 import { execFileSync, spawn } from "node:child_process";
+import { createServer } from "node:net";
+
+function availableLoopbackPort() {
+  return new Promise((resolve, reject) => {
+    const server = createServer();
+    server.once("error", reject);
+    server.listen({ exclusive: true, host: "127.0.0.1", port: 0 }, () => {
+      const address = server.address();
+      const port = typeof address === "object" && address ? address.port : null;
+
+      server.close((error) => {
+        if (error) reject(error);
+        else if (port === null) reject(new Error("Could not allocate a loopback port."));
+        else resolve(port);
+      });
+    });
+  });
+}
+
+if (process.env.PLAYWRIGHT_BASE_URL !== undefined) {
+  console.error(
+    "\n  Refusing caller-supplied PLAYWRIGHT_BASE_URL. npm run test:e2e always starts its own local app server.\n",
+  );
+  process.exit(1);
+}
 
 function localCredentials() {
   let raw;
@@ -59,13 +84,17 @@ if (!command) {
   process.exit(1);
 }
 
+const ownedPort = await availableLoopbackPort();
+const appUrl = `http://127.0.0.1:${ownedPort}`;
+
 const child = spawn(command, args, {
   stdio: "inherit",
   env: {
     ...process.env,
     NEXT_PUBLIC_SUPABASE_URL: local.url,
     NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: local.publishableKey,
-    NEXT_PUBLIC_SITE_URL: "http://127.0.0.1:3000",
+    NEXT_PUBLIC_SITE_URL: appUrl,
+    PLAYWRIGHT_E2E_PORT: String(ownedPort),
   },
 });
 

@@ -88,6 +88,36 @@ test("returns the conversation a shopper just opened", async () => {
   await expect(startPreSaleConversation(3)).resolves.toEqual({ conversationId: 42 });
 });
 
+test("asks for the shop's general enquiry when no product is named", async () => {
+  rpc.mockResolvedValue({ data: 42, error: null });
+
+  await startPreSaleConversation(3);
+
+  expect(rpc).toHaveBeenCalledWith("start_pre_sale_conversation", {
+    p_shop_id: 3,
+    p_product_id: null,
+  });
+});
+
+test("names the product a thread is about", async () => {
+  rpc.mockResolvedValue({ data: 43, error: null });
+
+  await startPreSaleConversation(3, 12);
+
+  expect(rpc).toHaveBeenCalledWith("start_pre_sale_conversation", {
+    p_shop_id: 3,
+    p_product_id: 12,
+  });
+});
+
+test("passes a rejected product back in the person's own words", async () => {
+  rpc.mockResolvedValue({ data: null, error: { code: "P0002", message: "Producto no encontrado." } });
+
+  await expect(startPreSaleConversation(3, 12)).resolves.toEqual({
+    error: "Producto no encontrado.",
+  });
+});
+
 test("passes an open-thread refusal through in Spanish", async () => {
   rpc.mockResolvedValue({
     data: null,

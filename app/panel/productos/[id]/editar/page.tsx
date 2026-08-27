@@ -22,7 +22,9 @@ export default async function EditProductPage({ params, searchParams }: { params
   const supabase = await createServerSupabaseClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   const { data: product } = await supabase.from("products").select("*").eq("id", productId).maybeSingle();
-  if (!product) notFound();
+  // A retired listing is kept only so its conversations still have something to
+  // point at. It is not editable, and it reads as gone.
+  if (!product || product.status === "deleted") notFound();
   const { data: galleryRows } = await supabase
     .from("product_images")
     .select("id, storage_path, position")

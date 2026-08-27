@@ -10,6 +10,14 @@ const row: ConversationRow = {
   shop_name: "Tienda Prueba",
   shop_slug: "tienda-prueba",
   counterpart_label: "Ana Ruiz",
+  product_id: null,
+  product_name: null,
+  product_slug: null,
+  product_image_path: null,
+  product_price: null,
+  product_currency_code: null,
+  product_status: null,
+  product_units_available: null,
   last_message_body: "Hola",
   last_message_at: "2026-08-23T10:00:00Z",
   last_message_sender_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
@@ -55,4 +63,63 @@ test("does not mutate the array it was given", () => {
   oldestFirst(messages);
 
   expect(messages.map((entry) => entry.id)).toEqual([2, 1]);
+});
+
+const productRow: ConversationRow = {
+  ...row,
+  product_id: 12,
+  product_name: "Taza de barro",
+  product_slug: "taza-de-barro",
+  product_image_path: "tienda/taza.jpg",
+  product_price: 250,
+  product_currency_code: "MXN",
+  product_status: "published",
+  product_units_available: 3,
+};
+
+test("carries the listing a product thread is about", () => {
+  const [summary] = mapConversationRows([productRow]);
+
+  expect(summary.product).toMatchObject({
+    id: 12,
+    name: "Taza de barro",
+    price: 250,
+    currency_code: "MXN",
+    is_available: true,
+    href: "/productos/taza-de-barro",
+  });
+});
+
+test("leaves a general enquiry without a product", () => {
+  const [summary] = mapConversationRows([row]);
+
+  expect(summary.product).toBeNull();
+});
+
+test("never reads an order thread as a product enquiry", () => {
+  const [summary] = mapConversationRows([{ ...productRow, type: "order", order_id: 12 }]);
+
+  expect(summary.product).toBeNull();
+});
+
+test("marks a listing that sold out as no longer available", () => {
+  const [summary] = mapConversationRows([{ ...productRow, product_units_available: 0 }]);
+
+  expect(summary.product?.is_available).toBe(false);
+  // The page is still there while the listing is published, so the link stays.
+  expect(summary.product?.href).toBe("/productos/taza-de-barro");
+});
+
+test("drops the link once the listing leaves the plaza", () => {
+  const [summary] = mapConversationRows([{ ...productRow, product_status: "deleted" }]);
+
+  expect(summary.product?.is_available).toBe(false);
+  expect(summary.product?.href).toBeNull();
+  expect(summary.product?.name).toBe("Taza de barro");
+});
+
+test("shows a price the seller changed after the thread began", () => {
+  const [summary] = mapConversationRows([{ ...productRow, product_price: 275 }]);
+
+  expect(summary.product?.price).toBe(275);
 });

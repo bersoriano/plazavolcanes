@@ -35,9 +35,9 @@ export type Database = {
         Relationships: [];
       };
       conversations: {
-        Row: { id: number; shop_id: number; buyer_id: string; order_id: number | null; type: "pre_sale" | "order"; created_at: string; updated_at: string };
-        Insert: { id?: never; shop_id: number; buyer_id: string; order_id?: number | null; type: "pre_sale" | "order"; created_at?: string; updated_at?: string };
-        Update: { id?: never; shop_id?: number; buyer_id?: string; order_id?: number | null; type?: "pre_sale" | "order"; created_at?: string; updated_at?: string };
+        Row: { id: number; shop_id: number; buyer_id: string; order_id: number | null; product_id: number | null; type: "pre_sale" | "order"; created_at: string; updated_at: string };
+        Insert: { id?: never; shop_id: number; buyer_id: string; order_id?: number | null; product_id?: number | null; type: "pre_sale" | "order"; created_at?: string; updated_at?: string };
+        Update: { id?: never; shop_id?: number; buyer_id?: string; order_id?: number | null; product_id?: number | null; type?: "pre_sale" | "order"; created_at?: string; updated_at?: string };
         Relationships: [];
       };
       conversation_reads: {
@@ -288,7 +288,7 @@ export type Database = {
           search_document: unknown;
           shop_id: number;
           slug: string;
-          status: "draft" | "published" | "expired";
+          status: "draft" | "published" | "expired" | "deleted";
           units_available: number;
           expires_at: string | null;
           updated_at: string;
@@ -308,7 +308,7 @@ export type Database = {
           price_mxn: number;
           shop_id: number;
           slug: string;
-          status?: "draft" | "published" | "expired";
+          status?: "draft" | "published" | "expired" | "deleted";
           units_available?: number;
           expires_at?: string | null;
           updated_at?: string;
@@ -328,7 +328,7 @@ export type Database = {
           price_mxn?: number;
           shop_id?: number;
           slug?: string;
-          status?: "draft" | "published" | "expired";
+          status?: "draft" | "published" | "expired" | "deleted";
           units_available?: number;
           expires_at?: string | null;
           updated_at?: string;
@@ -711,7 +711,7 @@ export type Database = {
         Args: { p_cart_item_id: number; p_quantity: number };
         Returns: undefined;
       };
-      start_pre_sale_conversation: { Args: { p_shop_id: number }; Returns: number };
+      start_pre_sale_conversation: { Args: { p_shop_id: number; p_product_id?: number | null }; Returns: number };
       set_display_name: { Args: { p_display_name: string }; Returns: undefined };
       my_display_name: { Args: Record<string, never>; Returns: string | null };
       mark_conversation_read: { Args: { p_conversation_id: number; p_last_message_id: number }; Returns: undefined };
@@ -726,6 +726,14 @@ export type Database = {
           shop_name: string;
           shop_slug: string;
           counterpart_label: string;
+          product_id: number | null;
+          product_name: string | null;
+          product_slug: string | null;
+          product_image_path: string | null;
+          product_price: number | null;
+          product_currency_code: string | null;
+          product_status: "draft" | "published" | "expired" | "deleted" | null;
+          product_units_available: number | null;
           last_message_body: string | null;
           last_message_at: string | null;
           last_message_sender_id: string | null;
