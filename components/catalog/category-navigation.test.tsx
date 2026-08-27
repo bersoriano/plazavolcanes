@@ -162,6 +162,16 @@ describe("SearchBar", () => {
     expect(container.querySelector('input[name="locale"]')).not.toBeInTheDocument();
     expect(container.querySelector('input[name="countryCode"]')).not.toBeInTheDocument();
   });
+
+  it("uses the state control border as the only desktop search separator", () => {
+    render(<SearchBar />);
+
+    const searchInput = screen.getByRole("searchbox", { name: "Buscar productos" });
+    const stateControl = screen.getByRole("combobox", { name: "Estado" }).closest("div");
+
+    expect(searchInput.nextElementSibling).toBe(stateControl);
+    expect(stateControl).toHaveClass("sm:border-l");
+  });
 });
 
 describe("CategoryNavigation overflow guidance", () => {
@@ -173,5 +183,11 @@ describe("CategoryNavigation overflow guidance", () => {
 
     expect(scrollers).toHaveLength(1);
     expect(container.querySelectorAll("[aria-hidden=\"true\"].pointer-events-none")).toHaveLength(1);
+  });
+
+  it("gives an active category's subcategory scroller focus clearance on every clipped edge", () => {
+    render(<CategoryNavigation activeCategorySlug="electronica" tree={tree} />);
+
+    expect(screen.getByLabelText("Subcategorías de Electrónica")).toHaveClass("p-2", "pr-10");
   });
 });

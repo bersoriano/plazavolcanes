@@ -51,6 +51,28 @@ describe("SiteHeader", () => {
     );
   });
 
+  it("keeps signed-in actions compact until the medium breakpoint", async () => {
+    await renderHeader(true);
+
+    const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
+    const panel = within(navigation).getByRole("link", { name: "Mi panel" });
+    const messages = within(navigation).getByRole("link", { name: "Mensajes" });
+    const signOut = within(navigation).getByRole("button", { name: "Salir" });
+
+    expect(panel).toHaveClass("md:inline-flex", "md:min-w-0");
+    expect(panel.querySelector("svg")).toHaveClass("md:hidden");
+    expect(within(panel).getByText("Mi panel")).toHaveClass("md:inline");
+    expect(messages).toHaveClass("md:inline-flex", "md:min-w-0");
+    expect(within(messages).getByText("Mensajes")).toHaveClass("md:inline");
+    expect(within(signOut).getByText("Salir")).toHaveClass("md:inline");
+  });
+
+  it("reveals the full brand separately from signed-in action labels", async () => {
+    await renderHeader(true);
+
+    expect(screen.getByText("Plaza Volcanes")).toHaveClass("sm:inline");
+  });
+
   it("keeps signed-out access named without relying on its visible label", async () => {
     await renderHeader(false);
 

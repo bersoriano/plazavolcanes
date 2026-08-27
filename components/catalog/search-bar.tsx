@@ -33,7 +33,6 @@ export function SearchBar({
       <Search aria-hidden="true" className="size-5 shrink-0 text-brand" />
       <label className="sr-only" htmlFor="buscar-productos">Buscar productos</label>
       <input className="min-w-0 flex-1 bg-transparent py-3 text-base text-ink outline-none placeholder:text-muted" defaultValue={defaultValue} id="buscar-productos" name="q" placeholder="¿Qué estás buscando?" type="search" />
-      <span aria-hidden="true" className="hidden h-7 w-px shrink-0 bg-line sm:block" />
       <div className="order-3 flex min-h-11 basis-full items-center gap-2 border-t border-line px-1 pt-2 text-brand sm:order-none sm:basis-auto sm:border-l sm:border-t-0 sm:pt-0">
         <MapPin aria-hidden="true" className="size-4" />
         <label className="sr-only" htmlFor="filtrar-estado">Estado</label>

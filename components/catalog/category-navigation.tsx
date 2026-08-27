@@ -80,7 +80,7 @@ export function CategoryNavigation({
 
       {activeCategory?.children.length ? (
         <div className="relative mt-3">
-          <div aria-describedby={scrollGuidanceId} aria-label={`Subcategorías de ${activeCategory.name}`} className="flex gap-2 overflow-x-auto pb-2 pr-10">
+          <div aria-describedby={scrollGuidanceId} aria-label={`Subcategorías de ${activeCategory.name}`} className="flex gap-2 overflow-x-auto p-2 pr-10">
             {activeCategory.children.map((subcategory) => {
               const isActive = subcategory.slug === activeSubcategorySlug;
 

@@ -18,7 +18,7 @@ The repository-local [Marketplace content-readiness gate](content-readiness.md) 
 
 ### Verdict
 
-The responsive, conversion, trust-copy, image-fallback, and accessibility implementation is materially stronger. The follow-up score is **7.4/10**, up from 5.8/10. The release is still **blocked**, because production inventory, imagery, copy quality, and merchandising variety have not been inspected or evidenced. The 8/10 overall target and the target of no category below 7/10 are therefore not met.
+The responsive, conversion, trust-copy, initial-load image-fallback, and accessibility implementation is materially stronger. The follow-up score is **7.4/10**, up from 5.8/10. The release is still **blocked**, because production inventory, imagery, copy quality, and merchandising variety have not been inspected or evidenced. The 8/10 overall target and the target of no category below 7/10 are therefore not met.
 
 The four screenshots below show ten accumulated synthetic E2E fixture records with black test images and generated test names. They verify layout and interaction states only. They are not production catalog content and are not evidence that the marketplace content-readiness gate passed.
 
@@ -40,7 +40,7 @@ Search, the state selector, category navigation, products, shops, buyer guidance
 
 ![Follow-up compact home at 320 px using accumulated synthetic E2E records](follow-up/03-compact-home-320.jpg)
 
-The prior 66 px document overflow is resolved. Compact account treatment fits, search retains the state selector, and horizontally scrollable category/shop rows do not widen the document. The full browser gate also verifies visible, unclipped keyboard focus at this width.
+The prior 66 px document overflow is resolved. Compact account treatment fits, search retains the state selector, and horizontally scrollable category/shop rows do not widen the document. The full browser gate also verifies visible, unclipped keyboard focus and browser-computed focus-indicator contrast at this width.
 
 #### Step 4 — Filtered search at 390 px: healthy
 
@@ -58,7 +58,7 @@ The query remains visible, the selected location remains available, the result h
 | Trust and reassurance | 5/10 | **7/10** | Stored location, platform-computed tier, direct-payment risk, written-record guidance, and dispute limits are visible without invented metrics or guarantees. Production evidence remains unverified. |
 | Buyer conversion | 5/10 | **8/10** | Browse and seller actions are clear, products lead the page, seller education is compact, and filtered search reaches a relevant result. |
 | Mobile responsiveness | 5/10 | **9/10** | 320/390 px captures and browser assertions show no document overflow, retained discovery controls, and usable horizontal scrollers. |
-| Accessibility readiness | 6/10 | **8/10** | Current DOM and E2E structure, keyboard, target-size, image-fallback, and 320/390/1440 reflow checks are strong; native assistive-technology and device checks remain unperformed. |
+| Accessibility readiness | 6/10 | **8/10** | Current DOM and E2E structure, keyboard, target-size, pre-hydration image-fallback, focus-clearance, browser-computed focus-contrast, and 320/390/1440 reflow checks are strong; native assistive-technology and device checks remain unperformed. |
 
 Arithmetic mean: **7.4/10**. This is an implementation-quality improvement, not a launch-readiness pass.
 
@@ -68,15 +68,15 @@ Fresh release gates from this follow-up:
 
 - `npm run typecheck`: exit 0.
 - `npm run lint`: exit 0.
-- `npx vitest run --exclude '.worktrees/**'`: 86 test files passed, 500 tests passed, 0 failed.
-- `npm run test:e2e`: 6 tests passed, 0 failed, covering the full browser suite.
+- `npx vitest run --exclude '.worktrees/**'`: 86 test files passed, 507 tests passed, 0 failed.
+- `npm run test:e2e`: 8 tests passed, 0 failed, covering the full browser suite.
 
 Current Task 9 follow-up evidence used to support the score:
 
 - Four fresh screenshots captured and inspected in the user-selected in-app browser: populated home at 1440, 390, and 320 px plus the 390 px filtered state.
 - Fresh in-app-browser DOM evidence for the expected landmarks, headings, controls, and filtered one-result state.
 - Fresh in-app-browser console check with no errors or warnings.
-- Current full E2E results above for responsive structure, keyboard flow, target sizes, image fallback, and document-width behavior.
+- Current full E2E results above for responsive structure, keyboard flow, target sizes, initial-request image fallback, focus-indicator contrast, sticky-header destinations, breakpoint boundaries, and document-width behavior.
 
 No alternate browser was used to replace the user-selected in-app-browser captures, DOM snapshot, or console check. The required full E2E suite used its configured runner.
 
@@ -90,7 +90,7 @@ Historical Task 8 diagnostic context only — not rerun for Task 9 and explicitl
 - 1280-to-640 CSS-pixel zoom proxy: no horizontal overflow or lost key content.
 - Active-animation inspection: zero active animations.
 
-The historical Task 8 diagnostics above are retained only for chronology. They did not raise or validate any current follow-up score. Neither the current nor historical results prove WCAG conformance or substitute for native VoiceOver traversal, browser-native 200% zoom, OS reduced-motion testing, or physical-device touch testing; none of those four checks was performed.
+The historical Task 8 diagnostics above are retained only for chronology. They did not raise or validate any current follow-up score. Neither the current nor historical results prove WCAG conformance or substitute for native VoiceOver traversal, browser-native 200% zoom, OS reduced-motion testing, physical-device touch testing, or a manual color-contrast audit; none of those checks was performed. Current focus-contrast evidence is an automated browser-computed regression only, not a claim of manual contrast coverage.
 
 ### Target disposition
 

@@ -86,7 +86,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   const catalogSection = (
     <section
       aria-labelledby="catalogo-heading"
-      className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12"
+      className="mx-auto max-w-[1440px] scroll-mt-[76px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12"
       id="catalogo"
       tabIndex={-1}
     >
