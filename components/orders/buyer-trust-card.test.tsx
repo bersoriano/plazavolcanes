@@ -38,8 +38,6 @@ describe("BuyerTrustCard", () => {
     render(<BuyerTrustCard trust={trust} />);
     expect(screen.getByRole("heading", { name: "Confiable · Cierra rápido" })).toBeInTheDocument();
     expect(screen.getByText("Miembro desde enero de 2026")).toBeInTheDocument();
-    expect(screen.getByText("Comprador verificado")).toBeInTheDocument();
-    expect(screen.getByText("Verificado")).toBeInTheDocument();
   });
 
   it("renders ten compact behavior markers and next-tier guidance", () => {

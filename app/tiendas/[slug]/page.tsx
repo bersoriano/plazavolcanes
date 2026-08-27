@@ -74,12 +74,7 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
           <TrustBadges
             metrics={shop.trust_metrics}
             profile={
-              shop.trust_profile
-                ? {
-                    joinedOn: shop.trust_profile.joined_on,
-                    verificationLevel: shop.trust_profile.verification_level,
-                  }
-                : null
+              shop.trust_profile ? { joinedOn: shop.trust_profile.joined_on } : null
             }
           />
           <p className="mt-3 text-xs text-muted">

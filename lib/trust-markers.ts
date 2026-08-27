@@ -1,8 +1,7 @@
-export type VerificationLevel =
-  | "unverified"
-  | "basic"
-  | "verified"
-  | "highly_verified";
+// There is no verification marker here on purpose. `user_trust_profiles
+// .verification_level` defaults to 'unverified' and nothing writes it, so any
+// badge derived from it asserts a review that never happened — which LFPC
+// art. 32 forbids. A marker returns when a review workflow exists to back it.
 
 type MemberSinceInput = {
   join_date: string;
@@ -63,38 +62,4 @@ export function generateMemberSinceMarker({
     trust_signal: trustSignal,
     days_active: daysActive,
   };
-}
-
-const verificationMarkers = {
-  unverified: {
-    primary_text: "Sin verificar",
-    badge_label: "Sin verificar",
-    tooltip:
-      "Este vendedor aún no completa la verificación de identidad. Recomendamos tomar precauciones adicionales.",
-  },
-  basic: {
-    primary_text: "Verificación básica",
-    badge_label: "Básica",
-    tooltip:
-      "Este vendedor verificó su teléfono y correo electrónico. Sus documentos de identidad aún no han sido revisados por completo.",
-  },
-  verified: {
-    primary_text: "Vendedor verificado",
-    badge_label: "Verificado",
-    tooltip:
-      "Este vendedor completó la verificación de identidad. Sus datos personales fueron revisados y confirmados.",
-  },
-  highly_verified: {
-    primary_text: "Altamente verificado",
-    badge_label: "Altamente verificado",
-    tooltip:
-      "Este vendedor completó una verificación avanzada con documentos oficiales y controles de seguridad adicionales.",
-  },
-} as const satisfies Record<
-  VerificationLevel,
-  { primary_text: string; badge_label: string; tooltip: string }
->;
-
-export function generateVerificationMarker(level: VerificationLevel) {
-  return { ...verificationMarkers[level], level };
 }

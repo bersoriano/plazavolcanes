@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  generateMemberSinceMarker,
-  generateVerificationMarker,
-} from "@/lib/trust-markers";
+import { generateMemberSinceMarker } from "@/lib/trust-markers";
 
 describe("generateMemberSinceMarker", () => {
   it("returns Spanish member copy and exact active days", () => {
@@ -39,51 +36,4 @@ describe("generateMemberSinceMarker", () => {
       ).toBe(trustSignal);
     },
   );
-});
-
-describe("generateVerificationMarker", () => {
-  it.each([
-    [
-      "unverified",
-      {
-        primary_text: "Sin verificar",
-        badge_label: "Sin verificar",
-        tooltip:
-          "Este vendedor aún no completa la verificación de identidad. Recomendamos tomar precauciones adicionales.",
-        level: "unverified",
-      },
-    ],
-    [
-      "basic",
-      {
-        primary_text: "Verificación básica",
-        badge_label: "Básica",
-        tooltip:
-          "Este vendedor verificó su teléfono y correo electrónico. Sus documentos de identidad aún no han sido revisados por completo.",
-        level: "basic",
-      },
-    ],
-    [
-      "verified",
-      {
-        primary_text: "Vendedor verificado",
-        badge_label: "Verificado",
-        tooltip:
-          "Este vendedor completó la verificación de identidad. Sus datos personales fueron revisados y confirmados.",
-        level: "verified",
-      },
-    ],
-    [
-      "highly_verified",
-      {
-        primary_text: "Altamente verificado",
-        badge_label: "Altamente verificado",
-        tooltip:
-          "Este vendedor completó una verificación avanzada con documentos oficiales y controles de seguridad adicionales.",
-        level: "highly_verified",
-      },
-    ],
-  ] as const)("maps %s to exact Spanish copy", (level, expected) => {
-    expect(generateVerificationMarker(level)).toEqual(expected);
-  });
 });

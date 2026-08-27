@@ -1,17 +1,13 @@
-import { BadgeCheck, CalendarDays } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 
 import {
   NO_DATA_LABEL,
   PUBLIC_TRUST_MARKERS,
   type PublicTrustMetrics,
 } from "@/lib/public-trust";
-import {
-  generateMemberSinceMarker,
-  generateVerificationMarker,
-  type VerificationLevel,
-} from "@/lib/trust-markers";
+import { generateMemberSinceMarker } from "@/lib/trust-markers";
 
-type TrustProfile = { joinedOn: string; verificationLevel: VerificationLevel };
+type TrustProfile = { joinedOn: string };
 
 type Badge = {
   key: string;
@@ -24,7 +20,6 @@ type Badge = {
 
 function buildBadges(metrics: PublicTrustMetrics | null, profile: TrustProfile | null): Badge[] {
   const membership = profile ? generateMemberSinceMarker({ join_date: profile.joinedOn }) : null;
-  const verification = profile ? generateVerificationMarker(profile.verificationLevel) : null;
 
   return [
     {
@@ -36,16 +31,6 @@ function buildBadges(metrics: PublicTrustMetrics | null, profile: TrustProfile |
         : "La antigüedad muestra cuánto tiempo lleva este vendedor activo en Plaza Volcanes.",
       measured: Boolean(membership),
       icon: <CalendarDays aria-hidden="true" className="size-3.5" />,
-    },
-    {
-      key: "verification",
-      label: "Verificación",
-      value: verification?.primary_text ?? NO_DATA_LABEL,
-      explanation:
-        verification?.tooltip ?? "El nivel de verificación resume qué datos confirmó el vendedor.",
-      // "Sin verificar" is a level, not an achievement: it stays greyed.
-      measured: Boolean(verification) && profile?.verificationLevel !== "unverified",
-      icon: <BadgeCheck aria-hidden="true" className="size-3.5" />,
     },
     ...PUBLIC_TRUST_MARKERS.map((marker) => ({
       key: marker.key,

@@ -21,17 +21,26 @@ const fullMetrics = {
   evaluatedAt: "2026-08-20T00:00:00.000Z",
 };
 
-const profile = { joinedOn: "2026-02-01", verificationLevel: "basic" as const };
+const profile = { joinedOn: "2026-02-01" };
 
 describe("TrustBadges", () => {
-  it("renders a badge for every trust signal, metrics plus membership and verification", () => {
+  it("renders a badge for every trust signal, metrics plus membership", () => {
     render(<TrustBadges metrics={fullMetrics} profile={profile} />);
 
     const list = screen.getByRole("list", { name: "Marcadores de confianza" });
 
     expect(within(list).getAllByRole("listitem")).toHaveLength(
-      PUBLIC_TRUST_MARKERS.length + 2,
+      PUBLIC_TRUST_MARKERS.length + 1,
     );
+  });
+
+  it("shows no verification badge, because no verification process exists", () => {
+    render(<TrustBadges metrics={fullMetrics} profile={{ joinedOn: "2026-02-01" }} />);
+
+    const list = screen.getByRole("list", { name: "Marcadores de confianza" });
+
+    expect(within(list).queryByTestId("trust-badge-verification")).toBeNull();
+    expect(list.textContent).not.toMatch(/verificad/i);
   });
 
   it("marks a measured signal as active and shows its value", () => {
@@ -67,27 +76,19 @@ describe("TrustBadges", () => {
     expect(badge).toHaveTextContent("Sin disputas");
   });
 
-  it("keeps membership and verification active when the profile exists", () => {
+  it("keeps membership active when the profile exists", () => {
     render(<TrustBadges metrics={null} profile={profile} />);
 
     expect(screen.getByTestId("trust-badge-membership")).toHaveAttribute(
       "data-state",
       "measured",
     );
-    expect(screen.getByTestId("trust-badge-verification")).toHaveAttribute(
-      "data-state",
-      "measured",
-    );
   });
 
-  it("greys out membership and verification when no profile exists", () => {
+  it("greys out membership when no profile exists", () => {
     render(<TrustBadges metrics={fullMetrics} profile={null} />);
 
     expect(screen.getByTestId("trust-badge-membership")).toHaveAttribute(
-      "data-state",
-      "unmeasured",
-    );
-    expect(screen.getByTestId("trust-badge-verification")).toHaveAttribute(
       "data-state",
       "unmeasured",
     );
@@ -138,33 +139,5 @@ describe("TrustBadges absence versus achievement", () => {
 
     expect(badge).toHaveAttribute("data-state", "measured");
     expect(badge).toHaveTextContent("Sin disputas");
-  });
-
-  it("greys an unverified account while naming its level", () => {
-    render(
-      <TrustBadges
-        metrics={emptyShop}
-        profile={{ joinedOn: "2026-02-01", verificationLevel: "unverified" }}
-      />,
-    );
-
-    const badge = screen.getByTestId("trust-badge-verification");
-
-    expect(badge).toHaveAttribute("data-state", "unmeasured");
-    expect(badge).toHaveTextContent("Sin verificar");
-  });
-
-  it("fills the badge in once the account is verified", () => {
-    render(
-      <TrustBadges
-        metrics={emptyShop}
-        profile={{ joinedOn: "2026-02-01", verificationLevel: "verified" }}
-      />,
-    );
-
-    expect(screen.getByTestId("trust-badge-verification")).toHaveAttribute(
-      "data-state",
-      "measured",
-    );
   });
 });

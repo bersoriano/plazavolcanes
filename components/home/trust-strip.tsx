@@ -1,4 +1,5 @@
 import { BadgeCheck, MessagesSquare, Scale, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
 const signals = [
   {
@@ -11,7 +12,7 @@ const signals = [
     icon: BadgeCheck,
     title: "Sabes quién te vende",
     description:
-      "Cada tienda muestra su nivel de verificación y su antigüedad antes de que envíes una solicitud.",
+      "Cada tienda muestra su antigüedad y su historial de desempeño antes de que envíes una solicitud.",
   },
   {
     icon: MessagesSquare,
@@ -21,9 +22,11 @@ const signals = [
   },
   {
     icon: Scale,
-    title: "Disputas con arbitraje",
+    title: "Un canal para reclamar",
     description:
-      "Si algo sale mal, abres una disputa y administración revisa la evidencia de ambas partes.",
+      "Si algo sale mal, abres una aclaración y queda registrada con su evidencia. Plaza Volcanes no retiene pagos ni impone resoluciones.",
+    href: "/quejas-y-aclaraciones",
+    linkLabel: "Quejas y aclaraciones",
   },
 ];
 
@@ -44,6 +47,14 @@ export function TrustStrip() {
                 {signal.title}
               </p>
               <p className="mt-1 text-sm leading-6 text-muted">{signal.description}</p>
+              {signal.href ? (
+                <Link
+                  className="mt-2 inline-block text-sm font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
+                  href={signal.href}
+                >
+                  {signal.linkLabel}
+                </Link>
+              ) : null}
             </div>
           </div>
         ))}

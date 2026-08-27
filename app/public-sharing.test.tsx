@@ -207,11 +207,6 @@ describe("public sharing controls", () => {
       "title",
       expect.stringContaining("Vendedor establecido"),
     );
-    expect(screen.getByTestId("trust-badge-verification")).toHaveTextContent("Sin verificar");
-    expect(screen.getByTestId("trust-badge-verification")).toHaveAttribute(
-      "title",
-      "Este vendedor aún no completa la verificación de identidad. Recomendamos tomar precauciones adicionales.",
-    );
     expect(screen.getByText("Nivel Estándar")).toBeInTheDocument();
     // A shop with no evaluation still shows every signal, greyed out.
     expect(screen.getByTestId("trust-badge-response_rate")).toHaveAttribute(

@@ -1,4 +1,4 @@
-import { BadgeCheck, CalendarDays, CheckCircle2, CircleHelp, ShieldCheck, Target } from "lucide-react";
+import { CalendarDays, CheckCircle2, CircleHelp, ShieldCheck, Target } from "lucide-react";
 
 import {
   formatBuyerSignal,
@@ -104,7 +104,6 @@ export function BuyerTrustCard({ trust }: { trust: BuyerTrustOutput }) {
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2">
         <IdentityMarker icon={<CalendarDays aria-hidden="true" className="size-5" />} label="Antigüedad" primary={trust.member_since.primary_text} tooltip={trust.member_since.tooltip} />
-        <IdentityMarker badge={trust.verification_level.badge_label} icon={<BadgeCheck aria-hidden="true" className="size-5" />} label="Verificación" primary={trust.verification_level.primary_text} tooltip={trust.verification_level.tooltip} />
       </div>
 
       <div aria-label="Señales de confianza del comprador" className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="group">
