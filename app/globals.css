@@ -71,3 +71,20 @@ a {
     animation-iteration-count: 1 !important;
   }
 }
+
+@media print {
+  header[data-site-header],
+  footer[data-site-footer] {
+    display: none;
+  }
+
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  a[href^="/"]::after {
+    content: " (plazavolcanes.com" attr(href) ")";
+    font-size: 0.8em;
+  }
+}

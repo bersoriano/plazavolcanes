@@ -19,7 +19,7 @@ export async function SiteHeader() {
   const unread = signedIn ? await fetchUnreadCount() : 0;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-line/80 bg-surface/95 backdrop-blur-lg">
+    <header className="sticky top-0 z-40 border-b border-line/80 bg-surface/95 backdrop-blur-lg" data-site-header>
       <div className="mx-auto flex h-[76px] max-w-[1440px] items-center justify-between gap-5 px-5 sm:px-8 lg:px-12">
         <Link className="group flex items-center gap-2.5 text-brand" href="/" aria-label="Plaza Volcanes, inicio">
           <span className="relative grid size-9 place-items-center overflow-hidden rounded-xl bg-brand text-accent">

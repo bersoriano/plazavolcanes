@@ -4,7 +4,7 @@ import { VolcanoMark } from "@/components/brand/volcano-mark";
 
 export function SiteFooter() {
   return (
-    <footer className="overflow-hidden bg-brand text-white">
+    <footer className="overflow-hidden bg-brand text-white" data-site-footer>
       <div className="relative mx-auto flex max-w-[1440px] flex-col gap-8 px-5 py-12 sm:px-8 lg:flex-row lg:items-end lg:justify-between lg:px-12">
         <VolcanoMark className="absolute -bottom-20 left-1/2 w-[720px] -translate-x-1/2 text-white/5" />
         <div className="relative">
