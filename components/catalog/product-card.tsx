@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ImageIcon } from "lucide-react";
 
+import { CatalogImage } from "@/components/catalog/catalog-image";
 import {
   DEFAULT_CATALOG_CURRENCY,
   DEFAULT_CATALOG_LOCALE,
@@ -10,6 +11,8 @@ import {
 } from "@/lib/catalog-locale";
 import { formatCurrency } from "@/lib/format";
 import { formatProductCondition, type ProductCondition, type UsedCondition } from "@/lib/product-condition";
+import { formatShopLocation } from "@/lib/shop-location";
+import type { TrustTier } from "@/lib/trust-tiers";
 
 type ProductCardProps = {
   product: {
@@ -22,7 +25,12 @@ type ProductCardProps = {
     category_id?: number | null;
     condition: ProductCondition;
     used_condition: UsedCondition | null;
-    shop: { name: string };
+    shop: {
+      name: string;
+      country_code: string;
+      administrative_area_codes: string[];
+      trust_tier: TrustTier;
+    };
   };
   categoryName?: string | null;
   catalogHref?: string;
@@ -61,17 +69,18 @@ export function ProductCard({
         <span className="absolute left-3 top-3 z-10 rounded-full bg-surface/95 px-3 py-1.5 text-xs font-semibold text-brand shadow-sm">
           {formatProductCondition(product.condition, product.used_condition)}
         </span>
-        {product.image_path ? (
-          // Supabase project hostname is configured at deployment time.
-          // eslint-disable-next-line @next/next/no-img-element
-          <img alt={product.name} className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.035]" src={product.image_path} />
-        ) : (
-          <div className="grid size-full place-items-center text-brand/35"><ImageIcon aria-hidden="true" className="size-10" /></div>
-        )}
+        <CatalogImage
+          alt={product.name}
+          className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.035]"
+          fallback={<div className="grid size-full place-items-center text-brand/35"><ImageIcon aria-hidden="true" className="size-10" /></div>}
+          src={product.image_path}
+        />
       </div>
       <div className="px-1 pt-4">
         <p className="text-sm font-medium text-muted">
           <span>{product.shop.name}</span>
+          <span aria-hidden="true"> · </span>
+          <span>{formatShopLocation(product.shop.country_code, product.shop.administrative_area_codes)}</span>
           {categoryName ? <><span aria-hidden="true"> · </span><span>{categoryName}</span></> : null}
         </p>
         <h3 className="mt-1 line-clamp-1 font-display text-lg font-semibold tracking-[-0.02em] text-ink">{product.name}</h3>

@@ -52,7 +52,8 @@ body {
 }
 
 :where(a, button, input, textarea, select):focus-visible {
-  outline: 3px solid var(--accent);
+  box-shadow: 0 0 0 3px var(--accent);
+  outline: 3px solid var(--brand);
   outline-offset: 3px;
 }
 

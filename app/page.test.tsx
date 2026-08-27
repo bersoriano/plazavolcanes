@@ -119,6 +119,23 @@ describe("Home category fallback", () => {
       "Categoría no disponible. Mostramos todos los productos.",
     );
   });
+
+  it("keeps the fallback hero when an invalid category still returns products", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()], invalidCategorySelection: true }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({ categoria: "no-existe" }) }));
+
+    const hero = screen
+      .getByRole("heading", {
+        name: "Una plaza llena de cosas que no encuentras en cualquier lugar.",
+      })
+      .closest("section");
+    expect(hero).not.toBeNull();
+    expect(within(hero!).queryByRole("link", { name: "Explorar productos" })).not.toBeInTheDocument();
+    expect(within(hero!).queryByRole("link", { name: "Abrir mi tienda" })).not.toBeInTheDocument();
+  });
 });
 
 function catalogResult(
@@ -150,11 +167,89 @@ function sampleProduct() {
     created_at: "2026-08-01T00:00:00.000Z",
     category_id: null,
     currency_code: "MXN",
-    shop: { name: "Taller Volcán", slug: "taller-volcan" },
+    shop: {
+      name: "Taller Volcán",
+      slug: "taller-volcan",
+      country_code: "MX",
+      administrative_area_codes: ["MX-OAX"],
+      trust_tier: "standard" as const,
+    },
+  };
+}
+
+function sampleShop() {
+  return {
+    administrative_area_codes: ["MX-OAX"],
+    country_code: "MX",
+    created_at: "2026-08-01T00:00:00.000Z",
+    description: "Piezas de barro negro hechas en Oaxaca.",
+    id: 3,
+    image_path: null,
+    imageUrl: null,
+    listing_limit: 15,
+    name: "Taller Volcán",
+    owner_id: "00000000-0000-0000-0000-000000000003",
+    slug: "taller-volcan",
+    time_zone: "America/Mexico_City",
+    trust_evaluated_at: null,
+    trust_tier: "standard" as const,
+    updated_at: "2026-08-01T00:00:00.000Z",
   };
 }
 
 describe("Home conversion sections", () => {
+  it("sharpens the populated home hero conversion paths", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const hero = screen.getByRole("heading", {
+      name: "Encuentra productos únicos cerca de ti.",
+    }).closest("section");
+    expect(hero).not.toBeNull();
+    expect(hero).toHaveTextContent(
+      "Explora artículos nuevos y usados, revisa quién vende y acuerda pago y entrega directamente con cada tienda.",
+    );
+    expect(within(hero!).getByRole("link", { name: "Explorar productos" })).toHaveAttribute(
+      "href",
+      "#catalogo",
+    );
+    expect(within(hero!).getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
+      "href",
+      "/registro",
+    );
+  });
+
+  it("prioritizes buyer discovery before trust details and the seller pitch", async () => {
+    const { getCatalogStateCounts } = await import("@/lib/queries/catalog.server");
+    vi.mocked(getCatalogStateCounts).mockResolvedValue([{ code: "MX-OAX", count: 1 }]);
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()], shops: [sampleShop()] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const orderedSections = [
+      screen.getByRole("region", { name: "Descubrimientos de la plaza" }),
+      screen.getByRole("heading", { name: "Tiendas de la plaza" }).closest("section"),
+      screen.getByRole("region", { name: "Explora por estado" }),
+      screen.getByRole("region", { name: "Cómo comprar en la plaza" }),
+      screen.getByRole("region", { name: "Antes de acordar una compra" }),
+      screen.getByRole("region", { name: "Vende en Plaza Volcanes" }),
+    ];
+
+    for (const [index, section] of orderedSections.entries()) {
+      expect(section).not.toBeNull();
+      const nextSection = orderedSections[index + 1];
+      if (nextSection) {
+        expect(section!.compareDocumentPosition(nextSection) & Node.DOCUMENT_POSITION_FOLLOWING)
+          .toBeTruthy();
+      }
+    }
+  });
+
   it("shows the buyer trust strip, the seller pitch and the buying steps when products exist", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()] }),
@@ -162,13 +257,14 @@ describe("Home conversion sections", () => {
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByRole("region", { name: "Compra con respaldo" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("region", { name: "Antes de acordar una compra" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Vende en Plaza Volcanes" })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Cómo comprar en la plaza" })).toBeInTheDocument();
   });
 
-  it("renders every trust tier with its free listing limit so sellers see what they unlock", async () => {
-    const { getTrustTierMarker } = await import("@/lib/trust-tiers");
+  it("keeps seller education compact on home and links to its dedicated page", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()] }),
     );
@@ -176,13 +272,12 @@ describe("Home conversion sections", () => {
     render(await Home({ searchParams: Promise.resolve({}) }));
 
     const pitch = screen.getByRole("region", { name: "Vende en Plaza Volcanes" });
-    for (const tier of ["standard", "reliable", "top_rated"] as const) {
-      const marker = getTrustTierMarker(tier);
-      expect(within(pitch).getByText(marker.label)).toBeInTheDocument();
-      expect(
-        within(pitch).getByText(`${marker.listingLimit} productos publicados`),
-      ).toBeInTheDocument();
-    }
+    expect(within(pitch).queryByRole("list")).not.toBeInTheDocument();
+    expect(pitch).not.toHaveTextContent(/Estándar|Confiable|Mejor valorada/);
+    expect(within(pitch).getByRole("link", { name: "Conoce cómo funciona" })).toHaveAttribute(
+      "href",
+      "/vender",
+    );
   });
 
   it("sends the seller call to action to registration", async () => {
@@ -231,7 +326,9 @@ describe("Home conversion sections", () => {
 
     render(await Home({ searchParams: Promise.resolve({ q: "taza" }) }));
 
-    expect(screen.queryByRole("region", { name: "Compra con respaldo" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Antes de acordar una compra" }),
+    ).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Vende en Plaza Volcanes" })).not.toBeInTheDocument();
     expect(
       screen.queryByRole("region", { name: "Cómo comprar en la plaza" }),
@@ -267,6 +364,21 @@ describe("Home state parameter", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "Estado no disponible. Mostramos todo México.",
     );
+  });
+
+  it("keeps the fallback hero when an invalid state still returns products", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products: [sampleProduct()] }));
+
+    render(await Home({ searchParams: Promise.resolve({ estado: "california" }) }));
+
+    const hero = screen
+      .getByRole("heading", {
+        name: "Una plaza llena de cosas que no encuentras en cualquier lugar.",
+      })
+      .closest("section");
+    expect(hero).not.toBeNull();
+    expect(within(hero!).queryByRole("link", { name: "Explorar productos" })).not.toBeInTheDocument();
+    expect(within(hero!).queryByRole("link", { name: "Abrir mi tienda" })).not.toBeInTheDocument();
   });
 
   it("offers the state explorer on the national catalog", async () => {
