@@ -77,4 +77,42 @@ describe("ShopForm", () => {
     expect(screen.getByLabelText("Estado principal")).toHaveValue("MX-PUE");
     expect(screen.getByLabelText("Segundo estado (opcional)")).toHaveValue("MX-OAX");
   });
+
+  it("hides the pickup fields until collection is offered", () => {
+    render(<ShopForm action={action} />);
+
+    expect(screen.getByLabelText("Ofrezco recolección en tienda")).not.toBeChecked();
+    expect(screen.queryByLabelText("Calle y número de recolección")).not.toBeInTheDocument();
+  });
+
+  it("reveals the pickup fields when collection is offered", () => {
+    render(<ShopForm action={action} />);
+
+    fireEvent.click(screen.getByLabelText("Ofrezco recolección en tienda"));
+
+    expect(screen.getByLabelText("Calle y número de recolección")).toBeRequired();
+    expect(screen.getByLabelText("Ciudad de recolección")).toBeRequired();
+    expect(screen.getByLabelText("Estado de recolección")).toBeRequired();
+    expect(screen.getByLabelText("Código postal de recolección")).toBeRequired();
+    expect(screen.getByLabelText("Referencias para llegar")).not.toBeRequired();
+  });
+
+  it("starts checked and filled for a shop that already offers collection", () => {
+    render(
+      <ShopForm
+        action={action}
+        pickupPoint={{
+          addressLine1: "Av. Vallarta 1234",
+          locality: "Zapopan",
+          administrativeAreaCode: "MX-JAL",
+          postalCode: "45010",
+          notes: "Portón verde",
+        }}
+      />,
+    );
+
+    expect(screen.getByLabelText("Ofrezco recolección en tienda")).toBeChecked();
+    expect(screen.getByLabelText("Calle y número de recolección")).toHaveValue("Av. Vallarta 1234");
+    expect(screen.getByLabelText("Código postal de recolección")).toHaveValue("45010");
+  });
 });

@@ -24,6 +24,13 @@ type ShopFormProps = {
     countryCode: string;
     administrativeAreaCodes: string[];
   };
+  pickupPoint?: {
+    addressLine1: string;
+    locality: string;
+    administrativeAreaCode: string;
+    postalCode: string;
+    notes: string;
+  } | null;
 };
 
 function SaveButton({ editing }: { editing: boolean }) {
@@ -35,11 +42,12 @@ function SaveButton({ editing }: { editing: boolean }) {
   );
 }
 
-export function ShopForm({ action, shop }: ShopFormProps) {
+export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
   const [state, formAction] = useFormAction(action);
   const [preview, setPreview] = useState(shop?.imageUrl ?? null);
   const [primaryArea, setPrimaryArea] = useState(shop?.administrativeAreaCodes?.[0] ?? "");
   const [secondaryArea, setSecondaryArea] = useState(shop?.administrativeAreaCodes?.[1] ?? "");
+  const [offersPickup, setOffersPickup] = useState(Boolean(pickupPoint));
 
   useEffect(() => {
     return () => {
@@ -135,6 +143,87 @@ export function ShopForm({ action, shop }: ShopFormProps) {
         <div className="space-y-2 sm:col-span-2">
           {state.errors?.administrative_area_codes?.[0] ? <p className="text-sm font-medium text-sale" id="administrative-area-error">{state.errors.administrative_area_codes[0]}</p> : null}
         </div>
+      </div>
+
+      <div className="space-y-4 border-t border-line pt-6">
+        <label className="flex items-center gap-3 text-sm font-semibold text-ink" htmlFor="offers_pickup">
+          <input
+            checked={offersPickup}
+            className="size-5 rounded border-line accent-brand"
+            id="offers_pickup"
+            name="offers_pickup"
+            onChange={(event) => setOffersPickup(event.target.checked)}
+            type="checkbox"
+          />
+          Ofrezco recolección en tienda
+        </label>
+        <p className="text-sm leading-6 text-muted">
+          Quien compre verá la ciudad al pedir, y la dirección completa cuando aceptes el pedido.
+        </p>
+
+        {offersPickup ? (
+          <div className="space-y-4">
+            <Field
+              defaultValue={state.values?.pickup_address_line1 ?? pickupPoint?.addressLine1}
+              error={state.errors?.pickup_address_line1?.[0]}
+              label="Calle y número de recolección"
+              maxLength={200}
+              name="pickup_address_line1"
+              required
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                defaultValue={state.values?.pickup_locality ?? pickupPoint?.locality}
+                error={state.errors?.pickup_locality?.[0]}
+                label="Ciudad de recolección"
+                maxLength={120}
+                name="pickup_locality"
+                required
+              />
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-ink" htmlFor="pickup_administrative_area_code">
+                  Estado de recolección
+                </label>
+                <select
+                  className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none"
+                  defaultValue={pickupPoint?.administrativeAreaCode ?? primaryArea}
+                  id="pickup_administrative_area_code"
+                  name="pickup_administrative_area_code"
+                  required
+                >
+                  {MEXICO_ADMINISTRATIVE_AREAS.map((area) => (
+                    <option key={area.code} value={area.code}>
+                      {area.label}
+                    </option>
+                  ))}
+                </select>
+                {state.errors?.pickup_administrative_area_code?.[0] ? (
+                  <p className="text-sm font-medium text-sale">
+                    {state.errors.pickup_administrative_area_code[0]}
+                  </p>
+                ) : null}
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                defaultValue={state.values?.pickup_postal_code ?? pickupPoint?.postalCode}
+                error={state.errors?.pickup_postal_code?.[0]}
+                inputMode="numeric"
+                label="Código postal de recolección"
+                maxLength={5}
+                name="pickup_postal_code"
+                required
+              />
+              <Field
+                defaultValue={state.values?.pickup_notes ?? pickupPoint?.notes}
+                error={state.errors?.pickup_notes?.[0]}
+                label="Referencias para llegar"
+                maxLength={500}
+                name="pickup_notes"
+              />
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-2">
