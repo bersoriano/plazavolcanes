@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/lib/action-state";
+import { savePickupPoint } from "@/lib/actions/shop-pickup-point";
 import { uniqueShopSlug } from "@/lib/slug";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -105,6 +106,9 @@ export async function createShop(
     return { status: "error", message: "No pudimos crear la tienda." };
   }
 
+  const pickupError = await savePickupPoint(supabase, data.id, formData);
+  if (pickupError) return pickupError;
+
   revalidatePath("/");
   revalidatePath("/panel");
   revalidatePath(`/tiendas/${data.slug}`);
@@ -147,6 +151,9 @@ export async function updateShop(
   if (!existing) {
     return { status: "error", message: "No encontramos esa tienda." };
   }
+
+  const pickupError = await savePickupPoint(supabase, shopId, formData);
+  if (pickupError) return pickupError;
 
   let nextImagePath = existing.image_path;
   if (image) {
