@@ -25,9 +25,9 @@ overriding system value
 values (900, 900, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'pre_sale');
 
 -- Creating the order also creates its conversation, through the fulfillment trigger.
-insert into public.orders (id, buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone)
+insert into public.orders (id, buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone, fulfillment_method)
 overriding system value
-values (900, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 900, gen_random_uuid(), 'MXN', 100, 1, 'America/Mexico_City');
+values (900, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 900, gen_random_uuid(), 'MXN', 100, 1, 'America/Mexico_City', 'shipping');
 
 insert into public.messages (conversation_id, sender_id, body, idempotency_key)
 values (900, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'Nunca llegó', gen_random_uuid());

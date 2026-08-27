@@ -13,9 +13,9 @@ overriding system value
 values (900, 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Tienda Prueba', 'tienda-prueba',
   'Descripción completa para probar la caducidad de conversaciones.');
 
-insert into public.orders (id, buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone)
+insert into public.orders (id, buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone, fulfillment_method)
 overriding system value
-values (900, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 900, gen_random_uuid(), 'MXN', 100, 1, 'America/Mexico_City');
+values (900, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 900, gen_random_uuid(), 'MXN', 100, 1, 'America/Mexico_City', 'shipping');
 
 -- Creating the order also creates its own conversation, through the trigger in
 -- the fulfillment migration.

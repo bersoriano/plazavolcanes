@@ -224,13 +224,13 @@ delete from public.shop_trust_evaluation_queue;
 insert into public.orders (
   buyer_id, shop_id, status, idempotency_key, currency_code, subtotal,
   handling_days, handling_time_zone, accepted_at, ship_by_at, shipped_at,
-  delivered_at, completed_at, created_at
+  delivered_at, completed_at, created_at, fulfillment_method
 )
 select
   '40000000-0000-4000-8000-000000000002', s.id, 'completed', gen_random_uuid(),
   'MXN', 100, 1, 'America/Mexico_City', now() - interval '10 days',
   now() - interval '8 days', now() - interval '9 days', now() - interval '8 days',
-  now() - interval '7 days', now() - interval '10 days'
+  now() - interval '7 days', now() - interval '10 days', 'shipping'
 from public.shops s cross join generate_series(1, 80)
 where s.slug = 'nivel-uno';
 

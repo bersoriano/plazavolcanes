@@ -27,11 +27,11 @@ insert into auth.users (id, email, created_at) values
 insert into public.shops (owner_id, name, slug, description)
 values ('20000000-0000-4000-8000-000000000001', 'Envíos Uno', 'envios-uno', 'Descripción completa para probar cumplimiento y mensajes.');
 
-insert into public.orders (buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone)
+insert into public.orders (buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone, fulfillment_method)
 values (
   '20000000-0000-4000-8000-000000000002',
   (select id from public.shops where slug = 'envios-uno'),
-  '20000000-0000-4000-8000-000000000099', 'MXN', 100, 1, 'America/Mexico_City'
+  '20000000-0000-4000-8000-000000000099', 'MXN', 100, 1, 'America/Mexico_City', 'shipping'
 );
 
 select results_eq(

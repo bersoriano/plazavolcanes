@@ -36,9 +36,9 @@ overriding system value
 values (900, 900, 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', 'pre_sale');
 
 -- An order carries its own conversation, opened by the trigger on orders.
-insert into public.orders (id, buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone)
+insert into public.orders (id, buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone, fulfillment_method)
 overriding system value
-values (900, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 900, gen_random_uuid(), 'MXN', 250, 1, 'America/Mexico_City');
+values (900, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 900, gen_random_uuid(), 'MXN', 250, 1, 'America/Mexico_City', 'shipping');
 
 create temp table order_thread as
 select id from public.conversations where order_id = 900;

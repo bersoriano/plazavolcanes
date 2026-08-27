@@ -156,36 +156,36 @@ delete from private.buyer_trust_evaluation_queue;
 insert into public.orders (
   buyer_id, shop_id, status, idempotency_key, currency_code, subtotal,
   handling_days, handling_time_zone, accepted_at, payment_completed_at,
-  payment_confirmed_by, shipped_at, delivered_at, completed_at
+  payment_confirmed_by, shipped_at, delivered_at, completed_at, fulfillment_method
 )
 select '60000000-0000-4000-8000-000000000002', s.id, 'completed', gen_random_uuid(), 'MXN', 100,
   1, 'America/Mexico_City', now() - interval '10 days', now() - interval '9 days',
-  '60000000-0000-4000-8000-000000000001', now() - interval '8 days', now() - interval '7 days', now() - interval '6 days'
+  '60000000-0000-4000-8000-000000000001', now() - interval '8 days', now() - interval '7 days', now() - interval '6 days', 'shipping'
 from public.shops s where s.slug = 'compradores-uno';
 
 insert into public.orders (
   buyer_id, shop_id, status, idempotency_key, currency_code, subtotal,
-  handling_days, handling_time_zone, accepted_at, shipped_at, delivered_at, completed_at
+  handling_days, handling_time_zone, accepted_at, shipped_at, delivered_at, completed_at, fulfillment_method
 )
 select '60000000-0000-4000-8000-000000000002', s.id, 'completed', gen_random_uuid(), 'MXN', 100,
-  1, 'America/Mexico_City', now() - interval '10 days', now() - interval '8 days', now() - interval '7 days', now() - interval '6 days'
+  1, 'America/Mexico_City', now() - interval '10 days', now() - interval '8 days', now() - interval '7 days', now() - interval '6 days', 'shipping'
 from public.shops s where s.slug = 'compradores-uno';
 
 insert into public.orders (
   buyer_id, shop_id, status, idempotency_key, currency_code, subtotal,
-  handling_days, handling_time_zone, accepted_at, canceled_at, canceled_by
+  handling_days, handling_time_zone, accepted_at, canceled_at, canceled_by, fulfillment_method
 )
 select '60000000-0000-4000-8000-000000000002', s.id, 'canceled_by_buyer', gen_random_uuid(), 'MXN', 100,
-  1, 'America/Mexico_City', now() - interval '5 days', now() - interval '4 days', '60000000-0000-4000-8000-000000000002'
+  1, 'America/Mexico_City', now() - interval '5 days', now() - interval '4 days', '60000000-0000-4000-8000-000000000002', 'shipping'
 from public.shops s where s.slug = 'compradores-uno';
 
 insert into public.orders (
   buyer_id, shop_id, status, idempotency_key, currency_code, subtotal,
-  handling_days, handling_time_zone, accepted_at, canceled_at, canceled_by, seller_cancellation_reason
+  handling_days, handling_time_zone, accepted_at, canceled_at, canceled_by, seller_cancellation_reason, fulfillment_method
 )
 select '60000000-0000-4000-8000-000000000002', s.id, 'canceled_by_seller', gen_random_uuid(), 'MXN', 100,
   1, 'America/Mexico_City', now() - interval '5 days', now() - interval '4 days',
-  '60000000-0000-4000-8000-000000000001', 'buyer_non_payment'
+  '60000000-0000-4000-8000-000000000001', 'buyer_non_payment', 'shipping'
 from public.shops s where s.slug = 'compradores-uno';
 
 insert into public.order_events (order_id, actor_id, actor_type, event_type, previous_status, next_status, created_at)

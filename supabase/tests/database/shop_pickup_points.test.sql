@@ -21,11 +21,11 @@ values (910, 'Av. Vallarta 1234', 'Zapopan', 'MX-JAL', '45010', 'Portón verde')
 -- An order that has not been accepted yet, and one that has.
 insert into public.orders
   (id, buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days,
-   handling_time_zone, status)
+   handling_time_zone, status, fulfillment_method)
 overriding system value
 values
   (910, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 910, gen_random_uuid(), 'MXN', 250, 1,
-   'America/Mexico_City', 'requested');
+   'America/Mexico_City', 'requested', 'pickup');
 
 -- 1. The owner sees the whole address.
 set local role authenticated;

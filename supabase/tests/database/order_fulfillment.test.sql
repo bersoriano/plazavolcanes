@@ -1,0 +1,110 @@
+begin;
+
+create extension if not exists pgtap with schema extensions;
+
+select plan(8);
+
+insert into auth.users (id, email, created_at) values
+  ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'buyer@test.local', now()),
+  ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'seller@test.local', now());
+
+insert into public.shops (id, owner_id, name, slug, description, country_code, time_zone)
+overriding system value
+values (920, 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Tienda Envio', 'tienda-envio',
+  'Descripción completa de la tienda para probar el método de entrega.', 'MX',
+  'America/Mexico_City');
+
+insert into public.products (id, shop_id, name, description, price_mxn, status, units_available, category_id)
+overriding system value
+values (820, 920, 'Taza', 'Descripción completa de la taza de barro artesanal.', 250,
+  'published', 5, (select id from public.categories where slug = 'celulares-y-accesorios'));
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "role": "authenticated"}';
+
+select public.add_cart_item(820, 1);
+
+-- 1. A shipping checkout writes an address row.
+create temp table shipping_order as
+select public.checkout_cart_v3(
+  920,
+  'shipping',
+  '{"recipient":"Ana Ruiz","address_line1":"Calle 1","address_line2":null,"locality":"Zapopan","administrative_area":"Jalisco","postal_code":"45010","country_code":"MX","delivery_instructions":null}'::jsonb,
+  null,
+  'Mensaje',
+  gen_random_uuid()
+) as id;
+
+select is(
+  (select fulfillment_method from public.orders where id = (select id from shipping_order)),
+  'shipping',
+  'a shipping checkout records the shipping method'
+);
+
+select isnt_empty(
+  $$select order_id from public.order_addresses
+    where order_id = (select id from shipping_order)$$,
+  'a shipping checkout writes an address row'
+);
+
+-- 2. A pickup checkout writes no address row, and carries the alternate contact.
+select public.add_cart_item(820, 1);
+
+create temp table pickup_order as
+select public.checkout_cart_v3(
+  920,
+  'pickup',
+  null,
+  '{"name":"Luis Ruiz","phone":"+523312345678","note":"mi hermano"}'::jsonb,
+  null,
+  gen_random_uuid()
+) as id;
+
+select is(
+  (select fulfillment_method from public.orders where id = (select id from pickup_order)),
+  'pickup',
+  'a pickup checkout records the pickup method'
+);
+
+select is_empty(
+  $$select order_id from public.order_addresses
+    where order_id = (select id from pickup_order)$$,
+  'a pickup checkout writes no address row'
+);
+
+select is(
+  (select alt_contact_note from public.orders where id = (select id from pickup_order)),
+  'mi hermano',
+  'the alternate contact note is stored on the order'
+);
+
+-- 3. Shipping without an address is refused.
+select public.add_cart_item(820, 1);
+
+select throws_ok(
+  $$select public.checkout_cart_v3(920, 'shipping', null, null, null, gen_random_uuid())$$,
+  '22023',
+  'Completa la dirección de entrega.',
+  'shipping without an address is refused'
+);
+
+-- 4. Pickup carrying an address is refused, so it cannot slip past the gate.
+select throws_ok(
+  $$select public.checkout_cart_v3(920, 'pickup',
+      '{"recipient":"Ana","address_line1":"Calle 1","locality":"Zapopan","administrative_area":"Jalisco","postal_code":"45010","country_code":"MX"}'::jsonb,
+      null, null, gen_random_uuid())$$,
+  'P0001',
+  'Una recolección no lleva dirección de entrega.',
+  'pickup with an address is refused'
+);
+
+-- 5. An invented method is refused.
+select throws_ok(
+  $$select public.checkout_cart_v3(920, 'teleport', null, null, null, gen_random_uuid())$$,
+  '22023',
+  'Elige recolección o envío.',
+  'an unknown fulfillment method is refused'
+);
+
+select * from finish();
+rollback;

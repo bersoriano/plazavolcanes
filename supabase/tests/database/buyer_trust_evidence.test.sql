@@ -111,8 +111,8 @@ select lives_ok(
 );
 
 reset role;
-insert into public.orders (buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone)
-select '50000000-0000-4000-8000-000000000002', id, gen_random_uuid(), 'MXN', 100, 1, 'America/Mexico_City'
+insert into public.orders (buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone, fulfillment_method)
+select '50000000-0000-4000-8000-000000000002', id, gen_random_uuid(), 'MXN', 100, 1, 'America/Mexico_City', 'shipping'
 from public.shops where slug = 'pagos-uno';
 
 set local role authenticated;
@@ -128,8 +128,8 @@ select results_eq(
 );
 
 reset role;
-insert into public.orders (buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone)
-select '50000000-0000-4000-8000-000000000002', id, gen_random_uuid(), 'MXN', 100, 1, 'America/Mexico_City'
+insert into public.orders (buyer_id, shop_id, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone, fulfillment_method)
+select '50000000-0000-4000-8000-000000000002', id, gen_random_uuid(), 'MXN', 100, 1, 'America/Mexico_City', 'shipping'
 from public.shops where slug = 'pagos-uno';
 
 set local role authenticated;
@@ -147,8 +147,8 @@ select results_eq(
 );
 
 reset role;
-insert into public.orders (buyer_id, shop_id, status, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone, accepted_at)
-select '50000000-0000-4000-8000-000000000002', id, 'accepted', gen_random_uuid(), 'MXN', 100, 1, 'America/Mexico_City', now()
+insert into public.orders (buyer_id, shop_id, status, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone, accepted_at, fulfillment_method)
+select '50000000-0000-4000-8000-000000000002', id, 'accepted', gen_random_uuid(), 'MXN', 100, 1, 'America/Mexico_City', now(), 'shipping'
 from public.shops where slug = 'pagos-uno';
 
 set local role authenticated;

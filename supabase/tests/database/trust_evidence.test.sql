@@ -20,12 +20,12 @@ insert into auth.users (id, email, created_at) values
 insert into public.shops (owner_id, name, slug, description)
 values ('30000000-0000-4000-8000-000000000001', 'Evidencia Uno', 'evidencia-uno', 'Descripción completa para probar reseñas y disputas.');
 
-insert into public.orders (buyer_id, shop_id, status, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone, delivered_at, completed_at)
+insert into public.orders (buyer_id, shop_id, status, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone, delivered_at, completed_at, fulfillment_method)
 values (
   '30000000-0000-4000-8000-000000000002',
   (select id from public.shops where slug = 'evidencia-uno'),
   'completed', '30000000-0000-4000-8000-000000000091', 'MXN', 100, 1,
-  'America/Mexico_City', now() - interval '100 days', now() - interval '100 days'
+  'America/Mexico_City', now() - interval '100 days', now() - interval '100 days', 'shipping'
 );
 
 insert into public.order_addresses (order_id, recipient, address_line1, locality, administrative_area, postal_code, country_code)
@@ -81,12 +81,12 @@ select results_eq(
 
 reset role;
 
-insert into public.orders (buyer_id, shop_id, status, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone, delivered_at)
+insert into public.orders (buyer_id, shop_id, status, idempotency_key, currency_code, subtotal, handling_days, handling_time_zone, delivered_at, fulfillment_method)
 values (
   '30000000-0000-4000-8000-000000000002',
   (select id from public.shops where slug = 'evidencia-uno'),
   'delivered', '30000000-0000-4000-8000-000000000092', 'MXN', 50, 1,
-  'America/Mexico_City', now() - interval '8 days'
+  'America/Mexico_City', now() - interval '8 days', 'shipping'
 );
 
 set local role authenticated;
