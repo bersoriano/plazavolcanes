@@ -52,36 +52,38 @@ async function readPublishedTypes() {
 
   if (!response.ok) return null;
   const rows = await response.json();
+  // A 200 carrying a non-array body (a PostgREST error object, a content
+  // negotiation surprise) must degrade like an unreachable database, not throw
+  // a raw stack trace out of the gate.
+  if (!Array.isArray(rows)) return null;
   return new Set(rows.map((row) => row.document_type));
 }
-
-const launchState = await readLaunchState();
-const missingVars = IDENTITY_VARS.filter((name) => !process.env[name]?.trim());
-const published = await readPublishedTypes();
 
 // Real drift protection for the registry: the TypeScript list and the
 // migration seed are two copies of the same truth, and only this check
 // reconciles them against the database itself.
 async function readSeededTypes(url, key) {
+  if (!url || !key) return null;
   const response = await fetch(`${url}/rest/v1/legal_documents?select=type,is_required`, {
     headers: { apikey: key, Authorization: `Bearer ${key}` },
   });
   if (!response.ok) return null;
-  return await response.json();
+  const rows = await response.json();
+  return Array.isArray(rows) ? rows : null;
 }
 
-if (published === null) {
-  const detail = "cannot reach the database to check published legal documents";
-  if (launchState?.status === "pre_launch") {
-    console.warn(`\n⚠ legal:verify  ${detail} (pre_launch, continuing)\n`);
-    process.exit(0);
-  }
-  fail([detail, "set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"]);
-}
+const launchState = await readLaunchState();
+const missingVars = IDENTITY_VARS.filter((name) => !process.env[name]?.trim());
 
+// Registry drift is a code bug, not a launch-state condition, so it is checked
+// FIRST and fails regardless of pre_launch. It must not sit behind the
+// published-versions lookup: that lookup exits early when the database is
+// unreachable, which is the path a build takes whenever it points at a project
+// the legal migrations have not been applied to — exactly when drift would go
+// unnoticed.
 const seeded = await readSeededTypes(
-  process.env.NEXT_PUBLIC_SUPABASE_URL.trim(),
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.trim(),
+  process.env.NEXT_PUBLIC_SUPABASE_URL?.trim(),
+  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim(),
 );
 
 if (seeded) {
@@ -100,6 +102,20 @@ if (seeded) {
       "reconcile lib/legal/document-types.ts with the migration seed.",
     ]);
   }
+} else {
+  // Silence here would let a maintainer believe drift protection ran.
+  console.warn("⚠ legal:verify  registry drift check skipped — legal_documents unreadable");
+}
+
+const published = await readPublishedTypes();
+
+if (published === null) {
+  const detail = "cannot reach the database to check published legal documents";
+  if (launchState?.status === "pre_launch") {
+    console.warn(`\n⚠ legal:verify  ${detail} (pre_launch, continuing)\n`);
+    process.exit(0);
+  }
+  fail([detail, "set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"]);
 }
 
 const unpublished = REQUIRED_TYPES.filter((type) => !published.has(type));
@@ -110,7 +126,11 @@ if (unpublished.length === 0 && missingVars.length === 0) {
 }
 
 if (launchState?.status === "pre_launch") {
-  const acknowledged = new Set(launchState.acknowledged_unpublished ?? []);
+  const acknowledgedList = launchState.acknowledged_unpublished ?? [];
+  if (!Array.isArray(acknowledgedList)) {
+    fail(["acknowledged_unpublished in docs/legal/launch-state.json must be an array"]);
+  }
+  const acknowledged = new Set(acknowledgedList);
   const unacknowledged = unpublished.filter((type) => !acknowledged.has(type));
 
   if (unacknowledged.length > 0) {
