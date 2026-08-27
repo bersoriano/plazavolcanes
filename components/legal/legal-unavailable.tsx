@@ -17,12 +17,7 @@ export function LegalUnavailable({ route }: { route: LegalRoute }) {
         role="status"
       >
         Este documento aún no está disponible: no hay una versión aprobada y
-        publicada. Plaza Volcanes no puede aceptar solicitudes de compra hasta
-        que exista.
-      </p>
-      <p className="mt-5 leading-7 text-muted">
-        Si necesitas esta información para una compra o una aclaración,
-        escríbenos y te respondemos directamente.
+        publicada.
       </p>
     </article>
   );

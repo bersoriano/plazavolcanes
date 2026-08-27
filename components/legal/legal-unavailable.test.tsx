@@ -25,8 +25,14 @@ describe("LegalUnavailable", () => {
     render(<LegalUnavailable route={route} />);
 
     expect(screen.getByRole("status")).toHaveTextContent(
-      /no hay una versión aprobada y publicada/i,
+      "Este documento aún no está disponible: no hay una versión aprobada y publicada.",
     );
+  });
+
+  it("does not claim purchase requests are blocked", () => {
+    const { container } = render(<LegalUnavailable route={route} />);
+
+    expect(container.textContent).not.toMatch(/no puede aceptar/i);
   });
 
   it("offers no control that could be read as acceptance", () => {
