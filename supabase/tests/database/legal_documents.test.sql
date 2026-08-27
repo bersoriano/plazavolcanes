@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(23);
+select plan(28);
 
 select has_table('public', 'legal_documents', 'the document type registry exists');
 select has_table('public', 'legal_document_versions', 'document versions exist');
@@ -26,7 +26,23 @@ values
   ('b0000000-0000-4000-8000-000000000001', 'platform_terms', 1, 'draft',
    'Terminos borrador', '{"sections": []}'::jsonb, 'primera version', now(), null, null),
   ('b0000000-0000-4000-8000-000000000002', 'privacy_notice', 1, 'approved',
-   'Aviso aprobado', '{"sections": []}'::jsonb, 'primera version', now(), 'Lic. Prueba', now());
+   'Aviso aprobado', '{"sections": []}'::jsonb, 'primera version', now(), 'Lic. Prueba', now()),
+  -- Fixtures for the publish-time validation tests below: an otherwise-valid
+  -- approved version reused across the identity-shape assertions (they all
+  -- fail before the function ever inspects the body), plus one version each
+  -- for the two body-shape failures and one for the fully valid case.
+  ('b0000000-0000-4000-8000-000000000004', 'returns_policy', 1, 'approved',
+   'Devoluciones aprobado', '{"sections": []}'::jsonb, 'primera version', now(), 'Lic. Prueba', now()),
+  ('b0000000-0000-4000-8000-000000000005', 'warranty_policy', 1, 'approved',
+   'Garantias aprobado', '{"foo": "bar"}'::jsonb, 'primera version', now(), 'Lic. Prueba', now()),
+  ('b0000000-0000-4000-8000-000000000006', 'shipping_policy', 1, 'approved',
+   'Envios aprobado',
+   '{"sections": [{"id": "s1", "paragraphs": ["hola"]}]}'::jsonb,
+   'primera version', now(), 'Lic. Prueba', now()),
+  ('b0000000-0000-4000-8000-000000000007', 'security_guidance', 1, 'approved',
+   'Seguridad aprobado',
+   '{"sections": [{"id": "s1", "heading": "Encabezado", "paragraphs": ["Parrafo uno."]}]}'::jsonb,
+   'primera version', now(), 'Lic. Prueba', now());
 
 -- A version can never be minted as published by a bare INSERT: the trigger
 -- rejects this unconditionally, regardless of who is writing, which is why
@@ -94,7 +110,7 @@ set local role authenticated;
 set local request.jwt.claims = '{"sub": "a0000000-0000-4000-8000-000000000001", "role": "authenticated"}';
 select results_eq(
   $$select count(*) from public.legal_document_versions$$,
-  array[2::bigint],
+  array[6::bigint],
   'an admin reads every version regardless of status'
 );
 reset role;
@@ -103,7 +119,7 @@ reset role;
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "a0000000-0000-4000-8000-000000000002", "role": "authenticated"}';
 select throws_ok(
-  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000002', '{"rfc":"X"}'::jsonb)$$,
+  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000002', '{"entityName":"Test SA de CV","rfc":"XAXX010101000","address":"Calle Falsa 123, CDMX","email":"test@example.com","phone":"+525555555555","attentionHours":"L-V 9:00-18:00","privacyContact":"privacidad@example.com"}'::jsonb)$$,
   '42501', null, 'a non-admin cannot publish a legal version'
 );
 reset role;
@@ -112,12 +128,12 @@ reset role;
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "a0000000-0000-4000-8000-000000000001", "role": "authenticated"}';
 select throws_ok(
-  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000001', '{"rfc":"X"}'::jsonb)$$,
+  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000001', '{"entityName":"Test SA de CV","rfc":"XAXX010101000","address":"Calle Falsa 123, CDMX","email":"test@example.com","phone":"+525555555555","attentionHours":"L-V 9:00-18:00","privacyContact":"privacidad@example.com"}'::jsonb)$$,
   '22023', null, 'a draft cannot be published'
 );
 
 select lives_ok(
-  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000002', '{"rfc":"XAXX010101000"}'::jsonb)$$,
+  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000002', '{"entityName":"Test SA de CV","rfc":"XAXX010101000","address":"Calle Falsa 123, CDMX","email":"test@example.com","phone":"+525555555555","attentionHours":"L-V 9:00-18:00","privacyContact":"privacidad@example.com"}'::jsonb)$$,
   'an approved version publishes'
 );
 reset role;
@@ -166,7 +182,7 @@ values
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "a0000000-0000-4000-8000-000000000001", "role": "authenticated"}';
 select lives_ok(
-  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000003', '{"rfc":"XAXX010101000"}'::jsonb)$$,
+  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000003', '{"entityName":"Test SA de CV","rfc":"XAXX010101000","address":"Calle Falsa 123, CDMX","email":"test@example.com","phone":"+525555555555","attentionHours":"L-V 9:00-18:00","privacyContact":"privacidad@example.com"}'::jsonb)$$,
   'publishing a second version succeeds'
 );
 reset role;
@@ -193,6 +209,42 @@ select results_eq(
   $$select count(*) from public.legal_document_versions$$,
   array[1::bigint],
   'anonymous visitors read exactly one published version after supersession'
+);
+reset role;
+
+-- publish_legal_version() validates the issuer identity and the document
+-- body before publishing: an identity missing a required key, an identity
+-- with an empty-string value, a malformed body, or a section missing a
+-- required field must all be rejected, and a fully valid publish must still
+-- succeed.
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "a0000000-0000-4000-8000-000000000001", "role": "authenticated"}';
+
+select throws_ok(
+  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000004',
+    '{"entityName":"Test SA de CV","address":"Calle Falsa 123, CDMX","email":"test@example.com","phone":"+525555555555","attentionHours":"L-V 9:00-18:00","privacyContact":"privacidad@example.com"}'::jsonb)$$,
+  '22023', null, 'an identity missing a required key is rejected'
+);
+
+select throws_ok(
+  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000004',
+    '{"entityName":"Test SA de CV","rfc":"","address":"Calle Falsa 123, CDMX","email":"test@example.com","phone":"+525555555555","attentionHours":"L-V 9:00-18:00","privacyContact":"privacidad@example.com"}'::jsonb)$$,
+  '22023', null, 'an identity with an empty-string value is rejected'
+);
+
+select throws_ok(
+  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000005', '{"entityName":"Test SA de CV","rfc":"XAXX010101000","address":"Calle Falsa 123, CDMX","email":"test@example.com","phone":"+525555555555","attentionHours":"L-V 9:00-18:00","privacyContact":"privacidad@example.com"}'::jsonb)$$,
+  '22023', null, 'a body that is not {"sections": [...]} is rejected'
+);
+
+select throws_ok(
+  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000006', '{"entityName":"Test SA de CV","rfc":"XAXX010101000","address":"Calle Falsa 123, CDMX","email":"test@example.com","phone":"+525555555555","attentionHours":"L-V 9:00-18:00","privacyContact":"privacidad@example.com"}'::jsonb)$$,
+  '22023', null, 'a section missing heading is rejected'
+);
+
+select lives_ok(
+  $$select public.publish_legal_version('b0000000-0000-4000-8000-000000000007', '{"entityName":"Test SA de CV","rfc":"XAXX010101000","address":"Calle Falsa 123, CDMX","email":"test@example.com","phone":"+525555555555","attentionHours":"L-V 9:00-18:00","privacyContact":"privacidad@example.com"}'::jsonb)$$,
+  'a fully valid publish still succeeds'
 );
 reset role;
 
