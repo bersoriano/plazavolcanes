@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/legal-verify.mjs && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "node scripts/e2e-env.mjs npx playwright test"
+    "test:e2e": "node scripts/e2e-env.mjs npx playwright test",
+    "legal:verify": "node scripts/legal-verify.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.4",

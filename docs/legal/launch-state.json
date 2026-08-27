@@ -1,0 +1,18 @@
+{
+  "status": "pre_launch",
+  "owner": "unassigned — see Q1 in the design spec",
+  "reason": "Mexican consumer and privacy counsel is not engaged; no legal document has been drafted, approved or published.",
+  "reviewed_on": "2026-08-26",
+  "acknowledged_unpublished": [
+    "platform_terms",
+    "privacy_notice",
+    "returns_policy",
+    "warranty_policy",
+    "shipping_policy",
+    "security_guidance",
+    "complaints_policy",
+    "seller_terms",
+    "buyer_terms",
+    "marketplace_role"
+  ]
+}
