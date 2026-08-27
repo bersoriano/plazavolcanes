@@ -29,3 +29,39 @@ export const shopSchema = z.object({
 });
 
 export type ShopInput = z.infer<typeof shopSchema>;
+
+/**
+ * The pickup point is its own schema rather than a refinement of `shopSchema`,
+ * because it is written to its own table. A shop offers collection exactly when
+ * this parses, and the seller unchecking the option deletes the row instead.
+ */
+export const pickupPointSchema = z.object({
+  address_line1: z
+    .string()
+    .trim()
+    .refine((value) => value.length >= 3 && value.length <= 200, {
+      message: "Escribe la calle y el número.",
+    }),
+  locality: z
+    .string()
+    .trim()
+    .refine((value) => value.length >= 2 && value.length <= 120, {
+      message: "Escribe la ciudad o localidad.",
+    }),
+  administrative_area_code: z.enum(MEXICO_ADMINISTRATIVE_AREA_CODES, {
+    error: "Selecciona un estado.",
+  }),
+  postal_code: z
+    .string()
+    .trim()
+    .regex(/^[0-9]{5}$/, { message: "El código postal tiene 5 dígitos." }),
+  notes: z
+    .string()
+    .trim()
+    .max(500, { error: "Las referencias no pueden pasar de 500 caracteres." })
+    .transform((value) => value || null)
+    .nullable()
+    .default(null),
+});
+
+export type PickupPointInput = z.infer<typeof pickupPointSchema>;
