@@ -79,7 +79,8 @@ export function LegalDocument({ document }: { document: PublishedLegalDocument }
         </section>
       ) : null}
 
-      {/* The hash lets a person prove which text they read. */}
+      {/* The hash covers the section body and issuer identity, not this
+          rendered title — see publish_legal_version. */}
       <p className="mt-10 border-t border-line pt-5 text-xs leading-5 text-muted">
         Versión {document.version} · publicada el {formatDate(document.publishedAt)} ·
         huella de contenido {document.contentHash}

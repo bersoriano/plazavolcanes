@@ -57,7 +57,11 @@ export async function getPublishedLegalDocument(
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc("current_legal_document", { p_type: type });
 
-  if (error || !data) return null;
+  if (error) {
+    console.error(`getPublishedLegalDocument(${type}): query failed`, error);
+    return null;
+  }
+  if (!data) return null;
 
   const row = data as Record<string, unknown>;
   if (typeof row.id !== "string") return null;
