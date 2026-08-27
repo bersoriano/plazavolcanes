@@ -55,3 +55,6 @@ next-env.d.ts
 
 # Subagent-driven development scratch
 /.superpowers/
+
+# vitest caches nested node_modules
+node_modules/
