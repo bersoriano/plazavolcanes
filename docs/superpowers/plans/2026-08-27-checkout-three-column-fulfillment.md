@@ -972,7 +972,7 @@ beside the existing `useState` calls, and render this block after the existing U
                 >
                   {MEXICO_ADMINISTRATIVE_AREAS.map((area) => (
                     <option key={area.code} value={area.code}>
-                      {area.name}
+                      {area.label}
                     </option>
                   ))}
                 </select>
@@ -1531,7 +1531,7 @@ import { Field } from "@/components/ui/field";
 type Method = "pickup" | "shipping" | null;
 
 function areaName(code: string) {
-  return MEXICO_ADMINISTRATIVE_AREAS.find((area) => area.code === code)?.name ?? code;
+  return MEXICO_ADMINISTRATIVE_AREAS.find((area) => area.code === code)?.label ?? code;
 }
 
 function ConfirmButton({ chosen }: { chosen: boolean }) {
@@ -2617,7 +2617,7 @@ import { MEXICO_ADMINISTRATIVE_AREAS } from "@/lib/shop-location";
 import type { OrderDetail } from "@/lib/queries/orders.types";
 
 function areaName(code: string) {
-  return MEXICO_ADMINISTRATIVE_AREAS.find((area) => area.code === code)?.name ?? code;
+  return MEXICO_ADMINISTRATIVE_AREAS.find((area) => area.code === code)?.label ?? code;
 }
 
 /**
