@@ -46,8 +46,15 @@ describe("claims audit", () => {
     const files = (await Promise.all(ROOTS.map(sourceFiles))).flat();
     const offences: string[] = [];
 
+    if (files.length < 50) {
+      throw new Error(
+        `Scanned only ${files.length} source files; the directory structure may have changed and the scan is no longer covering the codebase`,
+      );
+    }
+
     for (const file of files) {
-      const contents = (await readFile(file, "utf8")).toLowerCase();
+      // Normalize whitespace to catch phrases split across lines
+      const contents = (await readFile(file, "utf8")).toLowerCase().replace(/\s+/g, " ");
       for (const claim of FORBIDDEN) {
         if (contents.includes(claim)) offences.push(`${file}: "${claim}"`);
       }
@@ -60,8 +67,15 @@ describe("claims audit", () => {
     const files = (await Promise.all(ROOTS.map(sourceFiles))).flat();
     const offences: string[] = [];
 
+    if (files.length < 50) {
+      throw new Error(
+        `Scanned only ${files.length} source files; the directory structure may have changed and the scan is no longer covering the codebase`,
+      );
+    }
+
     for (const file of files) {
-      const contents = (await readFile(file, "utf8")).toLowerCase();
+      // Normalize whitespace to catch phrases split across lines
+      const contents = (await readFile(file, "utf8")).toLowerCase().replace(/\s+/g, " ");
       for (const tracker of TRACKERS) {
         if (contents.includes(tracker)) offences.push(`${file}: "${tracker}"`);
       }
