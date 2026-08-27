@@ -27,6 +27,30 @@ function fail(lines) {
   process.exit(1);
 }
 
+// `next build` loads .env.local, but this script runs BEFORE it as a bare Node
+// process, which does not. Without this the gate silently took the
+// "cannot reach the database" path on every local build and only ever fired in
+// CI — so a developer could never see what the deploy would do. A real process
+// environment always wins, so Vercel's variables are never overridden.
+async function loadEnvLocal() {
+  let contents;
+  try {
+    contents = await readFile(".env.local", "utf8");
+  } catch {
+    return;
+  }
+
+  for (const line of contents.split("\n")) {
+    const match = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)$/);
+    if (!match) continue;
+
+    const [, name, rawValue] = match;
+    if (process.env[name] !== undefined) continue;
+
+    process.env[name] = rawValue.trim().replace(/^["']|["']$/g, "");
+  }
+}
+
 async function readLaunchState() {
   try {
     return JSON.parse(await readFile("docs/legal/launch-state.json", "utf8"));
@@ -81,9 +105,17 @@ async function readPublishedTypes() {
     `${url}/rest/v1/legal_document_versions` +
     `?select=document_type&status=eq.published&effective_at=lte.${new Date().toISOString()}`;
 
-  const response = await fetch(endpoint, {
-    headers: { apikey: key, Authorization: `Bearer ${key}` },
-  });
+  // A refused connection or DNS failure REJECTS rather than returning a
+  // non-ok response, so without this the gate dies with an uncaught exception
+  // instead of degrading like any other unreachable database.
+  let response;
+  try {
+    response = await fetch(endpoint, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+    });
+  } catch {
+    return null;
+  }
 
   if (!response.ok) {
     const schemaMissingCode = await readSchemaMissingCode(response);
@@ -110,9 +142,16 @@ async function readPublishedTypes() {
 // reconciles them against the database itself.
 async function readSeededTypes(url, key) {
   if (!url || !key) return null;
-  const response = await fetch(`${url}/rest/v1/legal_documents?select=type,is_required`, {
-    headers: { apikey: key, Authorization: `Bearer ${key}` },
-  });
+  // Same reasoning as readPublishedTypes: a rejected connection must degrade,
+  // not throw out of the gate.
+  let response;
+  try {
+    response = await fetch(`${url}/rest/v1/legal_documents?select=type,is_required`, {
+      headers: { apikey: key, Authorization: `Bearer ${key}` },
+    });
+  } catch {
+    return null;
+  }
   if (!response.ok) {
     const schemaMissingCode = await readSchemaMissingCode(response);
     if (schemaMissingCode) {
@@ -127,6 +166,8 @@ async function readSeededTypes(url, key) {
   const rows = await response.json();
   return Array.isArray(rows) ? rows : null;
 }
+
+await loadEnvLocal();
 
 const launchState = await readLaunchState();
 if (launchState?.status === "pre_launch") requireLaunchStateFields(launchState);
