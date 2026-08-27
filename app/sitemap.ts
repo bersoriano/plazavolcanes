@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { LEGAL_ROUTES } from "@/lib/legal/document-types";
 import { getSitemapCatalog } from "@/lib/queries/sitemap.server";
 import { MEXICO_ADMINISTRATIVE_AREAS } from "@/lib/shop-location";
 import { buildSiteUrl } from "@/lib/site-url";
@@ -35,6 +36,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(product.updatedAt),
       changeFrequency: "weekly" as const,
       priority: 0.8,
+    })),
+    ...LEGAL_ROUTES.map((route) => ({
+      url: buildSiteUrl(route.path),
+      lastModified: now,
+      changeFrequency: "yearly" as const,
+      priority: 0.3,
     })),
   ];
 }

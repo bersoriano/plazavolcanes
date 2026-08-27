@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import sitemap from "@/app/sitemap";
+import { LEGAL_ROUTES } from "@/lib/legal/document-types";
 import { getSitemapCatalog } from "@/lib/queries/sitemap.server";
 import { MEXICO_ADMINISTRATIVE_AREAS } from "@/lib/shop-location";
+import { buildSiteUrl } from "@/lib/site-url";
 
 vi.mock("@/lib/queries/sitemap.server", () => ({ getSitemapCatalog: vi.fn() }));
 
@@ -26,7 +28,7 @@ describe("sitemap", () => {
     expect(urls).toContain("https://plazavolcanes.com/tiendas/casa-niebla");
     expect(urls).toContain("https://plazavolcanes.com/productos/taza-de-barro");
     expect(urls).toContain("https://plazavolcanes.com/estado/jalisco");
-    expect(urls).toHaveLength(3 + MEXICO_ADMINISTRATIVE_AREAS.length);
+    expect(urls).toHaveLength(3 + MEXICO_ADMINISTRATIVE_AREAS.length + LEGAL_ROUTES.length);
   });
 
   it("keeps signed-in areas out of the index", async () => {
@@ -49,5 +51,17 @@ describe("sitemap", () => {
     const shopEntry = (await sitemap()).find((entry) => entry.url.includes("/tiendas/"));
 
     expect(shopEntry?.lastModified).toEqual(new Date("2026-08-01T00:00:00.000Z"));
+  });
+
+  it("lists every legal route", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://plazavolcanes.com");
+    vi.mocked(getSitemapCatalog).mockResolvedValue({ shops: [], products: [] });
+
+    const entries = await sitemap();
+    const urls = entries.map((entry) => entry.url);
+
+    for (const route of LEGAL_ROUTES) {
+      expect(urls).toContain(buildSiteUrl(route.path));
+    }
   });
 });
