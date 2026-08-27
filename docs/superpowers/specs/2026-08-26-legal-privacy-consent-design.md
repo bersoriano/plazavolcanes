@@ -183,7 +183,7 @@ specific clause.
 `retired_at` set; `DELETE` always raises, at every status, so draft history
 survives too.
 
-**Publishing** goes through `private.publish_legal_version(p_version_id)`:
+**Publishing** goes through `public.publish_legal_version(p_version_id, p_issuer_identity)`:
 `security definer`, `set search_path = ''`, admin-gated, audited into
 `private.admin_audit_events`. It refuses unless the row is `approved` and
 `approved_by`, `approved_at` and `effective_at` are all present; it captures
@@ -713,6 +713,31 @@ failing.
   admin-reviewed.
 - **The platform floor is recorded, not enforced**, against seller policies —
   inherited from the landed-cost spec, and Q4.
+- **The buyer-side verification claim is removed from the UI but still emitted
+  by the database.** `private.evaluate_buyer_trust` (migration
+  `20260820191826`) still builds `'Comprador verificado'` and `'Altamente
+  verificado — completó verificación avanzada con documentos oficiales'` into
+  the buyer-trust payload, and `lib/buyer-trust.ts` still requires the field in
+  a `.strict()` schema, so the strings still reach the client even though
+  `BuyerTrustCard` no longer renders them. This is the same unbacked claim as
+  the seller-side badges, one layer down.
+
+  It was NOT fixed in this branch, deliberately. The fix means replacing a
+  400-line evaluator function whose 36-test pgTAP suite could not be run
+  (see the shared-database limitation below), and shipping an unverified change
+  to trust scoring is worse than a recorded debt. **Plan 2 must fix this first**,
+  and at the same time extend `tests/claims-audit.test.ts` to scan
+  `supabase/migrations/*.sql` — that scan would catch this immediately and is the
+  natural close of the gap between "no shipped code makes this claim" and "the
+  system does not make this claim". The two are coupled: the scan cannot be
+  added until the strings are gone.
+
+- **The eight legal routes are in the sitemap and are `noindex` while unpublished.**
+  That is deliberate and it will produce "Submitted URL marked noindex" in Search
+  Console for all eight until counsel publishes. The URLs are permanent, so
+  listing them is correct; suppressing the entries would mean editing the sitemap
+  again at launch. The warnings are accepted for the duration of `pre_launch`.
+
 - **The claims-audit guard covers code, not documents.** `tests/claims-audit.test.ts`
   scans `.ts`/`.tsx` under `app`, `components` and `lib`. The eight policy
   documents are database-driven — their text lives in
