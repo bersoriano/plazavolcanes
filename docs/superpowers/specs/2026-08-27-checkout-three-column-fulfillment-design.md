@@ -37,7 +37,7 @@ delivery, and this design is additive enough not to block it.
 
 | Question | Decision |
 |---|---|
-| Where pickup happens | A seller-managed pickup address on `shops`. Minimal fields: calle y número, ciudad, estado, CP, referencias. No hours. |
+| Where pickup happens | A seller-managed row in `public.shop_pickup_points`, one per shop. Minimal fields: calle y número, ciudad, estado, CP, referencias. No hours. |
 | Who sees that street | Shop owner always. Buyer sees ciudad and estado until the seller accepts, then the full street from `accepted` onward — including `shipped`, `delivered` and `completed`. |
 | Shop with no pickup address | Pickup is still offered. The panel says the point of collection is agreed in the chat. |
 | Default fulfillment | **Neither** option preselected. Choosing one is mandatory before the request can be confirmed. |
@@ -75,68 +75,68 @@ The design leans on all of it, so it is worth stating:
 
 Two additive migrations. Nothing is dropped or rewritten.
 
-### `public.shops` — pickup point
+### `public.shop_pickup_points`
+
+The pickup point is its own table rather than columns on `shops`, for two
+reasons. `shops` is read with `select *` in `getPublicShop` and on the seller's
+manage page, and Postgres checks column privileges through the star — withholding
+a column there breaks both queries for every shop, whether or not it offers
+collection. And the sensitivity is genuinely per row: one shop, one pickup point.
+A separate table makes ordinary row-level security the right tool.
 
 ```
-pickup_enabled                    boolean not null default false
-pickup_address_line1              text
-pickup_locality                   text
-pickup_administrative_area_code   text
-pickup_postal_code                text
-pickup_notes                      text     -- referencias, <= 500
+shop_id                    bigint primary key references public.shops (id) on delete cascade
+address_line1              text not null            -- calle y número
+locality                   text not null            -- ciudad
+administrative_area_code   text not null            -- MX-JAL
+postal_code                text not null
+notes                      text                     -- referencias, <= 500
+created_at, updated_at     timestamptz not null default now()
 ```
+
+**The row's existence is the flag.** There is no `pickup_enabled` boolean: a shop
+offers collection exactly when it has a row here. Every field but `notes` is
+`not null`, so a half-filled address cannot exist and no cross-table completeness
+check is needed.
 
 Constraints:
 
-- `pickup_administrative_area_code` reuses the `^[A-Z]{2}-[A-Z0-9]{1,3}$` format
-  check already on the table, and must start with `country_code || '-'`.
-- `pickup_postal_code ~ '^[0-9]{5}$'` when present.
-- A completeness check: `pickup_enabled = false or (pickup_address_line1 is not
-  null and pickup_locality is not null and pickup_administrative_area_code is not
-  null and pickup_postal_code is not null)`. A seller cannot advertise collection
-  at an address that is half filled in.
+- `administrative_area_code ~ '^[A-Z]{2}-[A-Z0-9]{1,3}$'`, reusing the format
+  already checked on `shops`, and it must start with the shop's `country_code`
+  followed by `-`. Enforced by a `before insert or update` trigger, since a check
+  constraint cannot read the other table.
+- `postal_code ~ '^[0-9]{5}$'`.
+- `length(notes) <= 500`.
 
-Added `not valid`, then validated, so the existing rows are proven to pass rather
-than assumed to.
+RLS is enabled, and the **only** policy is for the owner:
+
+```
+create policy "owners_manage_pickup_point" on public.shop_pickup_points
+  for all to authenticated
+  using (exists (select 1 from public.shops s
+                 where s.id = shop_id and s.owner_id = (select auth.uid())))
+  with check (same);
+```
+
+Grants: `select, insert, update, delete` to `authenticated`; nothing to `anon`.
+No buyer reads this table directly — buyers go through the function below, which
+is what keeps the reveal gate in one place.
 
 ### Reading the pickup point
-
-Row-level security is the wrong tool here, because the sensitivity is per column,
-not per row: the existing `select` policy on `shops` is public, and the row a
-buyer is allowed to see is exactly the row carrying the seller's street.
-
-So the street is removed from the table grant outright:
-
-```
-revoke select (pickup_address_line1, pickup_postal_code, pickup_notes)
-  on public.shops from anon, authenticated;
-```
-
-`pickup_enabled`, `pickup_locality` and `pickup_administrative_area_code` stay
-readable by everyone — that a shop offers collection in Zapopan, Jalisco is
-storefront information. The three withheld columns are reachable only through a
-function that decides who may see them.
 
 `public.shop_pickup_point(p_shop_id bigint) returns jsonb`, `security definer`,
 `set search_path = ''`, revoked from `public`, granted to `anon` and
 `authenticated`.
 
-It returns, for every caller:
+It returns `null` when the shop has no pickup point. Otherwise, for every caller:
 
 ```
-{ enabled, locality, administrative_area_code }
+{ "locality": …, "administrative_area_code": … }
 ```
 
-and additionally `address_line1`, `postal_code` and `notes` when the caller is
-either
+That a shop offers collection in Zapopan, Jalisco is storefront information.
 
-- the shop's `owner_id`, or
-- the `buyer_id` on an order for that shop whose `status` is one of
-  `accepted`, `shipped`, `delivered`, `completed`.
-
-Everything else — including a buyer whose request is still `requested`, and
-including a buyer of a *different* shop — gets the coarse form. The gate lives
-in this one function, so no page can leak the street by forgetting to check.
+It adds `address_line1`, `postal_code` and `notes` when the caller is either
 
 ### `public.orders` — fulfillment
 
@@ -191,19 +191,21 @@ nothing that calls it breaks during the rollout.
 ### Seller: pickup address
 
 `components/shops/shop-form.tsx` gains a **Recolección** block below Ubicación: a
-`pickup_enabled` checkbox that reveals calle y número, ciudad, estado, código
-postal and referencias. Estado reuses the `MEXICO_ADMINISTRATIVE_AREAS` select
-already in the file.
+checkbox *"Ofrezco recolección en tienda"* that reveals calle y número, ciudad,
+estado, código postal y referencias. Estado reuses the
+`MEXICO_ADMINISTRATIVE_AREAS` select already in the file. Unchecking it and
+saving deletes the pickup point row.
 
-`shopSchema` in `lib/validation/shop.ts` grows a refinement mirroring the
-database check: enabled implies the four required fields are present. The
-existing shop action passes the values through. No new route.
+`pickupPointSchema` in `lib/validation/shop.ts` is a separate schema, not a
+refinement of `shopSchema`, because the values go to a different table: offering
+collection implies the four required fields are present. No new route.
 
-The column grant above applies to the owner too, so the edit form cannot read the
-street back with a plain `select`. It loads the current values through
-`shop_pickup_point`, which answers an owner with the full address. The update
-itself is unaffected — `update` was never revoked — but the action must not use
-`returning` on the withheld columns.
+The owner reads their own row directly — the RLS policy above allows it — so the
+edit form loads it with a plain select on `shop_pickup_points`. `updateShop`
+upserts or deletes that row alongside the `shops` update. Because it is a second
+statement, a failed pickup write must not leave the shop saved and the address
+lost: the action writes the pickup point **first** and returns its error before
+touching `shops`.
 
 ### Buyer: the three columns
 
@@ -291,7 +293,7 @@ seller's view.
 Buyer opens /carrito/[shopId]
         │
         ├─ getCart(shopId)                    items, subtotal, shop
-        ├─ shop_pickup_point(shopId)          coarse form: enabled, city, state
+        ├─ shop_pickup_point(shopId)          coarse form: city and state, or null
         ├─ fetchCartThreads(shopId, ids)      existing conversations, read only
         └─ buyer profile + shop trust         existing queries
         │
@@ -320,9 +322,8 @@ never posts it.
 Two additive migrations, created with `supabase migration new` — never a
 hand-invented filename:
 
-1. `shops` pickup columns, constraints added `not valid` then validated, the
-   column-level `revoke select` on the three sensitive columns, and
-   `public.shop_pickup_point`.
+1. `public.shop_pickup_points` with its constraints, format trigger, RLS policy
+   and grants, plus `public.shop_pickup_point`. `shops` is not touched.
 2. `orders.fulfillment_method` with a backfilling default that is then dropped,
    the alternate-contact columns, `private.checkout_cart_internal` extended, and
    `public.checkout_cart_v3` with `revoke ... from public, anon` and
@@ -352,10 +353,12 @@ linked project is never reset.
    `completed`.
 10. It gives an unrelated signed-in user, and an anonymous caller, only city and
     state.
-11. A shop cannot set `pickup_enabled` with an incomplete address.
+11. A pickup point with a mismatched `administrative_area_code` is refused.
 12. Alternate contact: a phone without a name is refused.
-13. A direct `select pickup_address_line1 from shops` is refused for `anon` and
-    for `authenticated`, so the function is the only way through.
+13. A buyer selecting `shop_pickup_points` directly reads no rows, and `anon` has
+    no grant at all, so the function is the only way through.
+14. `select * from public.shops` still succeeds for `anon` — the regression the
+    earlier column-revoke design would have caused.
 
 **Unit** (Vitest) — `shopSchema` pickup refinement; `fulfillment-choice`
 rendering with neither radio checked, revealing each branch, and keeping the
