@@ -12,6 +12,12 @@ describe("TrustStrip", () => {
     expect(container.textContent).not.toMatch(/arbitraje/i);
   });
 
+  it("does not claim evidence is captured, because the dispute flow records none", () => {
+    const { container } = render(<TrustStrip />);
+
+    expect(container.textContent).not.toMatch(/evidencia/i);
+  });
+
   it("links the claims process instead of describing an outcome", () => {
     render(<TrustStrip />);
 

@@ -24,7 +24,7 @@ const signals = [
     icon: Scale,
     title: "Un canal para reclamar",
     description:
-      "Si algo sale mal, abres una aclaración y queda registrada con su evidencia. Plaza Volcanes no retiene pagos ni impone resoluciones.",
+      "Si algo sale mal, abres una aclaración con tu descripción de lo ocurrido. El vendedor puede responder y administración puede registrar una resolución. Plaza Volcanes no retiene el pago ni obliga a un reembolso.",
     href: "/quejas-y-aclaraciones",
     linkLabel: "Quejas y aclaraciones",
   },

@@ -102,7 +102,7 @@ export function BuyerTrustCard({ trust }: { trust: BuyerTrustOutput }) {
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-2">
+      <div className="mt-5 grid gap-3">
         <IdentityMarker icon={<CalendarDays aria-hidden="true" className="size-5" />} label="Antigüedad" primary={trust.member_since.primary_text} tooltip={trust.member_since.tooltip} />
       </div>
 
