@@ -1,5 +1,19 @@
 # Landed cost, delivery promise and policies before confirming a request
 
+> **Status: superseded and shelved (2026-08-27). Never implemented.**
+>
+> `2026-08-27-checkout-three-column-fulfillment-design.md` replaces the parts of
+> this design that were about to be built, and takes the name
+> `checkout_cart_v3` with a different signature. Pickup is now a real address on
+> the shop rather than a `shop_shipping_methods` row with `kind = 'pickup'`, and
+> the cost and timing of delivery stay a matter for the buyer and seller to
+> agree in the message thread.
+>
+> Nothing below is deleted. The quote row, the versioned policies and the
+> enforced total arithmetic remain a sound plan for the day the marketplace
+> starts pricing delivery; that work builds on the superseding design and takes
+> the next version number.
+
 Buyers confirm a purchase request today knowing only the product subtotal. They
 find out what delivery costs, when it might arrive, and whether it can be
 returned only by asking the seller afterwards. This design puts all of it in
