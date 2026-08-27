@@ -35,6 +35,41 @@ async function readLaunchState() {
   }
 }
 
+// The escape hatch is only as accountable as the fields that name who invoked
+// it. A pre_launch declaration with a missing or empty owner/reason/reviewed_on
+// is not reviewable, so it is treated as invalid rather than honored silently.
+function requireLaunchStateFields(state) {
+  const fields = ["owner", "reason", "reviewed_on"];
+  const invalid = fields.filter(
+    (name) => typeof state?.[name] !== "string" || state[name].trim().length === 0,
+  );
+  if (invalid.length > 0) {
+    fail([
+      "docs/legal/launch-state.json declares pre_launch but is missing required fields:",
+      ...invalid.map((name) => `  ${name}`),
+      "",
+      "owner, reason and reviewed_on must each be a non-empty string.",
+    ]);
+  }
+}
+
+// PostgREST's own signal for "the object I need to answer this doesn't exist"
+// -- a missing table (PGRST205) or a missing function (PGRST202). Distinct
+// from every other non-2xx response, which is treated as reachability trouble
+// and may degrade per launch state.
+const SCHEMA_MISSING_CODES = new Set(["PGRST205", "PGRST202"]);
+
+async function readSchemaMissingCode(response) {
+  try {
+    const body = await response.clone().json();
+    return typeof body?.code === "string" && SCHEMA_MISSING_CODES.has(body.code)
+      ? body.code
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 async function readPublishedTypes() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY?.trim();
@@ -50,7 +85,18 @@ async function readPublishedTypes() {
     headers: { apikey: key, Authorization: `Bearer ${key}` },
   });
 
-  if (!response.ok) return null;
+  if (!response.ok) {
+    const schemaMissingCode = await readSchemaMissingCode(response);
+    if (schemaMissingCode) {
+      fail([
+        "the legal_document_versions table does not exist on this database " +
+          `(PostgREST ${schemaMissingCode})`,
+        "this is a deployment error, not a launch-state condition:",
+        "apply the legal migrations before building",
+      ]);
+    }
+    return null;
+  }
   const rows = await response.json();
   // A 200 carrying a non-array body (a PostgREST error object, a content
   // negotiation surprise) must degrade like an unreachable database, not throw
@@ -67,12 +113,23 @@ async function readSeededTypes(url, key) {
   const response = await fetch(`${url}/rest/v1/legal_documents?select=type,is_required`, {
     headers: { apikey: key, Authorization: `Bearer ${key}` },
   });
-  if (!response.ok) return null;
+  if (!response.ok) {
+    const schemaMissingCode = await readSchemaMissingCode(response);
+    if (schemaMissingCode) {
+      fail([
+        `the legal_documents table does not exist on this database (PostgREST ${schemaMissingCode})`,
+        "this is a deployment error, not a launch-state condition:",
+        "apply the legal migrations before building",
+      ]);
+    }
+    return null;
+  }
   const rows = await response.json();
   return Array.isArray(rows) ? rows : null;
 }
 
 const launchState = await readLaunchState();
+if (launchState?.status === "pre_launch") requireLaunchStateFields(launchState);
 const missingVars = IDENTITY_VARS.filter((name) => !process.env[name]?.trim());
 
 // Registry drift is a code bug, not a launch-state condition, so it is checked
@@ -112,7 +169,9 @@ const published = await readPublishedTypes();
 if (published === null) {
   const detail = "cannot reach the database to check published legal documents";
   if (launchState?.status === "pre_launch") {
-    console.warn(`\n⚠ legal:verify  ${detail} (pre_launch, continuing)\n`);
+    console.warn(
+      `\n⚠ legal:verify  ${detail} (pre_launch, owner: ${launchState.owner}, continuing)\n`,
+    );
     process.exit(0);
   }
   fail([detail, "set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"]);
@@ -143,8 +202,8 @@ if (launchState?.status === "pre_launch") {
   }
 
   console.warn(
-    `\n⚠ legal:verify  pre_launch — ${unpublished.length} of ` +
-      `${REQUIRED_TYPES.length} documents unpublished, ` +
+    `\n⚠ legal:verify  pre_launch (owner: ${launchState.owner}) — ` +
+      `${unpublished.length} of ${REQUIRED_TYPES.length} documents unpublished, ` +
       `${missingVars.length} identity variables unset. No document can be ` +
       `published or accepted.\n`,
   );
