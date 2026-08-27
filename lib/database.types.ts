@@ -456,6 +456,12 @@ export type Database = {
         };
         Relationships: [];
       };
+      shop_pickup_points: {
+        Row: { shop_id: number; address_line1: string; locality: string; administrative_area_code: string; postal_code: string; notes: string | null; created_at: string; updated_at: string };
+        Insert: { shop_id: number; address_line1: string; locality: string; administrative_area_code: string; postal_code: string; notes?: string | null; created_at?: string; updated_at?: string };
+        Update: { shop_id?: number; address_line1?: string; locality?: string; administrative_area_code?: string; postal_code?: string; notes?: string | null; created_at?: string; updated_at?: string };
+        Relationships: [];
+      };
       shop_trust_evaluation_queue: {
         Row: { shop_id: number; dirty_at: string; next_attempt_at: string; attempt_count: number; last_error: string | null; locked_at: string | null; last_success_at: string | null };
         Insert: { shop_id: number; dirty_at?: string; next_attempt_at?: string; attempt_count?: number; last_error?: string | null; locked_at?: string | null; last_success_at?: string | null };
@@ -676,6 +682,7 @@ export type Database = {
         }[];
       };
       touch_user_activity: { Args: Record<string, never>; Returns: undefined };
+      shop_pickup_point: { Args: { p_shop_id: number }; Returns: Json };
       shop_public_trust_metrics: {
         Args: { p_shop_id: number };
         Returns: {
