@@ -20,6 +20,8 @@ export type OrderDetail = OrderSummary & {
   buyer_id: string;
   current_user_id: string;
   viewer_role: "buyer" | "seller";
+  fulfillment_method: "pickup" | "shipping";
+  alt_contact: { name: string; phone: string | null; note: string | null } | null;
   buyer_note: string | null;
   handling_days: number;
   handling_time_zone: string;
@@ -39,4 +41,3 @@ export type OrderDetail = OrderSummary & {
   review: { id: number; rating: number; matched_description: boolean; comment: string | null; created_at: string } | null;
   dispute: { id: number; reason: string; status: "open" | "seller_responded" | "resolved"; buyer_statement: string; seller_response: string | null; resolution: string | null; resolution_notes: string | null; seller_fault: boolean | null; opened_at: string } | null;
 };
-

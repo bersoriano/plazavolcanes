@@ -11,6 +11,10 @@ function row(overrides: Partial<OrderDetailRow> = {}): OrderDetailRow {
   return {
     id: 1,
     buyer_id: "buyer-uuid",
+    fulfillment_method: "shipping",
+    alt_contact_name: "Luis Ruiz",
+    alt_contact_phone: "+523312345678",
+    alt_contact_note: "Mi hermano",
     status: "requested",
     subtotal: 500,
     currency_code: "MXN",
@@ -62,6 +66,26 @@ function row(overrides: Partial<OrderDetailRow> = {}): OrderDetailRow {
 describe("mapOrderDetailRow", () => {
   it("keeps the delivery address of a fresh order", () => {
     expect(mapOrderDetailRow(row(), "buyer-uuid")?.address?.recipient).toBe("Ana Ruiz");
+  });
+
+  it("maps fulfillment and alternate-contact columns into the order detail", () => {
+    expect(mapOrderDetailRow(row(), "buyer-uuid")).toMatchObject({
+      fulfillment_method: "shipping",
+      alt_contact: {
+        name: "Luis Ruiz",
+        phone: "+523312345678",
+        note: "Mi hermano",
+      },
+    });
+  });
+
+  it("omits the alternate contact when its name is absent", () => {
+    expect(
+      mapOrderDetailRow(
+        row({ alt_contact_name: null, alt_contact_phone: null, alt_contact_note: null }),
+        "buyer-uuid",
+      ),
+    ).toMatchObject({ alt_contact: null });
   });
 
   it("keeps the conversation and orders its messages oldest first", () => {

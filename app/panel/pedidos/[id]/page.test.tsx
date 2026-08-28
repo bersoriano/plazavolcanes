@@ -4,11 +4,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import SellerOrderDetailPage from "@/app/panel/pedidos/[id]/page";
 import type { BuyerTrustOutput } from "@/lib/buyer-trust";
 import { getBuyerTrustForOrder } from "@/lib/queries/buyer-trust.server";
+import { fetchPickupPoint } from "@/lib/queries/checkout.server";
 import { getOrderDetail, type OrderDetail } from "@/lib/queries/orders.server";
 
 vi.mock("next/navigation", () => ({ notFound: vi.fn(() => { throw new Error("NOT_FOUND"); }) }));
 vi.mock("@/lib/queries/orders.server", () => ({ getOrderDetail: vi.fn() }));
 vi.mock("@/lib/queries/buyer-trust.server", () => ({ getBuyerTrustForOrder: vi.fn() }));
+vi.mock("@/lib/queries/checkout.server", () => ({ fetchPickupPoint: vi.fn() }));
 vi.mock("@/lib/actions/messages", () => ({ sendMessage: vi.fn() }));
 vi.mock("@/lib/actions/orders", () => ({ transitionOrder: vi.fn(), confirmOrderPayment: vi.fn(), cancelOrderAsSeller: vi.fn() }));
 vi.mock("@/lib/actions/trust-evidence", () => ({ respondToDispute: vi.fn() }));
@@ -35,6 +37,7 @@ const trust: BuyerTrustOutput = {
 
 const order: OrderDetail = {
   id: 41, buyer_id: "buyer", current_user_id: "seller", viewer_role: "seller",
+  fulfillment_method: "shipping", alt_contact: null,
   status: "accepted", subtotal: 250, currency_code: "MXN", created_at: "2026-08-20T12:00:00Z",
   shop: { id: 2, name: "Casa Niebla", slug: "casa-niebla" }, buyer_note: null,
   handling_days: 2, handling_time_zone: "America/Mexico_City", payment_confirmation_required: true,
@@ -54,6 +57,24 @@ describe("seller order buyer trust", () => {
     expect(screen.getByText("Pago: pendiente de confirmación")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Confirmar pago" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Marcar como enviado" })).not.toBeInTheDocument();
+    expect(fetchPickupPoint).not.toHaveBeenCalled();
+  });
+
+  it("fetches and renders the pickup point for a pickup order", async () => {
+    vi.mocked(getOrderDetail).mockResolvedValue({ ...order, fulfillment_method: "pickup" });
+    vi.mocked(getBuyerTrustForOrder).mockResolvedValue(null);
+    vi.mocked(fetchPickupPoint).mockResolvedValue({
+      locality: "Zapopan",
+      administrative_area_code: "MX-JAL",
+      address_line1: "Av. Vallarta 1234",
+      postal_code: "45010",
+    });
+
+    render(await SellerOrderDetailPage({ params: Promise.resolve({ id: "41" }) }));
+
+    expect(fetchPickupPoint).toHaveBeenCalledWith(2);
+    expect(screen.getByRole("heading", { name: "Recolección en tienda" })).toBeInTheDocument();
+    expect(screen.getByText("Av. Vallarta 1234")).toBeInTheDocument();
   });
 
   it("rejects buyer viewers on seller route", async () => {

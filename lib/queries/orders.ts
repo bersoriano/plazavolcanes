@@ -19,9 +19,13 @@ export type OrderDetailRow = Omit<
   | "conversation"
   | "review"
   | "dispute"
+  | "alt_contact"
   | "current_user_id"
   | "viewer_role"
 > & {
+  alt_contact_name: string | null;
+  alt_contact_phone: string | null;
+  alt_contact_note: string | null;
   shops: OrderDetail["shop"];
   order_items: OrderDetail["items"];
   order_addresses: OrderDetail["address"];
@@ -47,6 +51,14 @@ export function mapOrderDetailRow(
     ...row,
     current_user_id: userId,
     viewer_role: row.buyer_id === userId ? "buyer" : "seller",
+    fulfillment_method: row.fulfillment_method,
+    alt_contact: row.alt_contact_name
+      ? {
+          name: row.alt_contact_name,
+          phone: row.alt_contact_phone,
+          note: row.alt_contact_note,
+        }
+      : null,
     shop: row.shops,
     items: row.order_items,
     address: row.order_addresses ?? null,
