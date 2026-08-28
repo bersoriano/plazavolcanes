@@ -64,7 +64,8 @@ export function FulfillmentChoice({
 
         <label className="flex items-start gap-3 rounded-2xl border border-line p-4" htmlFor="method-pickup">
           <input
-            aria-label="Recolección en tienda"
+            aria-describedby="pickup-desc"
+            aria-labelledby="pickup-name"
             checked={method === "pickup"}
             className="mt-1 size-5 accent-brand"
             id="method-pickup"
@@ -74,14 +75,19 @@ export function FulfillmentChoice({
             value="pickup"
           />
           <span>
-            <span className="block font-semibold text-ink">Recolección en tienda</span>
-            <span className="mt-1 block text-sm text-muted">Vas por él y no compartes tu dirección.</span>
+            <span className="block font-semibold text-ink" id="pickup-name">
+              Recolección en tienda
+            </span>
+            <span className="mt-1 block text-sm text-muted" id="pickup-desc">
+              Vas por él y no compartes tu dirección.
+            </span>
           </span>
         </label>
 
         <label className="flex items-start gap-3 rounded-2xl border border-line p-4" htmlFor="method-shipping">
           <input
-            aria-label="Envío a domicilio"
+            aria-describedby="shipping-desc"
+            aria-labelledby="shipping-name"
             checked={method === "shipping"}
             className="mt-1 size-5 accent-brand"
             id="method-shipping"
@@ -91,8 +97,12 @@ export function FulfillmentChoice({
             value="shipping"
           />
           <span>
-            <span className="block font-semibold text-ink">Envío a domicilio</span>
-            <span className="mt-1 block text-sm text-muted">Solo esta tienda y tú verán tu dirección.</span>
+            <span className="block font-semibold text-ink" id="shipping-name">
+              Envío a domicilio
+            </span>
+            <span className="mt-1 block text-sm text-muted" id="shipping-desc">
+              Solo esta tienda y tú verán tu dirección.
+            </span>
           </span>
         </label>
 
@@ -124,7 +134,7 @@ export function FulfillmentChoice({
         </div>
       ) : null}
 
-      {method === "shipping" ? (
+      <fieldset disabled={method !== "shipping"} hidden={method !== "shipping"}>
         <div className="space-y-4">
           <Field defaultValue={state.values?.recipient} error={state.errors?.recipient?.[0]} label="Nombre de quien recibe" name="recipient" required />
           <Field defaultValue={state.values?.address_line1} error={state.errors?.address_line1?.[0]} label="Calle y número" name="address_line1" required />
@@ -136,7 +146,7 @@ export function FulfillmentChoice({
           <Field defaultValue={state.values?.postal_code} error={state.errors?.postal_code?.[0]} label="Código postal" name="postal_code" required />
           <Field defaultValue={state.values?.delivery_instructions} error={state.errors?.delivery_instructions?.[0]} label="Instrucciones de entrega" name="delivery_instructions" />
         </div>
-      ) : null}
+      </fieldset>
 
       {method !== null ? (
         <details className="rounded-2xl border border-line p-4">
