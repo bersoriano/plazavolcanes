@@ -28,11 +28,11 @@ This project excludes:
 
 `private.admin_users` remains the only administrator-membership source. No `super_admin` role, JWT claim, public profile flag, or user-editable metadata is introduced.
 
-The migration resolves the existing `auth.users` row whose normalized email is `bsorianodev@gmail.com`, then inserts that user's id into `private.admin_users` with the same id as `granted_by`. Email matching uses `lower(btrim(email))`, and the insert is idempotent. Existing `audit_admin_membership` behavior records the grant.
+The migration creates an operator-only `private.bootstrap_initial_admin()` helper, calls it once, and leaves it available for explicit database-operator recovery. The helper resolves the existing `auth.users` row whose normalized email is `bsorianodev@gmail.com`, then inserts that user's id into `private.admin_users` with the same id as `granted_by`. Email matching uses `lower(btrim(email))`, and the insert is idempotent. Existing `audit_admin_membership` behavior records the grant.
 
-The user confirmed this account already exists in the target Supabase project. If it does not exist in another environment, the migration raises an explicit exception instead of succeeding without an administrator or creating a future email-based grant path.
+The user confirmed this account already exists in the target Supabase project. If it does not exist in another environment, the helper returns `false` and the migration emits a notice without failing. This keeps local resets and new environments portable while making missing bootstrap state visible in migration logs. After creating the account, a database operator can call the helper explicitly.
 
-No signup trigger is added. Local Supabase configuration has email confirmation disabled, so automatically granting administrator access to a future signup based only on its submitted email would allow privileged access before inbox ownership is proven. Recreating the account later requires a new, explicit administrator grant.
+The helper is `security definer`, fixes `search_path` to an empty value, uses fully qualified object names, and has execution revoked from `public`, `anon`, and `authenticated`. No signup trigger is added. Local Supabase configuration has email confirmation disabled, so automatically granting administrator access to a future signup based only on its submitted email would allow privileged access before inbox ownership is proven. Recreating the account later requires an operator to call the helper explicitly.
 
 ## Data Access Boundary
 
@@ -124,8 +124,8 @@ No client component, mutation, modal, or form is needed.
 
 A pgTAP test covers:
 
-- Existing `bsorianodev@gmail.com` account receives administrator membership when migration runs
-- Migration fails explicitly when the bootstrap account is absent
+- Existing `bsorianodev@gmail.com` account receives administrator membership when bootstrap helper runs
+- Missing bootstrap account returns `false` without granting another account
 - Other accounts do not receive membership
 - Non-administrator RPC call fails with `42501`
 - Administrator call returns every auth user, including a user with no shop
