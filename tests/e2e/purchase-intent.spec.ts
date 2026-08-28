@@ -119,3 +119,140 @@ test("a signed-out shopper keeps their purchase through sign-in", async ({ brows
 
   expect(productUrl).toContain("/productos/");
 });
+
+test("a buyer must choose how they receive the item", async ({ browser }) => {
+  const stamp2 = Date.now() * 10 + 2;
+  const seller2 = {
+    email: `seller2-${stamp2}@test.local`,
+    password: "plaza-volcanes-1",
+    name: "Vendedor Dos",
+  };
+  const buyer2 = {
+    email: `buyer2-${stamp2}@test.local`,
+    password: "plaza-volcanes-1",
+    name: "Bea Lopez",
+  };
+
+  const sellerContext = await browser.newContext();
+  const sellerPage = await sellerContext.newPage();
+  await register(sellerPage, seller2);
+
+  await sellerPage.goto("/panel/tiendas/nueva");
+  await sellerPage.getByLabel("Nombre de la tienda").fill(`Tienda ${stamp2}`);
+  await sellerPage
+    .getByLabel("Descripción")
+    .fill("Descripción completa de la tienda de prueba para recolección.");
+  await sellerPage.getByLabel("Estado principal").selectOption("MX-JAL");
+  await sellerPage.getByLabel("Ofrezco recolección en tienda").check();
+  await sellerPage.getByLabel("Calle y número de recolección").fill("Av. Vallarta 1234");
+  await sellerPage.getByLabel("Ciudad de recolección").fill("Zapopan");
+  await sellerPage.getByLabel("Estado de recolección").selectOption("MX-JAL");
+  await sellerPage.getByLabel("Código postal de recolección").fill("45010");
+  await sellerPage.getByRole("button", { name: "Crear tienda" }).click();
+  await expect(sellerPage).toHaveURL(/\/panel\/tiendas\//);
+
+  // A published product for the visitor to want.
+  const productName = `Taza de barro ${stamp2}`;
+  await sellerPage.getByRole("link", { name: /nuevo producto|agregar producto/i }).first().click();
+  await expect(sellerPage).toHaveURL(/\/productos\/nuevo/);
+  await sellerPage.getByLabel("Categoría", { exact: true }).selectOption({ index: 1 });
+  await sellerPage.getByLabel("Subcategoría").selectOption({ index: 1 });
+  await sellerPage.getByLabel("Nombre del producto").fill(productName);
+  await sellerPage.getByLabel("Descripción").fill("Pieza de prueba para la compra de un visitante.");
+  await sellerPage.getByLabel("Precio en MXN").fill("250");
+  await sellerPage.getByLabel("Unidades disponibles").fill("5");
+  await sellerPage.getByRole("button", { name: "Publicar producto" }).click();
+
+  const buyerContext = await browser.newContext();
+  const buyerPage = await buyerContext.newPage();
+  await register(buyerPage, buyer2);
+
+  await buyerPage.goto(`/tiendas/tienda-${stamp2}`);
+  await buyerPage.getByRole("link", { name: /Taza/ }).click();
+  await buyerPage.getByRole("button", { name: "Solicitar compra" }).click();
+  await expect(buyerPage).toHaveURL(/\/carrito\//);
+
+  // Neither option chosen: the request cannot be sent.
+  await expect(buyerPage.getByRole("button", { name: "Confirmar solicitud" })).toBeDisabled();
+  await expect(buyerPage.getByText("Elige una opción para continuar.")).toBeVisible();
+
+  // Pickup shows the city and withholds the street.
+  await buyerPage.getByLabel("Recolección en tienda").check();
+  await expect(buyerPage.getByText("Zapopan, Jalisco", { exact: true })).toBeVisible();
+  await expect(buyerPage.getByText("Av. Vallarta 1234")).toHaveCount(0);
+  await expect(buyerPage.getByRole("button", { name: "Confirmar solicitud" })).toBeEnabled();
+
+  await buyerPage.getByRole("button", { name: "Confirmar solicitud" }).click();
+  await expect(buyerPage).toHaveURL(/\/compras\/\d+/);
+
+  // Still pending, so still no street.
+  await expect(buyerPage.getByText("Recolección en tienda")).toBeVisible();
+  await expect(buyerPage.getByText("Av. Vallarta 1234")).toHaveCount(0);
+
+  await sellerContext.close();
+  await buyerContext.close();
+});
+
+test("choosing shipping asks for an address and creates a shipped order", async ({ browser }) => {
+  const stamp3 = Date.now() * 10 + 3;
+  const seller3 = {
+    email: `seller3-${stamp3}@test.local`,
+    password: "plaza-volcanes-1",
+    name: "Vendedor Tres",
+  };
+  const buyer3 = {
+    email: `buyer3-${stamp3}@test.local`,
+    password: "plaza-volcanes-1",
+    name: "Cris Mora",
+  };
+
+  const sellerContext = await browser.newContext();
+  const sellerPage = await sellerContext.newPage();
+  await register(sellerPage, seller3);
+
+  await sellerPage.goto("/panel/tiendas/nueva");
+  await sellerPage.getByLabel("Nombre de la tienda").fill(`Tienda ${stamp3}`);
+  await sellerPage
+    .getByLabel("Descripción")
+    .fill("Descripción completa de la tienda de prueba para envío.");
+  await sellerPage.getByLabel("Estado principal").selectOption("MX-JAL");
+  await sellerPage.getByRole("button", { name: "Crear tienda" }).click();
+  await expect(sellerPage).toHaveURL(/\/panel\/tiendas\//);
+
+  // A published product for the visitor to want.
+  const productName = `Taza de barro ${stamp3}`;
+  await sellerPage.getByRole("link", { name: /nuevo producto|agregar producto/i }).first().click();
+  await expect(sellerPage).toHaveURL(/\/productos\/nuevo/);
+  await sellerPage.getByLabel("Categoría", { exact: true }).selectOption({ index: 1 });
+  await sellerPage.getByLabel("Subcategoría").selectOption({ index: 1 });
+  await sellerPage.getByLabel("Nombre del producto").fill(productName);
+  await sellerPage.getByLabel("Descripción").fill("Pieza de prueba para la compra de un visitante.");
+  await sellerPage.getByLabel("Precio en MXN").fill("250");
+  await sellerPage.getByLabel("Unidades disponibles").fill("5");
+  await sellerPage.getByRole("button", { name: "Publicar producto" }).click();
+
+  const buyerContext = await browser.newContext();
+  const buyerPage = await buyerContext.newPage();
+  await register(buyerPage, buyer3);
+
+  await buyerPage.goto(`/tiendas/tienda-${stamp3}`);
+  await buyerPage.getByRole("link", { name: /Taza/ }).click();
+  await buyerPage.getByRole("button", { name: "Solicitar compra" }).click();
+  await expect(buyerPage).toHaveURL(/\/carrito\//);
+
+  await buyerPage.getByLabel("Envío a domicilio").check();
+  await buyerPage.getByLabel("Nombre de quien recibe").fill("Cris Mora");
+  await buyerPage.getByLabel("Calle y número").fill("Calle Falsa 123");
+  await buyerPage.getByLabel("Ciudad o localidad").fill("Guadalajara");
+  await buyerPage.getByLabel("Estado").fill("Jalisco");
+  await buyerPage.getByLabel("Código postal").fill("44100");
+
+  await buyerPage.getByRole("button", { name: "Confirmar solicitud" }).click();
+  await expect(buyerPage).toHaveURL(/\/compras\/\d+/);
+
+  await expect(buyerPage.getByText("Envío a domicilio")).toBeVisible();
+  await expect(buyerPage.getByText("Calle Falsa 123")).toBeVisible();
+
+  await sellerContext.close();
+  await buyerContext.close();
+});
