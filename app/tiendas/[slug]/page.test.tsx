@@ -57,7 +57,7 @@ test("opens the general enquiry, with no product attached", async () => {
   forged.set("product_id", "999");
   await action({ status: "idle", message: "" }, forged);
 
-  expect(openConversation).toHaveBeenCalledWith(4, null, expect.anything(), forged);
+  expect(openConversation).toHaveBeenCalledWith(4, null, null, expect.anything(), forged);
 });
 
 test("returns a signed-out visitor to the shop they asked from", async () => {

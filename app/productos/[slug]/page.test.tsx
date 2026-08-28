@@ -102,7 +102,7 @@ describe("Product page messaging", () => {
     forged.set("product_id", "999");
     await action({ status: "idle", message: "" }, forged);
 
-    expect(openConversation).toHaveBeenCalledWith(4, 12, expect.anything(), forged);
+    expect(openConversation).toHaveBeenCalledWith(4, 12, null, expect.anything(), forged);
   });
 
   it("returns a signed-out shopper to the product they asked about", async () => {

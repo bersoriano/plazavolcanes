@@ -88,7 +88,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   // Shop and product are bound here, from the listing this page loaded, so the
   // thread is about what the shopper is looking at and nothing the browser sends
   // can change either one.
-  const messageAction = openConversation.bind(null, product.shopId, product.id);
+  const messageAction = openConversation.bind(null, product.shopId, product.id, null);
 
   let viewerId: string | null = null;
   if (isSupabaseConfigured()) {

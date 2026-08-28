@@ -18,6 +18,7 @@ import { startPreSaleConversation } from "@/lib/actions/messages";
 export async function openConversation(
   shopId: number,
   productId: number | null,
+  returnTo: string | null,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _previousState: ActionState,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -26,5 +27,7 @@ export async function openConversation(
   const result = await startPreSaleConversation(shopId, productId);
   if ("error" in result) return { status: "error", message: result.error };
 
-  redirect(`/mensajes/${result.conversationId}`);
+  // The cart binds its own path so the shopper comes back to the request they
+  // were in the middle of making, rather than being moved to the inbox.
+  redirect(returnTo ?? `/mensajes/${result.conversationId}`);
 }

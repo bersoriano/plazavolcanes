@@ -35,7 +35,7 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
   }
 
   // A shop page opens the general enquiry: no product is ever attached here.
-  const messageAction = openConversation.bind(null, shop.id, null);
+  const messageAction = openConversation.bind(null, shop.id, null, null);
 
   return (
     <section className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
