@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, MapPin, SearchX, Sparkles, Store } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
@@ -175,8 +176,18 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
 
   return (
     <>
-      <section className="overflow-hidden border-b border-line bg-surface">
-        <div className="mx-auto max-w-[1440px] px-5 pb-8 pt-14 sm:px-8 sm:pb-10 sm:pt-20 lg:px-12">
+      <section className="relative overflow-hidden border-b border-line bg-surface">
+        <Image
+          alt=""
+          aria-hidden="true"
+          className="object-cover object-center"
+          fill
+          preload
+          sizes="100vw"
+          src="/hero1.jpg"
+        />
+        <div aria-hidden="true" className="absolute inset-0 bg-surface/45" />
+        <div className="relative z-10 mx-auto max-w-[1440px] px-5 pb-8 pt-14 sm:px-8 sm:pb-10 sm:pt-20 lg:px-12">
           <div className="relative mx-auto max-w-4xl text-center">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-brand-hover">
               {area ? <MapPin aria-hidden="true" className="size-4" /> : <Sparkles aria-hidden="true" className="size-4" />}

@@ -198,6 +198,20 @@ function sampleShop() {
 }
 
 describe("Home conversion sections", () => {
+  it("uses the local market photograph in the hero", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const hero = screen.getByRole("heading", {
+      name: "Encuentra productos únicos cerca de ti.",
+    }).closest("section");
+
+    expect(hero?.querySelector('img[src*="hero1.jpg"]')).toBeInTheDocument();
+  });
+
   it("sharpens the populated home hero conversion paths", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()] }),
