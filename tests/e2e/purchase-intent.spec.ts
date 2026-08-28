@@ -186,6 +186,7 @@ test("a buyer must choose how they receive the item", async ({ browser }) => {
   await expect(buyerPage).toHaveURL(/\/compras\/\d+/);
 
   // Still pending, so still no street.
+  await expect(buyerPage.getByText("Solicitud enviada", { exact: true })).toBeVisible();
   await expect(buyerPage.getByText("Recolección en tienda")).toBeVisible();
   await expect(buyerPage.getByText("Av. Vallarta 1234")).toHaveCount(0);
 
