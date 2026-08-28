@@ -36,17 +36,22 @@ export const altContactSchema = z
     path: ["name"],
   });
 
-export const checkoutSchema = z.object({
-  recipient: trimmed(2, 120, "Escribe el nombre de quien recibe."),
-  address_line1: trimmed(3, 200, "Escribe la calle y número."),
-  address_line2: optionalTrimmed(200),
-  locality: trimmed(2, 120, "Escribe la ciudad o localidad."),
-  administrative_area: trimmed(2, 120, "Escribe el estado o provincia."),
-  postal_code: trimmed(3, 20, "Escribe un código postal válido."),
-  country_code: z.string().trim().regex(/^[A-Z]{2}$/, "Selecciona un país válido."),
-  delivery_instructions: optionalTrimmed(500),
+export const checkoutMetadataSchema = z.object({
   buyer_note: optionalTrimmed(1000),
   idempotency_key: z.uuid("Falta la clave de confirmación."),
 });
+
+export const checkoutSchema = z
+  .object({
+    recipient: trimmed(2, 120, "Escribe el nombre de quien recibe."),
+    address_line1: trimmed(3, 200, "Escribe la calle y número."),
+    address_line2: optionalTrimmed(200),
+    locality: trimmed(2, 120, "Escribe la ciudad o localidad."),
+    administrative_area: trimmed(2, 120, "Escribe el estado o provincia."),
+    postal_code: trimmed(3, 20, "Escribe un código postal válido."),
+    country_code: z.string().trim().regex(/^[A-Z]{2}$/, "Selecciona un país válido."),
+    delivery_instructions: optionalTrimmed(500),
+  })
+  .extend(checkoutMetadataSchema.shape);
 
 export type CheckoutInput = z.infer<typeof checkoutSchema>;

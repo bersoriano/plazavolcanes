@@ -12,6 +12,7 @@ import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   altContactSchema,
+  checkoutMetadataSchema,
   checkoutSchema,
   fulfillmentMethodSchema,
   quantitySchema,
@@ -115,8 +116,17 @@ export async function checkoutCart(
     };
   }
 
-  const idempotencyKey = formData.get("idempotency_key");
-  const buyerNote = formData.get("buyer_note");
+  const metadata = checkoutMetadataSchema.safeParse({
+    buyer_note: formData.get("buyer_note"),
+    idempotency_key: formData.get("idempotency_key"),
+  });
+  if (!metadata.success) {
+    return {
+      status: "error",
+      message: "Revisa los campos marcados.",
+      errors: metadata.error.flatten().fieldErrors,
+    };
+  }
 
   // Only a shipped order has an address, and a collected one must not carry one:
   // the database refuses it, because an address on a pickup order would sit in
@@ -132,8 +142,8 @@ export async function checkoutCart(
       postal_code: formData.get("postal_code"),
       country_code: formData.get("country_code"),
       delivery_instructions: formData.get("delivery_instructions"),
-      buyer_note: buyerNote,
-      idempotency_key: idempotencyKey,
+      buyer_note: metadata.data.buyer_note,
+      idempotency_key: metadata.data.idempotency_key,
     });
     if (!parsed.success) {
       return {
@@ -156,8 +166,8 @@ export async function checkoutCart(
     p_fulfillment_method: method.data,
     p_address: address,
     p_alt_contact: contact.data.name ? contact.data : null,
-    p_buyer_note: typeof buyerNote === "string" ? buyerNote : null,
-    p_idempotency_key: String(idempotencyKey ?? ""),
+    p_buyer_note: metadata.data.buyer_note,
+    p_idempotency_key: metadata.data.idempotency_key,
   });
 
   if (error || !orderId) {

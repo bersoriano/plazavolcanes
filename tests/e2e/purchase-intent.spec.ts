@@ -95,8 +95,16 @@ test("a signed-out shopper keeps their purchase through sign-in", async ({ brows
   await expect(guestPage.getByText(productName)).toBeVisible();
   await expect(guestPage.getByLabel(`Cantidad de ${productName}`)).toHaveValue("2");
 
-  // Re-opening the destination must not add the product a second time.
+  // This is a real RSC boundary: the cart must serialize the imported/bound
+  // start action, create nothing during render, then return here after the
+  // explicit click with an imported/bound send action for the new thread.
+  await expect(guestPage.getByLabel("Mensaje", { exact: true })).toHaveCount(0);
   const cartUrl = guestPage.url();
+  await guestPage.getByRole("button", { name: "Preguntar sobre este producto" }).click();
+  await expect(guestPage).toHaveURL(cartUrl);
+  await expect(guestPage.getByLabel("Mensaje", { exact: true })).toBeVisible();
+
+  // Re-opening the destination must not add the product a second time.
   await guestPage.goto(cartUrl);
   await expect(guestPage.getByLabel(`Cantidad de ${productName}`)).toHaveValue("2");
 

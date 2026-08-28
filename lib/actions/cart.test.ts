@@ -131,6 +131,48 @@ describe("checkoutCart fulfillment", () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
+  it.each([
+    { label: "missing", idempotencyKey: undefined },
+    { label: "malformed", idempotencyKey: "not-a-uuid" },
+  ])("refuses pickup with a $label idempotency key", async ({ idempotencyKey: postedKey }) => {
+    const formData = formOf({ fulfillment_method: "pickup" });
+    if (postedKey !== undefined) formData.set("idempotency_key", postedKey);
+
+    const state = await run(checkoutCart(4, idle, formData));
+
+    expect(state?.message).toBe("Revisa los campos marcados.");
+    expect(state?.errors?.idempotency_key).toEqual(["Falta la clave de confirmación."]);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { label: "blank", posted: "   ", expected: null },
+    { label: "padded", posted: "  Nos vemos en la entrada.  ", expected: "Nos vemos en la entrada." },
+  ])("sends a normalized $label pickup note", async ({ posted, expected }) => {
+    await run(checkoutCart(4, idle, formOf({
+      fulfillment_method: "pickup",
+      idempotency_key: idempotencyKey,
+      buyer_note: posted,
+    })));
+
+    expect(rpc).toHaveBeenCalledWith(
+      "checkout_cart_v3",
+      expect.objectContaining({ p_buyer_note: expected }),
+    );
+  });
+
+  it("refuses an oversized pickup note", async () => {
+    const state = await run(checkoutCart(4, idle, formOf({
+      fulfillment_method: "pickup",
+      idempotency_key: idempotencyKey,
+      buyer_note: "x".repeat(1001),
+    })));
+
+    expect(state?.message).toBe("Revisa los campos marcados.");
+    expect(state?.errors?.buyer_note).toBeDefined();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   it("checks out pickup through v3 without carrying a shipping address", async () => {
     await run(checkoutCart(4, idle, formOf({
       fulfillment_method: "pickup",
@@ -186,7 +228,7 @@ describe("checkoutCart fulfillment", () => {
       postal_code: " 44100 ",
       country_code: "MX",
       delivery_instructions: "",
-      buyer_note: "Tocar el timbre.",
+      buyer_note: "  Tocar el timbre.  ",
     })));
 
     expect(rpc).toHaveBeenCalledWith("checkout_cart_v3", {

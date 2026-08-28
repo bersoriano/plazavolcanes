@@ -15,8 +15,6 @@ import { CartThreads } from "@/components/orders/cart-thread";
 import type { ActionState } from "@/lib/action-state";
 
 const noop = async (): Promise<ActionState> => ({ status: "idle", message: "" });
-const sendAction = () => noop;
-const startAction = () => noop;
 
 const threads = [
   {
@@ -24,22 +22,31 @@ const threads = [
     productName: "Taza de barro",
     conversationId: 10,
     messages: [{ id: 1, sender_id: "u1", body: "¿Sigue disponible?", created_at: "2026-08-27T10:00:00Z" }],
+    sendAction: noop,
+    startAction: null,
   },
-  { productId: 2, productName: "Plato de barro", conversationId: null, messages: [] },
+  {
+    productId: 2,
+    productName: "Plato de barro",
+    conversationId: null,
+    messages: [],
+    sendAction: null,
+    startAction: noop,
+  },
 ];
 
 afterEach(cleanup);
 
 describe("CartThreads", () => {
   it("opens on the first item's thread", () => {
-    render(<CartThreads currentUserId="u1" sendAction={sendAction} startAction={startAction} threads={threads} />);
+    render(<CartThreads currentUserId="u1" threads={threads} />);
 
     expect(screen.getByRole("tab", { name: "Taza de barro" })).toHaveAttribute("aria-selected", "true");
     expect(screen.getByText("¿Sigue disponible?")).toBeInTheDocument();
   });
 
   it("switches to another item's thread", () => {
-    render(<CartThreads currentUserId="u1" sendAction={sendAction} startAction={startAction} threads={threads} />);
+    render(<CartThreads currentUserId="u1" threads={threads} />);
 
     fireEvent.click(screen.getByRole("tab", { name: "Plato de barro" }));
 
@@ -48,7 +55,7 @@ describe("CartThreads", () => {
   });
 
   it("offers to start a thread that does not exist yet", () => {
-    render(<CartThreads currentUserId="u1" sendAction={sendAction} startAction={startAction} threads={threads} />);
+    render(<CartThreads currentUserId="u1" threads={threads} />);
 
     fireEvent.click(screen.getByRole("tab", { name: "Plato de barro" }));
 
@@ -56,7 +63,7 @@ describe("CartThreads", () => {
   });
 
   it("shows no tab strip for a single item", () => {
-    render(<CartThreads currentUserId="u1" sendAction={sendAction} startAction={startAction} threads={[threads[0]]} />);
+    render(<CartThreads currentUserId="u1" threads={[threads[0]]} />);
 
     expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
     expect(screen.getByText("¿Sigue disponible?")).toBeInTheDocument();

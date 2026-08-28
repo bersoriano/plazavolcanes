@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { BuyerPanel } from "@/components/orders/buyer-panel";
 import { CartItems } from "@/components/orders/cart-items";
-import { CartThreads } from "@/components/orders/cart-thread";
+import { CartThreads, type CartThreadWithActions } from "@/components/orders/cart-thread";
 import { FulfillmentChoice } from "@/components/orders/fulfillment-choice";
 import { ShopPanel } from "@/components/orders/shop-panel";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -53,9 +53,25 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
   ]);
 
   const checkoutAction = checkoutCart.bind(null, shopId);
-  const sendAction = (conversationId: number) =>
-    sendMessage.bind(null, conversationId, [cartPath, `/mensajes/${conversationId}`, "/mensajes"]);
-  const startAction = (productId: number) => openConversation.bind(null, shopId, productId, cartPath);
+  const threadsWithActions: CartThreadWithActions[] = threads.map((thread) =>
+    thread.conversationId === null
+      ? {
+          ...thread,
+          conversationId: null,
+          sendAction: null,
+          startAction: openConversation.bind(null, shopId, thread.productId, cartPath),
+        }
+      : {
+          ...thread,
+          conversationId: thread.conversationId,
+          sendAction: sendMessage.bind(null, thread.conversationId, [
+            cartPath,
+            `/mensajes/${thread.conversationId}`,
+            "/mensajes",
+          ]),
+          startAction: null,
+        },
+  );
 
   return (
     <section className="mx-auto max-w-[86rem] px-5 py-10 sm:px-8 sm:py-14">
@@ -104,17 +120,18 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
           <div className="order-4 rounded-[2rem] border border-line bg-surface p-6 lg:order-none" id="conversacion">
             <h2 className="font-display text-2xl font-semibold">Conversación</h2>
             {buyer ? (
-              <>
-                <div className="mt-5 hidden lg:block">
-                  <CartThreads currentUserId={buyer.userId} sendAction={sendAction} startAction={startAction} threads={threads} />
+              <div className="mt-5">
+                <input className="peer sr-only lg:hidden" id="cart-thread-toggle" type="checkbox" />
+                <label
+                  className="cursor-pointer rounded-sm text-sm font-semibold text-brand peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 lg:hidden"
+                  htmlFor="cart-thread-toggle"
+                >
+                  Ver mensajes
+                </label>
+                <div className="mt-4 hidden peer-checked:block lg:mt-0 lg:block">
+                  <CartThreads currentUserId={buyer.userId} threads={threadsWithActions} />
                 </div>
-                <details className="mt-5 lg:hidden">
-                  <summary className="cursor-pointer text-sm font-semibold text-brand">Ver mensajes</summary>
-                  <div className="mt-4">
-                    <CartThreads currentUserId={buyer.userId} sendAction={sendAction} startAction={startAction} threads={threads} />
-                  </div>
-                </details>
-              </>
+              </div>
             ) : null}
           </div>
         </div>

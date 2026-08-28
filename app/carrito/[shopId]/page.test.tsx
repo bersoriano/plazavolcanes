@@ -1,7 +1,9 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import { Children, isValidElement, type ReactElement, type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import CartPage from "@/app/carrito/[shopId]/page";
+import { CartThreads } from "@/components/orders/cart-thread";
 import { openConversation } from "@/lib/actions/start-conversation";
 import { getPublicShop } from "@/lib/queries/catalog.server";
 import {
@@ -49,6 +51,18 @@ const cart: CartDetail = {
   ],
   subtotal: 480,
 };
+
+function elementsOfType(node: ReactNode, type: typeof CartThreads) {
+  const matches: ReactElement<Record<string, unknown>>[] = [];
+
+  Children.forEach(node, (child) => {
+    if (!isValidElement<Record<string, unknown>>(child)) return;
+    if (child.type === type) matches.push(child);
+    matches.push(...elementsOfType(child.props.children as ReactNode, type));
+  });
+
+  return matches;
+}
 
 beforeEach(() => {
   vi.mocked(getCart).mockResolvedValue(cart);
@@ -131,15 +145,29 @@ describe("cart purchase request", () => {
     ).not.toBeNull();
   });
 
-  it("offers the explicit thread action in both responsive views without opening one on render", async () => {
+  it("offers one explicit thread action through a responsive disclosure without opening one on render", async () => {
     render(await CartPage({ params: Promise.resolve({ shopId: "4" }) }));
 
-    expect(
-      screen.getAllByRole("button", { name: "Preguntar sobre este producto" }),
-    ).toHaveLength(2);
+    expect(screen.getAllByRole("button", { name: "Preguntar sobre este producto" })).toHaveLength(1);
+    expect(screen.getByLabelText("Ver mensajes")).not.toBeChecked();
     expect(fetchCartThreads).toHaveBeenCalledWith(4, [
       { productId: 12, productName: "Taza volcánica" },
     ]);
     expect(openConversation).not.toHaveBeenCalled();
+  });
+
+  it("passes only concrete per-thread actions across the client boundary", async () => {
+    const page = await CartPage({ params: Promise.resolve({ shopId: "4" }) });
+    const boundaries = elementsOfType(page, CartThreads);
+
+    expect(boundaries).toHaveLength(1);
+    for (const boundary of boundaries) {
+      expect(boundary.props.sendAction).toBeUndefined();
+      expect(boundary.props.startAction).toBeUndefined();
+
+      const [thread] = boundary.props.threads as Array<Record<string, unknown>>;
+      expect(thread.startAction).toBeTypeOf("function");
+      expect(thread.sendAction).toBeNull();
+    }
   });
 });

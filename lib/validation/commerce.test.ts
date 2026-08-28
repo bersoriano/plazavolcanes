@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { altContactSchema, checkoutSchema, quantitySchema } from "@/lib/validation/commerce";
+import {
+  altContactSchema,
+  checkoutMetadataSchema,
+  checkoutSchema,
+  quantitySchema,
+} from "@/lib/validation/commerce";
 
 describe("commerce validation", () => {
   it.each([1, 99])("accepts cart quantity %i", (quantity) => {
@@ -64,5 +69,30 @@ describe("altContactSchema", () => {
   it("accepts an entirely empty contact", () => {
     const parsed = altContactSchema.parse({ name: "", phone: "", note: "" });
     expect(parsed).toEqual({ name: null, phone: null, note: null });
+  });
+});
+
+describe("checkoutMetadataSchema", () => {
+  const idempotencyKey = "10000000-0000-4000-8000-000000000099";
+
+  it.each([
+    { note: "", expected: null },
+    { note: "  Nos vemos en la entrada.  ", expected: "Nos vemos en la entrada." },
+  ])("normalizes the shared buyer note '$note'", ({ note, expected }) => {
+    expect(checkoutMetadataSchema.parse({
+      buyer_note: note,
+      idempotency_key: idempotencyKey,
+    })).toEqual({
+      buyer_note: expected,
+      idempotency_key: idempotencyKey,
+    });
+  });
+
+  it.each([
+    { idempotency_key: undefined, buyer_note: "" },
+    { idempotency_key: "not-a-uuid", buyer_note: "" },
+    { idempotency_key: idempotencyKey, buyer_note: "x".repeat(1001) },
+  ])("rejects malformed shared checkout metadata %#", (metadata) => {
+    expect(checkoutMetadataSchema.safeParse(metadata).success).toBe(false);
   });
 });

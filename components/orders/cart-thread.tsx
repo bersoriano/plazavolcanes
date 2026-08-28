@@ -9,6 +9,18 @@ import { StartConversationButton } from "@/components/messages/start-conversatio
 
 type Action = (state: ActionState, formData: FormData) => Promise<ActionState>;
 
+export type CartThreadWithActions =
+  | (Omit<CartThread, "conversationId"> & {
+      conversationId: number;
+      sendAction: Action;
+      startAction: null;
+    })
+  | (Omit<CartThread, "conversationId"> & {
+      conversationId: null;
+      sendAction: null;
+      startAction: Action;
+    });
+
 /**
  * The conversation about what is being bought, beside what is being bought.
  *
@@ -18,14 +30,10 @@ type Action = (state: ActionState, formData: FormData) => Promise<ActionState>;
  */
 export function CartThreads({
   currentUserId,
-  sendAction,
-  startAction,
   threads,
 }: {
   currentUserId: string;
-  sendAction: (conversationId: number) => Action;
-  startAction: (productId: number) => Action;
-  threads: CartThread[];
+  threads: CartThreadWithActions[];
 }) {
   const [activeId, setActiveId] = useState(threads[0]?.productId ?? null);
   const active = threads.find((thread) => thread.productId === activeId) ?? threads[0];
@@ -56,9 +64,9 @@ export function CartThreads({
       ) : null}
 
       <div className="mt-4">
-        {active.conversationId ? (
+        {active.conversationId !== null ? (
           <MessageThread
-            action={sendAction(active.conversationId)}
+            action={active.sendAction}
             conversationId={active.conversationId}
             currentUserId={currentUserId}
             key={active.conversationId}
@@ -71,7 +79,7 @@ export function CartThreads({
             </p>
             <div className="mt-4">
               <StartConversationButton
-                action={startAction(active.productId)}
+                action={active.startAction}
                 isOwnShop={false}
                 label="Preguntar sobre este producto"
                 returnTo="/"
