@@ -70,6 +70,7 @@ export type Thread = {
   id: number;
   type: ConversationType;
   order_id: number | null;
+  viewer_role: InboxRole;
   counterpart_label: string;
   shop_name: string;
   shop_slug: string;

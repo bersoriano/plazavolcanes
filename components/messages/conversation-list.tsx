@@ -44,12 +44,18 @@ function ContextLine({ conversation }: { conversation: ConversationSummary }) {
 export function ConversationList({
   basePath,
   conversations,
+  emptyMessage = "No tienes conversaciones todavía.",
 }: {
   basePath: string;
   conversations: ConversationSummary[];
+  emptyMessage?: string;
 }) {
   if (!conversations.length) {
-    return <p className="mt-7 text-muted">No tienes conversaciones todavía.</p>;
+    return (
+      <p className="mt-6 rounded-[2rem] border border-dashed border-line bg-surface/60 px-6 py-8 text-sm leading-6 text-muted">
+        {emptyMessage}
+      </p>
+    );
   }
 
   return (

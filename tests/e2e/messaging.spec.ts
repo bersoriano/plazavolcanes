@@ -66,10 +66,10 @@ test("a shopper asks a question and the shop answers", async ({ browser }) => {
   await expect(buyerPage.getByText("¿Tienes talla 8?")).toBeVisible();
 
   // The seller sees it waiting, under the name the buyer chose.
-  await sellerPage.goto("/panel/mensajes");
+  await sellerPage.goto("/mensajes");
   await expect(sellerPage.getByLabel(/mensajes sin leer/i).first()).toBeVisible();
   await sellerPage.getByRole("link", { name: new RegExp(buyer.name, "i") }).click();
-  await expect(sellerPage).toHaveURL(/\/panel\/mensajes\/\d+/);
+  await expect(sellerPage).toHaveURL(/\/mensajes\/\d+/);
 
   await sellerPage.getByLabel("Mensaje", { exact: true }).fill("Sí, tenemos");
   await sellerPage.getByRole("button", { name: "Enviar mensaje" }).click();
@@ -78,6 +78,6 @@ test("a shopper asks a question and the shop answers", async ({ browser }) => {
   await expect(buyerPage.getByText("Sí, tenemos")).toBeVisible({ timeout: 15_000 });
 
   // Opening the thread cleared the seller's badge.
-  await sellerPage.goto("/panel/mensajes");
+  await sellerPage.goto("/mensajes");
   await expect(sellerPage.getByLabel(/mensajes sin leer/i)).toHaveCount(0);
 });

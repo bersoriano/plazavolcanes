@@ -69,6 +69,7 @@ export async function fetchThread(conversationId: number): Promise<Thread | null
     id: data.id,
     type: data.type,
     order_id: data.order_id,
+    viewer_role: role,
     counterpart_label: summary?.counterpart_label ?? "Conversación",
     shop_name: summary?.shop_name ?? "",
     shop_slug: summary?.shop_slug ?? "",

@@ -130,7 +130,7 @@ test("names the shop to a buyer and the person to a seller", () => {
   expect(screen.getByText("Tienda Prueba")).toBeInTheDocument();
   unmount();
 
-  render(<ConversationList basePath="/panel/mensajes" conversations={[productThread]} />);
+  render(<ConversationList basePath="/mensajes" conversations={[productThread]} />);
 
   expect(screen.getByText("Ana Ruiz")).toBeInTheDocument();
 });
@@ -138,7 +138,7 @@ test("names the shop to a buyer and the person to a seller", () => {
 test("keeps every kind of thread reachable from one list", () => {
   render(
     <ConversationList
-      basePath="/panel/mensajes"
+      basePath="/mensajes"
       conversations={[
         productThread,
         { ...conversation, id: 8 },

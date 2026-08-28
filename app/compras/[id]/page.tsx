@@ -31,7 +31,6 @@ export default async function PurchaseDetailPage({ params }: { params: Promise<{
         `/compras/${order.id}`,
         `/panel/pedidos/${order.id}`,
         "/mensajes",
-        "/panel/mensajes",
       ]) : null;
   const reviewAction = createReview.bind(null, order.id);
   const disputeAction = openDispute.bind(null, order.id);

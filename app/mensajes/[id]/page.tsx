@@ -7,7 +7,7 @@ import { ThreadContext } from "@/components/messages/thread-context";
 import { sendMessage } from "@/lib/actions/messages";
 import { fetchThread } from "@/lib/queries/messages.server";
 
-export default async function BuyerThreadPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function MessageThreadPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const conversationId = Number(id);
   if (!Number.isInteger(conversationId)) notFound();
@@ -28,7 +28,13 @@ export default async function BuyerThreadPage({ params }: { params: Promise<{ id
 
       <h1 className="mt-5 font-display text-3xl font-semibold">{thread.counterpart_label}</h1>
       <ThreadContext
-        orderHref={thread.order_id ? `/compras/${thread.order_id}` : null}
+        orderHref={
+          thread.order_id
+            ? thread.viewer_role === "seller"
+              ? `/panel/pedidos/${thread.order_id}`
+              : `/compras/${thread.order_id}`
+            : null
+        }
         orderId={thread.order_id}
         product={thread.product}
         shopName={thread.shop_name}
