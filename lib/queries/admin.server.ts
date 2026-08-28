@@ -1,5 +1,9 @@
 import "server-only";
 
+import {
+  mapAdminMarketplaceUsers,
+  type AdminMarketplaceUser,
+} from "@/lib/queries/admin";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -34,4 +38,17 @@ export async function getAdminDisputes(): Promise<AdminDispute[]> {
       return { ...row, shop: row.shops, conversation_id: conversationId ?? null };
     }),
   );
+}
+
+export async function getAdminMarketplaceUsers(): Promise<AdminMarketplaceUser[]> {
+  if (!isSupabaseConfigured()) return [];
+
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase.rpc("list_admin_marketplace_users");
+
+  if (error) {
+    throw new Error("No pudimos consultar los usuarios de la plataforma.");
+  }
+
+  return mapAdminMarketplaceUsers(data ?? []);
 }

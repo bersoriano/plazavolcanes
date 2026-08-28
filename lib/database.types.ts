@@ -645,6 +645,25 @@ export type Database = {
       create_order_review: { Args: { p_order_id: number; p_rating: number; p_matched_description: boolean; p_comment: string | null }; Returns: number };
       current_legal_document: { Args: { p_type: string }; Returns: Database["public"]["Tables"]["legal_document_versions"]["Row"] };
       is_current_user_admin: { Args: Record<never, never>; Returns: boolean };
+      list_admin_marketplace_users: {
+        Args: Record<never, never>;
+        Returns: {
+          user_id: string;
+          email: string | null;
+          user_created_at: string;
+          display_name: string | null;
+          shop_id: number | null;
+          shop_name: string | null;
+          shop_slug: string | null;
+          shop_created_at: string | null;
+          product_id: number | null;
+          product_name: string | null;
+          product_slug: string | null;
+          product_status: string | null;
+          product_created_at: string | null;
+          product_updated_at: string | null;
+        }[];
+      };
       mark_order_shipped: { Args: { p_order_id: number; p_tracking_text: string | null; p_idempotency_key: string }; Returns: undefined };
       open_order_dispute: { Args: { p_order_id: number; p_reason: string; p_statement: string; p_evidence: Json }; Returns: number };
       publish_legal_version: { Args: { p_version_id: string; p_issuer_identity: Json }; Returns: Database["public"]["Tables"]["legal_document_versions"]["Row"] };
