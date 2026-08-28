@@ -1,0 +1,117 @@
+export type AdminMarketplaceProductStatus = "draft" | "published";
+
+/** The flat row returned by public.list_admin_marketplace_users(). */
+export type AdminMarketplaceRpcRow = {
+  user_id: string;
+  email: string | null;
+  user_created_at: string;
+  display_name: string | null;
+  shop_id: number | null;
+  shop_name: string | null;
+  shop_slug: string | null;
+  shop_created_at: string | null;
+  product_id: number | null;
+  product_name: string | null;
+  product_slug: string | null;
+  product_status: string | null;
+  product_created_at: string | null;
+  product_updated_at: string | null;
+};
+
+export type AdminMarketplaceProduct = {
+  id: number;
+  name: string;
+  slug: string;
+  status: AdminMarketplaceProductStatus;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminMarketplaceShop = {
+  id: number;
+  name: string;
+  slug: string;
+  createdAt: string;
+  products: AdminMarketplaceProduct[];
+};
+
+export type AdminMarketplaceUser = {
+  id: string;
+  email: string | null;
+  displayName: string | null;
+  createdAt: string;
+  shops: AdminMarketplaceShop[];
+};
+
+export function mapAdminMarketplaceUsers(
+  rows: AdminMarketplaceRpcRow[],
+): AdminMarketplaceUser[] {
+  const users: AdminMarketplaceUser[] = [];
+  const usersById = new Map<string, AdminMarketplaceUser>();
+  const shopsByKey = new Map<string, AdminMarketplaceShop>();
+  const productKeys = new Set<string>();
+
+  for (const row of rows) {
+    let user = usersById.get(row.user_id);
+    if (!user) {
+      user = {
+        id: row.user_id,
+        email: row.email,
+        displayName: row.display_name,
+        createdAt: row.user_created_at,
+        shops: [],
+      };
+      usersById.set(row.user_id, user);
+      users.push(user);
+    }
+
+    if (
+      row.shop_id === null ||
+      row.shop_name === null ||
+      row.shop_slug === null ||
+      row.shop_created_at === null
+    ) {
+      continue;
+    }
+
+    const shopKey = `${row.user_id}:${row.shop_id}`;
+    let shop = shopsByKey.get(shopKey);
+    if (!shop) {
+      shop = {
+        id: row.shop_id,
+        name: row.shop_name,
+        slug: row.shop_slug,
+        createdAt: row.shop_created_at,
+        products: [],
+      };
+      shopsByKey.set(shopKey, shop);
+      user.shops.push(shop);
+    }
+
+    if (
+      row.product_id === null ||
+      row.product_name === null ||
+      row.product_slug === null ||
+      row.product_created_at === null ||
+      row.product_updated_at === null ||
+      (row.product_status !== "draft" && row.product_status !== "published")
+    ) {
+      continue;
+    }
+
+    const productKey = `${row.shop_id}:${row.product_id}`;
+    if (!productKeys.has(productKey)) {
+      productKeys.add(productKey);
+      shop.products.push({
+        id: row.product_id,
+        name: row.product_name,
+        slug: row.product_slug,
+        status: row.product_status,
+        createdAt: row.product_created_at,
+        updatedAt: row.product_updated_at,
+      });
+    }
+  }
+
+  return users;
+}
