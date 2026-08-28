@@ -63,14 +63,19 @@ describe("MarketplaceUsers", () => {
     expect(screen.getByText("2 personas registradas")).toBeInTheDocument();
     expect(screen.getByText("Lucía Martínez")).toBeInTheDocument();
     expect(screen.getByText("lucia@tallervolcan.mx")).toBeInTheDocument();
+    expect(screen.getByText("Registro: 1 de agosto de 2026")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Taller Volcán" })).toHaveAttribute(
       "href",
       "/tiendas/taller-volcan",
     );
+    expect(screen.getByText("Creada: 2 de agosto de 2026")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Taza de barro" })).toHaveAttribute(
       "href",
       "/productos/taza",
     );
+    expect(
+      screen.getByText("Creado: 3 de agosto de 2026 · Actualizado: 4 de agosto de 2026"),
+    ).toBeInTheDocument();
     expect(screen.getByText("Jarrón en proceso").closest("a")).toBeNull();
     expect(screen.getByText("Publicado")).toBeInTheDocument();
     expect(screen.getByText("Borrador")).toBeInTheDocument();

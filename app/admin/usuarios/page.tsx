@@ -1,7 +1,9 @@
 import { MarketplaceUsers } from "@/components/admin/marketplace-users";
+import { requireAdmin } from "@/lib/admin-auth.server";
 import { getAdminMarketplaceUsers } from "@/lib/queries/admin.server";
 
 export default async function AdminUsersPage() {
+  await requireAdmin();
   const users = await getAdminMarketplaceUsers();
 
   return (

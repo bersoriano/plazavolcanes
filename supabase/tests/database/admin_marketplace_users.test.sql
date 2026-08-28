@@ -2,12 +2,23 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(15);
+select plan(18);
 
 select has_function('private', 'bootstrap_initial_admin', array[]::text[],
   'operator-only bootstrap helper exists');
 select has_function('public', 'list_admin_marketplace_users', array[]::text[],
   'administrator marketplace RPC exists');
+select is(
+  (select p.proargnames::text
+   from pg_catalog.pg_proc p
+   join pg_catalog.pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.proname = 'list_admin_marketplace_users'),
+  '{user_id,email,user_created_at,display_name,shop_id,shop_name,shop_slug,shop_created_at,product_id,product_name,product_slug,product_status,product_created_at,product_updated_at}',
+  'RPC exposes exactly the approved 14 fields in order'
+);
+
+select is(private.bootstrap_initial_admin(), false,
+  'missing bootstrap account is reported without granting membership');
 
 insert into auth.users (id, email, created_at) values
   ('10000000-0000-4000-8000-000000000001', 'bsorianodev@gmail.com', '2026-08-01T00:00:00Z'),
@@ -19,9 +30,21 @@ insert into public.user_display_names (user_id, display_name)
 values ('10000000-0000-4000-8000-000000000002', 'María Taller');
 
 select ok(private.bootstrap_initial_admin(), 'existing bootstrap account is granted');
-select isnt_empty(
-  $$select 1 from private.admin_users where user_id = '10000000-0000-4000-8000-000000000001'$$,
-  'bootstrap membership uses existing administrator table'
+select results_eq(
+  $$select user_id, granted_by from private.admin_users
+    where user_id = '10000000-0000-4000-8000-000000000001'$$,
+  $$values ('10000000-0000-4000-8000-000000000001'::uuid,
+            '10000000-0000-4000-8000-000000000001'::uuid)$$,
+  'bootstrap stores the target as both member and grantor'
+);
+select results_eq(
+  $$select actor_id, target_user_id, action from private.admin_audit_events
+    where target_user_id = '10000000-0000-4000-8000-000000000001'
+    order by id$$,
+  $$values ('10000000-0000-4000-8000-000000000001'::uuid,
+            '10000000-0000-4000-8000-000000000001'::uuid,
+            'admin_granted'::text)$$,
+  'bootstrap audits admin_granted for the same target'
 );
 select is(
   (select count(*) from private.admin_users

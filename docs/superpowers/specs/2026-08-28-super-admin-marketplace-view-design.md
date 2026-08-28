@@ -91,7 +91,9 @@ Generated/manual `Database` types gain the RPC signature so application code doe
 
 ## Routes and UI
 
-`app/admin/layout.tsx` remains the route-level authorization gate. Signed-out visitors keep the existing redirect to `/ingresar?continuar=/admin/disputas`; authenticated non-administrators are redirected to `/panel`. Existing behavior for `/admin/disputas` remains intact, and authenticated administrators can reach the new page through admin navigation.
+`lib/admin-auth.server.ts` centralizes the exact administrator checks in a server-only `requireAdmin()` DAL function cached with React `cache()` for one render pass. Missing Supabase configuration redirects to `/panel`; a missing claim subject redirects to `/ingresar?continuar=/admin/disputas`; and an authenticated non-administrator redirects to `/panel`. The helper reuses the request-scoped Supabase client and `public.is_current_user_admin()`.
+
+Both `app/admin/layout.tsx` and the sensitive `app/admin/usuarios/page.tsx` await `requireAdmin()`. The layout protects shared administrator UI, while the leaf page awaits authorization before `getAdminMarketplaceUsers()`. This leaf guard is required because Next.js can render a layout and its child route independently; the layout is not a serialization boundary for the child's sensitive fetch. React caching deduplicates the repeated check during a shared render pass. Existing behavior for `/admin/disputas` remains intact, and authenticated administrators can reach the new page through admin navigation.
 
 The shared administrator layout adds compact navigation:
 
@@ -112,8 +114,8 @@ No client component, mutation, modal, or form is needed.
 
 ## Error Handling
 
-- Route authorization runs before page data access.
-- RPC authorization repeats the check at the database boundary; layout protection is not treated as sufficient authorization.
+- The users leaf page awaits the cached DAL authorization before starting its marketplace query; it does not rely on layout execution order.
+- RPC authorization repeats the check at the database boundary; application DAL and leaf protection do not replace database authorization.
 - Supabase RPC errors are thrown from the server query and reach the normal Next.js error path. Failure never appears as "no users."
 - Nullable left-join fields are validated structurally by the mapper. A partial shop or product row is ignored rather than rendered as a malformed entity.
 - Missing Supabase configuration keeps existing administrator-layout redirect behavior.
@@ -144,7 +146,8 @@ Vitest covers:
 - Administrator page renders email, display name, dates, shop links, product names, and localized status badges
 - Draft products do not receive public links
 - Empty states render at all three levels
-- Admin layout keeps signed-out and non-admin redirect behavior
+- The cached DAL keeps unconfigured, signed-out, non-admin, and authorized behavior exact
+- A composed unauthorized page test proves rejected authorization prevents `getAdminMarketplaceUsers()` from being called; authorized page wiring still calls it once
 
 ### Verification gates
 

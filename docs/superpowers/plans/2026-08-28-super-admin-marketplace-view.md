@@ -4,7 +4,7 @@
 
 **Goal:** Give existing administrators a read-only page showing every signed-up user, their shops, and each shop's draft or published products, while bootstrapping `bsorianodev@gmail.com` into the existing administrator role.
 
-**Architecture:** Keep authorization and sensitive reads inside Postgres. An operator-only bootstrap helper grants the one existing account, and one authenticated admin-only RPC returns flat account/shop/product rows; pure TypeScript groups them for a server-rendered Next.js page protected by the existing admin layout.
+**Architecture:** Keep the authoritative sensitive-read check inside Postgres. An operator-only bootstrap helper grants the one existing account, and one authenticated admin-only RPC returns flat account/shop/product rows; pure TypeScript groups them for a server-rendered Next.js page. A server-only, React-cached `requireAdmin()` DAL centralizes the same application redirects and is awaited by both the shared admin layout and the users leaf page before its sensitive query, because layouts do not serialize child route rendering.
 
 **Tech Stack:** Next.js 16.3 App Router, React 19.2, TypeScript, Supabase Auth/Postgres/PostgREST, pgTAP, Vitest, Testing Library, Tailwind CSS 4.
 
@@ -17,6 +17,7 @@
 - Return only account id/email/signup date/display name, shop id/name/slug/date, and product id/name/slug/status/created/updated dates.
 - Include only product statuses `draft` and `published`; preserve users without shops and shops without included products.
 - Never expose a Supabase secret/service-role key.
+- Await the cached administrator DAL at every sensitive leaf before starting its query; do not treat layout execution as the sole application authorization boundary.
 - Every `security definer` function uses `set search_path = ''`, schema-qualifies every object, revokes execution from `public` and `anon`, and grants only explicitly required roles.
 - No signup-based admin trigger. Local email confirmation is disabled.
 - Preserve unrelated dirty-worktree changes and stage only files named by each task.
@@ -31,13 +32,15 @@
 | `lib/queries/admin.ts` | RPC row types, nested view types, pure flat-row grouper. |
 | `lib/queries/admin.test.ts` | Grouper order, deduplication, and empty-child tests. |
 | `lib/database.types.ts` | Typed `list_admin_marketplace_users` RPC contract. |
+| `lib/admin-auth.server.ts` | Server-only cached administrator DAL with the existing exact redirects and database membership check. |
+| `lib/admin-auth.server.test.ts` | Unconfigured, anonymous, non-admin, and authorized DAL behavior. |
 | `lib/queries/admin.server.ts` | Existing dispute query plus `getAdminMarketplaceUsers()`. |
 | `lib/queries/admin.server.test.ts` | RPC success/error/config behavior. |
 | `components/admin/marketplace-users.tsx` | Read-only nested administrator view. |
 | `components/admin/marketplace-users.test.tsx` | User/shop/product rendering and empty states. |
-| `app/admin/usuarios/page.tsx` | Server page fetch and composition. |
-| `app/admin/usuarios/page.test.tsx` | Page-to-query wiring. |
-| `app/admin/layout.tsx` | Existing authorization plus shared admin navigation. |
+| `app/admin/usuarios/page.tsx` | Leaf authorization before server fetch and composition. |
+| `app/admin/usuarios/page.test.tsx` | Composed authorization-to-query ordering and authorized page wiring. |
+| `app/admin/layout.tsx` | Cached DAL invocation plus shared admin navigation. |
 | `app/admin/layout.test.tsx` | Signed-out/non-admin redirects and admin navigation. |
 
 ---
@@ -612,6 +615,7 @@ git commit -m "feat(admin): fetch marketplace users"
 
 **Interfaces:**
 - Consumes: `AdminMarketplaceUser[]`
+- Consumes: cached `requireAdmin()`
 - Consumes: `getAdminMarketplaceUsers()`
 - Produces: `<MarketplaceUsers users={users} />`
 
@@ -628,9 +632,9 @@ Use one user with display name, one published and one draft product, one user wi
 - `Sin correo registrado`, `Sin tiendas`, and `Sin borradores ni publicaciones` render for empty levels.
 - Empty `users` renders `No hay personas registradas`.
 
-- [ ] **Step 2: Write failing page wiring test**
+- [ ] **Step 2: Write failing page authorization and wiring tests**
 
-Mock `getAdminMarketplaceUsers`, render `await AdminUsersPage()`, and assert returned user email appears. Verify query called once.
+Mock `requireAdmin` and `getAdminMarketplaceUsers`. First reject authorization, assert the page rejects, and prove `getAdminMarketplaceUsers` is never called. Then authorize, render `await AdminUsersPage()`, assert the returned user email appears, and verify both authorization and query are called once.
 
 - [ ] **Step 3: Run tests and confirm missing-module failures**
 
@@ -734,9 +738,11 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
 
 ```tsx
 import { MarketplaceUsers } from "@/components/admin/marketplace-users";
+import { requireAdmin } from "@/lib/admin-auth.server";
 import { getAdminMarketplaceUsers } from "@/lib/queries/admin.server";
 
 export default async function AdminUsersPage() {
+  await requireAdmin();
   const users = await getAdminMarketplaceUsers();
 
   return (
@@ -772,16 +778,19 @@ git commit -m "feat(admin): show users shops and products"
 ### Task 5: Shared admin navigation and complete verification
 
 **Files:**
+- Create: `lib/admin-auth.server.ts`
+- Create: `lib/admin-auth.server.test.ts`
 - Modify: `app/admin/layout.tsx`
 - Create: `app/admin/layout.test.tsx`
 
 **Interfaces:**
-- Consumes: existing auth claims and `is_current_user_admin()` RPC
+- Consumes: existing Supabase configuration, auth claims, and `is_current_user_admin()` RPC
+- Produces: server-only React-cached `requireAdmin()` used by the layout and sensitive leaf page
 - Produces: shared `Usuarios` and `Disputas` navigation for authorized administrators
 
-- [ ] **Step 1: Write failing layout tests**
+- [ ] **Step 1: Write failing DAL and layout tests**
 
-Mock `next/navigation.redirect`, Supabase config/client, and RPC responses. Assert:
+Mock `next/navigation.redirect`, Supabase config/client, and RPC responses. Cover the exact three redirects and the authorized return in `lib/admin-auth.server.test.ts`. Keep the layout composition assertions, including:
 
 ```ts
 await expect(AdminLayout({ children: <p>Privado</p> }))
@@ -807,9 +816,9 @@ npx vitest run app/admin/layout.test.tsx
 
 Expected: redirect tests pass; authorized-admin navigation assertions fail.
 
-- [ ] **Step 3: Add shared navigation after authorization**
+- [ ] **Step 3: Add cached DAL and shared navigation after authorization**
 
-Import `Link` from `next/link`. Keep all existing checks before rendering any children. Return a wrapper containing:
+Move the existing exact checks into server-only `requireAdmin()` wrapped in React `cache()`. Await it from both the layout and users leaf page, with the leaf call before `getAdminMarketplaceUsers()`. Import `Link` from `next/link` and return a wrapper containing:
 
 ```tsx
 <nav aria-label="Administración" className="mx-auto flex max-w-6xl gap-2 px-5 pt-6 sm:px-8">
@@ -827,6 +836,7 @@ Import `Link` from `next/link`. Keep all existing checks before rendering any ch
 
 ```bash
 npx vitest run \
+  lib/admin-auth.server.test.ts \
   lib/queries/admin.test.ts \
   lib/queries/admin.server.test.ts \
   components/admin/marketplace-users.test.tsx \
@@ -868,8 +878,8 @@ Expected: `true`. Do not expose query result through application UI.
 - [ ] **Step 7: Commit navigation and verification slice**
 
 ```bash
-git add app/admin/layout.tsx app/admin/layout.test.tsx
-git commit -m "feat(admin): add admin section navigation"
+git add lib/admin-auth.server.ts lib/admin-auth.server.test.ts app/admin/layout.tsx app/admin/layout.test.tsx app/admin/usuarios/page.tsx app/admin/usuarios/page.test.tsx
+git commit -m "fix(admin): authorize users before sensitive query"
 ```
 
 - [ ] **Step 8: Stop at approved scope**

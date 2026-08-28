@@ -1,14 +1,17 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { requireAdmin } from "@/lib/admin-auth.server";
 import { getAdminMarketplaceUsers } from "@/lib/queries/admin.server";
 
+vi.mock("@/lib/admin-auth.server", () => ({ requireAdmin: vi.fn() }));
 vi.mock("@/lib/queries/admin.server", () => ({ getAdminMarketplaceUsers: vi.fn() }));
 
 const { default: AdminUsersPage } = await import("@/app/admin/usuarios/page");
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(requireAdmin).mockResolvedValue(undefined);
   vi.mocked(getAdminMarketplaceUsers).mockResolvedValue([
     {
       id: "persona-1",
@@ -23,10 +26,19 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("AdminUsersPage", () => {
+  it("does not query marketplace users when authorization rejects", async () => {
+    vi.mocked(requireAdmin).mockRejectedValue(new Error("REDIRECT"));
+
+    await expect(AdminUsersPage()).rejects.toThrow("REDIRECT");
+
+    expect(getAdminMarketplaceUsers).not.toHaveBeenCalled();
+  });
+
   it("loads and displays the marketplace users", async () => {
     render(await AdminUsersPage());
 
     expect(screen.getByText("lucia@tallervolcan.mx")).toBeInTheDocument();
+    expect(requireAdmin).toHaveBeenCalledOnce();
     expect(getAdminMarketplaceUsers).toHaveBeenCalledOnce();
   });
 });

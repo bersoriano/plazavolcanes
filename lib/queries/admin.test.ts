@@ -124,7 +124,7 @@ describe("mapAdminMarketplaceUsers", () => {
     ]);
   });
 
-  it("keeps first-seen user and shop order", () => {
+  it("keeps first-seen user and nested shop order", () => {
     const second = {
       ...base,
       user_id: "user-2",
@@ -133,10 +133,16 @@ describe("mapAdminMarketplaceUsers", () => {
       shop_name: "Segundo Taller",
       shop_slug: "segundo-taller",
     };
+    const secondUserFirstShop = {
+      ...second,
+      shop_id: 12,
+      shop_name: "Primer Taller Visto",
+      shop_slug: "primer-taller-visto",
+    };
 
-    expect(mapAdminMarketplaceUsers([second, base]).map((user) => user.id)).toEqual([
-      "user-2",
-      "user-1",
-    ]);
+    const users = mapAdminMarketplaceUsers([secondUserFirstShop, second, base]);
+
+    expect(users.map((user) => user.id)).toEqual(["user-2", "user-1"]);
+    expect(users[0]?.shops.map((shop) => shop.id)).toEqual([12, 11]);
   });
 });
