@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { checkoutSchema, quantitySchema } from "@/lib/validation/commerce";
+import { altContactSchema, checkoutSchema, quantitySchema } from "@/lib/validation/commerce";
 
 describe("commerce validation", () => {
   it.each([1, 99])("accepts cart quantity %i", (quantity) => {
@@ -48,5 +48,21 @@ describe("commerce validation", () => {
       idempotency_key: "10000000-0000-4000-8000-000000000099",
     });
     expect(result.success).toBe(false);
+  });
+});
+
+describe("altContactSchema", () => {
+  it("normalises a ten-digit national number", () => {
+    const parsed = altContactSchema.parse({ name: "Luis", phone: "3312345678", note: "" });
+    expect(parsed.phone).toBe("+523312345678");
+  });
+
+  it("refuses a phone with no name", () => {
+    expect(altContactSchema.safeParse({ name: "", phone: "3312345678", note: "" }).success).toBe(false);
+  });
+
+  it("accepts an entirely empty contact", () => {
+    const parsed = altContactSchema.parse({ name: "", phone: "", note: "" });
+    expect(parsed).toEqual({ name: null, phone: null, note: null });
   });
 });

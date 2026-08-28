@@ -15,6 +15,27 @@ export const quantitySchema = z.coerce
   .min(1, "Agrega al menos una unidad.")
   .max(99, "Puedes solicitar máximo 99 unidades.");
 
+export const fulfillmentMethodSchema = z.enum(["pickup", "shipping"], {
+  error: "Elige recolección o envío.",
+});
+
+export const altContactSchema = z
+  .object({
+    name: z.string().trim().max(80).transform((value) => value || null),
+    phone: z
+      .string()
+      .trim()
+      .transform((value) => (value ? (value.startsWith("+") ? value : `+52${value.replace(/\D/g, "")}`) : null))
+      .refine((value) => value === null || /^\+52[0-9]{10}$/.test(value), {
+        error: "El teléfono debe tener 10 dígitos.",
+      }),
+    note: z.string().trim().max(200).transform((value) => value || null),
+  })
+  .refine((value) => value.name !== null || (value.phone === null && value.note === null), {
+    error: "Escribe el nombre de la otra persona.",
+    path: ["name"],
+  });
+
 export const checkoutSchema = z.object({
   recipient: trimmed(2, 120, "Escribe el nombre de quien recibe."),
   address_line1: trimmed(3, 200, "Escribe la calle y número."),

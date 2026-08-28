@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getClaims = vi.fn();
 const insertCartItem = vi.fn();
+const rpc = vi.fn();
 const savePurchaseIntent = vi.fn();
 // The real redirect() throws, which is what stops a Server Action mid-flight.
 // A mock that returns instead would let the code below it run and hide that.
@@ -14,21 +15,25 @@ const configured = vi.hoisted(() => ({ value: true }));
 
 vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: () => configured.value }));
 vi.mock("@/lib/supabase/server", () => ({
-  createServerSupabaseClient: async () => ({ auth: { getClaims } }),
+  createServerSupabaseClient: async () => ({ auth: { getClaims }, rpc }),
 }));
 vi.mock("@/lib/cart-insert", () => ({ insertCartItem, databaseMessage: (_m: string, f: string) => f }));
 vi.mock("@/lib/purchase-intent.server", () => ({ savePurchaseIntent }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect }));
 
-const { addToCart } = await import("@/lib/actions/cart");
+const { addToCart, checkoutCart } = await import("@/lib/actions/cart");
 
 const idle = { status: "idle" as const, message: "" };
 
 /** Runs an action that may redirect, returning its state when it does not. */
 async function run(work: Promise<unknown>) {
   try {
-    return (await work) as { status: string; message: string } | undefined;
+    return (await work) as {
+      status: string;
+      message: string;
+      errors?: Record<string, string[] | undefined>;
+    } | undefined;
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("NEXT_REDIRECT:")) return undefined;
     throw error;
@@ -46,6 +51,7 @@ beforeEach(() => {
   configured.value = true;
   getClaims.mockResolvedValue({ data: { claims: { sub: "buyer-1" } } });
   insertCartItem.mockResolvedValue({ status: "added", shopId: 4 });
+  rpc.mockResolvedValue({ data: 77, error: null });
 });
 
 describe("addToCart while signed out", () => {
@@ -109,5 +115,96 @@ describe("addToCart while signed in", () => {
     expect(state?.status).toBe("error");
     expect(state?.message).toBe("Agrega al menos una unidad.");
     expect(insertCartItem).not.toHaveBeenCalled();
+  });
+});
+
+describe("checkoutCart fulfillment", () => {
+  const idempotencyKey = "10000000-0000-4000-8000-000000000099";
+
+  it("requires the buyer to choose pickup or shipping before checkout", async () => {
+    const state = await run(checkoutCart(4, idle, formOf({ idempotency_key: idempotencyKey })));
+
+    expect(state).toEqual({
+      status: "error",
+      message: "Elige recolección o envío para continuar.",
+    });
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("checks out pickup through v3 without carrying a shipping address", async () => {
+    await run(checkoutCart(4, idle, formOf({
+      fulfillment_method: "pickup",
+      idempotency_key: idempotencyKey,
+      buyer_note: "Entrego identificación.",
+      alt_contact_name: "Luis",
+      alt_contact_phone: "3312345678",
+      alt_contact_note: "Mi hermano",
+      recipient: "Esta dirección no pertenece a recolección",
+    })));
+
+    expect(rpc).toHaveBeenCalledWith("checkout_cart_v3", {
+      p_shop_id: 4,
+      p_fulfillment_method: "pickup",
+      p_address: null,
+      p_alt_contact: {
+        name: "Luis",
+        phone: "+523312345678",
+        note: "Mi hermano",
+      },
+      p_buyer_note: "Entrego identificación.",
+      p_idempotency_key: idempotencyKey,
+    });
+    expect(redirect).toHaveBeenCalledWith("/compras/77?creado=1");
+  });
+
+  it("refuses shipping until its address is valid", async () => {
+    const state = await run(checkoutCart(4, idle, formOf({
+      fulfillment_method: "shipping",
+      idempotency_key: idempotencyKey,
+      recipient: "Ana Ruiz",
+      address_line1: "Calle Volcán 12",
+      locality: "",
+      administrative_area: "Jalisco",
+      postal_code: "44100",
+      country_code: "MX",
+    })));
+
+    expect(state?.message).toBe("Revisa los campos marcados.");
+    expect(state?.errors?.locality).toEqual(["Escribe la ciudad o localidad."]);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it("sends a validated shipping address through v3", async () => {
+    await run(checkoutCart(4, idle, formOf({
+      fulfillment_method: "shipping",
+      idempotency_key: idempotencyKey,
+      recipient: " Ana Ruiz ",
+      address_line1: " Calle Volcán 12 ",
+      address_line2: "",
+      locality: " Guadalajara ",
+      administrative_area: " Jalisco ",
+      postal_code: " 44100 ",
+      country_code: "MX",
+      delivery_instructions: "",
+      buyer_note: "Tocar el timbre.",
+    })));
+
+    expect(rpc).toHaveBeenCalledWith("checkout_cart_v3", {
+      p_shop_id: 4,
+      p_fulfillment_method: "shipping",
+      p_address: {
+        recipient: "Ana Ruiz",
+        address_line1: "Calle Volcán 12",
+        address_line2: null,
+        locality: "Guadalajara",
+        administrative_area: "Jalisco",
+        postal_code: "44100",
+        country_code: "MX",
+        delivery_instructions: null,
+      },
+      p_alt_contact: null,
+      p_buyer_note: "Tocar el timbre.",
+      p_idempotency_key: idempotencyKey,
+    });
   });
 });

@@ -5,11 +5,17 @@ import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/lib/action-state";
 import { databaseMessage, insertCartItem } from "@/lib/cart-insert";
+import type { Json } from "@/lib/database.types";
 import { savePurchaseIntent } from "@/lib/purchase-intent.server";
 import { safeContinuation } from "@/lib/safe-continuation";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { checkoutSchema, quantitySchema } from "@/lib/validation/commerce";
+import {
+  altContactSchema,
+  checkoutSchema,
+  fulfillmentMethodSchema,
+  quantitySchema,
+} from "@/lib/validation/commerce";
 
 const sessionError: ActionState = { status: "error", message: "Tu sesión terminó. Ingresa nuevamente." };
 const setupError: ActionState = {
@@ -86,29 +92,81 @@ export async function checkoutCart(
   _previousState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const parsed = checkoutSchema.safeParse({
-    recipient: formData.get("recipient"),
-    address_line1: formData.get("address_line1"),
-    address_line2: formData.get("address_line2"),
-    locality: formData.get("locality"),
-    administrative_area: formData.get("administrative_area"),
-    postal_code: formData.get("postal_code"),
-    country_code: formData.get("country_code"),
-    delivery_instructions: formData.get("delivery_instructions"),
-    buyer_note: formData.get("buyer_note"),
-    idempotency_key: formData.get("idempotency_key"),
+  const method = fulfillmentMethodSchema.safeParse(formData.get("fulfillment_method"));
+  if (!method.success) {
+    return { status: "error", message: "Elige recolección o envío para continuar." };
+  }
+
+  const contact = altContactSchema.safeParse({
+    name: formData.get("alt_contact_name") ?? "",
+    phone: formData.get("alt_contact_phone") ?? "",
+    note: formData.get("alt_contact_note") ?? "",
   });
-  if (!parsed.success) return { status: "error", message: "Revisa los campos marcados.", errors: parsed.error.flatten().fieldErrors };
+  if (!contact.success) {
+    return {
+      status: "error",
+      message: "Revisa los datos de la otra persona.",
+      errors: Object.fromEntries(
+        Object.entries(contact.error.flatten().fieldErrors).map(([key, value]) => [
+          `alt_contact_${key}`,
+          value,
+        ]),
+      ),
+    };
+  }
+
+  const idempotencyKey = formData.get("idempotency_key");
+  const buyerNote = formData.get("buyer_note");
+
+  // Only a shipped order has an address, and a collected one must not carry one:
+  // the database refuses it, because an address on a pickup order would sit in
+  // order_addresses looking like a shipment nobody agreed to.
+  let address: Json | null = null;
+  if (method.data === "shipping") {
+    const parsed = checkoutSchema.safeParse({
+      recipient: formData.get("recipient"),
+      address_line1: formData.get("address_line1"),
+      address_line2: formData.get("address_line2"),
+      locality: formData.get("locality"),
+      administrative_area: formData.get("administrative_area"),
+      postal_code: formData.get("postal_code"),
+      country_code: formData.get("country_code"),
+      delivery_instructions: formData.get("delivery_instructions"),
+      buyer_note: buyerNote,
+      idempotency_key: idempotencyKey,
+    });
+    if (!parsed.success) {
+      return {
+        status: "error",
+        message: "Revisa los campos marcados.",
+        errors: parsed.error.flatten().fieldErrors,
+      };
+    }
+    const addressFields = { ...parsed.data };
+    Reflect.deleteProperty(addressFields, "buyer_note");
+    Reflect.deleteProperty(addressFields, "idempotency_key");
+    address = addressFields;
+  }
+
   const supabase = await authenticatedClient();
   if (!supabase) return sessionError;
-  const { buyer_note, idempotency_key, ...address } = parsed.data;
-  const { data: orderId, error } = await supabase.rpc("checkout_cart_v2", {
+
+  const { data: orderId, error } = await supabase.rpc("checkout_cart_v3", {
     p_shop_id: shopId,
+    p_fulfillment_method: method.data,
     p_address: address,
-    p_buyer_note: buyer_note,
-    p_idempotency_key: idempotency_key,
+    p_alt_contact: contact.data.name ? contact.data : null,
+    p_buyer_note: typeof buyerNote === "string" ? buyerNote : null,
+    p_idempotency_key: String(idempotencyKey ?? ""),
   });
-  if (error || !orderId) return { status: "error", message: databaseMessage(error?.message, "No pudimos crear tu pedido.") };
+
+  if (error || !orderId) {
+    return {
+      status: "error",
+      message: databaseMessage(error?.message, "No pudimos crear tu pedido."),
+    };
+  }
+
   revalidatePath("/compras");
   redirect(`/compras/${orderId}?creado=1`);
 }

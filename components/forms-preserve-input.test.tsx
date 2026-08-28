@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AuthForm } from "@/components/auth/auth-form";
-import { CheckoutForm } from "@/components/orders/checkout-form";
+import { FulfillmentChoice } from "@/components/orders/fulfillment-choice";
 import { ProductForm } from "@/components/products/product-form";
 import { ShopForm } from "@/components/shops/shop-form";
 import type { ActionState } from "@/lib/action-state";
@@ -42,7 +42,16 @@ async function submitAndWait(buttonName: RegExp | string) {
 
 describe("a rejected submit never discards what was typed", () => {
   it("keeps the whole shipping address on the checkout form", async () => {
-    render(<CheckoutForm action={rejecting} idempotencyKey="key-1" />);
+    render(
+      <FulfillmentChoice
+        action={rejecting}
+        idempotencyKey="key-1"
+        pickupPoint={null}
+        threadHref="#conversacion"
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("Envío a domicilio"));
 
     const typed: Record<string, string> = {
       "Nombre de quien recibe": "Ana Ruiz",

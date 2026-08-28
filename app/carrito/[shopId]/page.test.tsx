@@ -1,0 +1,145 @@
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import CartPage from "@/app/carrito/[shopId]/page";
+import { openConversation } from "@/lib/actions/start-conversation";
+import { getPublicShop } from "@/lib/queries/catalog.server";
+import {
+  fetchBuyerProfile,
+  fetchCartThreads,
+  fetchPickupPoint,
+} from "@/lib/queries/checkout.server";
+import { getCart, type CartDetail } from "@/lib/queries/orders.server";
+
+vi.mock("next/navigation", () => ({
+  notFound: vi.fn(() => {
+    throw new Error("NOT_FOUND");
+  }),
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
+vi.mock("@/lib/actions/cart", () => ({
+  checkoutCart: vi.fn(),
+  removeCartItem: vi.fn(),
+  setCartItemQuantity: vi.fn(),
+}));
+vi.mock("@/lib/actions/messages", () => ({ sendMessage: vi.fn(), markConversationRead: vi.fn() }));
+vi.mock("@/lib/actions/start-conversation", () => ({ openConversation: vi.fn() }));
+vi.mock("@/lib/queries/catalog.server", () => ({ getPublicShop: vi.fn() }));
+vi.mock("@/lib/queries/checkout.server", () => ({
+  fetchBuyerProfile: vi.fn(),
+  fetchCartThreads: vi.fn(),
+  fetchPickupPoint: vi.fn(),
+}));
+vi.mock("@/lib/queries/orders.server", () => ({ getCart: vi.fn() }));
+
+const cart: CartDetail = {
+  id: 20,
+  shop: { id: 4, name: "Casa Niebla", slug: "casa-niebla" },
+  items: [
+    {
+      id: 31,
+      quantity: 2,
+      product: {
+        id: 12,
+        name: "Taza volcánica",
+        price_mxn: 240,
+        image_path: null,
+      },
+    },
+  ],
+  subtotal: 480,
+};
+
+beforeEach(() => {
+  vi.mocked(getCart).mockResolvedValue(cart);
+  vi.mocked(fetchBuyerProfile).mockResolvedValue({
+    userId: "buyer-1",
+    displayName: "Ana Ruiz",
+    email: "ana@example.com",
+    phone: "+523312345678",
+  });
+  vi.mocked(fetchPickupPoint).mockResolvedValue({
+    locality: "Guadalajara",
+    administrative_area_code: "JAL",
+  });
+  vi.mocked(fetchCartThreads).mockResolvedValue([
+    {
+      productId: 12,
+      productName: "Taza volcánica",
+      conversationId: null,
+      messages: [],
+    },
+  ]);
+  vi.mocked(getPublicShop).mockResolvedValue({
+    id: 4,
+    name: "Casa Niebla",
+    slug: "casa-niebla",
+    administrative_area_codes: ["JAL"],
+    country_code: "MX",
+    created_at: "2026-08-01T12:00:00Z",
+    description: "Barro y cerámica local.",
+    image_path: null,
+    imageUrl: null,
+    listing_limit: 50,
+    owner_id: "seller-1",
+    time_zone: "America/Mexico_City",
+    trust_evaluated_at: null,
+    trust_tier: "standard",
+    trust_metrics: null,
+    trust_profile: null,
+    updated_at: "2026-08-01T12:00:00Z",
+    products: [],
+  });
+});
+
+afterEach(() => {
+  cleanup();
+  vi.clearAllMocks();
+});
+
+describe("cart purchase request", () => {
+  it("renders buyer, items and threads, and seller in the required responsive grid", async () => {
+    const { container } = render(
+      await CartPage({ params: Promise.resolve({ shopId: "4" }) }),
+    );
+
+    expect(screen.getByRole("heading", { name: "Carrito de Casa Niebla" })).toBeInTheDocument();
+    expect(screen.getByText("Taza volcánica")).toBeInTheDocument();
+    expect(screen.getByText("Ana Ruiz")).toBeInTheDocument();
+    expect(screen.getByText("Vendedor")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Entrega" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Conversación" })).toBeInTheDocument();
+
+    const grid = container.querySelector(
+      ".lg\\:grid-cols-\\[minmax\\(0\\,340px\\)_minmax\\(0\\,1fr\\)_minmax\\(0\\,320px\\)\\]",
+    );
+    expect(grid).not.toBeNull();
+    expect(grid?.children).toHaveLength(3);
+    expect(grid?.children[0]).toHaveClass("contents", "lg:block");
+    expect(grid?.children[0]).toContainElement(screen.getByText("Ana Ruiz"));
+    expect(grid?.children[1]).toHaveClass("contents", "lg:block");
+    expect(grid?.children[1]).toContainElement(screen.getByText("Taza volcánica"));
+    expect(grid?.children[1]).toContainElement(screen.getByRole("heading", { name: "Conversación" }));
+    expect(grid?.children[2]).toHaveClass("contents", "lg:block");
+    expect(grid?.children[2]).toContainElement(screen.getByText("Vendedor"));
+
+    expect(screen.getByText("Taza volcánica").closest(".order-1")).not.toBeNull();
+    expect(screen.getByText("Vendedor").closest(".order-2")).not.toBeNull();
+    expect(screen.getByText("Ana Ruiz").closest(".order-3")).not.toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "Conversación" }).closest(".order-4"),
+    ).not.toBeNull();
+  });
+
+  it("offers the explicit thread action in both responsive views without opening one on render", async () => {
+    render(await CartPage({ params: Promise.resolve({ shopId: "4" }) }));
+
+    expect(
+      screen.getAllByRole("button", { name: "Preguntar sobre este producto" }),
+    ).toHaveLength(2);
+    expect(fetchCartThreads).toHaveBeenCalledWith(4, [
+      { productId: 12, productName: "Taza volcánica" },
+    ]);
+    expect(openConversation).not.toHaveBeenCalled();
+  });
+});
