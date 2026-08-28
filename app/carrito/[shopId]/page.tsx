@@ -14,6 +14,7 @@ import { openConversation } from "@/lib/actions/start-conversation";
 import { getPublicShop } from "@/lib/queries/catalog.server";
 import { fetchBuyerProfile, fetchCartThreads, fetchPickupPoint } from "@/lib/queries/checkout.server";
 import { getCart } from "@/lib/queries/orders.server";
+import { formatShopLocation } from "@/lib/shop-location";
 
 export default async function CartPage({ params }: { params: Promise<{ shopId: string }> }) {
   const { shopId: rawShopId } = await params;
@@ -146,7 +147,14 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
                   imageUrl: shop.imageUrl,
                   trustTier: shop.trust_tier,
                   trustMetrics: shop.trust_metrics,
-                  locality: pickupPoint?.locality ?? null,
+                  trustProfile: shop.trust_profile
+                    ? { joinedOn: shop.trust_profile.joined_on }
+                    : null,
+                  sellerDisplayName: shop.seller_display_name,
+                  location: formatShopLocation(
+                    shop.country_code,
+                    shop.administrative_area_codes,
+                  ),
                 }}
               />
             ) : null}

@@ -169,7 +169,33 @@ describe("checkoutCart fulfillment", () => {
     })));
 
     expect(state?.message).toBe("Revisa los campos marcados.");
-    expect(state?.errors?.buyer_note).toBeDefined();
+    expect(state?.errors?.buyer_note).toEqual([
+      "La nota para el vendedor no puede pasar de 1000 caracteres.",
+    ]);
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    {
+      field: "alt_contact_name",
+      value: "x".repeat(81),
+      message: "El nombre de la otra persona no puede pasar de 80 caracteres.",
+    },
+    {
+      field: "alt_contact_note",
+      value: "x".repeat(201),
+      message: "La nota de la otra persona no puede pasar de 200 caracteres.",
+    },
+  ])("returns the localized $field length error", async ({ field, value, message }) => {
+    const state = await run(checkoutCart(4, idle, formOf({
+      fulfillment_method: "pickup",
+      idempotency_key: idempotencyKey,
+      alt_contact_name: "Luis",
+      [field]: value,
+    })));
+
+    expect(state?.message).toBe("Revisa los datos de la otra persona.");
+    expect(state?.errors?.[field]).toEqual([message]);
     expect(rpc).not.toHaveBeenCalled();
   });
 

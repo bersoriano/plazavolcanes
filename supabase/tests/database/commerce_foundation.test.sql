@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(21);
+select plan(27);
 
 select has_column('public', 'shops', 'trust_tier', 'shops cache trust tier');
 select has_column('public', 'shops', 'listing_limit', 'shops cache listing limit');
@@ -15,7 +15,51 @@ select has_table('public', 'order_items', 'order item snapshots exist');
 select has_table('public', 'order_addresses', 'order address snapshots exist');
 select has_table('public', 'order_events', 'order audit events exist');
 select has_function('public', 'add_cart_item', array['bigint', 'integer'], 'cart mutation RPC exists');
-select has_function('public', 'checkout_cart', array['bigint', 'jsonb', 'text', 'uuid'], 'atomic checkout RPC exists');
+select hasnt_function('public', 'checkout_cart', array['bigint', 'jsonb', 'text', 'uuid'], 'checkout v1 is retired');
+select hasnt_function(
+  'private',
+  'checkout_cart_internal',
+  array['bigint', 'jsonb', 'text', 'uuid', 'boolean'],
+  'the five-argument private checkout is retired'
+);
+select has_function(
+  'private',
+  'checkout_cart_internal_v2',
+  array['bigint', 'text', 'jsonb', 'jsonb', 'text', 'uuid', 'boolean'],
+  'v2 and v3 share one seven-argument private checkout'
+);
+select ok(
+  not has_function_privilege(
+    'authenticated',
+    'private.checkout_cart_internal_v2(bigint,text,jsonb,jsonb,text,uuid,boolean)',
+    'execute'
+  ),
+  'authenticated callers cannot execute the private checkout directly'
+);
+select ok(
+  not has_function_privilege(
+    'anon',
+    'public.checkout_cart_v2(bigint,jsonb,text,uuid)',
+    'execute'
+  ),
+  'anonymous callers cannot execute checkout v2'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.checkout_cart_v2(bigint,jsonb,text,uuid)',
+    'execute'
+  ),
+  'authenticated callers retain checkout v2 compatibility'
+);
+select ok(
+  has_function_privilege(
+    'authenticated',
+    'public.checkout_cart_v3(bigint,text,jsonb,jsonb,text,uuid)',
+    'execute'
+  ),
+  'authenticated callers execute the fulfillment-aware checkout v3'
+);
 
 insert into auth.users (id, email, created_at) values
   ('10000000-0000-4000-8000-000000000001', 'commerce-seller@test.local', now()),
@@ -40,7 +84,14 @@ set local role authenticated;
 set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000001';
 
 update public.products set status = 'published'
-where id in (select id from public.products order by id limit 15);
+where id in (
+  select products.id
+  from public.products products
+  join public.shops shops on shops.id = products.shop_id
+  where shops.slug = 'comercio-uno'
+  order by products.id
+  limit 15
+);
 
 select throws_ok(
   $$update public.products set status = 'published' where name = 'Producto 16'$$,
@@ -70,13 +121,13 @@ select results_eq(
 );
 
 select lives_ok(
-  $$select public.checkout_cart(
+  $$select public.checkout_cart_v2(
     (select id from public.shops where slug = 'comercio-uno'),
     '{"recipient":"María López","address_line1":"Calle Uno 10","locality":"Guadalajara","administrative_area":"Jalisco","postal_code":"44100","country_code":"MX"}'::jsonb,
     'Entregar por la tarde',
     '10000000-0000-4000-8000-000000000099'::uuid
   )$$,
-  'buyer checks out cart atomically'
+  'buyer checks out cart atomically through v2'
 );
 
 select results_eq(

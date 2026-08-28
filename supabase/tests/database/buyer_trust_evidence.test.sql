@@ -26,19 +26,22 @@ select s.id, 'Producto pagable', 'Descripción suficientemente larga para probar
   (select id from public.categories where slug = 'celulares-y-accesorios')
 from public.shops s where s.slug = 'pagos-uno';
 
+select lives_ok(
+  $$insert into public.orders (
+      buyer_id, shop_id, idempotency_key, currency_code, subtotal,
+      handling_days, handling_time_zone, payment_confirmation_required,
+      fulfillment_method
+    )
+    select
+      '50000000-0000-4000-8000-000000000002', id,
+      '50000000-0000-4000-8000-000000000101', 'MXN', 250,
+      3, time_zone, false, 'shipping'
+    from public.shops where slug = 'pagos-uno'$$,
+  'the payment-optional compatibility fixture is explicit'
+);
+
 set local role authenticated;
 set local request.jwt.claim.sub = '50000000-0000-4000-8000-000000000002';
-
-select public.add_cart_item((select id from public.products where name = 'Producto pagable'), 1);
-select lives_ok(
-  $$select public.checkout_cart(
-    (select id from public.shops where slug = 'pagos-uno'),
-    '{"recipient":"Comprador Uno","address_line1":"Calle Uno 1","locality":"Guadalajara","administrative_area":"Jalisco","postal_code":"44100","country_code":"MX"}'::jsonb,
-    null,
-    '50000000-0000-4000-8000-000000000101'
-  )$$,
-  'legacy checkout remains callable'
-);
 
 select public.add_cart_item((select id from public.products where name = 'Producto pagable'), 1);
 select lives_ok(
@@ -54,19 +57,19 @@ select lives_ok(
 select results_eq(
   $$select count(*) from public.orders where payment_confirmation_required$$,
   array[1::bigint],
-  'only v2 checkout requires payment confirmation'
+  'checkout v2 requires payment confirmation'
 );
 select results_eq(
   $$select count(*) from public.orders where not payment_confirmation_required$$,
   array[1::bigint],
-  'legacy checkout remains payment optional'
+  'the explicit compatibility fixture remains payment optional'
 );
 
 set local request.jwt.claim.sub = '50000000-0000-4000-8000-000000000001';
 
 select lives_ok(
   $$select public.accept_order((select id from public.orders where not payment_confirmation_required), '50000000-0000-4000-8000-000000000111')$$,
-  'seller accepts legacy order'
+  'seller accepts the payment-optional fixture'
 );
 select lives_ok(
   $$select public.accept_order((select id from public.orders where payment_confirmation_required), '50000000-0000-4000-8000-000000000112')$$,
@@ -107,7 +110,7 @@ select lives_ok(
 );
 select lives_ok(
   $$select public.mark_order_shipped((select id from public.orders where not payment_confirmation_required), 'Guía legado', '50000000-0000-4000-8000-000000000125')$$,
-  'legacy order remains shippable without payment evidence'
+  'the payment-optional fixture remains shippable without payment evidence'
 );
 
 reset role;

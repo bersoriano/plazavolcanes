@@ -188,6 +188,7 @@ describe("public sharing controls", () => {
     vi.mocked(getPublicShop).mockResolvedValue({
       id: 3,
       owner_id: "123e4567-e89b-12d3-a456-426614174000",
+      seller_display_name: "Vendedor #123E",
       name: "Casa Niebla",
       slug: "casa-niebla",
       description: "Objetos hechos en un taller al pie del volcán.",

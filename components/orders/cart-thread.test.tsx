@@ -41,7 +41,18 @@ describe("CartThreads", () => {
   it("opens on the first item's thread", () => {
     render(<CartThreads currentUserId="u1" threads={threads} />);
 
-    expect(screen.getByRole("tab", { name: "Taza de barro" })).toHaveAttribute("aria-selected", "true");
+    const firstTab = screen.getByRole("tab", { name: "Taza de barro" });
+    const secondTab = screen.getByRole("tab", { name: "Plato de barro" });
+    const panel = screen.getByRole("tabpanel");
+
+    expect(firstTab).toHaveAttribute("aria-selected", "true");
+    expect(firstTab).toHaveAttribute("aria-controls", "cart-thread-panel-1");
+    expect(firstTab).toHaveAttribute("tabindex", "0");
+    expect(secondTab).toHaveAttribute("aria-controls", "cart-thread-panel-2");
+    expect(secondTab).toHaveAttribute("tabindex", "-1");
+    expect(panel).toHaveAttribute("id", "cart-thread-panel-1");
+    expect(panel).toHaveAttribute("aria-labelledby", "cart-thread-tab-1");
+    expect(document.getElementById("cart-thread-panel-2")).toHaveAttribute("hidden");
     expect(screen.getByText("¿Sigue disponible?")).toBeInTheDocument();
   });
 
@@ -60,6 +71,21 @@ describe("CartThreads", () => {
     fireEvent.click(screen.getByRole("tab", { name: "Plato de barro" }));
 
     expect(screen.getByRole("button", { name: "Preguntar sobre este producto" })).toBeInTheDocument();
+  });
+
+  it("moves selection and focus with the tab arrow keys", () => {
+    render(<CartThreads currentUserId="u1" threads={threads} />);
+
+    const firstTab = screen.getByRole("tab", { name: "Taza de barro" });
+    const secondTab = screen.getByRole("tab", { name: "Plato de barro" });
+    firstTab.focus();
+
+    fireEvent.keyDown(firstTab, { key: "ArrowRight" });
+
+    expect(secondTab).toHaveFocus();
+    expect(secondTab).toHaveAttribute("aria-selected", "true");
+    expect(secondTab).toHaveAttribute("tabindex", "0");
+    expect(firstTab).toHaveAttribute("tabindex", "-1");
   });
 
   it("shows no tab strip for a single item", () => {

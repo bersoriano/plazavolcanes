@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(15);
 
 insert into auth.users (id, email, created_at) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'buyer@test.local', now()),
@@ -13,6 +13,9 @@ insert into public.shops (id, owner_id, name, slug, description, country_code)
 overriding system value
 values (910, 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Tienda Recoge', 'tienda-recoge',
   'Descripción completa de la tienda que ofrece recolección.', 'MX');
+
+insert into public.user_display_names (user_id, display_name)
+values ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Elena Volcán');
 
 insert into public.shop_pickup_points
   (shop_id, address_line1, locality, administrative_area_code, postal_code, notes)
@@ -110,10 +113,41 @@ select throws_ok(
 
 -- 7. The regression the column-revoke design would have caused.
 set local role anon;
+
+select is(
+  public.shop_pickup_point(910) ->> 'locality',
+  'Zapopan',
+  'an anonymous caller sees the pickup locality'
+);
+
+select ok(
+  public.shop_pickup_point(910) -> 'address_line1' is null,
+  'an anonymous caller does not see the pickup street'
+);
+
+select ok(
+  not has_table_privilege('anon', 'public.shop_pickup_points', 'select'),
+  'anonymous has no direct select privilege on pickup points'
+);
+
+select is(
+  public.shop_seller_display_name(910),
+  'Elena Volcán',
+  'the public shop reader returns the seller display name'
+);
+
+select ok(
+  has_function_privilege('anon', 'public.shop_seller_display_name(bigint)', 'execute'),
+  'anonymous may call the narrow public seller-name reader'
+);
+
 select lives_ok(
   $$select * from public.shops where id = 910$$,
   'select * on shops still works for anonymous callers'
 );
+
+reset role;
+reset request.jwt.claims;
 
 select * from finish();
 rollback;

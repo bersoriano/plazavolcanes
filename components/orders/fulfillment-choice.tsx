@@ -20,7 +20,6 @@ function ConfirmButton({ chosen }: { chosen: boolean }) {
 
   return (
     <button
-      aria-describedby={chosen ? undefined : "fulfillment-required"}
       className="w-full rounded-full bg-brand px-6 py-3 font-semibold text-white disabled:opacity-60"
       disabled={pending || !chosen}
       type="submit"
@@ -57,7 +56,10 @@ export function FulfillmentChoice({
       <input name="idempotency_key" type="hidden" value={idempotencyKey} />
       <input name="country_code" type="hidden" value="MX" />
 
-      <fieldset className="space-y-3">
+      <fieldset
+        aria-describedby={method === null ? "fulfillment-required" : undefined}
+        className="space-y-3"
+      >
         <legend className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">
           ¿Cómo lo recibes?
         </legend>

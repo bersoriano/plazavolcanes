@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { ShopForm } from "@/components/shops/shop-form";
@@ -114,5 +114,48 @@ describe("ShopForm", () => {
     expect(screen.getByLabelText("Ofrezco recolección en tienda")).toBeChecked();
     expect(screen.getByLabelText("Calle y número de recolección")).toHaveValue("Av. Vallarta 1234");
     expect(screen.getByLabelText("Código postal de recolección")).toHaveValue("45010");
+  });
+
+  it("rehydrates the rejected pickup state and associates its server error", async () => {
+    const rejected = async (): Promise<ActionState> => ({
+      status: "error",
+      message: "Revisa los datos de recolección.",
+      errors: {
+        pickup_administrative_area_code: ["Selecciona un estado de recolección."],
+      },
+    });
+
+    render(
+      <ShopForm
+        action={rejected}
+        pickupPoint={{
+          addressLine1: "Av. Vallarta 1234",
+          locality: "Zapopan",
+          administrativeAreaCode: "MX-JAL",
+          postalCode: "45010",
+          notes: "Portón verde",
+        }}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Estado de recolección"), {
+      target: { value: "MX-OAX" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Crear tienda" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("status")).toHaveTextContent("Revisa los datos de recolección.");
+    });
+
+    const select = screen.getByLabelText("Estado de recolección");
+    expect(select).toHaveValue("MX-OAX");
+    expect(select).toHaveAttribute("aria-invalid", "true");
+    expect(select).toHaveAttribute(
+      "aria-describedby",
+      "pickup-administrative-area-code-error",
+    );
+    expect(document.getElementById("pickup-administrative-area-code-error")).toHaveTextContent(
+      "Selecciona un estado de recolección.",
+    );
   });
 });

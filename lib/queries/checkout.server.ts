@@ -3,7 +3,11 @@ import "server-only";
 import { displayNameOrHandle } from "@/lib/display-name";
 import { oldestFirst } from "@/lib/queries/messages";
 import type { ThreadMessage } from "@/lib/queries/messages";
-import { parsePickupPoint, type PickupPoint } from "@/lib/queries/checkout";
+import {
+  parsePickupPoint,
+  PICKUP_POINT_READ_ERROR,
+  type PickupPoint,
+} from "@/lib/queries/checkout";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -17,8 +21,13 @@ export type CartThread = {
 export async function fetchPickupPoint(shopId: number): Promise<PickupPoint | null> {
   if (!isSupabaseConfigured()) return null;
   const supabase = await createServerSupabaseClient();
-  const { data } = await supabase.rpc("shop_pickup_point", { p_shop_id: shopId });
-  return parsePickupPoint(data);
+  const { data, error } = await supabase.rpc("shop_pickup_point", { p_shop_id: shopId });
+  if (error) throw new Error(PICKUP_POINT_READ_ERROR);
+  if (data === null) return null;
+
+  const pickupPoint = parsePickupPoint(data);
+  if (!pickupPoint) throw new Error(PICKUP_POINT_READ_ERROR);
+  return pickupPoint;
 }
 
 /**

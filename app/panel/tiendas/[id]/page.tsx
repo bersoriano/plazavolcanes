@@ -9,6 +9,7 @@ import { ProductRow } from "@/components/products/product-row";
 import type { ListingStatus } from "@/components/ui/status-badge";
 import { deleteShop, updateShop } from "@/lib/actions/shops";
 import { getShopTrustDashboard } from "@/lib/queries/trust.server";
+import { PICKUP_POINT_READ_ERROR } from "@/lib/queries/checkout";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getCatalogImageUrl } from "@/lib/storage";
@@ -24,11 +25,12 @@ export default async function ShopManagePage({ params }: { params: Promise<{ id:
   const userId = claimsData?.claims?.sub;
   const { data: shop } = await supabase.from("shops").select("*").eq("id", shopId).eq("owner_id", userId ?? "").maybeSingle();
   if (!shop) notFound();
-  const { data: pickupPoint } = await supabase
+  const { data: pickupPoint, error: pickupPointError } = await supabase
     .from("shop_pickup_points")
     .select("address_line1, locality, administrative_area_code, postal_code, notes")
     .eq("shop_id", shopId)
     .maybeSingle();
+  if (pickupPointError) throw new Error(PICKUP_POINT_READ_ERROR);
   const { data: products } = await supabase.from("products").select("id, name, price_mxn, image_path, status, expires_at").eq("shop_id", shopId).neq("status", "deleted").order("created_at", { ascending: false });
   // Retired listings are kept only so their conversations still have something to
   // point at, and the query above leaves them out; narrowing here says so in types.

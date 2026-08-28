@@ -3,10 +3,10 @@ import { z } from "zod";
 const trimmed = (minimum: number, maximum: number, message: string) =>
   z.string().trim().min(minimum, message).max(maximum, message);
 
-const optionalTrimmed = (maximum: number) =>
+const optionalTrimmed = (maximum: number, maximumMessage: string) =>
   z.preprocess(
     (value) => (typeof value === "string" && value.trim() === "" ? null : value),
-    z.string().trim().max(maximum).nullable().optional().transform((value) => value ?? null),
+    z.string().trim().max(maximum, maximumMessage).nullable().optional().transform((value) => value ?? null),
   );
 
 export const quantitySchema = z.coerce
@@ -21,7 +21,10 @@ export const fulfillmentMethodSchema = z.enum(["pickup", "shipping"], {
 
 export const altContactSchema = z
   .object({
-    name: z.string().trim().max(80).transform((value) => value || null),
+    name: z.string().trim().max(
+      80,
+      "El nombre de la otra persona no puede pasar de 80 caracteres.",
+    ).transform((value) => value || null),
     phone: z
       .string()
       .trim()
@@ -29,7 +32,10 @@ export const altContactSchema = z
       .refine((value) => value === null || /^\+52[0-9]{10}$/.test(value), {
         error: "El teléfono debe tener 10 dígitos.",
       }),
-    note: z.string().trim().max(200).transform((value) => value || null),
+    note: z.string().trim().max(
+      200,
+      "La nota de la otra persona no puede pasar de 200 caracteres.",
+    ).transform((value) => value || null),
   })
   .refine((value) => value.name !== null || (value.phone === null && value.note === null), {
     error: "Escribe el nombre de la otra persona.",
@@ -37,7 +43,10 @@ export const altContactSchema = z
   });
 
 export const checkoutMetadataSchema = z.object({
-  buyer_note: optionalTrimmed(1000),
+  buyer_note: optionalTrimmed(
+    1000,
+    "La nota para el vendedor no puede pasar de 1000 caracteres.",
+  ),
   idempotency_key: z.uuid("Falta la clave de confirmación."),
 });
 
@@ -45,12 +54,18 @@ export const checkoutSchema = z
   .object({
     recipient: trimmed(2, 120, "Escribe el nombre de quien recibe."),
     address_line1: trimmed(3, 200, "Escribe la calle y número."),
-    address_line2: optionalTrimmed(200),
+    address_line2: optionalTrimmed(
+      200,
+      "El interior o referencia no puede pasar de 200 caracteres.",
+    ),
     locality: trimmed(2, 120, "Escribe la ciudad o localidad."),
     administrative_area: trimmed(2, 120, "Escribe el estado o provincia."),
     postal_code: trimmed(3, 20, "Escribe un código postal válido."),
     country_code: z.string().trim().regex(/^[A-Z]{2}$/, "Selecciona un país válido."),
-    delivery_instructions: optionalTrimmed(500),
+    delivery_instructions: optionalTrimmed(
+      500,
+      "Las instrucciones de entrega no pueden pasar de 500 caracteres.",
+    ),
   })
   .extend(checkoutMetadataSchema.shape);
 

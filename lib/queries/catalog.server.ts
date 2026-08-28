@@ -368,7 +368,12 @@ export async function getPublicShop(
   const { data: shop } = await supabase.from("shops").select("*").eq("slug", slug).maybeSingle();
   if (!shop) return null;
 
-  const [{ data: products }, { data: trustProfile }, trustMetrics] = await Promise.all([
+  const [
+    { data: products },
+    { data: trustProfile },
+    { data: sellerDisplayName },
+    trustMetrics,
+  ] = await Promise.all([
     supabase
       .from("products")
       .select(productSelection)
@@ -380,12 +385,16 @@ export async function getPublicShop(
       .select("joined_on, verification_level")
       .eq("user_id", shop.owner_id)
       .maybeSingle(),
+    supabase.rpc("shop_seller_display_name", { p_shop_id: shop.id }),
     getPublicTrustMetrics(shop.id),
   ]);
 
   return {
     ...shop,
     imageUrl: getCatalogImageUrl(shop.image_path),
+    seller_display_name:
+      sellerDisplayName
+      ?? `Vendedor #${shop.owner_id.replace(/-/g, "").slice(0, 4).toUpperCase()}`,
     trust_metrics: trustMetrics,
     trust_profile: trustProfile as Pick<
       UserTrustProfile,

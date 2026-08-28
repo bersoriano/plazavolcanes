@@ -15,7 +15,9 @@ export function ShopPanel({
     imageUrl: string | null;
     trustTier: "standard" | "reliable" | "top_rated";
     trustMetrics: PublicTrustMetrics | null;
-    locality: string | null;
+    trustProfile: { joinedOn: string } | null;
+    sellerDisplayName: string;
+    location: string;
   };
 }) {
   return (
@@ -32,8 +34,9 @@ export function ShopPanel({
           )}
         </span>
         <div className="min-w-0">
+          <p className="truncate font-semibold text-ink">{shop.sellerDisplayName}</p>
           <p className="truncate font-display text-xl font-semibold">{shop.name}</p>
-          {shop.locality ? <p className="text-sm text-muted">{shop.locality}</p> : null}
+          <p className="text-sm text-muted">{shop.location}</p>
         </div>
       </div>
 
@@ -41,11 +44,9 @@ export function ShopPanel({
         <TrustTierBadge tier={shop.trustTier} />
       </div>
 
-      {shop.trustMetrics ? (
-        <div className="mt-4">
-          <TrustBadges metrics={shop.trustMetrics} profile={null} />
-        </div>
-      ) : null}
+      <div className="mt-4">
+        <TrustBadges metrics={shop.trustMetrics} profile={shop.trustProfile} />
+      </div>
 
       <Link className="mt-5 inline-flex text-sm font-semibold text-brand" href={`/tiendas/${shop.slug}`}>
         Ver la tienda

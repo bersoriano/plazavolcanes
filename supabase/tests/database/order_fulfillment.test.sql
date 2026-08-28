@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(12);
+select plan(14);
 
 insert into auth.users (id, email, created_at) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'buyer@test.local', now()),
@@ -50,6 +50,9 @@ select isnt_empty(
 -- 2. A pickup checkout writes no address row, and carries the alternate contact.
 select public.add_cart_item(820, 1);
 
+create temp table pickup_request as
+select gen_random_uuid() as idempotency_key;
+
 create temp table pickup_order as
 select public.checkout_cart_v3(
   920,
@@ -57,7 +60,7 @@ select public.checkout_cart_v3(
   null,
   '{"name":"Luis Ruiz","phone":"+523312345678","note":"mi hermano"}'::jsonb,
   null,
-  gen_random_uuid()
+  (select idempotency_key from pickup_request)
 ) as id;
 
 select is(
@@ -72,13 +75,40 @@ select is_empty(
   'a pickup checkout writes no address row'
 );
 
-select is(
-  (select alt_contact_note from public.orders where id = (select id from pickup_order)),
-  'mi hermano',
-  'the alternate contact note is stored on the order'
+select results_eq(
+  $$select alt_contact_name || '|' || alt_contact_phone || '|' || alt_contact_note
+    from public.orders where id = (select id from pickup_order)$$,
+  array['Luis Ruiz|+523312345678|mi hermano'::text],
+  'all alternate contact fields are stored in their intended columns'
 );
 
--- 3. Shipping without an address is refused.
+-- 3. Replaying the same key after the cart was emptied returns the first order
+-- and cannot create another row.
+select is(
+  public.checkout_cart_v3(
+    920,
+    'pickup',
+    null,
+    '{"name":"Luis Ruiz","phone":"+523312345678","note":"mi hermano"}'::jsonb,
+    null,
+    (select idempotency_key from pickup_request)
+  ),
+  (select id from pickup_order),
+  'a repeated v3 idempotency key returns the original order'
+);
+
+select is(
+  (
+    select count(*)
+    from public.orders
+    where buyer_id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+      and idempotency_key = (select idempotency_key from pickup_request)
+  ),
+  1::bigint,
+  'a repeated v3 idempotency key creates no extra order row'
+);
+
+-- 4. Shipping without an address is refused.
 select public.add_cart_item(820, 1);
 
 select throws_ok(
@@ -88,7 +118,7 @@ select throws_ok(
   'shipping without an address is refused'
 );
 
--- 4. Pickup carrying an address is refused, so it cannot slip past the gate.
+-- 5. Pickup carrying an address is refused, so it cannot slip past the gate.
 select throws_ok(
   $$select public.checkout_cart_v3(920, 'pickup',
       '{"recipient":"Ana","address_line1":"Calle 1","locality":"Zapopan","administrative_area":"Jalisco","postal_code":"45010","country_code":"MX"}'::jsonb,
@@ -98,7 +128,7 @@ select throws_ok(
   'pickup with an address is refused'
 );
 
--- 5. An invented method is refused.
+-- 6. An invented method is refused.
 select throws_ok(
   $$select public.checkout_cart_v3(920, 'teleport', null, null, null, gen_random_uuid())$$,
   '22023',
@@ -106,7 +136,7 @@ select throws_ok(
   'an unknown fulfillment method is refused'
 );
 
--- 6. A phone or note with nobody's name attached is refused.
+-- 7. A phone or note with nobody's name attached is refused.
 select public.add_cart_item(820, 1);
 
 select throws_ok(
@@ -116,7 +146,7 @@ select throws_ok(
   'an alternate contact phone without a name is refused'
 );
 
--- 7. A too-short alternate contact name is refused in Spanish, not as a raw
+-- 8. A too-short alternate contact name is refused in Spanish, not as a raw
 -- constraint violation.
 select throws_ok(
   $$select public.checkout_cart_v3(920, 'pickup', null, '{"name":"A"}'::jsonb, null, gen_random_uuid())$$,
@@ -125,7 +155,7 @@ select throws_ok(
   'a too-short alternate contact name is refused'
 );
 
--- 8. A phone missing the +52 prefix is refused in Spanish. This is the case a
+-- 9. A phone missing the +52 prefix is refused in Spanish. This is the case a
 -- buyer is most likely to hit, typing ten digits with no country code.
 select throws_ok(
   $$select public.checkout_cart_v3(920, 'pickup', null, '{"name":"Luis Ruiz","phone":"3312345678"}'::jsonb, null, gen_random_uuid())$$,
@@ -134,7 +164,7 @@ select throws_ok(
   'an alternate contact phone missing the +52 prefix is refused'
 );
 
--- 9. A too-long alternate contact note is refused in Spanish.
+-- 10. A too-long alternate contact note is refused in Spanish.
 select throws_ok(
   $$select public.checkout_cart_v3(920, 'pickup', null, jsonb_build_object('name', 'Luis Ruiz', 'note', repeat('a', 201)), null, gen_random_uuid())$$,
   '22023',

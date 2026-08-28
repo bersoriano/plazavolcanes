@@ -2471,7 +2471,7 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
 }
 ```
 
-Note the thread is rendered twice — once for wide screens, once inside the collapsed `<details>` for narrow ones. If that proves to double the Realtime subscriptions in practice, replace it with a single instance and a CSS-only disclosure; verify with `read_console_messages` or the browser devtools before deciding.
+Authenticated browser verification showed that rendering the thread twice creates duplicate Realtime subscriptions. The implemented page therefore keeps one `CartThreads` instance mounted and uses a CSS-only disclosure on narrow screens.
 
 - [ ] **Step 8: Delete the superseded form**
 
@@ -2913,4 +2913,4 @@ Checked against the spec:
 Two spec details deliberately implemented differently, both noted in place:
 
 1. The spec's pgTAP list numbers cases 1-14 across one imagined file; the plan splits them into `shop_pickup_points.test.sql` and `order_fulfillment.test.sql` so each migration's tests fail before its own migration exists.
-2. The thread is rendered twice on the page (wide and collapsed-narrow). Task 10 Step 7 flags this as the one thing to verify in a browser rather than in a test.
+2. Authenticated browser verification proved that two rendered thread instances create duplicate Realtime subscriptions. The final implementation is single-mounted and uses CSS only to disclose it on narrow screens.

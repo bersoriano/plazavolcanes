@@ -11,6 +11,8 @@ export type PickupPoint = {
   notes?: string | null;
 };
 
+export const PICKUP_POINT_READ_ERROR = "No pudimos consultar el punto de recolección.";
+
 export function parsePickupPoint(value: unknown): PickupPoint | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;

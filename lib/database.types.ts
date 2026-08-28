@@ -629,10 +629,6 @@ export type Database = {
         Args: { p_product_id: number; p_quantity?: number };
         Returns: number;
       };
-      checkout_cart: {
-        Args: { p_shop_id: number; p_address: Json; p_buyer_note: string | null; p_idempotency_key: string };
-        Returns: number;
-      };
       checkout_cart_v2: {
         Args: { p_shop_id: number; p_address: Json; p_buyer_note: string | null; p_idempotency_key: string };
         Returns: number;
@@ -687,6 +683,7 @@ export type Database = {
       };
       touch_user_activity: { Args: Record<string, never>; Returns: undefined };
       shop_pickup_point: { Args: { p_shop_id: number }; Returns: Json };
+      shop_seller_display_name: { Args: { p_shop_id: number }; Returns: string | null };
       shop_public_trust_metrics: {
         Args: { p_shop_id: number };
         Returns: {

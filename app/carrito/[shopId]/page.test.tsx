@@ -96,6 +96,7 @@ beforeEach(() => {
     imageUrl: null,
     listing_limit: 50,
     owner_id: "seller-1",
+    seller_display_name: "Vendedor #SELL",
     time_zone: "America/Mexico_City",
     trust_evaluated_at: null,
     trust_tier: "standard",
@@ -169,5 +170,58 @@ describe("cart purchase request", () => {
       expect(thread.startAction).toBeTypeOf("function");
       expect(thread.sendAction).toBeNull();
     }
+  });
+
+  it("renders the seller, stored shop location and positive trust context without a pickup point", async () => {
+    vi.mocked(fetchPickupPoint).mockResolvedValue(null);
+    vi.mocked(getPublicShop).mockResolvedValue({
+      id: 4,
+      name: "Casa Niebla",
+      slug: "casa-niebla",
+      administrative_area_codes: ["MX-JAL"],
+      country_code: "MX",
+      created_at: "2026-08-01T12:00:00Z",
+      description: "Barro y cerámica local.",
+      image_path: "seller/shops/casa-niebla.jpg",
+      imageUrl: "/casa-niebla.jpg",
+      listing_limit: 40,
+      owner_id: "seller-1",
+      seller_display_name: "Elena Volcán",
+      time_zone: "America/Mexico_City",
+      trust_evaluated_at: "2026-08-27T12:00:00Z",
+      trust_tier: "reliable",
+      trust_metrics: {
+        averageReplyTimeMinutes: 45,
+        responseRate: 98,
+        descriptionAccuracy: 97,
+        onTimeShippingRate: 96,
+        orderCompletionRate: 99,
+        disputeRate: 0,
+        totalOrders: 32,
+        averageRating: 4.8,
+        reviewCount: 20,
+        lastActiveDaysAgo: 1,
+        sellerActiveDaysAgo: 1,
+        evaluatedAt: "2026-08-27T12:00:00Z",
+      },
+      trust_profile: { joined_on: "2025-01-15", verification_level: "basic" },
+      updated_at: "2026-08-01T12:00:00Z",
+      products: [],
+    } as never);
+
+    render(await CartPage({ params: Promise.resolve({ shopId: "4" }) }));
+
+    expect(screen.getByText("Elena Volcán")).toBeInTheDocument();
+    expect(screen.getByText("Jalisco, México")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Casa Niebla" })).toHaveAttribute(
+      "src",
+      "/casa-niebla.jpg",
+    );
+    expect(screen.getByText("Nivel Confiable")).toBeInTheDocument();
+    expect(screen.getByTestId("trust-badge-membership")).toHaveAttribute(
+      "data-state",
+      "measured",
+    );
+    expect(screen.getByTestId("trust-badge-response_rate")).toHaveTextContent("98%");
   });
 });

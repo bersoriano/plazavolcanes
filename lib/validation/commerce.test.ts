@@ -70,6 +70,26 @@ describe("altContactSchema", () => {
     const parsed = altContactSchema.parse({ name: "", phone: "", note: "" });
     expect(parsed).toEqual({ name: null, phone: null, note: null });
   });
+
+  it.each([
+    {
+      field: "name",
+      input: { name: "x".repeat(81), phone: "", note: "" },
+      message: "El nombre de la otra persona no puede pasar de 80 caracteres.",
+    },
+    {
+      field: "note",
+      input: { name: "Luis", phone: "", note: "x".repeat(201) },
+      message: "La nota de la otra persona no puede pasar de 200 caracteres.",
+    },
+  ])("localizes the $field length bound", ({ field, input, message }) => {
+    const result = altContactSchema.safeParse(input);
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toContainEqual(
+      expect.objectContaining({ path: [field], message }),
+    );
+  });
 });
 
 describe("checkoutMetadataSchema", () => {
@@ -94,5 +114,55 @@ describe("checkoutMetadataSchema", () => {
     { idempotency_key: idempotencyKey, buyer_note: "x".repeat(1001) },
   ])("rejects malformed shared checkout metadata %#", (metadata) => {
     expect(checkoutMetadataSchema.safeParse(metadata).success).toBe(false);
+  });
+
+  it("localizes the buyer note length bound", () => {
+    const result = checkoutMetadataSchema.safeParse({
+      buyer_note: "x".repeat(1001),
+      idempotency_key: idempotencyKey,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toContainEqual(
+      expect.objectContaining({
+        path: ["buyer_note"],
+        message: "La nota para el vendedor no puede pasar de 1000 caracteres.",
+      }),
+    );
+  });
+});
+
+describe("optional shipping field bounds", () => {
+  const shipping = {
+    recipient: "Ana Ruiz",
+    address_line1: "Calle Volcán 12",
+    address_line2: "",
+    locality: "Guadalajara",
+    administrative_area: "Jalisco",
+    postal_code: "44100",
+    country_code: "MX",
+    delivery_instructions: "",
+    buyer_note: "",
+    idempotency_key: "10000000-0000-4000-8000-000000000099",
+  };
+
+  it.each([
+    {
+      field: "address_line2",
+      value: "x".repeat(201),
+      message: "El interior o referencia no puede pasar de 200 caracteres.",
+    },
+    {
+      field: "delivery_instructions",
+      value: "x".repeat(501),
+      message: "Las instrucciones de entrega no pueden pasar de 500 caracteres.",
+    },
+  ])("localizes the $field length bound", ({ field, value, message }) => {
+    const result = checkoutSchema.safeParse({ ...shipping, [field]: value });
+
+    expect(result.success).toBe(false);
+    expect(result.error?.issues).toContainEqual(
+      expect.objectContaining({ path: [field], message }),
+    );
   });
 });

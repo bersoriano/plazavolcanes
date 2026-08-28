@@ -185,9 +185,24 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
                   Estado de recolección
                 </label>
                 <select
+                  aria-describedby={
+                    state.errors?.pickup_administrative_area_code
+                      ? "pickup-administrative-area-code-error"
+                      : undefined
+                  }
+                  aria-invalid={Boolean(state.errors?.pickup_administrative_area_code)}
                   className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none"
-                  defaultValue={pickupPoint?.administrativeAreaCode ?? primaryArea}
+                  defaultValue={
+                    state.values?.pickup_administrative_area_code
+                      ?? pickupPoint?.administrativeAreaCode
+                      ?? primaryArea
+                  }
                   id="pickup_administrative_area_code"
+                  key={
+                    state.values?.pickup_administrative_area_code
+                      ?? pickupPoint?.administrativeAreaCode
+                      ?? primaryArea
+                  }
                   name="pickup_administrative_area_code"
                   required
                 >
@@ -198,7 +213,10 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
                   ))}
                 </select>
                 {state.errors?.pickup_administrative_area_code?.[0] ? (
-                  <p className="text-sm font-medium text-sale">
+                  <p
+                    className="text-sm font-medium text-sale"
+                    id="pickup-administrative-area-code-error"
+                  >
                     {state.errors.pickup_administrative_area_code[0]}
                   </p>
                 ) : null}

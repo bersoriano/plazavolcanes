@@ -16,6 +16,12 @@ describe("FulfillmentChoice", () => {
     expect(screen.getByLabelText("Recolección en tienda")).not.toBeChecked();
     expect(screen.getByLabelText("Envío a domicilio")).not.toBeChecked();
     expect(screen.getByRole("button", { name: "Confirmar solicitud" })).toBeDisabled();
+
+    const choiceGroup = screen.getByRole("group", { name: "¿Cómo lo recibes?" });
+    expect(choiceGroup).toHaveAttribute("aria-describedby", "fulfillment-required");
+    expect(document.getElementById("fulfillment-required")).toHaveTextContent(
+      "Elige una opción para continuar.",
+    );
   });
 
   it("shows the address fields and enables the button when shipping is chosen", () => {
