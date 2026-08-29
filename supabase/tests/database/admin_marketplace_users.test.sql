@@ -2,12 +2,16 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(27);
 
 select has_function('private', 'bootstrap_initial_admin', array[]::text[],
   'operator-only bootstrap helper exists');
 select has_function('public', 'list_admin_marketplace_users', array[]::text[],
   'administrator marketplace RPC exists');
+select has_function('public', 'set_shop_publishing_approval', array['bigint', 'boolean'],
+  'shop publication approval RPC exists');
+select has_function('public', 'set_product_admin_enabled', array['bigint', 'boolean'],
+  'product administration enablement RPC exists');
 select is(
   (select p.proargnames::text
    from pg_catalog.pg_proc p
@@ -73,7 +77,7 @@ values
    'Descripción suficientemente larga para producto de prueba.', 100, 'draft',
    '2026-08-07T00:00:00Z', '2026-08-08T00:00:00Z'),
   (9202, 9101, 'Publicado visible', 'publicado-visible',
-   'Descripción suficientemente larga para producto de prueba.', 200, 'published',
+   'Descripción suficientemente larga para producto de prueba.', 200, 'draft',
    '2026-08-09T00:00:00Z', '2026-08-10T00:00:00Z'),
   (9203, 9101, 'Vencido oculto', 'vencido-oculto',
    'Descripción suficientemente larga para producto de prueba.', 300, 'expired',
@@ -83,6 +87,13 @@ values
    '2026-08-13T00:00:00Z', '2026-08-14T00:00:00Z');
 alter table public.products enable trigger products_require_publishable_category;
 
+-- Publication fixtures enter through the seller-safe draft state, then a trusted
+-- test role transitions the row to published.
+update public.products
+  set status = 'published',
+      category_id = (select id from public.categories where slug = 'celulares-y-accesorios')
+  where id = 9202;
+
 set local role authenticated;
 set local request.jwt.claims =
   '{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated"}';
@@ -90,6 +101,15 @@ set local request.jwt.claims =
 select throws_ok(
   $$select * from public.list_admin_marketplace_users()$$,
   '42501', null, 'non-administrator cannot read account marketplace data'
+);
+
+select throws_ok(
+  $$select * from public.set_shop_publishing_approval(9101, true)$$,
+  '42501', null, 'non-administrator cannot set shop publication approval'
+);
+select throws_ok(
+  $$select * from public.set_product_admin_enabled(9202, false)$$,
+  '42501', null, 'non-administrator cannot set product administration enablement'
 );
 
 set local request.jwt.claims =
@@ -134,6 +154,22 @@ select results_eq(
   'users return newest first with stable ordering'
 );
 
+select results_eq(
+  $$select shop_id, shop_slug from public.set_shop_publishing_approval(9101, true)$$,
+  $$values (9101::bigint, 'taller-volcan'::text)$$,
+  'administrator receives the affected shop identity after approval'
+);
+select results_eq(
+  $$select product_id, product_slug, shop_id, shop_slug from public.set_product_admin_enabled(9202, false)$$,
+  $$values (9202::bigint, 'publicado-visible'::text, 9101::bigint, 'taller-volcan'::text)$$,
+  'administrator receives affected product and shop identities after moderation'
+);
+select results_eq(
+  $$select status, is_admin_enabled from public.products where id = 9202$$,
+  $$values ('published'::text, false)$$,
+  'product moderation preserves seller publication status while changing only its gate'
+);
+
 set local role postgres;
 select is(
   has_function_privilege('anon', 'public.list_admin_marketplace_users()', 'EXECUTE'),
@@ -142,6 +178,16 @@ select is(
 select is(
   has_function_privilege('authenticated', 'private.bootstrap_initial_admin()', 'EXECUTE'),
   false, 'browser roles cannot invoke bootstrap helper'
+);
+
+set local role anon;
+select throws_ok(
+  $$select * from public.set_shop_publishing_approval(9101, false)$$,
+  '42501', null, 'anonymous users cannot set shop publication approval'
+);
+select throws_ok(
+  $$select * from public.set_product_admin_enabled(9202, true)$$,
+  '42501', null, 'anonymous users cannot set product administration enablement'
 );
 
 select * from finish();

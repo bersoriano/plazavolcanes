@@ -15,7 +15,13 @@ insert into public.shops (owner_id, name, slug, description, country_code, admin
 
 insert into public.products (shop_id, name, description, price_mxn, status, category_id) values
   ((select id from public.shops where slug='caduca'), 'Borrador quieto', 'Descripción completa del borrador quieto.', 100, 'draft', null),
-  ((select id from public.shops where slug='caduca'), 'Publicado fresco', 'Descripción completa del producto fresco.', 200, 'published', (select id from public.categories where slug='celulares-y-accesorios'));
+  ((select id from public.shops where slug='caduca'), 'Publicado fresco', 'Descripción completa del producto fresco.', 200, 'draft', null);
+
+-- Publication fixtures first use the normal draft state, then transition with
+-- the trusted test role instead of bypassing the creation invariant.
+update public.products
+  set status = 'published', category_id = (select id from public.categories where slug='celulares-y-accesorios')
+  where name = 'Publicado fresco';
 
 select is(
   (select expires_at from public.products where name = 'Borrador quieto'),
