@@ -164,6 +164,7 @@ select results_eq(
   $$values (9202::bigint, 'publicado-visible'::text, 9101::bigint, 'taller-volcan'::text)$$,
   'administrator receives affected product and shop identities after moderation'
 );
+set local role postgres;
 select results_eq(
   $$select status, is_admin_enabled from public.products where id = 9202$$,
   $$values ('published'::text, false)$$,

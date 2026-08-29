@@ -14,6 +14,8 @@ values (920, 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'Tienda Envio', 'tienda-env
   'Descripción completa de la tienda para probar el método de entrega.', 'MX',
   'America/Mexico_City');
 
+update public.shops set is_publishing_approved = true where id = 920;
+
 insert into public.products (id, shop_id, name, description, price_mxn, status, units_available, category_id)
 overriding system value
 values (820, 920, 'Taza', 'Descripción completa de la taza de barro artesanal.', 250,

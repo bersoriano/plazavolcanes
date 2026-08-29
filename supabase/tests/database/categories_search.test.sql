@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(83);
+select plan(84);
 
 select has_table('public', 'categories', 'categories table exists');
 select has_table('public', 'category_translations', 'category translations table exists');
@@ -74,6 +74,10 @@ insert into auth.users (id, email, created_at) values
 insert into public.shops (owner_id, name, slug, description, country_code) values
   ('123e4567-e89b-12d3-a456-426614174000', 'Tecnología Volcanes', 'tecnologia-volcanes', 'Productos tecnológicos desde México.', 'MX'),
   ('987fcdeb-51a2-43d7-9012-345678901234', 'US Catalog Shop', 'us-catalog-shop', 'Technology products shipped from the United States.', 'US');
+
+update public.shops
+set is_publishing_approved = true
+where slug in ('tecnologia-volcanes', 'us-catalog-shop');
 
 alter table public.products disable trigger products_require_publishable_category;
 insert into public.products (shop_id, name, description, price_mxn, status)
@@ -566,6 +570,29 @@ select lives_ok(
       1
     )$$,
   'authenticated callers can record a selected result through the RPC'
+);
+
+reset role;
+update public.products
+set is_admin_enabled = false
+where name = 'Funda resistente';
+
+create temp table hidden_search_product as
+select id from public.products where name = 'Funda resistente';
+
+grant select on hidden_search_product to anon;
+
+set local role anon;
+
+select throws_ok(
+  $$select public.record_search_selection(
+      public.record_catalog_search('teléfono', 'es-MX', 'MX', null, 1),
+      (select id from hidden_search_product),
+      1
+    )$$,
+  '22023',
+  'Selected product must be published.',
+  'search telemetry cannot select a hidden product'
 );
 
 reset role;

@@ -74,6 +74,8 @@ select results_eq(
   'a current-admin owned shop starts with publication approval'
 );
 
+update public.shops set is_publishing_approved = true where slug = 'tienda-b';
+
 insert into auth.users (id, email, created_at) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'buyer-without-shop@test.local', '2026-08-20 09:00:00+00');
 
