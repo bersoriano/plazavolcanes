@@ -37,8 +37,18 @@ type ProductFormProps = {
 
 export type ProductImage = { id: number; url: string | null; position: number };
 
-function ProductActions({ status }: { status: "draft" | "published" }) {
+function ProductActions({ status }: { status?: "draft" | "published" }) {
   const { pending } = useFormStatus();
+  if (!status) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-md text-sm leading-6 text-muted">Tu producto se guardará oculto como borrador. Podrás publicarlo cuando esté listo.</p>
+        <Button disabled={pending} type="submit">
+          {pending ? "Guardando…" : "Guardar producto"}
+        </Button>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-wrap justify-end gap-3">
       <Button disabled={pending} name="status" type="submit" value="draft" variant="secondary">
@@ -143,7 +153,7 @@ export function ProductForm({ action, categories, product, images = [] }: Produc
         {state.errors?.images?.[0] ? <p className="text-sm font-medium text-sale">{state.errors.images[0]}</p> : null}
       </div>
       {state.message ? <p className={`rounded-2xl px-4 py-3 text-sm font-medium ${state.status === "success" ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"}`} role="status">{state.message}</p> : null}
-      <ProductActions status={product?.status ?? "draft"} />
+      <ProductActions status={product?.status} />
     </form>
   );
 }

@@ -6,7 +6,7 @@ export const productStatusSchema = z.enum(["draft", "published"]);
 export const productConditionSchema = z.enum(["new", "used"]);
 export const usedConditionSchema = z.enum(["mint", "good", "fair", "bad", "scrap"]);
 
-export const productSchema = z.object({
+const productFields = {
   name: z
     .string()
     .trim()
@@ -27,7 +27,6 @@ export const productSchema = z.object({
     .refine((value) => value <= 9_999_999_999.99, {
       message: "El precio excede el máximo permitido.",
     }),
-  status: productStatusSchema,
   condition: productConditionSchema,
   used_condition: z.preprocess(
     (value) => (value === "" ? null : value),
@@ -51,7 +50,12 @@ export const productSchema = z.object({
   ),
   currency_code: z.literal(DEFAULT_CATALOG_CURRENCY).default(DEFAULT_CATALOG_CURRENCY),
   content_locale: z.literal(DEFAULT_CATALOG_LOCALE).default(DEFAULT_CATALOG_LOCALE),
-}).superRefine((product, context) => {
+};
+
+function validateCondition(
+  product: { condition: "new" | "used"; used_condition: "mint" | "good" | "fair" | "bad" | "scrap" | null },
+  context: z.RefinementCtx,
+) {
   if (product.condition === "used" && product.used_condition === null) {
     context.addIssue({
       code: "custom",
@@ -67,6 +71,15 @@ export const productSchema = z.object({
       path: ["used_condition"],
     });
   }
+}
+
+export const productCreationSchema = z.object(productFields).superRefine(validateCondition);
+
+export const productSchema = z.object({
+  ...productFields,
+  status: productStatusSchema,
+}).superRefine((product, context) => {
+  validateCondition(product, context);
 
   if (product.status === "published" && product.category_id === null) {
     context.addIssue({
@@ -78,3 +91,4 @@ export const productSchema = z.object({
 });
 
 export type ProductInput = z.infer<typeof productSchema>;
+export type ProductCreationInput = z.infer<typeof productCreationSchema>;
