@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(10);
+select plan(11);
 
 select has_table('public', 'product_images', 'product images table exists');
 
@@ -98,6 +98,15 @@ select results_eq(
   $$select count(*) from public.product_images where storage_path = 'owner/products/publicada.jpg'$$,
   array[0::bigint],
   'product images leave the public catalogue when the product visibility gate closes'
+);
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "11112222-1111-4111-8111-111122223333", "role": "authenticated"}';
+
+select results_eq(
+  $$select count(*) from public.product_images where storage_path = 'owner/products/publicada.jpg'$$,
+  array[1::bigint],
+  'the owner retains gallery access after the parent product becomes hidden'
 );
 
 select * from finish();

@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(84);
+select plan(87);
 
 select has_table('public', 'categories', 'categories table exists');
 select has_table('public', 'category_translations', 'category translations table exists');
@@ -593,6 +593,53 @@ select throws_ok(
   '22023',
   'Selected product must be published.',
   'search telemetry cannot select a hidden product'
+);
+
+reset role;
+insert into public.products (shop_id, name, description, price_mxn, status, category_id) values
+  ((select id from public.shops where slug = 'tecnologia-volcanes'), 'Coincidencia limitada', 'Descripción completa del resultado visible con coincidencia limitada.', 260, 'published', (select id from public.categories where slug = 'celulares-y-accesorios')),
+  ((select id from public.shops where slug = 'tecnologia-volcanes'), 'Coincidencia limitada', 'Descripción completa del resultado oculto con coincidencia limitada.', 270, 'published', (select id from public.categories where slug = 'celulares-y-accesorios'));
+
+create temp table visible_limited_search_product as
+select id from public.products where name = 'Coincidencia limitada' order by id limit 1;
+
+grant select on visible_limited_search_product to anon;
+
+update public.products
+set is_admin_enabled = false
+where id = (
+  select id from public.products where name = 'Coincidencia limitada' order by id desc limit 1
+);
+
+set local role anon;
+
+select results_eq(
+  $$select product_id from public.search_product_ids('Coincidencia limitada', 'es-MX', 'MX', null, null, 1)$$,
+  $$select id from visible_limited_search_product$$,
+  'a hidden exact match cannot consume the only search result slot'
+);
+
+reset role;
+update public.products
+set category_id = (select id from public.categories where slug = 'celulares-y-accesorios'),
+    is_admin_enabled = false
+where name = 'Cuaderno técnico';
+
+set local role anon;
+
+select results_eq(
+  $$select count(*) from public.product_translations where name = 'Gaming laptop'$$,
+  array[0::bigint],
+  'translations leave the public catalogue when their parent product becomes hidden'
+);
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "123e4567-e89b-12d3-a456-426614174000", "role": "authenticated"}';
+
+select results_eq(
+  $$select count(*) from public.product_translations where name = 'Gaming laptop'$$,
+  array[1::bigint],
+  'the owner retains translation access after the parent product becomes hidden'
 );
 
 reset role;

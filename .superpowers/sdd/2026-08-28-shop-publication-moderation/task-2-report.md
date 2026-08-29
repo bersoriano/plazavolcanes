@@ -114,3 +114,41 @@ Result: PASS
 - Confirmed expired/hidden products cannot start new commerce activity, while
   pre-existing order/conversation history remains readable.
 - No storage, URL-signing, or listing-limit behavior was changed.
+
+## Fix round 1
+
+### RED
+
+Added regressions for the remaining privileged-cart and search-limit gaps, then
+ran the focused files against the prior implementation:
+
+```sh
+npx supabase test db \
+  supabase/tests/database/commerce_foundation.test.sql \
+  supabase/tests/database/categories_search.test.sql \
+  supabase/tests/database/product_images.test.sql
+```
+
+```text
+Failed test 29: "a cart quantity cannot be changed after its product becomes hidden"
+  caught: no exception
+  wanted: P0002
+Failed test 83: "a hidden exact match cannot consume the only search result slot"
+  have: NULL
+  want: (visible product id)
+Result: FAIL
+```
+
+The dependent-row tests also now prove both sides of the policy contract:
+anonymous access disappears when the parent is hidden, while the owner still
+reads the same image or approved translation.
+
+### GREEN
+
+- Replaced `public.set_cart_item_quantity` in the moderation migration with an
+  explicit cart/product/shop effective-public lookup.
+- The public search wrapper now requests the legacy candidate set at the
+  maximum supported size, applies the effective-public gate, and only then
+  orders and clamps the requested limit.
+- Focused regressions passed: `Files=3, Tests=128, Result: PASS`.
+- Full database suite passed after the fix: `Files=28, Tests=578, Result: PASS`.

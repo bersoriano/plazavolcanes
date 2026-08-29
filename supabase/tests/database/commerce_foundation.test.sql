@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(29);
+select plan(30);
 
 select has_column('public', 'shops', 'trust_tier', 'shops cache trust tier');
 select has_column('public', 'shops', 'listing_limit', 'shops cache listing limit');
@@ -180,6 +180,18 @@ select throws_ok(
   'P0002',
   'Producto no disponible.',
   'a hidden product cannot be added to a cart'
+);
+
+select throws_ok(
+  $$select public.set_cart_item_quantity((
+      select cart_items.id
+      from public.cart_items
+      join public.carts on carts.id = cart_items.cart_id
+      where carts.buyer_id = '10000000-0000-4000-8000-000000000002'
+    ), 2)$$,
+  'P0002',
+  'Producto no encontrado en tu carrito.',
+  'a cart quantity cannot be changed after its product becomes hidden'
 );
 
 select throws_ok(

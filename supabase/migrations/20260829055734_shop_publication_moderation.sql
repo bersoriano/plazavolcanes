@@ -550,7 +550,7 @@ set search_path = ''
 as $$
   select search_results.product_id, search_results.rank
   from public.search_product_ids_unfiltered(
-    p_query, p_locale, p_country_code, p_administrative_area_code, p_category_id, p_limit
+    p_query, p_locale, p_country_code, p_administrative_area_code, p_category_id, 100
   ) search_results
   join public.products p on p.id = search_results.product_id
   join public.shops s on s.id = p.shop_id
@@ -558,7 +558,9 @@ as $$
     and p.is_admin_enabled
     and s.is_publishing_approved
     and p.expires_at is not null
-    and p.expires_at > now();
+    and p.expires_at > now()
+  order by search_results.rank desc, p.created_at desc, p.id desc
+  limit greatest(1, least(coalesce(p_limit, 20), 100));
 $$;
 
 revoke all on function public.search_product_ids(text, text, text, text, bigint, integer)
@@ -591,6 +593,46 @@ $$;
 
 revoke all on function public.catalog_state_counts(text) from public, anon;
 grant execute on function public.catalog_state_counts(text) to anon, authenticated;
+
+create or replace function public.set_cart_item_quantity(p_cart_item_id bigint, p_quantity integer)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_units smallint;
+begin
+  if auth.uid() is null then raise exception using errcode = '42501', message = 'Debes iniciar sesión.'; end if;
+  if p_quantity not between 1 and 99 then raise exception using errcode = '22023', message = 'La cantidad debe estar entre 1 y 99.'; end if;
+
+  select p.units_available into v_units
+  from public.cart_items ci
+  join public.carts c on c.id = ci.cart_id
+  join public.products p on p.id = ci.product_id
+  join public.shops s on s.id = p.shop_id
+  where ci.id = p_cart_item_id
+    and c.buyer_id = auth.uid()
+    and p.status = 'published'
+    and p.is_admin_enabled
+    and s.is_publishing_approved
+    and p.expires_at is not null
+    and p.expires_at > now();
+  if v_units is null then raise exception using errcode = 'P0002', message = 'Producto no encontrado en tu carrito.'; end if;
+  if p_quantity > v_units then
+    raise exception using errcode = '22023',
+      message = format('Solo hay %s unidades disponibles.', v_units);
+  end if;
+
+  update public.cart_items ci set quantity = p_quantity, updated_at = now()
+  from public.carts c
+  where ci.id = p_cart_item_id and c.id = ci.cart_id and c.buyer_id = auth.uid();
+  if not found then raise exception using errcode = 'P0002', message = 'Producto no encontrado en tu carrito.'; end if;
+end;
+$$;
+
+revoke all on function public.set_cart_item_quantity(bigint, integer) from public, anon;
+grant execute on function public.set_cart_item_quantity(bigint, integer) to authenticated;
 
 create or replace function public.record_search_selection(
   p_event_id uuid,
