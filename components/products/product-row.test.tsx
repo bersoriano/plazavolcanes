@@ -18,16 +18,30 @@ function product(overrides: Partial<Parameters<typeof ProductRow>[0]["product"]>
     image_path: null,
     status: "published" as const,
     expires_at: "2026-09-20T00:00:00.000Z",
+    is_admin_enabled: true,
+    is_publishing_approved: true,
     ...overrides,
   };
 }
 
 describe("ProductRow", () => {
-  it("tells a seller when a live listing runs out", () => {
+  it("shows the effective seller publication state", () => {
     render(<ProductRow product={product()} />);
 
+    expect(screen.getByText("Publicado")).toBeInTheDocument();
     expect(screen.getByText(/Vence el/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Despublicar" })).toBeInTheDocument();
+  });
+
+  it.each([
+    ["seller-disabled", product({ status: "draft", expires_at: null }), "Desactivado por ti"],
+    ["approval-pending", product({ is_publishing_approved: false, expires_at: null }), "Esperando aprobación de administración"],
+    ["product-admin-disabled", product({ is_admin_enabled: false, expires_at: null }), "Deshabilitado por administración"],
+    ["expired", product({ status: "expired", expires_at: "2026-08-01T00:00:00.000Z" }), "Vencido"],
+  ] as const)("labels a %s listing as %s", (_state, listing, label) => {
+    render(<ProductRow product={listing} />);
+
+    expect(screen.getByText(label)).toBeInTheDocument();
   });
 
   it("offers to bring an expired listing back", () => {
