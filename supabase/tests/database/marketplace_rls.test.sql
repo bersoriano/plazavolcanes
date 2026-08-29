@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(39);
+select plan(41);
 
 select has_table('public', 'shops', 'shops table exists');
 select has_table('public', 'products', 'products table exists');
@@ -16,6 +16,20 @@ select has_column('public', 'shops', 'country_code', 'shops have a country code'
 select has_column('public', 'shops', 'administrative_area_codes', 'shops have administrative area codes');
 select has_column('public', 'shops', 'is_publishing_approved', 'shops record publication approval');
 select has_column('public', 'products', 'is_admin_enabled', 'products record administration enablement');
+select col_default_is(
+  'public',
+  'shops',
+  'is_publishing_approved',
+  'false',
+  'shop publication approval defaults to false'
+);
+select col_default_is(
+  'public',
+  'products',
+  'is_admin_enabled',
+  'true',
+  'product administration enablement defaults to true'
+);
 
 insert into auth.users (id, email, created_at) values
   ('123e4567-e89b-12d3-a456-426614174000', 'seller-a@test.local', '2024-02-29 12:30:00+00'),
