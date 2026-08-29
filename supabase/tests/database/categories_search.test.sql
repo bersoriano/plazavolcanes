@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(87);
+select plan(88);
 
 select has_table('public', 'categories', 'categories table exists');
 select has_table('public', 'category_translations', 'category translations table exists');
@@ -617,6 +617,42 @@ select results_eq(
   $$select product_id from public.search_product_ids('Coincidencia limitada', 'es-MX', 'MX', null, null, 1)$$,
   $$select id from visible_limited_search_product$$,
   'a hidden exact match cannot consume the only search result slot'
+);
+
+reset role;
+update public.shops
+set listing_limit = 200
+where slug = 'tecnologia-volcanes';
+
+insert into public.products (shop_id, name, description, price_mxn, status, category_id) values
+  ((select id from public.shops where slug = 'tecnologia-volcanes'), 'Visible sin límite', 'Coincidencia sin tope dentro de una descripción completa del resultado visible.', 290, 'published', (select id from public.categories where slug = 'celulares-y-accesorios'));
+
+create temp table visible_uncapped_search_product as
+select id from public.products where name = 'Visible sin límite';
+
+grant select on visible_uncapped_search_product to anon;
+
+insert into public.products (shop_id, name, description, price_mxn, status, category_id)
+select
+  (select id from public.shops where slug = 'tecnologia-volcanes'),
+  'Coincidencia sin tope',
+  'Descripción completa del resultado oculto que excede el límite de candidatos.',
+  280,
+  'published',
+  (select id from public.categories where slug = 'celulares-y-accesorios')
+from generate_series(1, 101);
+
+update public.products
+set is_admin_enabled = false
+where name = 'Coincidencia sin tope'
+  and id not in (select id from visible_uncapped_search_product);
+
+set local role anon;
+
+select results_eq(
+  $$select product_id from public.search_product_ids('Coincidencia sin tope', 'es-MX', 'MX', null, null, 1)$$,
+  $$select id from visible_uncapped_search_product$$,
+  'more than one hundred hidden exact matches cannot exhaust public search candidates'
 );
 
 reset role;

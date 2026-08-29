@@ -152,3 +152,39 @@ reads the same image or approved translation.
   orders and clamps the requested limit.
 - Focused regressions passed: `Files=3, Tests=128, Result: PASS`.
 - Full database suite passed after the fix: `Files=28, Tests=578, Result: PASS`.
+
+## Fix round 2
+
+### RED
+
+Added a regression with 101 higher-ranked hidden exact matches and one lower-
+ranked visible match, with `p_limit = 1`:
+
+```sh
+npx supabase test db supabase/tests/database/categories_search.test.sql
+```
+
+Before this fix it failed as intended:
+
+```text
+Failed test 84: "more than one hundred hidden exact matches cannot exhaust public search candidates"
+  have: NULL
+  want: (visible product id)
+Result: FAIL
+```
+
+### GREEN
+
+The migration now derives a private uncapped candidate function from the
+established, inaccessible legacy ranking function, removing only its terminal
+candidate limit. The public security-definer wrapper applies the effective
+visibility join, orders the filtered rows, and then clamps the caller's
+`p_limit`. The legacy and candidate helpers have no browser-role execute grant.
+
+After a local reset applied the migration:
+
+```text
+npx supabase test db supabase/tests/database/categories_search.test.sql
+Files=1, Tests=88
+Result: PASS
+```

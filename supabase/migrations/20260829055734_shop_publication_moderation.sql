@@ -534,6 +534,38 @@ alter function public.search_product_ids(text, text, text, text, bigint, integer
 revoke all on function public.search_product_ids_unfiltered(text, text, text, text, bigint, integer)
   from public, anon, authenticated;
 
+-- Preserve the established candidate/ranking implementation, but deliberately
+-- remove its public-result cap for the private stream. Effective visibility is
+-- applied by the wrapper below, before that wrapper orders and limits results.
+do $$
+declare
+  v_definition text;
+begin
+  select pg_get_functiondef(
+    'public.search_product_ids_unfiltered(text,text,text,text,bigint,integer)'::regprocedure
+  ) into v_definition;
+
+  if position('limit greatest(1, least(coalesce(p_limit, 20), 100));' in v_definition) = 0 then
+    raise exception 'Expected search candidate limit was not found.';
+  end if;
+
+  v_definition := replace(
+    v_definition,
+    'FUNCTION public.search_product_ids_unfiltered(',
+    'FUNCTION private.search_product_ids_candidates('
+  );
+  v_definition := replace(
+    v_definition,
+    'limit greatest(1, least(coalesce(p_limit, 20), 100));',
+    ''
+  );
+  execute v_definition;
+end;
+$$;
+
+revoke all on function private.search_product_ids_candidates(text, text, text, text, bigint, integer)
+  from public, anon, authenticated;
+
 create function public.search_product_ids(
   p_query text,
   p_locale text,
@@ -549,8 +581,8 @@ security definer
 set search_path = ''
 as $$
   select search_results.product_id, search_results.rank
-  from public.search_product_ids_unfiltered(
-    p_query, p_locale, p_country_code, p_administrative_area_code, p_category_id, 100
+  from private.search_product_ids_candidates(
+    p_query, p_locale, p_country_code, p_administrative_area_code, p_category_id, p_limit
   ) search_results
   join public.products p on p.id = search_results.product_id
   join public.shops s on s.id = p.shop_id
