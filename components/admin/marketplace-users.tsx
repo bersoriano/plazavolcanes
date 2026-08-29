@@ -1,10 +1,62 @@
+"use client";
+
 import Link from "next/link";
 import { UsersRound } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { setShopPublishingApproval } from "@/lib/actions/admin-publication";
 import { formatDate } from "@/lib/format";
-import type { AdminMarketplaceUser } from "@/lib/queries/admin";
+import type { AdminMarketplaceShop, AdminMarketplaceUser } from "@/lib/queries/admin";
+import { useFormAction } from "@/lib/use-form-action";
+
+function ShopPublishingApproval({ shop }: { shop: AdminMarketplaceShop }) {
+  const [state, formAction, pending] = useFormAction(setShopPublishingApproval);
+  const isApproved = shop.isPublishingApproved;
+
+  return (
+    <form action={formAction} className="mt-4 rounded-2xl border border-line bg-surface p-4">
+      <input name="shop_id" type="hidden" value={shop.id} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold">
+            {isApproved ? "Publicaciones habilitadas" : "Publicaciones pendientes"}
+          </p>
+          <p className="mt-1 text-sm text-muted">
+            Habilita las publicaciones cuando la tienda pueda aparecer públicamente.
+          </p>
+        </div>
+        <button
+          aria-checked={isApproved}
+          className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition ${
+            isApproved ? "bg-success" : "bg-line"
+          }`}
+          disabled={pending}
+          name="enabled"
+          role="switch"
+          type="submit"
+          value={String(!isApproved)}
+        >
+          <span className="sr-only">Publicaciones habilitadas</span>
+          <span
+            aria-hidden="true"
+            className={`size-6 rounded-full bg-white shadow transition-transform ${
+              isApproved ? "translate-x-7" : "translate-x-1"
+            }`}
+          />
+        </button>
+      </div>
+      {state.message ? (
+        <p
+          className={`mt-3 text-sm ${state.status === "error" ? "text-sale" : "text-success"}`}
+          role="status"
+        >
+          {state.message}
+        </p>
+      ) : null}
+    </form>
+  );
+}
 
 export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
   if (!users.length) {
@@ -43,13 +95,14 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
                       <p className="mt-1 text-sm text-muted">Creada: {formatDate(shop.createdAt)}</p>
                     </div>
                   </div>
+                  <ShopPublishingApproval shop={shop} />
                   {shop.products.length ? (
                     <ul className="mt-4 divide-y divide-line">
                       {shop.products.map((product) => (
                         <li className="flex flex-col gap-3 py-4 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between" key={product.id}>
                           <div>
                             <h4 className="font-semibold">
-                              {product.status === "published" ? (
+                              {product.effectiveVisibility ? (
                                 <Link className="text-brand underline-offset-4 hover:underline" href={`/productos/${product.slug}`}>
                                   {product.name}
                                 </Link>
