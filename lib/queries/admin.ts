@@ -1,4 +1,4 @@
-export type AdminMarketplaceProductStatus = "draft" | "published";
+export type AdminMarketplaceProductStatus = "draft" | "published" | "expired";
 
 /** The flat row returned by public.list_admin_marketplace_users(). */
 export type AdminMarketplaceRpcRow = {
@@ -10,10 +10,13 @@ export type AdminMarketplaceRpcRow = {
   shop_name: string | null;
   shop_slug: string | null;
   shop_created_at: string | null;
+  shop_is_publishing_approved: boolean | null;
   product_id: number | null;
   product_name: string | null;
   product_slug: string | null;
   product_status: string | null;
+  product_is_admin_enabled: boolean | null;
+  product_expires_at: string | null;
   product_created_at: string | null;
   product_updated_at: string | null;
 };
@@ -23,6 +26,9 @@ export type AdminMarketplaceProduct = {
   name: string;
   slug: string;
   status: AdminMarketplaceProductStatus;
+  isAdminEnabled: boolean;
+  expiresAt: string | null;
+  effectiveVisibility: boolean;
   createdAt: string;
   updatedAt: string;
 };
@@ -32,6 +38,7 @@ export type AdminMarketplaceShop = {
   name: string;
   slug: string;
   createdAt: string;
+  isPublishingApproved: boolean;
   products: AdminMarketplaceProduct[];
 };
 
@@ -69,7 +76,8 @@ export function mapAdminMarketplaceUsers(
       row.shop_id === null ||
       row.shop_name === null ||
       row.shop_slug === null ||
-      row.shop_created_at === null
+      row.shop_created_at === null ||
+      row.shop_is_publishing_approved === null
     ) {
       continue;
     }
@@ -82,6 +90,7 @@ export function mapAdminMarketplaceUsers(
         name: row.shop_name,
         slug: row.shop_slug,
         createdAt: row.shop_created_at,
+        isPublishingApproved: row.shop_is_publishing_approved,
         products: [],
       };
       shopsByKey.set(shopKey, shop);
@@ -94,7 +103,10 @@ export function mapAdminMarketplaceUsers(
       row.product_slug === null ||
       row.product_created_at === null ||
       row.product_updated_at === null ||
-      (row.product_status !== "draft" && row.product_status !== "published")
+      row.product_is_admin_enabled === null ||
+      (row.product_status !== "draft" &&
+        row.product_status !== "published" &&
+        row.product_status !== "expired")
     ) {
       continue;
     }
@@ -107,6 +119,14 @@ export function mapAdminMarketplaceUsers(
         name: row.product_name,
         slug: row.product_slug,
         status: row.product_status,
+        isAdminEnabled: row.product_is_admin_enabled,
+        expiresAt: row.product_expires_at,
+        effectiveVisibility:
+          row.product_status === "published" &&
+          row.shop_is_publishing_approved &&
+          row.product_is_admin_enabled &&
+          row.product_expires_at !== null &&
+          new Date(row.product_expires_at).getTime() > Date.now(),
         createdAt: row.product_created_at,
         updatedAt: row.product_updated_at,
       });

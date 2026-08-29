@@ -230,12 +230,17 @@ revoke all on function private.expire_due_products() from public, anon, authenti
 
 select private.expire_due_products();
 
-create or replace function public.set_shop_publishing_approval(p_shop_id bigint, p_enabled boolean)
-returns table (shop_id bigint, shop_slug text)
+drop function public.set_shop_publishing_approval(bigint, boolean);
+
+create function public.set_shop_publishing_approval(p_shop_id bigint, p_enabled boolean)
+returns table (shop_id bigint, shop_slug text, product_slugs text[])
 language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  v_shop_slug text;
+  v_product_slugs text[];
 begin
   if auth.uid() is null or not (select public.is_current_user_admin()) then
     raise exception using
@@ -243,12 +248,11 @@ begin
       message = 'Solo administración puede cambiar la aprobación de publicación.';
   end if;
 
-  return query
   update public.shops s
   set is_publishing_approved = p_enabled,
       updated_at = now()
   where s.id = p_shop_id
-  returning s.id, s.slug;
+  returning s.slug into v_shop_slug;
 
   if not found then
     raise exception using errcode = 'P0002', message = 'Tienda no encontrada.';
@@ -263,11 +267,84 @@ begin
   updated_at = now()
   where p.shop_id = p_shop_id
     and p.status = 'published';
+
+  select coalesce(array_agg(p.slug order by p.id), '{}'::text[])
+  into v_product_slugs
+  from public.products p
+  where p.shop_id = p_shop_id
+    and p.status = 'published';
+
+  return query select p_shop_id, v_shop_slug, v_product_slugs;
 end;
 $$;
 
 revoke all on function public.set_shop_publishing_approval(bigint, boolean) from public, anon;
 grant execute on function public.set_shop_publishing_approval(bigint, boolean) to authenticated;
+
+drop function public.list_admin_marketplace_users();
+
+create function public.list_admin_marketplace_users()
+returns table (
+  user_id uuid,
+  email text,
+  user_created_at timestamp with time zone,
+  display_name text,
+  shop_id bigint,
+  shop_name text,
+  shop_slug text,
+  shop_created_at timestamp with time zone,
+  shop_is_publishing_approved boolean,
+  product_id bigint,
+  product_name text,
+  product_slug text,
+  product_status text,
+  product_is_admin_enabled boolean,
+  product_expires_at timestamp with time zone,
+  product_created_at timestamp with time zone,
+  product_updated_at timestamp with time zone
+)
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not (select public.is_current_user_admin()) then
+    raise exception using errcode = '42501',
+      message = 'Solo administración puede consultar usuarios.';
+  end if;
+
+  return query
+  select
+    u.id,
+    u.email::text,
+    u.created_at,
+    d.display_name,
+    s.id,
+    s.name,
+    s.slug,
+    s.created_at,
+    s.is_publishing_approved,
+    p.id,
+    p.name,
+    p.slug,
+    p.status,
+    p.is_admin_enabled,
+    p.expires_at,
+    p.created_at,
+    p.updated_at
+  from auth.users u
+  left join public.user_display_names d on d.user_id = u.id
+  left join public.shops s on s.owner_id = u.id
+  left join public.products p
+    on p.shop_id = s.id and p.status in ('draft', 'published', 'expired')
+  order by u.created_at desc, u.id, s.created_at desc nulls last, s.id,
+           p.created_at desc nulls last, p.id;
+end;
+$$;
+
+revoke all on function public.list_admin_marketplace_users() from public, anon;
+grant execute on function public.list_admin_marketplace_users() to authenticated;
 
 drop policy if exists "published_products_and_owner_drafts_are_visible" on public.products;
 create policy "effective_products_and_owner_rows_are_visible"

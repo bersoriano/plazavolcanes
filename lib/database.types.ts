@@ -283,6 +283,7 @@ export type Database = {
           handling_days: number;
           id: number;
           image_path: string | null;
+          is_admin_enabled: boolean;
           name: string;
           price_mxn: number;
           search_document: unknown;
@@ -304,6 +305,7 @@ export type Database = {
           handling_days?: number;
           id?: never;
           image_path?: string | null;
+          is_admin_enabled?: boolean;
           name: string;
           price_mxn: number;
           shop_id: number;
@@ -324,6 +326,7 @@ export type Database = {
           handling_days?: number;
           id?: never;
           image_path?: string | null;
+          is_admin_enabled?: boolean;
           name?: string;
           price_mxn?: number;
           shop_id?: number;
@@ -413,6 +416,7 @@ export type Database = {
           description: string;
           id: number;
           image_path: string | null;
+          is_publishing_approved: boolean;
           listing_limit: number;
           name: string;
           owner_id: string;
@@ -429,6 +433,7 @@ export type Database = {
           description: string;
           id?: never;
           image_path?: string | null;
+          is_publishing_approved?: boolean;
           listing_limit?: number;
           name: string;
           owner_id: string;
@@ -445,6 +450,7 @@ export type Database = {
           description?: string;
           id?: never;
           image_path?: string | null;
+          is_publishing_approved?: boolean;
           listing_limit?: number;
           name?: string;
           owner_id?: string;
@@ -645,6 +651,10 @@ export type Database = {
       create_order_review: { Args: { p_order_id: number; p_rating: number; p_matched_description: boolean; p_comment: string | null }; Returns: number };
       current_legal_document: { Args: { p_type: string }; Returns: Database["public"]["Tables"]["legal_document_versions"]["Row"] };
       is_current_user_admin: { Args: Record<never, never>; Returns: boolean };
+      set_shop_publishing_approval: {
+        Args: { p_shop_id: number; p_enabled: boolean };
+        Returns: { shop_id: number; shop_slug: string; product_slugs: string[] }[];
+      };
       list_admin_marketplace_users: {
         Args: Record<never, never>;
         Returns: {
@@ -656,10 +666,13 @@ export type Database = {
           shop_name: string | null;
           shop_slug: string | null;
           shop_created_at: string | null;
+          shop_is_publishing_approved: boolean | null;
           product_id: number | null;
           product_name: string | null;
           product_slug: string | null;
           product_status: string | null;
+          product_is_admin_enabled: boolean | null;
+          product_expires_at: string | null;
           product_created_at: string | null;
           product_updated_at: string | null;
         }[];

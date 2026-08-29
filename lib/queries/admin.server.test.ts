@@ -12,7 +12,7 @@ vi.mock("@/lib/queries/admin", () => ({
 vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: vi.fn() }));
 
-const row: AdminMarketplaceRpcRow = {
+const row = {
   user_id: "user-1",
   email: "elena@example.com",
   user_created_at: "2026-08-01T00:00:00.000Z",
@@ -21,13 +21,16 @@ const row: AdminMarketplaceRpcRow = {
   shop_name: "Casa Niebla",
   shop_slug: "casa-niebla",
   shop_created_at: "2026-08-02T00:00:00.000Z",
+  shop_is_publishing_approved: true,
   product_id: 9,
   product_name: "Taza de barro negro",
   product_slug: "taza-de-barro-negro",
   product_status: "published",
+  product_is_admin_enabled: true,
+  product_expires_at: "2027-08-03T00:00:00.000Z",
   product_created_at: "2026-08-03T00:00:00.000Z",
   product_updated_at: "2026-08-04T00:00:00.000Z",
-};
+} as AdminMarketplaceRpcRow;
 
 const grouped: AdminMarketplaceUser[] = [{
   id: "user-1",
