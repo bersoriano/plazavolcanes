@@ -11,6 +11,21 @@ export type CartInsertResult =
   | { status: "unavailable" }
   | { status: "error"; message: string };
 
+export async function findAvailableProduct(supabase: CartClient, productId: number) {
+  const { data } = await supabase
+    .from("products")
+    .select("shop_id, shops!inner(is_publishing_approved)")
+    .eq("id", productId)
+    .eq("status", "published")
+    .eq("is_admin_enabled", true)
+    .eq("shops.is_publishing_approved", true)
+    .not("expires_at", "is", null)
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle();
+
+  return data;
+}
+
 /** Turns a database refusal into something a buyer can act on. */
 export function databaseMessage(message: string | undefined, fallback: string) {
   if (message?.includes("propia tienda")) return "No puedes solicitar productos de tu propia tienda.";
@@ -35,16 +50,7 @@ export async function insertCartItem(
   productId: number,
   quantity: number,
 ): Promise<CartInsertResult> {
-  const { data: product } = await supabase
-    .from("products")
-    .select("shop_id, shops!inner(is_publishing_approved)")
-    .eq("id", productId)
-    .eq("status", "published")
-    .eq("is_admin_enabled", true)
-    .eq("shops.is_publishing_approved", true)
-    .not("expires_at", "is", null)
-    .gt("expires_at", new Date().toISOString())
-    .maybeSingle();
+  const product = await findAvailableProduct(supabase, productId);
 
   if (!product) return { status: "unavailable" };
 

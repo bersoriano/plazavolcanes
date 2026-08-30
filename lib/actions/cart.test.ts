@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getClaims = vi.fn();
+const findAvailableProduct = vi.fn();
 const insertCartItem = vi.fn();
 const rpc = vi.fn();
 const savePurchaseIntent = vi.fn();
@@ -17,7 +18,11 @@ vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: () => configured
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: async () => ({ auth: { getClaims }, rpc }),
 }));
-vi.mock("@/lib/cart-insert", () => ({ insertCartItem, databaseMessage: (_m: string, f: string) => f }));
+vi.mock("@/lib/cart-insert", () => ({
+  findAvailableProduct,
+  insertCartItem,
+  databaseMessage: (_m: string, f: string) => f,
+}));
 vi.mock("@/lib/purchase-intent.server", () => ({ savePurchaseIntent }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect }));
@@ -50,6 +55,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   configured.value = true;
   getClaims.mockResolvedValue({ data: { claims: { sub: "buyer-1" } } });
+  findAvailableProduct.mockResolvedValue({ shop_id: 4 });
   insertCartItem.mockResolvedValue({ status: "added", shopId: 4 });
   rpc.mockResolvedValue({ data: 77, error: null });
 });
@@ -88,6 +94,17 @@ describe("addToCart while signed out", () => {
     await run(addToCart(12, idle, formOf({ quantity: "1" })));
 
     expect(insertCartItem).not.toHaveBeenCalled();
+  });
+
+  it("does not remember or redirect for a product outside the public visibility gate", async () => {
+    findAvailableProduct.mockResolvedValue(null);
+
+    const state = await run(addToCart(12, idle, formOf({ quantity: "1", producto: "/productos/oculto" })));
+
+    expect(state).toEqual({ status: "error", message: "Este producto ya no está disponible." });
+    expect(findAvailableProduct).toHaveBeenCalledWith(expect.anything(), 12);
+    expect(savePurchaseIntent).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
   });
 });
 

@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(17);
 
 select has_column('public', 'products', 'expires_at', 'products carry an expiry');
 
@@ -86,6 +86,19 @@ select ok(
   (select expires_at from public.products where name = 'Publicado fresco') between now() + interval '29 days' and now() + interval '31 days',
   'reactivating a listing starts a new window'
 );
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "cafe1111-cafe-4afe-8afe-cafe11111111", "role": "authenticated"}';
+
+select throws_ok(
+  $$update public.products set expires_at = now() + interval '90 days' where name = 'Publicado fresco'$$,
+  '42501',
+  null,
+  'a seller cannot extend a listing window directly'
+);
+
+set local role postgres;
+set local request.jwt.claims = '{"sub": "cafe2222-cafe-4afe-8afe-cafe22222222", "role": "authenticated"}';
 
 -- Editing a live listing must not extend it.
 update public.products set expires_at = now() + interval '2 days' where name = 'Publicado fresco';

@@ -43,12 +43,16 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
   }
 
   const cartPath = `/carrito/${shopId}`;
+  const availableItems = cart.items.filter(
+    (item): item is typeof item & { product: NonNullable<typeof item.product> } => item.product !== null,
+  );
+  const hasUnavailableItems = availableItems.length !== cart.items.length;
   const [buyer, pickupPoint, threads, shop] = await Promise.all([
     fetchBuyerProfile(),
     fetchPickupPoint(shopId),
     fetchCartThreads(
       shopId,
-      cart.items.map((item) => ({ productId: item.product.id, productName: item.product.name })),
+      availableItems.map((item) => ({ productId: item.product.id, productName: item.product.name })),
     ),
     getPublicShop(cart.shop.slug),
   ]);
@@ -98,12 +102,18 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
           <div className="order-3 rounded-[2rem] border border-line bg-surface p-6 lg:order-none">
             <h2 className="font-display text-2xl font-semibold">Entrega</h2>
             <div className="mt-5">
-              <FulfillmentChoice
-                action={checkoutAction}
-                idempotencyKey={crypto.randomUUID()}
-                pickupPoint={pickupPoint}
-                threadHref="#conversacion"
-              />
+              {hasUnavailableItems ? (
+                <p className="rounded-2xl bg-sale/10 p-4 text-sm font-medium text-sale" role="alert">
+                  Quita los productos no disponibles antes de continuar.
+                </p>
+              ) : (
+                <FulfillmentChoice
+                  action={checkoutAction}
+                  idempotencyKey={crypto.randomUUID()}
+                  pickupPoint={pickupPoint}
+                  threadHref="#conversacion"
+                />
+              )}
             </div>
           </div>
         </div>

@@ -23,14 +23,36 @@ export async function getCart(shopId: number): Promise<CartDetail | null> {
   const { supabase, userId } = context;
   const { data } = await supabase
     .from("carts")
-    .select("id, shops!inner(id, name, slug), cart_items(id, quantity, products!inner(id, name, price_mxn, image_path))")
+    .select("id, shops!inner(id, name, slug), cart_items(id, product_id, quantity, products(id, name, price_mxn, image_path))")
     .eq("buyer_id", userId)
     .eq("shop_id", shopId)
     .maybeSingle();
   if (!data) return null;
-  const row = data as unknown as { id: number; shops: CartDetail["shop"]; cart_items: { id: number; quantity: number; products: CartDetail["items"][number]["product"] }[] };
-  const items = row.cart_items.map((item) => ({ id: item.id, quantity: item.quantity, product: item.products }));
-  return { id: row.id, shop: row.shops, items, subtotal: items.reduce((sum, item) => sum + item.product.price_mxn * item.quantity, 0) };
+  const row = data as unknown as {
+    id: number;
+    shops: CartDetail["shop"];
+    cart_items: {
+      id: number;
+      product_id: number;
+      quantity: number;
+      products: CartDetail["items"][number]["product"];
+    }[];
+  };
+  const items = row.cart_items.map((item) => ({
+    id: item.id,
+    productId: item.product_id,
+    quantity: item.quantity,
+    product: item.products,
+  }));
+  return {
+    id: row.id,
+    shop: row.shops,
+    items,
+    subtotal: items.reduce(
+      (sum, item) => sum + (item.product ? item.product.price_mxn * item.quantity : 0),
+      0,
+    ),
+  };
 }
 
 async function getOrders(scope: "buyer" | "seller"): Promise<OrderSummary[]> {

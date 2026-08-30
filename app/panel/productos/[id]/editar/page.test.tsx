@@ -39,11 +39,13 @@ async function renderEditProduct({
   expiresAt = null,
   isAdminEnabled = true,
   isPublishingApproved = false,
+  publishingReviewedAt = null,
 }: {
   status?: "draft" | "published" | "expired";
   expiresAt?: string | null;
   isAdminEnabled?: boolean;
   isPublishingApproved?: boolean;
+  publishingReviewedAt?: string | null;
 } = {}) {
   const productQuery = chained({
     data: {
@@ -67,7 +69,12 @@ async function renderEditProduct({
   });
   const galleryQuery = chained({ data: [], error: null });
   const shopQuery = chained({
-    data: { id: 4, name: "Casa Niebla", is_publishing_approved: isPublishingApproved },
+    data: {
+      id: 4,
+      name: "Casa Niebla",
+      is_publishing_approved: isPublishingApproved,
+      publishing_reviewed_at: publishingReviewedAt,
+    },
     error: null,
   });
   const translationQuery = chained({ data: null, error: null });
@@ -94,7 +101,7 @@ describe("EditProductPage", () => {
   it("does not offer the public link for a seller-published product awaiting shop approval", async () => {
     const { shopQuery } = await renderEditProduct();
 
-    expect(shopQuery.select).toHaveBeenCalledWith("id, name, is_publishing_approved");
+    expect(shopQuery.select).toHaveBeenCalledWith("id, name, is_publishing_approved, publishing_reviewed_at");
     expect(screen.getByText("Esperando aprobación de administración")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Ver publicación" })).not.toBeInTheDocument();
   });
@@ -102,6 +109,7 @@ describe("EditProductPage", () => {
   it.each([
     [{ status: "draft" }, "Desactivado por ti"],
     [{ isPublishingApproved: false }, "Esperando aprobación de administración"],
+    [{ isPublishingApproved: false, publishingReviewedAt: "2026-08-29T00:00:00.000Z" }, "Tienda deshabilitada por administración"],
     [{ isPublishingApproved: true, isAdminEnabled: false }, "Deshabilitado por administración"],
     [{ status: "expired", isPublishingApproved: true, expiresAt: "2026-08-01T00:00:00.000Z" }, "Vencido"],
   ] as const)("never offers the public link when the listing is %s", async (input, label) => {

@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(41);
+select plan(45);
 
 select has_table('public', 'shops', 'shops table exists');
 select has_table('public', 'products', 'products table exists');
@@ -15,6 +15,7 @@ select has_column('public', 'products', 'used_condition', 'products have used co
 select has_column('public', 'shops', 'country_code', 'shops have a country code');
 select has_column('public', 'shops', 'administrative_area_codes', 'shops have administrative area codes');
 select has_column('public', 'shops', 'is_publishing_approved', 'shops record publication approval');
+select has_column('public', 'shops', 'publishing_reviewed_at', 'shops record whether administration reviewed publication');
 select has_column('public', 'products', 'is_admin_enabled', 'products record administration enablement');
 select col_default_is(
   'public',
@@ -57,10 +58,10 @@ select results_eq(
   'trust profiles preserve auth account creation dates'
 );
 
-insert into public.shops (owner_id, name, slug, description, is_publishing_approved) values
-  ('123e4567-e89b-12d3-a456-426614174000', 'Tienda A', 'tienda-a', 'Descripción completa para la tienda A.', true),
-  ('987fcdeb-51a2-43d7-9012-345678901234', 'Tienda B', 'tienda-b', 'Descripción completa para la tienda B.', false),
-  ('11111111-1111-4111-8111-111111111111', 'Tienda Admin', 'tienda-admin', 'Descripción completa para la tienda de administración.', false);
+insert into public.shops (owner_id, name, slug, description, is_publishing_approved, publishing_reviewed_at) values
+  ('123e4567-e89b-12d3-a456-426614174000', 'Tienda A', 'tienda-a', 'Descripción completa para la tienda A.', true, now()),
+  ('987fcdeb-51a2-43d7-9012-345678901234', 'Tienda B', 'tienda-b', 'Descripción completa para la tienda B.', false, now()),
+  ('11111111-1111-4111-8111-111111111111', 'Tienda Admin', 'tienda-admin', 'Descripción completa para la tienda de administración.', false, null);
 
 select results_eq(
   $$select is_publishing_approved from public.shops where slug = 'tienda-a'$$,
@@ -72,6 +73,18 @@ select results_eq(
   $$select is_publishing_approved from public.shops where slug = 'tienda-admin'$$,
   array[true],
   'a current-admin owned shop starts with publication approval'
+);
+
+select results_eq(
+  $$select publishing_reviewed_at is null from public.shops where slug = 'tienda-a'$$,
+  array[true],
+  'a non-admin owned shop starts pending administration review'
+);
+
+select results_eq(
+  $$select publishing_reviewed_at is not null from public.shops where slug = 'tienda-admin'$$,
+  array[true],
+  'an admin-owned auto-approved shop starts reviewed'
 );
 
 update public.shops set is_publishing_approved = true where slug = 'tienda-b';
@@ -180,14 +193,14 @@ select lives_ok(
 );
 
 select lives_ok(
-  $$insert into public.products (shop_id, name, description, price_mxn, status, category_id, is_admin_enabled) values ((select id from public.shops where slug = 'tienda-a'), 'Publicación forjada', 'Descripción completa de la publicación forjada.', 99, 'published', (select id from public.categories where slug = 'celulares-y-accesorios'), false)$$,
+  $$insert into public.products (shop_id, name, description, price_mxn, status, category_id, is_admin_enabled, expires_at) values ((select id from public.shops where slug = 'tienda-a'), 'Publicación forjada', 'Descripción completa de la publicación forjada.', 99, 'published', (select id from public.categories where slug = 'celulares-y-accesorios'), false, now() + interval '90 days')$$,
   'seller A can submit a product carrying moderation values'
 );
 
 select results_eq(
-  $$select status, is_admin_enabled from public.products where name = 'Publicación forjada'$$,
-  $$values ('draft'::text, true)$$,
-  'ordinary product creation persists a draft with administration enabled'
+  $$select status, is_admin_enabled, expires_at from public.products where name = 'Publicación forjada'$$,
+  $$values ('draft'::text, true, null::timestamptz)$$,
+  'ordinary product creation persists a draft with safe moderation and expiry defaults'
 );
 
 select throws_ok(
@@ -195,6 +208,13 @@ select throws_ok(
   '42501',
   null,
   'sellers cannot change shop publication approval directly'
+);
+
+select throws_ok(
+  $$update public.shops set publishing_reviewed_at = now() where slug = 'tienda-a'$$,
+  '42501',
+  null,
+  'sellers cannot forge an administration review'
 );
 
 select throws_ok(

@@ -67,7 +67,10 @@ describe("seller pickup point read", () => {
     ).rejects.toThrow("No pudimos consultar el punto de recolección.");
   });
 
-  it("keeps a pending publication in the seller catalogue with its effective state", async () => {
+  it.each([
+    [null, "Esperando aprobación de administración"],
+    ["2026-08-29T00:00:00.000Z", "Tienda deshabilitada por administración"],
+  ] as const)("renders a reviewed-at %s shop with effective state %s", async (publishingReviewedAt, label) => {
     const shopQuery = chained({
       data: {
         id: 4,
@@ -79,6 +82,7 @@ describe("seller pickup point read", () => {
         country_code: "MX",
         administrative_area_codes: ["MX-JAL"],
         is_publishing_approved: false,
+        publishing_reviewed_at: publishingReviewedAt,
       },
       error: null,
     });
@@ -108,6 +112,6 @@ describe("seller pickup point read", () => {
     render(await ShopManagePage({ params: Promise.resolve({ id: "4" }) }));
 
     expect(productsQuery.select).toHaveBeenCalledWith("id, name, price_mxn, image_path, status, expires_at, is_admin_enabled");
-    expect(screen.getByText("Esperando aprobación de administración")).toBeInTheDocument();
+    expect(screen.getByText(label)).toBeInTheDocument();
   });
 });

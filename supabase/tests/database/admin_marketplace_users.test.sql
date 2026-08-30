@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(27);
+select plan(28);
 
 select has_function('private', 'bootstrap_initial_admin', array[]::text[],
   'operator-only bootstrap helper exists');
@@ -158,6 +158,11 @@ select results_eq(
   $$select shop_id, shop_slug from public.set_shop_publishing_approval(9101, true)$$,
   $$values (9101::bigint, 'taller-volcan'::text)$$,
   'administrator receives the affected shop identity after approval'
+);
+select results_eq(
+  $$select publishing_reviewed_at is not null from public.shops where id = 9101$$,
+  array[true],
+  'administrator approval records that publication was reviewed'
 );
 select results_eq(
   $$select product_id, product_slug, shop_id, shop_slug from public.set_product_admin_enabled(9202, false)$$,

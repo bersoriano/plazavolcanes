@@ -1,15 +1,24 @@
 alter table public.shops
-  add column is_publishing_approved boolean not null default false;
+  add column is_publishing_approved boolean not null default false,
+  add column publishing_reviewed_at timestamptz;
 
 alter table public.products
   add column is_admin_enabled boolean not null default true;
 
 update public.shops s
 set is_publishing_approved = exists (
-  select 1
-  from private.admin_users a
-  where a.user_id = s.owner_id
-);
+      select 1
+      from private.admin_users a
+      where a.user_id = s.owner_id
+    ),
+    publishing_reviewed_at = case
+      when exists (
+        select 1
+        from private.admin_users a
+        where a.user_id = s.owner_id
+      ) then now()
+      else null
+    end;
 
 update public.products
 set is_admin_enabled = true;
@@ -20,12 +29,17 @@ language plpgsql
 security definer
 set search_path = ''
 as $$
+declare
+  v_is_admin boolean;
 begin
-  new.is_publishing_approved := exists (
+  select exists (
     select 1
     from private.admin_users a
     where a.user_id = new.owner_id
-  );
+  ) into v_is_admin;
+
+  new.is_publishing_approved := v_is_admin;
+  new.publishing_reviewed_at := case when v_is_admin then now() else null end;
   return new;
 end;
 $$;
@@ -48,6 +62,7 @@ begin
     or new.listing_limit is distinct from old.listing_limit
     or new.trust_evaluated_at is distinct from old.trust_evaluated_at
     or new.is_publishing_approved is distinct from old.is_publishing_approved
+    or new.publishing_reviewed_at is distinct from old.publishing_reviewed_at
   ) then
     raise exception using
       errcode = '42501',
@@ -84,11 +99,13 @@ language plpgsql
 set search_path = ''
 as $$
 begin
-  if current_user not in ('postgres', 'service_role')
-    and new.is_admin_enabled is distinct from old.is_admin_enabled then
+  if current_user not in ('postgres', 'service_role') and (
+    new.is_admin_enabled is distinct from old.is_admin_enabled
+    or new.expires_at is distinct from old.expires_at
+  ) then
     raise exception using
       errcode = '42501',
-      message = 'La habilitación administrativa del producto es administrada por el sistema.';
+      message = 'La moderación y vigencia del producto son administradas por el sistema.';
   end if;
   return new;
 end;
@@ -117,6 +134,7 @@ begin
   return query
   update public.shops s
   set is_publishing_approved = p_enabled,
+      publishing_reviewed_at = now(),
       updated_at = now()
   where s.id = p_shop_id
   returning s.id, s.slug;
@@ -250,6 +268,7 @@ begin
 
   update public.shops s
   set is_publishing_approved = p_enabled,
+      publishing_reviewed_at = now(),
       updated_at = now()
   where s.id = p_shop_id
   returning s.slug into v_shop_slug;

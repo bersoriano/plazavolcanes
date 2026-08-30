@@ -417,6 +417,7 @@ export type Database = {
           id: number;
           image_path: string | null;
           is_publishing_approved: boolean;
+          publishing_reviewed_at: string | null;
           listing_limit: number;
           name: string;
           owner_id: string;
@@ -434,6 +435,7 @@ export type Database = {
           id?: never;
           image_path?: string | null;
           is_publishing_approved?: boolean;
+          publishing_reviewed_at?: string | null;
           listing_limit?: number;
           name: string;
           owner_id: string;
@@ -451,6 +453,7 @@ export type Database = {
           id?: never;
           image_path?: string | null;
           is_publishing_approved?: boolean;
+          publishing_reviewed_at?: string | null;
           listing_limit?: number;
           name?: string;
           owner_id?: string;

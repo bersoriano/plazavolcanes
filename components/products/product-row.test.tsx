@@ -24,6 +24,7 @@ function product(overrides: Partial<Parameters<typeof ProductRow>[0]["product"]>
     expires_at: "2026-09-20T00:00:00.000Z",
     is_admin_enabled: true,
     is_publishing_approved: true,
+    publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
     ...overrides,
   };
 }
@@ -39,7 +40,8 @@ describe("ProductRow", () => {
 
   it.each([
     ["seller-disabled", product({ status: "draft", expires_at: null }), "Desactivado por ti"],
-    ["approval-pending", product({ is_publishing_approved: false, expires_at: null }), "Esperando aprobación de administración"],
+    ["approval-pending", product({ is_publishing_approved: false, publishing_reviewed_at: null, expires_at: null }), "Esperando aprobación de administración"],
+    ["shop-admin-disabled", product({ is_publishing_approved: false, publishing_reviewed_at: "2026-08-29T00:00:00.000Z", expires_at: null }), "Tienda deshabilitada por administración"],
     ["product-admin-disabled", product({ is_admin_enabled: false, expires_at: null }), "Deshabilitado por administración"],
     ["expired", product({ status: "expired", expires_at: "2026-08-01T00:00:00.000Z" }), "Vencido"],
   ] as const)("labels a %s listing as %s", (_state, listing, label) => {

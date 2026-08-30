@@ -17,6 +17,7 @@ type ProductRowProps = {
     expires_at: string | null;
     is_admin_enabled: boolean;
     is_publishing_approved: boolean;
+    publishing_reviewed_at: string | null;
   };
 };
 
@@ -26,11 +27,15 @@ export type SellerPublicationState = {
 };
 
 export function getSellerPublicationState(
-  product: Pick<ProductRowProps["product"], "status" | "expires_at" | "is_admin_enabled" | "is_publishing_approved">,
+  product: Pick<ProductRowProps["product"], "status" | "expires_at" | "is_admin_enabled" | "is_publishing_approved" | "publishing_reviewed_at">,
 ): SellerPublicationState {
   if (product.status === "draft") return { label: "Desactivado por ti", isPublic: false };
   if (product.status === "expired") return { label: "Vencido", isPublic: false };
-  if (!product.is_publishing_approved) return { label: "Esperando aprobación de administración", isPublic: false };
+  if (!product.is_publishing_approved) {
+    return product.publishing_reviewed_at
+      ? { label: "Tienda deshabilitada por administración", isPublic: false }
+      : { label: "Esperando aprobación de administración", isPublic: false };
+  }
   if (!product.is_admin_enabled) return { label: "Deshabilitado por administración", isPublic: false };
   if (!product.expires_at || new Date(product.expires_at).getTime() <= Date.now()) return { label: "Vencido", isPublic: false };
   return { label: "Publicado", isPublic: true };
