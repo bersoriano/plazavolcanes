@@ -1,14 +1,18 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ProductRow } from "@/components/products/product-row";
 
-vi.mock("@/lib/actions/products", () => ({
-  deleteProduct: { bind: () => vi.fn() },
-  setProductStatus: { bind: () => vi.fn() },
-}));
+const { setProductStatus } = vi.hoisted(() => ({ setProductStatus: vi.fn() }));
+
+vi.mock("@/lib/actions/products", () => ({ deleteProduct: vi.fn(), setProductStatus }));
 
 afterEach(cleanup);
+
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(setProductStatus).mockResolvedValue({ status: "idle", message: "" });
+});
 
 function product(overrides: Partial<Parameters<typeof ProductRow>[0]["product"]> = {}) {
   return {
@@ -57,5 +61,19 @@ describe("ProductRow", () => {
 
     expect(screen.queryByText(/Vence|Venció/)).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Publicar" })).toBeInTheDocument();
+  });
+
+  it("announces the gate-aware result returned by the publication action", async () => {
+    vi.mocked(setProductStatus).mockResolvedValueOnce({
+      status: "success",
+      message: "Producto guardado. Está pendiente de aprobación de administración.",
+    });
+    render(<ProductRow product={product({ status: "draft", expires_at: null })} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Publicar" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Producto guardado. Está pendiente de aprobación de administración.",
+    );
   });
 });

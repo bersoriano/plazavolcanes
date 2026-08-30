@@ -655,6 +655,10 @@ export type Database = {
         Args: { p_shop_id: number; p_enabled: boolean };
         Returns: { shop_id: number; shop_slug: string; product_slugs: string[] }[];
       };
+      set_product_admin_enabled: {
+        Args: { p_product_id: number; p_enabled: boolean };
+        Returns: { product_id: number; product_slug: string; shop_id: number; shop_slug: string }[];
+      };
       list_admin_marketplace_users: {
         Args: Record<never, never>;
         Returns: {

@@ -23,7 +23,7 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 vi.mock("next/navigation", () => ({ redirect }));
 
-const { createProduct, updateProduct } = await import("@/lib/actions/products");
+const { createProduct, setProductStatus, updateProduct } = await import("@/lib/actions/products");
 
 const idle = { status: "idle" as const, message: "" };
 
@@ -203,4 +203,38 @@ describe("updateProduct", () => {
 
     expect(state).toEqual({ status: "success", message: "Producto publicado." });
   });
+});
+
+describe("setProductStatus", () => {
+  it.each([
+    [true, true, "Producto publicado."],
+    [false, true, "Producto guardado. Está pendiente de aprobación de administración."],
+    [true, false, "Producto guardado. Está pendiente de aprobación de administración."],
+  ] as const)(
+    "reports gate-aware publication feedback when shop approval is %s and product enablement is %s",
+    async (isPublishingApproved, isAdminEnabled, message) => {
+      mocks.productsSelect.mockImplementationOnce(() => query({
+        data: {
+          shop_id: 7,
+          category_id: 11,
+          status: "draft",
+          slug: "taza-volcanica",
+          is_admin_enabled: isAdminEnabled,
+        },
+        error: null,
+      }));
+      mocks.shop.mockResolvedValueOnce({
+        data: {
+          slug: "barro-volcanico",
+          listing_limit: 10,
+          is_publishing_approved: isPublishingApproved,
+        },
+        error: null,
+      });
+
+      const state = await setProductStatus(22, "published");
+
+      expect(state).toEqual({ status: "success", message });
+    },
+  );
 });

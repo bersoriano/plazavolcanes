@@ -47,7 +47,7 @@ describe("MarketplaceUsers", () => {
                     id: 11,
                     name: "Taza de barro",
                     slug: "taza",
-                    status: "published",
+                    state: "public",
                     isAdminEnabled: true,
                     effectiveVisibility: true,
                     expiresAt: "2026-09-03T00:00:00.000Z",
@@ -58,7 +58,7 @@ describe("MarketplaceUsers", () => {
                     id: 12,
                     name: "Jarrón en proceso",
                     slug: "jarron-en-proceso",
-                    status: "draft",
+                    state: "draft",
                     isAdminEnabled: true,
                     effectiveVisibility: false,
                     expiresAt: null,
@@ -139,7 +139,7 @@ describe("MarketplaceUsers", () => {
     const approval = screen.getByRole("switch", { name: "Publicaciones habilitadas" });
     expect(approval).not.toBeChecked();
     expect(screen.getByText("Publicaciones pendientes")).toBeInTheDocument();
-    expect(screen.getByText("Habilita las publicaciones cuando la tienda pueda aparecer públicamente.")).toBeInTheDocument();
+    expect(screen.getByText("Deshabilitar la tienda oculta sus productos sin cambiar las decisiones del vendedor.")).toBeInTheDocument();
 
     fireEvent.click(approval);
 
@@ -277,7 +277,7 @@ describe("MarketplaceUsers", () => {
                     id: 11,
                     name: "Taza visible",
                     slug: "taza-visible",
-                    status: "published",
+                    state: "public",
                     isAdminEnabled: true,
                     effectiveVisibility: true,
                     expiresAt: "2026-09-03T00:00:00.000Z",
@@ -288,7 +288,7 @@ describe("MarketplaceUsers", () => {
                     id: 12,
                     name: "Taza pendiente",
                     slug: "taza-pendiente",
-                    status: "published",
+                    state: "pending",
                     isAdminEnabled: true,
                     effectiveVisibility: false,
                     expiresAt: null,
@@ -308,6 +308,46 @@ describe("MarketplaceUsers", () => {
       "/productos/taza-visible",
     );
     expect(screen.getByText("Taza pendiente").closest("a")).toBeNull();
+    expect(screen.getByText("Pendiente de aprobación")).toBeInTheDocument();
+  });
+
+  it.each([
+    ["draft", "Borrador"],
+    ["pending", "Pendiente de aprobación"],
+    ["public", "Publicado"],
+    ["admin-disabled", "Deshabilitado por administración"],
+    ["expired", "Vencido"],
+  ] as const)("renders the effective %s product state as %s", (state, label) => {
+    render(
+      <MarketplaceUsers
+        users={[{
+          id: "persona-1",
+          email: "lucia@tallervolcan.mx",
+          displayName: "Lucía Martínez",
+          createdAt: "2026-08-01T00:00:00.000Z",
+          shops: [{
+            id: 1,
+            name: "Taller Volcán",
+            slug: "taller-volcan",
+            createdAt: "2026-08-02T00:00:00.000Z",
+            isPublishingApproved: true,
+            products: [{
+              id: 11,
+              name: "Taza de barro",
+              slug: "taza",
+              state,
+              isAdminEnabled: state !== "admin-disabled",
+              effectiveVisibility: state === "public",
+              expiresAt: state === "draft" ? null : "2027-09-03T00:00:00.000Z",
+              createdAt: "2026-08-03T00:00:00.000Z",
+              updatedAt: "2026-08-04T00:00:00.000Z",
+            }],
+          }],
+        }]}
+      />,
+    );
+
+    expect(screen.getByText(label)).toBeInTheDocument();
   });
 
   it("shows an empty state when no people are registered", () => {

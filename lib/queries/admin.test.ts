@@ -57,7 +57,7 @@ describe("mapAdminMarketplaceUsers", () => {
                 id: 20,
                 name: "Taza",
                 slug: "taza",
-                status: "published",
+                state: "public",
                 isAdminEnabled: true,
                 expiresAt: "2027-08-05T00:00:00.000Z",
                 effectiveVisibility: true,
@@ -68,7 +68,7 @@ describe("mapAdminMarketplaceUsers", () => {
                 id: 21,
                 name: "Plato",
                 slug: "plato",
-                status: "draft",
+                state: "draft",
                 isAdminEnabled: true,
                 expiresAt: "2027-08-05T00:00:00.000Z",
                 effectiveVisibility: false,
@@ -82,25 +82,26 @@ describe("mapAdminMarketplaceUsers", () => {
     ]);
   });
 
-  it("derives effective visibility from every publication gate", () => {
+  it("derives the effective administrative state from every publication gate", () => {
     const users = mapAdminMarketplaceUsers([
       { ...base, product_id: 20, product_status: "draft" },
       { ...base, product_id: 21, shop_is_publishing_approved: false },
       { ...base, product_id: 22 },
       { ...base, product_id: 23, product_is_admin_enabled: false },
-      { ...base, product_id: 24, product_expires_at: "2026-01-01T00:00:00.000Z" },
+      { ...base, product_id: 24, product_status: "expired", product_expires_at: "2026-01-01T00:00:00.000Z" },
     ]);
 
     expect(users[0]?.shops[0]?.isPublishingApproved).toBe(true);
     expect(users[0]?.shops[0]?.products.map((product) => ({
       id: product.id,
+      state: product.state,
       effectiveVisibility: product.effectiveVisibility,
     }))).toEqual([
-      { id: 20, effectiveVisibility: false },
-      { id: 21, effectiveVisibility: false },
-      { id: 22, effectiveVisibility: true },
-      { id: 23, effectiveVisibility: false },
-      { id: 24, effectiveVisibility: false },
+      { id: 20, state: "draft", effectiveVisibility: false },
+      { id: 21, state: "pending", effectiveVisibility: false },
+      { id: 22, state: "public", effectiveVisibility: true },
+      { id: 23, state: "admin-disabled", effectiveVisibility: false },
+      { id: 24, state: "expired", effectiveVisibility: false },
     ]);
   });
 

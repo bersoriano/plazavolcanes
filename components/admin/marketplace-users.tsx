@@ -4,11 +4,37 @@ import Link from "next/link";
 import { UsersRound } from "lucide-react";
 
 import { EmptyState } from "@/components/ui/empty-state";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { setShopPublishingApproval } from "@/lib/actions/admin-publication";
 import { formatDate } from "@/lib/format";
-import type { AdminMarketplaceShop, AdminMarketplaceUser } from "@/lib/queries/admin";
+import type {
+  AdminMarketplaceProductState,
+  AdminMarketplaceShop,
+  AdminMarketplaceUser,
+} from "@/lib/queries/admin";
 import { useFormAction } from "@/lib/use-form-action";
+
+const productStateStyles: Record<
+  AdminMarketplaceProductState,
+  { label: string; className: string }
+> = {
+  draft: { label: "Borrador", className: "bg-background text-muted" },
+  pending: { label: "Pendiente de aprobación", className: "bg-background text-muted" },
+  public: { label: "Publicado", className: "bg-accent text-brand-hover" },
+  "admin-disabled": {
+    label: "Deshabilitado por administración",
+    className: "bg-sale/15 text-sale",
+  },
+  expired: { label: "Vencido", className: "bg-sale/15 text-sale" },
+};
+
+function AdminProductStateBadge({ state }: { state: AdminMarketplaceProductState }) {
+  const { label, className } = productStateStyles[state];
+  return (
+    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${className}`}>
+      {label}
+    </span>
+  );
+}
 
 function ShopPublishingApproval({ shop }: { shop: AdminMarketplaceShop }) {
   const [state, formAction, pending] = useFormAction(setShopPublishingApproval);
@@ -23,7 +49,7 @@ function ShopPublishingApproval({ shop }: { shop: AdminMarketplaceShop }) {
             {isApproved ? "Publicaciones habilitadas" : "Publicaciones pendientes"}
           </p>
           <p className="mt-1 text-sm text-muted">
-            Habilita las publicaciones cuando la tienda pueda aparecer públicamente.
+            Deshabilitar la tienda oculta sus productos sin cambiar las decisiones del vendedor.
           </p>
         </div>
         <button
@@ -114,7 +140,7 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
                               Creado: {formatDate(product.createdAt)} · Actualizado: {formatDate(product.updatedAt)}
                             </p>
                           </div>
-                          <StatusBadge status={product.status} />
+                          <AdminProductStateBadge state={product.state} />
                         </li>
                       ))}
                     </ul>

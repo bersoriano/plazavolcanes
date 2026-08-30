@@ -307,16 +307,19 @@ export async function updateProduct(
   return { status: "success", message: "Borrador guardado." };
 }
 
-export async function setProductStatus(productId: number, nextStatus: "draft" | "published") {
+export async function setProductStatus(
+  productId: number,
+  nextStatus: "draft" | "published",
+): Promise<ActionState> {
   const parsedStatus = productStatusSchema.safeParse(nextStatus);
   const context = await getAuthenticatedContext();
   if (!parsedStatus.success || !context) redirect("/ingresar");
   const { supabase, userId } = context;
-  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, status, slug").eq("id", productId).maybeSingle();
+  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, status, slug, is_admin_enabled").eq("id", productId).maybeSingle();
   if (productError) throw new Error("No pudimos consultar el producto.");
   // Retiring a listing is one way: it stays out of the catalogue for good.
   if (!product || product.status === "deleted") redirect("/panel");
-  const { data: shop, error: shopError } = await supabase.from("shops").select("slug, listing_limit").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
+  const { data: shop, error: shopError } = await supabase.from("shops").select("slug, listing_limit, is_publishing_approved").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
   if (shopError) throw new Error("No pudimos consultar la tienda.");
   if (!shop) redirect("/panel");
   if (parsedStatus.data === "published" && !(await isPublishableCategory(supabase, product.category_id))) {
@@ -332,6 +335,15 @@ export async function setProductStatus(productId: number, nextStatus: "draft" | 
   revalidatePath(`/productos/${product.slug}`);
   revalidatePath(`/panel/tiendas/${product.shop_id}`);
   revalidatePath(`/tiendas/${shop.slug}`);
+  if (parsedStatus.data === "draft") {
+    return { status: "success", message: "Producto despublicado." };
+  }
+  return {
+    status: "success",
+    message: shop.is_publishing_approved && product.is_admin_enabled
+      ? "Producto publicado."
+      : "Producto guardado. Está pendiente de aprobación de administración.",
+  };
 }
 
 /**
