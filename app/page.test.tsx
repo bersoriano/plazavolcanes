@@ -198,34 +198,29 @@ function sampleShop() {
 }
 
 describe("Home conversion sections", () => {
-  it("uses the local market photograph in the hero", async () => {
+  it("opens the home hero on the welcome slide of the carousel", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()] }),
     );
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const hero = screen.getByRole("heading", {
-      name: "Encuentra productos únicos cerca de ti.",
-    }).closest("section");
-
-    expect(hero?.querySelector('img[src*="hero1.jpg"]')).toBeInTheDocument();
+    const carousel = screen.getByRole("region", { name: "Novedades de Plaza Volcanes" });
+    expect(within(carousel).getByRole("heading", { level: 1 })).toHaveTextContent("Bienvenido");
+    expect(carousel.querySelector('img[src*="hero2.jpg"]')).toBeInTheDocument();
+    expect(carousel.querySelector('img[src*="hero1.jpg"]')).toBeInTheDocument();
   });
 
-  it("sharpens the populated home hero conversion paths", async () => {
+  it("keeps the conversion links, the search and the categories outside the carousel", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()] }),
     );
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const hero = screen.getByRole("heading", {
-      name: "Encuentra productos únicos cerca de ti.",
-    }).closest("section");
+    const carousel = screen.getByRole("region", { name: "Novedades de Plaza Volcanes" });
+    const hero = carousel.closest("section");
     expect(hero).not.toBeNull();
-    expect(hero).toHaveTextContent(
-      "Explora artículos nuevos y usados, revisa quién vende y acuerda pago y entrega directamente con cada tienda.",
-    );
     expect(within(hero!).getByRole("link", { name: "Explorar productos" })).toHaveAttribute(
       "href",
       "#catalogo",
@@ -234,6 +229,37 @@ describe("Home conversion sections", () => {
       "href",
       "/registro",
     );
+    expect(within(hero!).getByRole("search")).toBeInTheDocument();
+    expect(within(hero!).getByRole("navigation", { name: "Categorías de productos" })).toBeInTheDocument();
+    expect(within(carousel).queryByRole("search")).not.toBeInTheDocument();
+    expect(within(carousel).queryByRole("navigation")).not.toBeInTheDocument();
+    expect(within(carousel).queryByRole("link")).not.toBeInTheDocument();
+  });
+
+  it("carries the same carousel into the cold start home", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult());
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const carousel = screen.getByRole("region", { name: "Novedades de Plaza Volcanes" });
+    expect(within(carousel).getByRole("heading", { level: 1 })).toHaveTextContent("Bienvenido");
+  });
+
+  it("keeps the single adaptive hero on a search", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({ q: "taza" }) }));
+
+    expect(
+      screen.queryByRole("region", { name: "Novedades de Plaza Volcanes" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Una plaza llena de cosas que no encuentras en cualquier lugar.",
+      }),
+    ).toBeInTheDocument();
   });
 
   it("prioritizes buyer discovery before trust details and the seller pitch", async () => {

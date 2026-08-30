@@ -10,6 +10,7 @@ import { ProductGrid } from "@/components/catalog/product-grid";
 import { SearchBar } from "@/components/catalog/search-bar";
 import { PublicShopCard } from "@/components/catalog/shop-card";
 import { BuyerSteps } from "@/components/home/buyer-steps";
+import { HeroCarousel } from "@/components/home/hero-carousel";
 import { SellerPitch } from "@/components/home/seller-pitch";
 import { StateExplorer } from "@/components/home/state-explorer";
 import { TrustStrip } from "@/components/home/trust-strip";
@@ -71,8 +72,10 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   // The state scopes the page rather than filtering within it, so it never counts here.
   const hasFilters = Boolean(filters.query || activeCategorySlug);
   const coldStart = !hasFilters && products.length === 0;
-  const populatedHome =
-    !area && !hasFilters && !coldStart && !invalidCategorySelection && !filters.invalidAreaSelection;
+  // The carousel owns the home pitch; every scoped or filtered view keeps the
+  // single hero whose copy adapts to the place or the query.
+  const homeCarousel =
+    !area && !hasFilters && !invalidCategorySelection && !filters.invalidAreaSelection;
   const placeSuffix = area ? ` en ${area.label}` : "";
   const heading = filters.query
     ? activeCategoryName
@@ -177,77 +180,30 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   return (
     <>
       <section className="relative overflow-hidden border-b border-line bg-surface">
-        <Image
-          alt=""
-          aria-hidden="true"
-          className="object-cover object-center"
-          fill
-          preload
-          sizes="100vw"
-          src="/hero1.jpg"
-        />
-        <div aria-hidden="true" className="absolute inset-0 bg-surface/45" />
-        <div className="relative z-10 mx-auto max-w-[1440px] px-5 pb-8 pt-14 sm:px-8 sm:pb-10 sm:pt-20 lg:px-12">
-          <div className="relative mx-auto max-w-4xl text-center">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-brand-hover">
-              {area ? <MapPin aria-hidden="true" className="size-4" /> : <Sparkles aria-hidden="true" className="size-4" />}
-              {area
-                ? `Tiendas de ${area.label}`
-                : coldStart
-                  ? "Publicar es gratis y sin comisiones."
-                  : "Hecho cerca. Encontrado aquí."}
-            </div>
-            <h1 className="font-display text-4xl font-semibold leading-[0.98] tracking-[-0.045em] text-brand sm:text-6xl lg:text-7xl">
-              {area
-                ? `Productos en ${area.label}`
-                : coldStart
-                  ? "Abre la primera tienda de la plaza."
-                  : populatedHome
-                    ? "Encuentra productos únicos cerca de ti."
-                    : "Una plaza llena de cosas que no encuentras en cualquier lugar."}
-            </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-muted sm:text-lg">
-              {area
-                ? `Descubre lo que publican las tiendas que operan en ${area.label}.`
-                : coldStart
-                  ? "Plaza Volcanes está lista para tus productos. Crea tu tienda, publica lo que haces y empieza a recibir pedidos."
-                  : populatedHome
-                    ? "Explora artículos nuevos y usados, revisa quién vende y acuerda pago y entrega directamente con cada tienda."
-                    : "Explora productos de tiendas independientes y descubre quién está detrás de cada pieza."}
-            </p>
-            {area ? (
-              <div className="mt-7">
-                <Link
-                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-5 text-sm font-semibold text-brand transition-colors hover:border-brand"
-                  href={buildCatalogHref({ locale: filters.locale, countryCode: filters.countryCode })}
-                >
-                  Ver todo México
-                  <ArrowRight aria-hidden="true" className="size-4" />
-                </Link>
-              </div>
-            ) : null}
-            {!area && coldStart ? (
-              <div className="mt-8 flex flex-wrap justify-center gap-4">
-                <Link
-                  className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-transform hover:-translate-y-0.5"
-                  href="/registro"
-                >
-                  Crear mi tienda
-                  <ArrowRight aria-hidden="true" className="size-4" />
-                </Link>
-                <Link
-                  className="inline-flex min-h-12 items-center rounded-full border border-line bg-surface px-6 font-semibold text-brand transition-colors hover:border-brand"
-                  href="/ingresar"
-                >
-                  Ya tengo cuenta
-                </Link>
-              </div>
-            ) : null}
-            {populatedHome ? (
-              <div className="mt-8 flex flex-wrap justify-center gap-4">
-                <CatalogJumpLink
-                  className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-transform hover:-translate-y-0.5"
-                >
+        {homeCarousel ? null : (
+          <>
+            <Image
+              alt=""
+              aria-hidden="true"
+              className="object-cover object-center"
+              fill
+              preload
+              sizes="100vw"
+              src="/hero1.jpg"
+            />
+            <div aria-hidden="true" className="absolute inset-0 bg-surface/45" />
+          </>
+        )}
+        {homeCarousel ? <HeroCarousel /> : null}
+        <div
+          className={`relative z-10 mx-auto max-w-[1440px] px-5 pb-8 sm:px-8 sm:pb-10 lg:px-12 ${
+            homeCarousel ? "pt-8 sm:pt-10" : "pt-14 sm:pt-20"
+          }`}
+        >
+          {homeCarousel ? (
+            <div className="mx-auto max-w-4xl text-center">
+              <div className="flex flex-wrap justify-center gap-4">
+                <CatalogJumpLink className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-transform hover:-translate-y-0.5">
                   Explorar productos
                   <ArrowRight aria-hidden="true" className="size-4" />
                 </CatalogJumpLink>
@@ -258,19 +214,82 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
                   Abrir mi tienda
                 </Link>
               </div>
-            ) : null}
-            <div className="relative z-10 mx-auto mt-9 max-w-2xl">
-              <SearchBar
-                categorySlug={activeCategorySlug}
-                defaultValue={filters.query}
-                subcategorySlug={activeSubcategorySlug}
-                stateSlug={stateSlug}
-                locale={filters.locale}
-                countryCode={filters.countryCode}
-              />
+              <div className="mx-auto mt-9 max-w-2xl">
+                <SearchBar
+                  categorySlug={activeCategorySlug}
+                  defaultValue={filters.query}
+                  subcategorySlug={activeSubcategorySlug}
+                  stateSlug={stateSlug}
+                  locale={filters.locale}
+                  countryCode={filters.countryCode}
+                />
+              </div>
             </div>
-            <VolcanoMark className="pointer-events-none absolute -bottom-24 left-1/2 w-[760px] max-w-none -translate-x-1/2 text-brand/8" />
-          </div>
+          ) : (
+            <div className="relative mx-auto max-w-4xl text-center">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-brand-hover">
+                {area ? <MapPin aria-hidden="true" className="size-4" /> : <Sparkles aria-hidden="true" className="size-4" />}
+                {area
+                  ? `Tiendas de ${area.label}`
+                  : coldStart
+                    ? "Publicar es gratis y sin comisiones."
+                    : "Hecho cerca. Encontrado aquí."}
+              </div>
+              <h1 className="font-display text-4xl font-semibold leading-[0.98] tracking-[-0.045em] text-brand sm:text-6xl lg:text-7xl">
+                {area
+                  ? `Productos en ${area.label}`
+                  : coldStart
+                    ? "Abre la primera tienda de la plaza."
+                    : "Una plaza llena de cosas que no encuentras en cualquier lugar."}
+              </h1>
+              <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-muted sm:text-lg">
+                {area
+                  ? `Descubre lo que publican las tiendas que operan en ${area.label}.`
+                  : coldStart
+                    ? "Plaza Volcanes está lista para tus productos. Crea tu tienda, publica lo que haces y empieza a recibir pedidos."
+                    : "Explora productos de tiendas independientes y descubre quién está detrás de cada pieza."}
+              </p>
+              {area ? (
+                <div className="mt-7">
+                  <Link
+                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-5 text-sm font-semibold text-brand transition-colors hover:border-brand"
+                    href={buildCatalogHref({ locale: filters.locale, countryCode: filters.countryCode })}
+                  >
+                    Ver todo México
+                    <ArrowRight aria-hidden="true" className="size-4" />
+                  </Link>
+                </div>
+              ) : null}
+              {!area && coldStart ? (
+                <div className="mt-8 flex flex-wrap justify-center gap-4">
+                  <Link
+                    className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-transform hover:-translate-y-0.5"
+                    href="/registro"
+                  >
+                    Crear mi tienda
+                    <ArrowRight aria-hidden="true" className="size-4" />
+                  </Link>
+                  <Link
+                    className="inline-flex min-h-12 items-center rounded-full border border-line bg-surface px-6 font-semibold text-brand transition-colors hover:border-brand"
+                    href="/ingresar"
+                  >
+                    Ya tengo cuenta
+                  </Link>
+                </div>
+              ) : null}
+              <div className="relative z-10 mx-auto mt-9 max-w-2xl">
+                <SearchBar
+                  categorySlug={activeCategorySlug}
+                  defaultValue={filters.query}
+                  subcategorySlug={activeSubcategorySlug}
+                  stateSlug={stateSlug}
+                  locale={filters.locale}
+                  countryCode={filters.countryCode}
+                />
+              </div>
+              <VolcanoMark className="pointer-events-none absolute -bottom-24 left-1/2 w-[760px] max-w-none -translate-x-1/2 text-brand/8" />
+            </div>
+          )}
           <div className="relative z-10 mt-10">
             <CategoryNavigation
               activeCategorySlug={activeCategorySlug}
