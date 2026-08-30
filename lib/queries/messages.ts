@@ -128,3 +128,16 @@ export function mapConversationRows(rows: ConversationRow[]): ConversationSummar
         : null,
   }));
 }
+
+/**
+ * The threads that belong in an inbox: the ones somebody has written in.
+ *
+ * Buying opens a conversation alongside the order, before either side has said
+ * anything, and the seller's first reply may never come. Those empty threads are
+ * an order's business, not a message's, and listing them among real exchanges
+ * only puzzles the reader. They stay reachable from the order itself, and they
+ * join the inbox the moment they carry a word.
+ */
+export function startedConversations(conversations: ConversationSummary[]) {
+  return conversations.filter((conversation) => conversation.last_message !== null);
+}

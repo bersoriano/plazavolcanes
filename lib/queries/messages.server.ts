@@ -63,6 +63,8 @@ export async function fetchThread(conversationId: number): Promise<Thread | null
   // to a buyer and a display name to a seller. Asking it again keeps that rule
   // in one place rather than reimplementing it here.
   const role: InboxRole = data.buyer_id === userId ? "buyer" : "seller";
+  // Unfiltered on purpose: the inbox drops threads nobody has written in yet, but
+  // this is the page you land on to write the first one, so it has to find them.
   const summary = (await listConversations(role)).find((entry) => entry.id === conversationId);
 
   return {
