@@ -44,9 +44,12 @@ const product = {
   shopOwnerId: "seller-1",
 };
 
-function renderPage(searchParams: Record<string, string> = {}) {
+function renderPage(
+  searchParams: Record<string, string> = {},
+  slug = "taza-de-barro",
+) {
   return ProductPage({
-    params: Promise.resolve({ slug: "taza-de-barro" }),
+    params: Promise.resolve({ slug }),
     searchParams: Promise.resolve(searchParams),
   });
 }
@@ -69,7 +72,7 @@ describe("Product page purchase notices", () => {
     await expect(
       generateMetadata({ params: Promise.resolve({ slug: adminDisabledPublishedProduct.slug }) }),
     ).resolves.toEqual({ title: "Producto no encontrado" });
-    await expect(renderPage()).rejects.toThrow("not found");
+    await expect(renderPage({}, adminDisabledPublishedProduct.slug)).rejects.toThrow("not found");
 
     expect(getPublicProduct).toHaveBeenCalledWith(adminDisabledPublishedProduct.slug);
     expect(notFound).toHaveBeenCalledOnce();

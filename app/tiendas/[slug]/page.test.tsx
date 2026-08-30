@@ -68,10 +68,16 @@ test("returns a signed-out visitor to the shop they asked from", async () => {
 
 test("keeps a pending shop reachable while its published products are withheld", async () => {
   const pendingShopPublishedProduct = { slug: "taza-pendiente", name: "Taza pendiente" };
+  const catalogDouble = (filters: { isAdminEnabled?: boolean; isShopApproved?: boolean }) =>
+    filters.isAdminEnabled === true && filters.isShopApproved === true
+      ? []
+      : [pendingShopPublishedProduct];
+  const effectiveProducts = catalogDouble({ isAdminEnabled: true, isShopApproved: true });
+  expect(catalogDouble({ isAdminEnabled: true })).toEqual([pendingShopPublishedProduct]);
   getPublicShop.mockResolvedValue({
     ...shop,
     is_publishing_approved: false,
-    products: [],
+    products: effectiveProducts,
   });
 
   await renderPage();

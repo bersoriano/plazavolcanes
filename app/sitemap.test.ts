@@ -42,14 +42,27 @@ describe("sitemap", () => {
   });
 
   it("omits a published product URL when the shop approval gate filters it out", async () => {
-    const pendingShopPublishedProduct = "taza-pendiente";
+    const pendingShopPublishedProduct = {
+      slug: "taza-pendiente",
+      updatedAt: "2026-08-01T00:00:00.000Z",
+    };
+    const catalogDouble = (filters: { isAdminEnabled?: boolean; isShopApproved?: boolean }) => ({
+      shops: [],
+      products:
+        filters.isAdminEnabled === true && filters.isShopApproved === true
+          ? []
+          : [pendingShopPublishedProduct],
+    });
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://plazavolcanes.com");
-    vi.mocked(getSitemapCatalog).mockResolvedValue({ shops: [], products: [] });
+    expect(catalogDouble({ isAdminEnabled: true }).products).toEqual([pendingShopPublishedProduct]);
+    vi.mocked(getSitemapCatalog).mockResolvedValue(
+      catalogDouble({ isAdminEnabled: true, isShopApproved: true }),
+    );
 
     const urls = (await sitemap()).map((entry) => entry.url);
 
     expect(urls).not.toContain(
-      `https://plazavolcanes.com/productos/${pendingShopPublishedProduct}`,
+      `https://plazavolcanes.com/productos/${pendingShopPublishedProduct.slug}`,
     );
   });
 
