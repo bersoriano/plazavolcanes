@@ -5,7 +5,7 @@ import {
   type AdminMarketplaceRpcRow,
 } from "@/lib/queries/admin";
 
-const base: AdminMarketplaceRpcRow = {
+const base = {
   user_id: "user-1",
   email: "seller@test.local",
   user_created_at: "2026-08-03T00:00:00.000Z",
@@ -14,13 +14,16 @@ const base: AdminMarketplaceRpcRow = {
   shop_name: "Taller Volcán",
   shop_slug: "taller-volcan",
   shop_created_at: "2026-08-04T00:00:00.000Z",
+  shop_is_publishing_approved: true,
   product_id: 20,
   product_name: "Taza",
   product_slug: "taza",
   product_status: "published",
+  product_is_admin_enabled: true,
+  product_expires_at: "2027-08-05T00:00:00.000Z",
   product_created_at: "2026-08-05T00:00:00.000Z",
   product_updated_at: "2026-08-06T00:00:00.000Z",
-};
+} as AdminMarketplaceRpcRow;
 
 describe("mapAdminMarketplaceUsers", () => {
   it("groups repeated flat rows into an exact nested shape", () => {
@@ -48,12 +51,16 @@ describe("mapAdminMarketplaceUsers", () => {
             name: "Taller Volcán",
             slug: "taller-volcan",
             createdAt: "2026-08-04T00:00:00.000Z",
+            isPublishingApproved: true,
             products: [
               {
                 id: 20,
                 name: "Taza",
                 slug: "taza",
-                status: "published",
+                state: "public",
+                isAdminEnabled: true,
+                expiresAt: "2027-08-05T00:00:00.000Z",
+                effectiveVisibility: true,
                 createdAt: "2026-08-05T00:00:00.000Z",
                 updatedAt: "2026-08-06T00:00:00.000Z",
               },
@@ -61,7 +68,10 @@ describe("mapAdminMarketplaceUsers", () => {
                 id: 21,
                 name: "Plato",
                 slug: "plato",
-                status: "draft",
+                state: "draft",
+                isAdminEnabled: true,
+                expiresAt: "2027-08-05T00:00:00.000Z",
+                effectiveVisibility: false,
                 createdAt: "2026-08-05T00:00:00.000Z",
                 updatedAt: "2026-08-06T00:00:00.000Z",
               },
@@ -69,6 +79,39 @@ describe("mapAdminMarketplaceUsers", () => {
           },
         ],
       },
+    ]);
+  });
+
+  it("derives the effective administrative state from every publication gate", () => {
+    const users = mapAdminMarketplaceUsers([
+      { ...base, product_id: 20, product_status: "draft" },
+      {
+        ...base,
+        product_id: 21,
+        shop_is_publishing_approved: false,
+        product_expires_at: null,
+      },
+      { ...base, product_id: 22 },
+      {
+        ...base,
+        product_id: 23,
+        product_is_admin_enabled: false,
+        product_expires_at: null,
+      },
+      { ...base, product_id: 24, product_status: "expired", product_expires_at: "2026-01-01T00:00:00.000Z" },
+    ]);
+
+    expect(users[0]?.shops[0]?.isPublishingApproved).toBe(true);
+    expect(users[0]?.shops[0]?.products.map((product) => ({
+      id: product.id,
+      state: product.state,
+      effectiveVisibility: product.effectiveVisibility,
+    }))).toEqual([
+      { id: 20, state: "draft", effectiveVisibility: false },
+      { id: 21, state: "pending", effectiveVisibility: false },
+      { id: 22, state: "public", effectiveVisibility: true },
+      { id: 23, state: "admin-disabled", effectiveVisibility: false },
+      { id: 24, state: "expired", effectiveVisibility: false },
     ]);
   });
 
@@ -82,10 +125,13 @@ describe("mapAdminMarketplaceUsers", () => {
         shop_name: null,
         shop_slug: null,
         shop_created_at: null,
+        shop_is_publishing_approved: false,
         product_id: null,
         product_name: null,
         product_slug: null,
         product_status: null,
+        product_is_admin_enabled: null,
+        product_expires_at: null,
         product_created_at: null,
         product_updated_at: null,
       },
@@ -95,6 +141,8 @@ describe("mapAdminMarketplaceUsers", () => {
         product_name: null,
         product_slug: null,
         product_status: null,
+        product_is_admin_enabled: null,
+        product_expires_at: null,
         product_created_at: null,
         product_updated_at: null,
       },
@@ -114,7 +162,7 @@ describe("mapAdminMarketplaceUsers", () => {
     const users = mapAdminMarketplaceUsers([
       base,
       { ...base, shop_slug: null, product_id: 22 },
-      { ...base, product_id: 23, product_status: "expired" },
+      { ...base, product_id: 23, product_status: "deleted" },
       { ...base, product_id: 24, product_updated_at: null },
     ]);
 

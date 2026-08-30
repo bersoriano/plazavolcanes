@@ -21,6 +21,21 @@ export async function POST(request: Request) {
 
   try {
     const supabase = await createServerSupabaseClient();
+    const { data: product } = await supabase
+      .from("products")
+      .select("id, shops!inner(is_publishing_approved)")
+      .eq("id", parsed.data.productId)
+      .eq("status", "published")
+      .eq("is_admin_enabled", true)
+      .eq("shops.is_publishing_approved", true)
+      .not("expires_at", "is", null)
+      .gt("expires_at", new Date().toISOString())
+      .maybeSingle();
+
+    if (!product) {
+      return new Response(null, { status: 400 });
+    }
+
     const { error } = await supabase.rpc("record_search_selection", {
       p_event_id: parsed.data.eventId,
       p_product_id: parsed.data.productId,

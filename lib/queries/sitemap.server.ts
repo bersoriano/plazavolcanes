@@ -37,8 +37,12 @@ export async function getSitemapCatalog(): Promise<SitemapCatalog> {
       .limit(SITEMAP_ROW_LIMIT),
     supabase
       .from("products")
-      .select("slug, updated_at")
+      .select("slug, updated_at, shops!inner(is_publishing_approved)")
       .eq("status", "published")
+      .eq("is_admin_enabled", true)
+      .eq("shops.is_publishing_approved", true)
+      .not("expires_at", "is", null)
+      .gt("expires_at", new Date().toISOString())
       .order("updated_at", { ascending: false })
       .limit(SITEMAP_ROW_LIMIT),
   ]);

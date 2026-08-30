@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(83);
+select plan(88);
 
 select has_table('public', 'categories', 'categories table exists');
 select has_table('public', 'category_translations', 'category translations table exists');
@@ -74,6 +74,10 @@ insert into auth.users (id, email, created_at) values
 insert into public.shops (owner_id, name, slug, description, country_code) values
   ('123e4567-e89b-12d3-a456-426614174000', 'Tecnología Volcanes', 'tecnologia-volcanes', 'Productos tecnológicos desde México.', 'MX'),
   ('987fcdeb-51a2-43d7-9012-345678901234', 'US Catalog Shop', 'us-catalog-shop', 'Technology products shipped from the United States.', 'US');
+
+update public.shops
+set is_publishing_approved = true
+where slug in ('tecnologia-volcanes', 'us-catalog-shop');
 
 alter table public.products disable trigger products_require_publishable_category;
 insert into public.products (shop_id, name, description, price_mxn, status)
@@ -566,6 +570,112 @@ select lives_ok(
       1
     )$$,
   'authenticated callers can record a selected result through the RPC'
+);
+
+reset role;
+update public.products
+set is_admin_enabled = false
+where name = 'Funda resistente';
+
+create temp table hidden_search_product as
+select id from public.products where name = 'Funda resistente';
+
+grant select on hidden_search_product to anon;
+
+set local role anon;
+
+select throws_ok(
+  $$select public.record_search_selection(
+      public.record_catalog_search('teléfono', 'es-MX', 'MX', null, 1),
+      (select id from hidden_search_product),
+      1
+    )$$,
+  '22023',
+  'Selected product must be published.',
+  'search telemetry cannot select a hidden product'
+);
+
+reset role;
+insert into public.products (shop_id, name, description, price_mxn, status, category_id) values
+  ((select id from public.shops where slug = 'tecnologia-volcanes'), 'Coincidencia limitada', 'Descripción completa del resultado visible con coincidencia limitada.', 260, 'published', (select id from public.categories where slug = 'celulares-y-accesorios')),
+  ((select id from public.shops where slug = 'tecnologia-volcanes'), 'Coincidencia limitada', 'Descripción completa del resultado oculto con coincidencia limitada.', 270, 'published', (select id from public.categories where slug = 'celulares-y-accesorios'));
+
+create temp table visible_limited_search_product as
+select id from public.products where name = 'Coincidencia limitada' order by id limit 1;
+
+grant select on visible_limited_search_product to anon;
+
+update public.products
+set is_admin_enabled = false
+where id = (
+  select id from public.products where name = 'Coincidencia limitada' order by id desc limit 1
+);
+
+set local role anon;
+
+select results_eq(
+  $$select product_id from public.search_product_ids('Coincidencia limitada', 'es-MX', 'MX', null, null, 1)$$,
+  $$select id from visible_limited_search_product$$,
+  'a hidden exact match cannot consume the only search result slot'
+);
+
+reset role;
+update public.shops
+set listing_limit = 200
+where slug = 'tecnologia-volcanes';
+
+insert into public.products (shop_id, name, description, price_mxn, status, category_id) values
+  ((select id from public.shops where slug = 'tecnologia-volcanes'), 'Visible sin límite', 'Coincidencia sin tope dentro de una descripción completa del resultado visible.', 290, 'published', (select id from public.categories where slug = 'celulares-y-accesorios'));
+
+create temp table visible_uncapped_search_product as
+select id from public.products where name = 'Visible sin límite';
+
+grant select on visible_uncapped_search_product to anon;
+
+insert into public.products (shop_id, name, description, price_mxn, status, category_id)
+select
+  (select id from public.shops where slug = 'tecnologia-volcanes'),
+  'Coincidencia sin tope',
+  'Descripción completa del resultado oculto que excede el límite de candidatos.',
+  280,
+  'published',
+  (select id from public.categories where slug = 'celulares-y-accesorios')
+from generate_series(1, 101);
+
+update public.products
+set is_admin_enabled = false
+where name = 'Coincidencia sin tope'
+  and id not in (select id from visible_uncapped_search_product);
+
+set local role anon;
+
+select results_eq(
+  $$select product_id from public.search_product_ids('Coincidencia sin tope', 'es-MX', 'MX', null, null, 1)$$,
+  $$select id from visible_uncapped_search_product$$,
+  'more than one hundred hidden exact matches cannot exhaust public search candidates'
+);
+
+reset role;
+update public.products
+set category_id = (select id from public.categories where slug = 'celulares-y-accesorios'),
+    is_admin_enabled = false
+where name = 'Cuaderno técnico';
+
+set local role anon;
+
+select results_eq(
+  $$select count(*) from public.product_translations where name = 'Gaming laptop'$$,
+  array[0::bigint],
+  'translations leave the public catalogue when their parent product becomes hidden'
+);
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "123e4567-e89b-12d3-a456-426614174000", "role": "authenticated"}';
+
+select results_eq(
+  $$select count(*) from public.product_translations where name = 'Gaming laptop'$$,
+  array[1::bigint],
+  'the owner retains translation access after the parent product becomes hidden'
 );
 
 reset role;

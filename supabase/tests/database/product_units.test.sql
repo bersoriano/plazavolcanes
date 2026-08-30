@@ -13,6 +13,8 @@ insert into auth.users (id, email, created_at) values
 insert into public.shops (owner_id, name, slug, description, country_code, administrative_area_codes) values
   ('dddd4444-dddd-4ddd-8ddd-dddd44444444', 'Unidades', 'unidades', 'Descripción completa de la tienda de unidades.', 'MX', array['MX-JAL']);
 
+update public.shops set is_publishing_approved = true where slug = 'unidades';
+
 insert into public.products (shop_id, name, description, price_mxn, status, category_id, units_available) values
   ((select id from public.shops where slug='unidades'), 'Taza limitada', 'Descripción completa de la taza limitada.', 100, 'published', (select id from public.categories where slug='celulares-y-accesorios'), 3);
 

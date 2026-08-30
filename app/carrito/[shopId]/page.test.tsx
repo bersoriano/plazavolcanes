@@ -40,6 +40,7 @@ const cart: CartDetail = {
   items: [
     {
       id: 31,
+      productId: 12,
       quantity: 2,
       product: {
         id: 12,
@@ -94,6 +95,8 @@ beforeEach(() => {
     description: "Barro y cerámica local.",
     image_path: null,
     imageUrl: null,
+    is_publishing_approved: true,
+    publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
     listing_limit: 50,
     owner_id: "seller-1",
     seller_display_name: "Vendedor #SELL",
@@ -170,6 +173,27 @@ describe("cart purchase request", () => {
       expect(thread.startAction).toBeTypeOf("function");
       expect(thread.sendAction).toBeNull();
     }
+  });
+
+  it("keeps hidden cart rows removable and blocks checkout until they are removed", async () => {
+    vi.mocked(getCart).mockResolvedValue({
+      ...cart,
+      items: [
+        ...cart.items,
+        { id: 32, quantity: 1, product: null },
+      ],
+      subtotal: 480,
+    } as CartDetail);
+
+    render(await CartPage({ params: Promise.resolve({ shopId: "4" }) }));
+
+    expect(screen.getByText("Ya no disponible")).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Quitar" })).toHaveLength(2);
+    expect(screen.getByText("Quita los productos no disponibles antes de continuar.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Confirmar solicitud" })).not.toBeInTheDocument();
+    expect(fetchCartThreads).toHaveBeenCalledWith(4, [
+      { productId: 12, productName: "Taza volcánica" },
+    ]);
   });
 
   it("renders the seller, stored shop location and positive trust context without a pickup point", async () => {

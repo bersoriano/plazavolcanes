@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/lib/action-state";
-import { databaseMessage, insertCartItem } from "@/lib/cart-insert";
+import { databaseMessage, findAvailableProduct, insertCartItem } from "@/lib/cart-insert";
 import type { Json } from "@/lib/database.types";
 import { savePurchaseIntent } from "@/lib/purchase-intent.server";
 import { safeContinuation } from "@/lib/safe-continuation";
@@ -49,6 +49,10 @@ export async function addToCart(
   // A first-time visitor has no session to have lost. Remember what they were
   // buying and send them to sign in; the purchase finishes itself afterwards.
   if (typeof data?.claims?.sub !== "string") {
+    const product = await findAvailableProduct(supabase, productId);
+    if (!product) {
+      return { status: "error", message: "Este producto ya no está disponible." };
+    }
     await savePurchaseIntent({
       productId,
       quantity: quantity.data,

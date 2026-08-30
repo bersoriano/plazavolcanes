@@ -1,4 +1,4 @@
-import { cleanup, render } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 
 const getPublicShop = vi.fn();
@@ -64,4 +64,27 @@ test("returns a signed-out visitor to the shop they asked from", async () => {
   await renderPage();
 
   expect(conversationButtonProps.returnTo).toBe("/tiendas/casa-niebla");
+});
+
+test("keeps a pending shop reachable while its published products are withheld", async () => {
+  const pendingShopPublishedProduct = { slug: "taza-pendiente", name: "Taza pendiente" };
+  const catalogDouble = (filters: { isAdminEnabled?: boolean; isShopApproved?: boolean }) =>
+    filters.isAdminEnabled === true && filters.isShopApproved === true
+      ? []
+      : [pendingShopPublishedProduct];
+  const effectiveProducts = catalogDouble({ isAdminEnabled: true, isShopApproved: true });
+  expect(catalogDouble({ isAdminEnabled: true })).toEqual([pendingShopPublishedProduct]);
+  getPublicShop.mockResolvedValue({
+    ...shop,
+    is_publishing_approved: false,
+    products: effectiveProducts,
+  });
+
+  await renderPage();
+
+  expect(screen.getByRole("heading", { name: "Casa Niebla" })).toBeInTheDocument();
+  expect(screen.getByText("Esta tienda prepara su catálogo")).toBeInTheDocument();
+  expect(
+    screen.queryByRole("link", { name: new RegExp(pendingShopPublishedProduct.name) }),
+  ).not.toBeInTheDocument();
 });

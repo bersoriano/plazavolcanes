@@ -56,6 +56,37 @@ const categories: CategoryTree[] = [
 afterEach(cleanup);
 
 describe("ProductForm", () => {
+  it("saves new products hidden first with a single submit action", () => {
+    render(<ProductForm action={action} categories={categories} />);
+
+    expect(screen.getAllByRole("button").filter((button) => button.getAttribute("type") === "submit")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Guardar producto" })).toBeInTheDocument();
+    expect(screen.getByText(/se guardará oculto como borrador/i)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Publicar producto|Guardar borrador/ })).not.toBeInTheDocument();
+  });
+
+  it("keeps the publication controls while editing", () => {
+    render(
+      <ProductForm
+        action={action}
+        categories={categories}
+        product={{
+          name: "Taza volcánica",
+          description: "Taza hecha a mano con barro de alta temperatura.",
+          price_mxn: 349,
+          status: "draft",
+          condition: "new",
+          used_condition: null,
+          category_id: null,
+          imageUrl: null,
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Guardar borrador" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Publicar producto" })).toBeInTheDocument();
+  });
+
   it("reveals used subcondition only when Usado is selected", () => {
     render(<ProductForm action={action} categories={categories} />);
 
@@ -122,7 +153,22 @@ describe("ProductForm", () => {
       message: "Revisa los campos marcados.",
       errors: { category_id: ["Selecciona una subcategoría válida antes de publicar."] },
     });
-    render(<ProductForm action={invalidCategoryAction} categories={categories} />);
+    render(
+      <ProductForm
+        action={invalidCategoryAction}
+        categories={categories}
+        product={{
+          name: "Taza volcánica",
+          description: "Taza hecha a mano con barro de alta temperatura.",
+          price_mxn: 349,
+          status: "draft",
+          condition: "new",
+          used_condition: null,
+          category_id: null,
+          imageUrl: null,
+        }}
+      />,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Publicar producto" }));
 
@@ -133,7 +179,7 @@ describe("ProductForm", () => {
   it("submits the fixed catalog currency and source locale", () => {
     render(<ProductForm action={action} categories={categories} />);
 
-    const form = screen.getByRole("button", { name: "Publicar producto" }).closest("form");
+    const form = screen.getByRole("button", { name: "Guardar producto" }).closest("form");
 
     expect(form?.elements.namedItem("currency_code")).toHaveValue("MXN");
     expect(form?.elements.namedItem("content_locale")).toHaveValue("es-MX");

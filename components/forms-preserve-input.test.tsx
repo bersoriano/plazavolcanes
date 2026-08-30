@@ -103,7 +103,7 @@ describe("a rejected submit never discards what was typed", () => {
     fireEvent.change(screen.getByLabelText("Precio en MXN"), { target: { value: "480" } });
     fireEvent.change(screen.getByLabelText("Unidades disponibles"), { target: { value: "4" } });
 
-    await submitAndWait("Guardar borrador");
+    await submitAndWait("Guardar producto");
 
     expect(screen.getByLabelText("Nombre del producto")).toHaveValue("Taza de barro negro");
     expect(screen.getByLabelText("Descripción")).toHaveValue(

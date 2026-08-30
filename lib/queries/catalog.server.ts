@@ -38,7 +38,7 @@ export type CatalogProduct = Pick<
 export type CatalogShop = Shop & { imageUrl: string | null };
 
 const productSelection =
-  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, shops!inner(id, owner_id, name, slug, country_code, administrative_area_codes, trust_tier), product_translations(locale, name, description, review_status)";
+  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, is_admin_enabled, expires_at, shops!inner(id, owner_id, name, slug, country_code, administrative_area_codes, trust_tier, is_publishing_approved), product_translations(locale, name, description, review_status)";
 
 type ProductQueryRow = {
   id: number;
@@ -53,6 +53,8 @@ type ProductQueryRow = {
   created_at: string;
   category_id: number | null;
   currency_code: string;
+  is_admin_enabled: boolean;
+  expires_at: string | null;
   shops: {
     id: number;
     owner_id: string;
@@ -61,6 +63,7 @@ type ProductQueryRow = {
     country_code: string;
     administrative_area_codes: string[] | null;
     trust_tier: Shop["trust_tier"];
+    is_publishing_approved: boolean;
   };
   product_translations: {
     locale: CatalogLocale;
@@ -208,6 +211,10 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
           .from("products")
           .select(productSelection)
           .eq("status", "published")
+          .eq("is_admin_enabled", true)
+          .eq("shops.is_publishing_approved", true)
+          .not("expires_at", "is", null)
+          .gt("expires_at", new Date().toISOString())
           .in("id", rankedIds);
         const rankById = new Map(rankedIds.map((id, index) => [id, index]));
         productRows = ((data ?? []) as unknown as ProductQueryRow[]).sort(
@@ -231,6 +238,10 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
           .from("products")
           .select(productSelection)
           .eq("status", "published")
+          .eq("is_admin_enabled", true)
+          .eq("shops.is_publishing_approved", true)
+          .not("expires_at", "is", null)
+          .gt("expires_at", new Date().toISOString())
           .eq("shops.country_code", normalizedFilters.countryCode)
           .order("created_at", { ascending: false })
           .limit(24);
@@ -257,6 +268,10 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
       .from("products")
       .select(productSelection)
       .eq("status", "published")
+      .eq("is_admin_enabled", true)
+      .eq("shops.is_publishing_approved", true)
+      .not("expires_at", "is", null)
+      .gt("expires_at", new Date().toISOString())
       .eq("shops.country_code", normalizedFilters.countryCode)
       .order("created_at", { ascending: false })
       .limit(24);
@@ -379,6 +394,10 @@ export async function getPublicShop(
       .select(productSelection)
       .eq("shop_id", shop.id)
       .eq("status", "published")
+      .eq("is_admin_enabled", true)
+      .eq("shops.is_publishing_approved", true)
+      .not("expires_at", "is", null)
+      .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false }),
     supabase
       .from("user_trust_profiles")
@@ -417,6 +436,10 @@ export async function getPublicProduct(
     .select(productSelection)
     .eq("slug", slug)
     .eq("status", "published")
+    .eq("is_admin_enabled", true)
+    .eq("shops.is_publishing_approved", true)
+    .not("expires_at", "is", null)
+    .gt("expires_at", new Date().toISOString())
     .maybeSingle();
   if (!data) return null;
 

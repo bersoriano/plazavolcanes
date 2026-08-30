@@ -1,6 +1,26 @@
 import { describe, expect, it } from "vitest";
 
-import { productSchema, productStatusSchema } from "@/lib/validation/product";
+import { productCreationSchema, productSchema, productStatusSchema } from "@/lib/validation/product";
+
+describe("productCreationSchema", () => {
+  it("keeps seller-entered product details while ignoring a forged publication status", () => {
+    const result = productCreationSchema.safeParse({
+      name: "Taza de barro",
+      description: "Hecha a mano en un taller local de la región.",
+      price_mxn: "349.00",
+      status: "published",
+      is_admin_enabled: "false",
+      condition: "new",
+      used_condition: "",
+      category_id: "",
+      currency_code: "MXN",
+      content_locale: "es-MX",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data).not.toHaveProperty("status");
+  });
+});
 
 describe("productSchema", () => {
   it.each([1, 30])("accepts handling promise of %i business days", (handlingDays) => {

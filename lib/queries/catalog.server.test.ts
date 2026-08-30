@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getHomeCatalog, getPublicShop } from "@/lib/queries/catalog.server";
+import { getHomeCatalog, getPublicProduct, getPublicShop } from "@/lib/queries/catalog.server";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -46,6 +46,8 @@ describe("getHomeCatalog", () => {
     const productsQuery = {
       select: productSelect.mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue({ data: productRows }),
     };
@@ -65,6 +67,10 @@ describe("getHomeCatalog", () => {
     expect(productSelect).toHaveBeenCalledWith(
       expect.stringContaining("administrative_area_codes, trust_tier"),
     );
+    expect(productsQuery.eq).toHaveBeenCalledWith("is_admin_enabled", true);
+    expect(productsQuery.eq).toHaveBeenCalledWith("shops.is_publishing_approved", true);
+    expect(productsQuery.not).toHaveBeenCalledWith("expires_at", "is", null);
+    expect(productsQuery.gt).toHaveBeenCalledWith("expires_at", expect.any(String));
     expect(result.products[0]?.shop).toEqual({
       name: "Taller Volcán",
       slug: "taller-volcan",
@@ -72,6 +78,169 @@ describe("getHomeCatalog", () => {
       administrative_area_codes: ["MX-OAX"],
       trust_tier: "reliable",
     });
+  });
+
+  it("applies the effective publication gate after a ranked search", async () => {
+    const productsQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      in: vi.fn().mockResolvedValue({ data: [] }),
+    };
+    const shopsQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [] }),
+    };
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      from: vi.fn((table: string) => (table === "products" ? productsQuery : shopsQuery)),
+      rpc: vi.fn().mockResolvedValue({ data: [{ product_id: 7, rank: 1 }] }),
+    } as never);
+    vi.mocked(getProductCategoryTree).mockResolvedValue([]);
+
+    await getHomeCatalog({
+      query: "taza",
+      locale: "es-MX",
+      countryCode: "MX",
+      invalidCategorySelection: false,
+      invalidAreaSelection: false,
+    });
+
+    expect(productsQuery.eq).toHaveBeenCalledWith("is_admin_enabled", true);
+    expect(productsQuery.eq).toHaveBeenCalledWith("shops.is_publishing_approved", true);
+    expect(productsQuery.not).toHaveBeenCalledWith("expires_at", "is", null);
+    expect(productsQuery.gt).toHaveBeenCalledWith("expires_at", expect.any(String));
+  });
+
+  it("keeps published rows from a pending shop or disabled by an admin out of the catalog", async () => {
+    const rows = [
+      {
+        id: 1,
+        slug: "taza-visible",
+        name: "Taza visible",
+        units_available: 1,
+        description: "Visible.",
+        price_mxn: 100,
+        condition: "new",
+        used_condition: null,
+        image_path: null,
+        created_at: "2026-08-01T00:00:00.000Z",
+        category_id: null,
+        currency_code: "MXN",
+        status: "published",
+        is_admin_enabled: true,
+        expires_at: "2026-09-01T00:00:00.000Z",
+        shops: {
+          id: 3,
+          owner_id: "seller-1",
+          name: "Casa visible",
+          slug: "casa-visible",
+          country_code: "MX",
+          administrative_area_codes: [],
+          trust_tier: "standard",
+          is_publishing_approved: true,
+        },
+        product_translations: [],
+      },
+      {
+        id: 2,
+        slug: "taza-pendiente",
+        name: "Taza pendiente",
+        units_available: 1,
+        description: "Pending shop.",
+        price_mxn: 100,
+        condition: "new",
+        used_condition: null,
+        image_path: null,
+        created_at: "2026-08-01T00:00:00.000Z",
+        category_id: null,
+        currency_code: "MXN",
+        status: "published",
+        is_admin_enabled: true,
+        expires_at: "2026-09-01T00:00:00.000Z",
+        shops: {
+          id: 4,
+          owner_id: "seller-2",
+          name: "Casa pendiente",
+          slug: "casa-pendiente",
+          country_code: "MX",
+          administrative_area_codes: [],
+          trust_tier: "standard",
+          is_publishing_approved: false,
+        },
+        product_translations: [],
+      },
+      {
+        id: 3,
+        slug: "taza-deshabilitada",
+        name: "Taza deshabilitada",
+        units_available: 1,
+        description: "Admin disabled.",
+        price_mxn: 100,
+        condition: "new",
+        used_condition: null,
+        image_path: null,
+        created_at: "2026-08-01T00:00:00.000Z",
+        category_id: null,
+        currency_code: "MXN",
+        status: "published",
+        is_admin_enabled: false,
+        expires_at: "2026-09-01T00:00:00.000Z",
+        shops: {
+          id: 5,
+          owner_id: "seller-3",
+          name: "Casa deshabilitada",
+          slug: "casa-deshabilitada",
+          country_code: "MX",
+          administrative_area_codes: [],
+          trust_tier: "standard",
+          is_publishing_approved: true,
+        },
+        product_translations: [],
+      },
+    ];
+    const filters = new Map<string, unknown>();
+    let requiresExpiry = false;
+    const productsQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn(function (column: string, value: unknown) {
+        filters.set(column, value);
+        return productsQuery;
+      }),
+      not: vi.fn(function (column: string, operator: string, value: unknown) {
+        requiresExpiry = column === "expires_at" && operator === "is" && value === null;
+        return productsQuery;
+      }),
+      gt: vi.fn(function () {
+        return productsQuery;
+      }),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockImplementation(async () => ({
+        data: rows.filter((row) =>
+          (!filters.has("status") || row.status === filters.get("status")) &&
+          (!filters.has("is_admin_enabled") || row.is_admin_enabled === filters.get("is_admin_enabled")) &&
+          (!filters.has("shops.is_publishing_approved") ||
+            row.shops.is_publishing_approved === filters.get("shops.is_publishing_approved")) &&
+          (!requiresExpiry || row.expires_at !== null),
+        ),
+      })),
+    };
+    const shopsQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [] }),
+    };
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      from: vi.fn((table: string) => (table === "products" ? productsQuery : shopsQuery)),
+    } as never);
+    vi.mocked(getProductCategoryTree).mockResolvedValue([]);
+
+    const result = await getHomeCatalog();
+
+    expect(result.products.map((product) => product.slug)).toEqual(["taza-visible"]);
   });
 });
 
@@ -93,10 +262,61 @@ describe("getPublicShop", () => {
       eq: vi.fn().mockReturnThis(),
       maybeSingle: vi.fn().mockResolvedValue({ data: shop, error: null }),
     };
+    const pendingShopPublishedRows = [
+      {
+        id: 12,
+        slug: "taza-pendiente",
+        name: "Taza pendiente",
+        units_available: 1,
+        description: "No debe aparecer.",
+        price_mxn: 100,
+        condition: "new",
+        used_condition: null,
+        image_path: null,
+        created_at: "2026-08-01T00:00:00.000Z",
+        category_id: null,
+        currency_code: "MXN",
+        status: "published",
+        is_admin_enabled: true,
+        expires_at: "2026-09-01T00:00:00.000Z",
+        shops: {
+          id: 4,
+          owner_id: "seller-1",
+          name: "Casa Niebla",
+          slug: "casa-niebla",
+          country_code: "MX",
+          administrative_area_codes: ["MX-JAL"],
+          trust_tier: "reliable",
+          is_publishing_approved: false,
+        },
+        product_translations: [],
+      },
+    ];
+    const filters = new Map<string, unknown>();
+    let requiresExpiry = false;
     const productsQuery = {
       select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+      eq: vi.fn(function (column: string, value: unknown) {
+        filters.set(column, value);
+        return productsQuery;
+      }),
+      not: vi.fn(function (column: string, operator: string, value: unknown) {
+        requiresExpiry = column === "expires_at" && operator === "is" && value === null;
+        return productsQuery;
+      }),
+      gt: vi.fn(function () {
+        return productsQuery;
+      }),
+      order: vi.fn().mockImplementation(async () => ({
+        data: pendingShopPublishedRows.filter((row) =>
+          (!filters.has("status") || row.status === filters.get("status")) &&
+          (!filters.has("is_admin_enabled") || row.is_admin_enabled === filters.get("is_admin_enabled")) &&
+          (!filters.has("shops.is_publishing_approved") ||
+            row.shops.is_publishing_approved === filters.get("shops.is_publishing_approved")) &&
+          (!requiresExpiry || row.expires_at !== null),
+        ),
+        error: null,
+      })),
     };
     const trustProfileQuery = {
       select: vi.fn().mockReturnThis(),
@@ -144,5 +364,35 @@ describe("getPublicShop", () => {
       trust_profile: { joined_on: "2025-01-15", verification_level: "basic" },
       trust_metrics: expect.objectContaining({ responseRate: 98, totalOrders: 32 }),
     }));
+    expect(result?.products).toEqual([]);
+    expect(productsQuery.eq).toHaveBeenCalledWith("is_admin_enabled", true);
+    expect(productsQuery.eq).toHaveBeenCalledWith("shops.is_publishing_approved", true);
+    expect(productsQuery.not).toHaveBeenCalledWith("expires_at", "is", null);
+    expect(productsQuery.gt).toHaveBeenCalledWith("expires_at", expect.any(String));
+  });
+});
+
+describe("getPublicProduct", () => {
+  it("does not resolve a published product when its shop or admin gate is closed", async () => {
+    const productQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const client = {
+      from: vi.fn(() => productQuery),
+    };
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(client as never);
+
+    const result = await getPublicProduct("taza-oculta");
+
+    expect(result).toBeNull();
+    expect(productQuery.eq).toHaveBeenCalledWith("status", "published");
+    expect(productQuery.eq).toHaveBeenCalledWith("is_admin_enabled", true);
+    expect(productQuery.eq).toHaveBeenCalledWith("shops.is_publishing_approved", true);
+    expect(productQuery.not).toHaveBeenCalledWith("expires_at", "is", null);
+    expect(productQuery.gt).toHaveBeenCalledWith("expires_at", expect.any(String));
   });
 });

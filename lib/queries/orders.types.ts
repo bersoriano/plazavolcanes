@@ -3,7 +3,12 @@ import type { OrderStatus } from "@/lib/database.types";
 export type CartDetail = {
   id: number;
   shop: { id: number; name: string; slug: string };
-  items: { id: number; quantity: number; product: { id: number; name: string; price_mxn: number; image_path: string | null } }[];
+  items: {
+    id: number;
+    productId: number;
+    quantity: number;
+    product: { id: number; name: string; price_mxn: number; image_path: string | null } | null;
+  }[];
   subtotal: number;
 };
 

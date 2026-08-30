@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(29);
+select plan(32);
 
 insert into auth.users (id, email, created_at) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'buyer@test.local', now()),
@@ -17,6 +17,10 @@ values
     'Descripción completa para probar conversaciones por producto.'),
   (901, 'dddddddd-dddd-4ddd-8ddd-dddddddddddd', 'Otra Tienda', 'otra-tienda',
     'Descripción completa de la tienda que no participa en la conversación.');
+
+update public.shops
+set is_publishing_approved = true
+where id in (900, 901);
 
 insert into public.products (id, shop_id, name, description, price_mxn, status, image_path, units_available, category_id)
 overriding system value
@@ -254,6 +258,35 @@ select is(
   (select count(*)::integer from public.list_conversations('buyer')),
   4,
   'no conversation disappears when a listing does'
+);
+
+reset role;
+update public.products
+set is_admin_enabled = false
+where id = 801;
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "cccccccc-cccc-4ccc-8ccc-cccccccccccc", "role": "authenticated"}';
+
+select throws_ok(
+  $$select public.start_pre_sale_conversation(900, 801)$$,
+  'P0002',
+  'Producto no encontrado.',
+  'a hidden product cannot start a new pre-sale conversation'
+);
+
+set local request.jwt.claims = '{"sub": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "role": "authenticated"}';
+
+select results_eq(
+  $$select product_status, product_name from public.list_conversations('buyer') where product_id = 800$$,
+  $$values ('deleted'::text, 'Taza de barro'::text)$$,
+  'historical product conversations stay readable after catalogue visibility ends'
+);
+
+select results_eq(
+  $$select product_status, product_is_public from public.list_conversations('buyer') where product_id = 801$$,
+  $$values ('published'::text, false)$$,
+  'a moderated product stays readable in its historical thread without remaining public'
 );
 
 -- Uniqueness and integrity are the database's job, not the function's.

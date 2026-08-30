@@ -18,7 +18,16 @@ beforeEach(() => {
       email: "lucia@tallervolcan.mx",
       displayName: "Lucía Martínez",
       createdAt: "2026-08-01T00:00:00.000Z",
-      shops: [],
+      shops: [
+        {
+          id: 1,
+          name: "Taller Volcán",
+          slug: "taller-volcan",
+          createdAt: "2026-08-02T00:00:00.000Z",
+          isPublishingApproved: false,
+          products: [],
+        },
+      ],
     },
   ]);
 });
@@ -38,6 +47,8 @@ describe("AdminUsersPage", () => {
     render(await AdminUsersPage());
 
     expect(screen.getByText("lucia@tallervolcan.mx")).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "Publicaciones habilitadas" })).not.toBeChecked();
+    expect(screen.getByText("Publicaciones pendientes")).toBeInTheDocument();
     expect(requireAdmin).toHaveBeenCalledOnce();
     expect(getAdminMarketplaceUsers).toHaveBeenCalledOnce();
   });

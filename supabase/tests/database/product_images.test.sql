@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(9);
+select plan(11);
 
 select has_table('public', 'product_images', 'product images table exists');
 
@@ -12,6 +12,10 @@ insert into auth.users (id, email, created_at) values
 
 insert into public.shops (owner_id, name, slug, description, country_code, administrative_area_codes) values
   ('11112222-1111-4111-8111-111122223333', 'Galería', 'galeria', 'Descripción completa de la tienda con galería.', 'MX', array['MX-JAL']);
+
+update public.shops
+set is_publishing_approved = true
+where slug = 'galeria';
 
 insert into public.products (shop_id, name, description, price_mxn, status, category_id, image_path) values
   ((select id from public.shops where slug='galeria'), 'Con imagen previa', 'Descripción completa del producto con imagen.', 100, 'published', (select id from public.categories where slug='celulares-y-accesorios'), 'owner/products/vieja.jpg'),
@@ -81,6 +85,28 @@ select throws_ok(
   '42501',
   null,
   'a stranger cannot add images to a product they do not own'
+);
+
+reset role;
+update public.products
+set is_admin_enabled = false
+where name = 'Con imagen previa';
+
+set local role anon;
+
+select results_eq(
+  $$select count(*) from public.product_images where storage_path = 'owner/products/publicada.jpg'$$,
+  array[0::bigint],
+  'product images leave the public catalogue when the product visibility gate closes'
+);
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "11112222-1111-4111-8111-111122223333", "role": "authenticated"}';
+
+select results_eq(
+  $$select count(*) from public.product_images where storage_path = 'owner/products/publicada.jpg'$$,
+  array[1::bigint],
+  'the owner retains gallery access after the parent product becomes hidden'
 );
 
 select * from finish();

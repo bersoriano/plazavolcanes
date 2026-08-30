@@ -17,6 +17,7 @@ const row: ConversationRow = {
   product_price: null,
   product_currency_code: null,
   product_status: null,
+  product_is_public: null,
   product_units_available: null,
   last_message_body: "Hola",
   last_message_at: "2026-08-23T10:00:00Z",
@@ -74,6 +75,7 @@ const productRow: ConversationRow = {
   product_price: 250,
   product_currency_code: "MXN",
   product_status: "published",
+  product_is_public: true,
   product_units_available: 3,
 };
 
@@ -111,11 +113,23 @@ test("marks a listing that sold out as no longer available", () => {
 });
 
 test("drops the link once the listing leaves the plaza", () => {
-  const [summary] = mapConversationRows([{ ...productRow, product_status: "deleted" }]);
+  const [summary] = mapConversationRows([
+    { ...productRow, product_status: "deleted", product_is_public: false },
+  ]);
 
   expect(summary.product?.is_available).toBe(false);
   expect(summary.product?.href).toBeNull();
   expect(summary.product?.name).toBe("Taza de barro");
+});
+
+test("keeps a moderated listing readable without exposing its public link", () => {
+  const [summary] = mapConversationRows([
+    { ...productRow, product_is_public: false },
+  ]);
+
+  expect(summary.product?.name).toBe("Taza de barro");
+  expect(summary.product?.is_available).toBe(false);
+  expect(summary.product?.href).toBeNull();
 });
 
 test("shows a price the seller changed after the thread began", () => {

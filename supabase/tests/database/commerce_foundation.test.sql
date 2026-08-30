@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(27);
+select plan(30);
 
 select has_column('public', 'shops', 'trust_tier', 'shops cache trust tier');
 select has_column('public', 'shops', 'listing_limit', 'shops cache listing limit');
@@ -67,6 +67,10 @@ insert into auth.users (id, email, created_at) values
 
 insert into public.shops (owner_id, name, slug, description)
 values ('10000000-0000-4000-8000-000000000001', 'Comercio Uno', 'comercio-uno', 'Descripción completa para probar pedidos y límites.');
+
+update public.shops
+set is_publishing_approved = true
+where slug = 'comercio-uno';
 
 insert into public.products (shop_id, name, description, price_mxn, status, category_id, units_available)
 select s.id, 'Producto ' || n, 'Descripción suficientemente larga para producto ' || n, 10 * n, 'draft',
@@ -146,6 +150,62 @@ select results_eq(
   $$select count(*) from public.order_events where event_type = 'requested'$$,
   array[1::bigint],
   'checkout appends requested audit event'
+);
+
+reset role;
+update public.products
+set is_admin_enabled = false
+where name = 'Producto 2';
+
+create temp table hidden_commerce_product as
+select id from public.products where name = 'Producto 2';
+
+grant select on hidden_commerce_product to authenticated;
+
+insert into public.carts (buyer_id, shop_id)
+select '10000000-0000-4000-8000-000000000002', id
+from public.shops
+where slug = 'comercio-uno';
+
+insert into public.cart_items (cart_id, product_id, quantity)
+select carts.id, hidden_commerce_product.id, 1
+from public.carts cross join hidden_commerce_product
+where carts.buyer_id = '10000000-0000-4000-8000-000000000002';
+
+set local role authenticated;
+set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000002';
+
+select throws_ok(
+  $$select public.add_cart_item((select id from hidden_commerce_product), 1)$$,
+  'P0002',
+  'Producto no disponible.',
+  'a hidden product cannot be added to a cart'
+);
+
+select throws_ok(
+  $$select public.set_cart_item_quantity((
+      select cart_items.id
+      from public.cart_items
+      join public.carts on carts.id = cart_items.cart_id
+      where carts.buyer_id = '10000000-0000-4000-8000-000000000002'
+    ), 2)$$,
+  'P0002',
+  'Producto no encontrado en tu carrito.',
+  'a cart quantity cannot be changed after its product becomes hidden'
+);
+
+select throws_ok(
+  $$select public.checkout_cart_v3(
+    (select id from public.shops where slug = 'comercio-uno'),
+    'pickup',
+    null,
+    null,
+    null,
+    '10000000-0000-4000-8000-000000000098'::uuid
+  )$$,
+  'P0001',
+  'Uno o más productos ya no están disponibles.',
+  'checkout rejects a cart containing a product that became hidden'
 );
 
 select * from finish();

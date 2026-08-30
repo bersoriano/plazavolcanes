@@ -21,6 +21,8 @@ insert into auth.users (id, email, created_at) values
 insert into public.shops (owner_id, name, slug, description)
 values ('50000000-0000-4000-8000-000000000001', 'Pagos Uno', 'pagos-uno', 'Descripción completa para probar evidencia de pago del comprador.');
 
+update public.shops set is_publishing_approved = true where slug = 'pagos-uno';
+
 insert into public.products (shop_id, name, description, price_mxn, status, category_id)
 select s.id, 'Producto pagable', 'Descripción suficientemente larga para probar solicitudes con pago.', 250, 'published',
   (select id from public.categories where slug = 'celulares-y-accesorios')

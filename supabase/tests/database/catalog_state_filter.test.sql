@@ -26,6 +26,9 @@ insert into public.shops (owner_id, name, slug, description, country_code, admin
   ('22222222-2222-4222-8222-222222222222', 'Taller Oaxaca', 'taller-oaxaca', 'Descripción completa del taller de Oaxaca.', 'MX', array['MX-OAX']),
   ('22222222-2222-4222-8222-222222222222', 'Taller Doble', 'taller-doble', 'Descripción completa del taller con dos estados.', 'MX', array['MX-JAL', 'MX-COL']);
 
+update public.shops set is_publishing_approved = true
+where slug in ('taller-jalisco', 'taller-oaxaca', 'taller-doble');
+
 insert into public.products (shop_id, name, description, price_mxn, status, category_id) values
   ((select id from public.shops where slug = 'taller-jalisco'), 'Taza jalisciense', 'Descripción completa de la taza jalisciense.', 100, 'published', (select id from public.categories where slug = 'celulares-y-accesorios')),
   ((select id from public.shops where slug = 'taller-oaxaca'), 'Taza oaxaqueña', 'Descripción completa de la taza oaxaqueña.', 200, 'published', (select id from public.categories where slug = 'celulares-y-accesorios')),

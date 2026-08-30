@@ -21,8 +21,9 @@ vi.mock("next/navigation", () => ({ notFound: vi.fn(), redirect: vi.fn() }));
 
 let conversationButtonProps: Record<string, unknown> = {};
 
-const { default: ProductPage } = await import("@/app/productos/[slug]/page");
+const { default: ProductPage, generateMetadata } = await import("@/app/productos/[slug]/page");
 const { openConversation } = await import("@/lib/actions/start-conversation");
+const { notFound } = await import("next/navigation");
 
 const product = {
   id: 12,
@@ -43,9 +44,12 @@ const product = {
   shopOwnerId: "seller-1",
 };
 
-function renderPage(searchParams: Record<string, string> = {}) {
+function renderPage(
+  searchParams: Record<string, string> = {},
+  slug = "taza-de-barro",
+) {
   return ProductPage({
-    params: Promise.resolve({ slug: "taza-de-barro" }),
+    params: Promise.resolve({ slug }),
     searchParams: Promise.resolve(searchParams),
   });
 }
@@ -58,6 +62,22 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("Product page purchase notices", () => {
+  it("treats a moderation-hidden published product as not found", async () => {
+    const adminDisabledPublishedProduct = { slug: "taza-deshabilitada", is_admin_enabled: false };
+    getPublicProduct.mockResolvedValue(null);
+    vi.mocked(notFound).mockImplementation(() => {
+      throw new Error("not found");
+    });
+
+    await expect(
+      generateMetadata({ params: Promise.resolve({ slug: adminDisabledPublishedProduct.slug }) }),
+    ).resolves.toEqual({ title: "Producto no encontrado" });
+    await expect(renderPage({}, adminDisabledPublishedProduct.slug)).rejects.toThrow("not found");
+
+    expect(getPublicProduct).toHaveBeenCalledWith(adminDisabledPublishedProduct.slug);
+    expect(notFound).toHaveBeenCalledOnce();
+  });
+
   it("tells a returning buyer the product ran out", async () => {
     render(await renderPage({ compra: "agotado" }));
 
