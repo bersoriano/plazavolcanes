@@ -3,6 +3,7 @@ import { ShoppingBag, Store } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { ConversationList } from "@/components/messages/conversation-list";
+import { startedConversations } from "@/lib/queries/messages";
 import { listConversations } from "@/lib/queries/messages.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -18,11 +19,14 @@ export default async function MessagesPage() {
   const userId = typeof data.claims.sub === "string" ? data.claims.sub : null;
   if (!userId) redirect("/ingresar?continuar=/mensajes");
 
-  const [shoppingConversations, sellingConversations, { data: ownedShops }] = await Promise.all([
+  const [shopping, selling, { data: ownedShops }] = await Promise.all([
     listConversations("buyer"),
     listConversations("seller"),
     supabase.from("shops").select("id").eq("owner_id", userId).limit(1),
   ]);
+  // This route is the inbox, so it carries conversations rather than orders.
+  const shoppingConversations = startedConversations(shopping);
+  const sellingConversations = startedConversations(selling);
   const ownsShop = Boolean(ownedShops?.length);
   const sellingUnread = sellingConversations.reduce(
     (total, conversation) => total + conversation.unread_count,

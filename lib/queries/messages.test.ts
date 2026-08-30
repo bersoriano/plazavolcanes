@@ -1,6 +1,11 @@
 import { expect, test } from "vitest";
 
-import { mapConversationRows, oldestFirst, type ConversationRow } from "@/lib/queries/messages";
+import {
+  mapConversationRows,
+  oldestFirst,
+  startedConversations,
+  type ConversationRow,
+} from "@/lib/queries/messages";
 
 const row: ConversationRow = {
   conversation_id: 7,
@@ -136,4 +141,41 @@ test("shows a price the seller changed after the thread began", () => {
   const [summary] = mapConversationRows([{ ...productRow, product_price: 275 }]);
 
   expect(summary.product?.price).toBe(275);
+});
+
+test("keeps out of the inbox a thread nobody has written in", () => {
+  // An order opens a conversation whether or not anyone speaks. The inbox lists
+  // conversations, so an order still waiting for its first word stays out of it.
+  const silentOrder = mapConversationRows([
+    {
+      ...row,
+      conversation_id: 9,
+      type: "order",
+      order_id: 12,
+      last_message_body: null,
+      last_message_at: null,
+      last_message_sender_id: null,
+      unread_count: 0,
+    },
+  ]);
+
+  expect(startedConversations(silentOrder)).toEqual([]);
+});
+
+test("keeps an order thread once it carries a message", () => {
+  const spokenOrder = mapConversationRows([
+    { ...row, conversation_id: 9, type: "order", order_id: 12 },
+  ]);
+
+  expect(startedConversations(spokenOrder).map((entry) => entry.id)).toEqual([9]);
+});
+
+test("leaves the threads that have messages in the order they arrived", () => {
+  const conversations = mapConversationRows([
+    row,
+    { ...row, conversation_id: 8, last_message_body: null, last_message_at: null, last_message_sender_id: null },
+    { ...row, conversation_id: 9 },
+  ]);
+
+  expect(startedConversations(conversations).map((entry) => entry.id)).toEqual([7, 9]);
 });

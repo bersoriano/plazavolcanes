@@ -42,6 +42,15 @@ const buyerConversation: ConversationSummary = {
   unread_count: 1,
 };
 
+const silentOrder: ConversationSummary = {
+  ...buyerConversation,
+  id: 21,
+  type: "order",
+  order_id: 12,
+  unread_count: 0,
+  last_message: null,
+};
+
 let ownedShops: { id: number }[];
 
 beforeEach(() => {
@@ -106,5 +115,48 @@ describe("unified messages inbox", () => {
 
     const selling = screen.getByRole("region", { name: "Mis tiendas y publicaciones" });
     expect(within(selling).getByText(/consultas sobre tus tiendas aparecerán aquí/i)).toBeVisible();
+  });
+  it("leaves out an order nobody has written in yet", async () => {
+    // Buying opens a conversation before anyone speaks. Until somebody does, it
+    // is not a message, and showing it in the inbox only puzzles the reader.
+    vi.mocked(listConversations).mockImplementation(async (role) =>
+      role === "seller" ? [sellerConversation] : [buyerConversation, silentOrder],
+    );
+
+    render(await MessagesPage());
+
+    const shopping = screen.getByRole("region", { name: "Mis compras" });
+    expect(within(shopping).queryByText("Pedido #12")).not.toBeInTheDocument();
+    expect(within(shopping).queryByText(/sin mensajes todavía/i)).not.toBeInTheDocument();
+    expect(within(shopping).getByRole("link", { name: /Casa Niebla/ })).toBeInTheDocument();
+  });
+
+  it("shows an order thread as soon as it carries a message", async () => {
+    vi.mocked(listConversations).mockImplementation(async (role) =>
+      role === "seller"
+        ? [sellerConversation]
+        : [{ ...silentOrder, last_message: sellerConversation.last_message }],
+    );
+
+    render(await MessagesPage());
+
+    const shopping = screen.getByRole("region", { name: "Mis compras" });
+    expect(within(shopping).getByText("Pedido #12")).toBeInTheDocument();
+    expect(within(shopping).getByRole("link", { name: /Pedido #12/ })).toHaveAttribute(
+      "href",
+      "/mensajes/21",
+    );
+  });
+
+  it("counts only the threads it shows as unread", async () => {
+    vi.mocked(listConversations).mockImplementation(async (role) =>
+      role === "seller" ? [sellerConversation] : [silentOrder],
+    );
+
+    render(await MessagesPage());
+
+    const shopping = screen.getByRole("region", { name: "Mis compras" });
+    expect(within(shopping).queryByText(/sin leer/i)).not.toBeInTheDocument();
+    expect(within(shopping).getByText(/tus preguntas y solicitudes de compra aparecerán aquí/i)).toBeVisible();
   });
 });
