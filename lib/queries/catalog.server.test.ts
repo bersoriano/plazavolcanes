@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getHomeCatalog, getPublicShop } from "@/lib/queries/catalog.server";
+import { getHomeCatalog, getPublicProduct, getPublicShop } from "@/lib/queries/catalog.server";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -46,6 +46,8 @@ describe("getHomeCatalog", () => {
     const productsQuery = {
       select: productSelect.mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue({ data: productRows }),
     };
@@ -65,6 +67,10 @@ describe("getHomeCatalog", () => {
     expect(productSelect).toHaveBeenCalledWith(
       expect.stringContaining("administrative_area_codes, trust_tier"),
     );
+    expect(productsQuery.eq).toHaveBeenCalledWith("is_admin_enabled", true);
+    expect(productsQuery.eq).toHaveBeenCalledWith("shops.is_publishing_approved", true);
+    expect(productsQuery.not).toHaveBeenCalledWith("expires_at", "is", null);
+    expect(productsQuery.gt).toHaveBeenCalledWith("expires_at", expect.any(String));
     expect(result.products[0]?.shop).toEqual({
       name: "Taller Volcán",
       slug: "taller-volcan",
@@ -72,6 +78,40 @@ describe("getHomeCatalog", () => {
       administrative_area_codes: ["MX-OAX"],
       trust_tier: "reliable",
     });
+  });
+
+  it("applies the effective publication gate after a ranked search", async () => {
+    const productsQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      in: vi.fn().mockResolvedValue({ data: [] }),
+    };
+    const shopsQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [] }),
+    };
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      from: vi.fn((table: string) => (table === "products" ? productsQuery : shopsQuery)),
+      rpc: vi.fn().mockResolvedValue({ data: [{ product_id: 7, rank: 1 }] }),
+    } as never);
+    vi.mocked(getProductCategoryTree).mockResolvedValue([]);
+
+    await getHomeCatalog({
+      query: "taza",
+      locale: "es-MX",
+      countryCode: "MX",
+      invalidCategorySelection: false,
+      invalidAreaSelection: false,
+    });
+
+    expect(productsQuery.eq).toHaveBeenCalledWith("is_admin_enabled", true);
+    expect(productsQuery.eq).toHaveBeenCalledWith("shops.is_publishing_approved", true);
+    expect(productsQuery.not).toHaveBeenCalledWith("expires_at", "is", null);
+    expect(productsQuery.gt).toHaveBeenCalledWith("expires_at", expect.any(String));
   });
 });
 
@@ -96,6 +136,8 @@ describe("getPublicShop", () => {
     const productsQuery = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
       order: vi.fn().mockResolvedValue({ data: [], error: null }),
     };
     const trustProfileQuery = {
@@ -144,5 +186,34 @@ describe("getPublicShop", () => {
       trust_profile: { joined_on: "2025-01-15", verification_level: "basic" },
       trust_metrics: expect.objectContaining({ responseRate: 98, totalOrders: 32 }),
     }));
+    expect(productsQuery.eq).toHaveBeenCalledWith("is_admin_enabled", true);
+    expect(productsQuery.eq).toHaveBeenCalledWith("shops.is_publishing_approved", true);
+    expect(productsQuery.not).toHaveBeenCalledWith("expires_at", "is", null);
+    expect(productsQuery.gt).toHaveBeenCalledWith("expires_at", expect.any(String));
+  });
+});
+
+describe("getPublicProduct", () => {
+  it("does not resolve a published product when its shop or admin gate is closed", async () => {
+    const productQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+    const client = {
+      from: vi.fn(() => productQuery),
+    };
+    vi.mocked(createServerSupabaseClient).mockResolvedValue(client as never);
+
+    const result = await getPublicProduct("taza-oculta");
+
+    expect(result).toBeNull();
+    expect(productQuery.eq).toHaveBeenCalledWith("status", "published");
+    expect(productQuery.eq).toHaveBeenCalledWith("is_admin_enabled", true);
+    expect(productQuery.eq).toHaveBeenCalledWith("shops.is_publishing_approved", true);
+    expect(productQuery.not).toHaveBeenCalledWith("expires_at", "is", null);
+    expect(productQuery.gt).toHaveBeenCalledWith("expires_at", expect.any(String));
   });
 });

@@ -94,6 +94,7 @@ beforeEach(() => {
     description: "Barro y cerámica local.",
     image_path: null,
     imageUrl: null,
+    is_publishing_approved: true,
     listing_limit: 50,
     owner_id: "seller-1",
     seller_display_name: "Vendedor #SELL",

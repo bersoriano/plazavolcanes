@@ -37,9 +37,13 @@ export async function insertCartItem(
 ): Promise<CartInsertResult> {
   const { data: product } = await supabase
     .from("products")
-    .select("shop_id")
+    .select("shop_id, shops!inner(is_publishing_approved)")
     .eq("id", productId)
     .eq("status", "published")
+    .eq("is_admin_enabled", true)
+    .eq("shops.is_publishing_approved", true)
+    .not("expires_at", "is", null)
+    .gt("expires_at", new Date().toISOString())
     .maybeSingle();
 
   if (!product) return { status: "unavailable" };

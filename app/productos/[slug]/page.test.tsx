@@ -23,6 +23,7 @@ let conversationButtonProps: Record<string, unknown> = {};
 
 const { default: ProductPage } = await import("@/app/productos/[slug]/page");
 const { openConversation } = await import("@/lib/actions/start-conversation");
+const { notFound } = await import("next/navigation");
 
 const product = {
   id: 12,
@@ -58,6 +59,17 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("Product page purchase notices", () => {
+  it("treats a moderation-hidden published product as not found", async () => {
+    getPublicProduct.mockResolvedValue(null);
+    vi.mocked(notFound).mockImplementation(() => {
+      throw new Error("not found");
+    });
+
+    await expect(renderPage()).rejects.toThrow("not found");
+
+    expect(notFound).toHaveBeenCalledOnce();
+  });
+
   it("tells a returning buyer the product ran out", async () => {
     render(await renderPage({ compra: "agotado" }));
 

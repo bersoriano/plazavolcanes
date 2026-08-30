@@ -194,6 +194,7 @@ describe("public sharing controls", () => {
       description: "Objetos hechos en un taller al pie del volcán.",
       image_path: null,
       imageUrl: null,
+      is_publishing_approved: true,
       listing_limit: 15,
       time_zone: "America/Mexico_City",
       trust_evaluated_at: null,

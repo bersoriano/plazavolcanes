@@ -186,6 +186,7 @@ function sampleShop() {
     id: 3,
     image_path: null,
     imageUrl: null,
+    is_publishing_approved: true,
     listing_limit: 15,
     name: "Taller Volcán",
     owner_id: "00000000-0000-0000-0000-000000000003",
