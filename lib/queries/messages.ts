@@ -23,6 +23,7 @@ export type ConversationRow = {
   product_price: number | null;
   product_currency_code: string | null;
   product_status: ProductStatus | null;
+  product_is_public: boolean | null;
   product_units_available: number | null;
   last_message_body: string | null;
   last_message_at: string | null;
@@ -90,7 +91,7 @@ export function oldestFirst<T extends { created_at: string }>(entries: T[]) {
 export function mapConversationProduct(row: ConversationRow): ConversationProduct | null {
   if (row.type !== "pre_sale" || row.product_id === null || row.product_name === null) return null;
 
-  const published = row.product_status === "published";
+  const isPublic = row.product_is_public === true;
 
   return {
     id: row.product_id,
@@ -98,10 +99,10 @@ export function mapConversationProduct(row: ConversationRow): ConversationProduc
     image_url: getCatalogImageUrl(row.product_image_path),
     price: Number(row.product_price ?? 0),
     currency_code: row.product_currency_code ?? DEFAULT_CATALOG_CURRENCY,
-    is_available: published && (row.product_units_available ?? 0) > 0,
+    is_available: isPublic && (row.product_units_available ?? 0) > 0,
     // A listing that left the catalogue keeps its thread, but its page is gone,
     // so the context card stops being a link rather than pointing at a 404.
-    href: published && row.product_slug ? `/productos/${row.product_slug}` : null,
+    href: isPublic && row.product_slug ? `/productos/${row.product_slug}` : null,
   };
 }
 

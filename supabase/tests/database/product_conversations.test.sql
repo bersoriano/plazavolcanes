@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(31);
+select plan(32);
 
 insert into auth.users (id, email, created_at) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'buyer@test.local', now()),
@@ -281,6 +281,12 @@ select results_eq(
   $$select product_status, product_name from public.list_conversations('buyer') where product_id = 800$$,
   $$values ('deleted'::text, 'Taza de barro'::text)$$,
   'historical product conversations stay readable after catalogue visibility ends'
+);
+
+select results_eq(
+  $$select product_status, product_is_public from public.list_conversations('buyer') where product_id = 801$$,
+  $$values ('published'::text, false)$$,
+  'a moderated product stays readable in its historical thread without remaining public'
 );
 
 -- Uniqueness and integrity are the database's job, not the function's.

@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process";
+
 import { expect, test, type Page } from "@playwright/test";
 
 // Like the messaging spec, this one registers accounts and publishes a product,
@@ -29,6 +31,23 @@ async function register(page: Page, account: { email: string; password: string; 
   await expect(page).toHaveURL(/\/panel/);
 }
 
+function approveShopForPublication(slug: string) {
+  execFileSync(
+    "npx",
+    [
+      "supabase",
+      "db",
+      "query",
+      "--local",
+      `do $$ begin
+        update public.shops set is_publishing_approved = true where slug = '${slug}';
+        if not found then raise exception 'Could not approve local e2e shop.'; end if;
+      end $$;`,
+    ],
+    { stdio: "pipe" },
+  );
+}
+
 test("a signed-out shopper keeps their purchase through sign-in", async ({ browser }) => {
   const sellerContext = await browser.newContext();
   const sellerPage = await sellerContext.newPage();
@@ -43,6 +62,8 @@ test("a signed-out shopper keeps their purchase through sign-in", async ({ brows
   await sellerPage.getByLabel("Estado principal").selectOption({ index: 1 });
   await sellerPage.getByRole("button", { name: "Crear tienda" }).click();
   await expect(sellerPage).toHaveURL(/\/panel\/tiendas\/\d+/);
+
+  approveShopForPublication(`tienda-${stamp}`);
 
   const shopHref = await sellerPage
     .getByRole("link", { name: /ver tienda|tienda pública/i })
@@ -59,7 +80,10 @@ test("a signed-out shopper keeps their purchase through sign-in", async ({ brows
   await sellerPage.getByLabel("Descripción").fill("Pieza de prueba para la compra de un visitante.");
   await sellerPage.getByLabel("Precio en MXN").fill("250");
   await sellerPage.getByLabel("Unidades disponibles").fill("5");
+  await sellerPage.getByRole("button", { name: "Guardar producto" }).click();
+  await expect(sellerPage).toHaveURL(/\/panel\/productos\/\d+\/editar/);
   await sellerPage.getByRole("button", { name: "Publicar producto" }).click();
+  await expect(sellerPage.getByRole("status")).toHaveText("Producto publicado.");
 
   // The buyer's account exists, but the browser doing the buying is a stranger.
   const registrationContext = await browser.newContext();
@@ -151,6 +175,8 @@ test("a buyer must choose how they receive the item", async ({ browser }) => {
   await sellerPage.getByRole("button", { name: "Crear tienda" }).click();
   await expect(sellerPage).toHaveURL(/\/panel\/tiendas\//);
 
+  approveShopForPublication(`tienda-${stamp2}`);
+
   // A published product for the visitor to want.
   const productName = `Taza de barro ${stamp2}`;
   await sellerPage.getByRole("link", { name: /nuevo producto|agregar producto/i }).first().click();
@@ -161,7 +187,10 @@ test("a buyer must choose how they receive the item", async ({ browser }) => {
   await sellerPage.getByLabel("Descripción").fill("Pieza de prueba para la compra de un visitante.");
   await sellerPage.getByLabel("Precio en MXN").fill("250");
   await sellerPage.getByLabel("Unidades disponibles").fill("5");
+  await sellerPage.getByRole("button", { name: "Guardar producto" }).click();
+  await expect(sellerPage).toHaveURL(/\/panel\/productos\/\d+\/editar/);
   await sellerPage.getByRole("button", { name: "Publicar producto" }).click();
+  await expect(sellerPage.getByRole("status")).toHaveText("Producto publicado.");
 
   const buyerContext = await browser.newContext();
   const buyerPage = await buyerContext.newPage();
@@ -220,6 +249,8 @@ test("choosing shipping asks for an address and creates a shipped order", async 
   await sellerPage.getByRole("button", { name: "Crear tienda" }).click();
   await expect(sellerPage).toHaveURL(/\/panel\/tiendas\//);
 
+  approveShopForPublication(`tienda-${stamp3}`);
+
   // A published product for the visitor to want.
   const productName = `Taza de barro ${stamp3}`;
   await sellerPage.getByRole("link", { name: /nuevo producto|agregar producto/i }).first().click();
@@ -230,7 +261,10 @@ test("choosing shipping asks for an address and creates a shipped order", async 
   await sellerPage.getByLabel("Descripción").fill("Pieza de prueba para la compra de un visitante.");
   await sellerPage.getByLabel("Precio en MXN").fill("250");
   await sellerPage.getByLabel("Unidades disponibles").fill("5");
+  await sellerPage.getByRole("button", { name: "Guardar producto" }).click();
+  await expect(sellerPage).toHaveURL(/\/panel\/productos\/\d+\/editar/);
   await sellerPage.getByRole("button", { name: "Publicar producto" }).click();
+  await expect(sellerPage.getByRole("status")).toHaveText("Producto publicado.");
 
   const buyerContext = await browser.newContext();
   const buyerPage = await buyerContext.newPage();

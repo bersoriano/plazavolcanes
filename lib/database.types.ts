@@ -773,6 +773,7 @@ export type Database = {
           product_price: number | null;
           product_currency_code: string | null;
           product_status: "draft" | "published" | "expired" | "deleted" | null;
+          product_is_public: boolean | null;
           product_units_available: number | null;
           last_message_body: string | null;
           last_message_at: string | null;
