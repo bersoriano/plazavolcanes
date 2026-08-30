@@ -149,3 +149,45 @@ test("keeps every kind of thread reachable from one list", () => {
 
   expect(screen.getAllByRole("link")).toHaveLength(3);
 });
+
+test("reads the listing before the message it belongs to", () => {
+  // The row is context first, conversation second: a product thread can never be
+  // read as if the listing name were part of the message preview.
+  render(<ConversationList basePath="/mensajes" conversations={[productThread]} />);
+
+  expect(screen.getByRole("link").textContent).toMatch(
+    /Taza de barro[\s\S]*\$250\.00[\s\S]*Ana Ruiz[\s\S]*¿Sigue disponible\?/,
+  );
+});
+
+test("reads the order before the message it belongs to", () => {
+  render(
+    <ConversationList
+      basePath="/mensajes"
+      conversations={[{ ...conversation, type: "order", order_id: 12 }]}
+    />,
+  );
+
+  expect(screen.getByRole("link").textContent).toMatch(
+    /Pedido #12[\s\S]*Ana Ruiz[\s\S]*¿Sigue disponible\?/,
+  );
+});
+
+test("leaves a general enquiry as one plain row led by the person", () => {
+  render(<ConversationList basePath="/mensajes" conversations={[conversation]} />);
+
+  expect(screen.getByRole("link").textContent).toMatch(
+    /Ana Ruiz[\s\S]*Consulta general[\s\S]*¿Sigue disponible\?/,
+  );
+});
+
+test("keeps the order label off a thread that carries a listing", () => {
+  render(
+    <ConversationList
+      basePath="/mensajes"
+      conversations={[{ ...productThread, type: "order", order_id: 12 }]}
+    />,
+  );
+
+  expect(screen.getByRole("link").textContent).toMatch(/Pedido #12[\s\S]*Taza de barro/);
+});
