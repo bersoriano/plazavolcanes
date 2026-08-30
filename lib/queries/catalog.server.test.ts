@@ -113,6 +113,135 @@ describe("getHomeCatalog", () => {
     expect(productsQuery.not).toHaveBeenCalledWith("expires_at", "is", null);
     expect(productsQuery.gt).toHaveBeenCalledWith("expires_at", expect.any(String));
   });
+
+  it("keeps published rows from a pending shop or disabled by an admin out of the catalog", async () => {
+    const rows = [
+      {
+        id: 1,
+        slug: "taza-visible",
+        name: "Taza visible",
+        units_available: 1,
+        description: "Visible.",
+        price_mxn: 100,
+        condition: "new",
+        used_condition: null,
+        image_path: null,
+        created_at: "2026-08-01T00:00:00.000Z",
+        category_id: null,
+        currency_code: "MXN",
+        status: "published",
+        is_admin_enabled: true,
+        expires_at: "2026-09-01T00:00:00.000Z",
+        shops: {
+          id: 3,
+          owner_id: "seller-1",
+          name: "Casa visible",
+          slug: "casa-visible",
+          country_code: "MX",
+          administrative_area_codes: [],
+          trust_tier: "standard",
+          is_publishing_approved: true,
+        },
+        product_translations: [],
+      },
+      {
+        id: 2,
+        slug: "taza-pendiente",
+        name: "Taza pendiente",
+        units_available: 1,
+        description: "Pending shop.",
+        price_mxn: 100,
+        condition: "new",
+        used_condition: null,
+        image_path: null,
+        created_at: "2026-08-01T00:00:00.000Z",
+        category_id: null,
+        currency_code: "MXN",
+        status: "published",
+        is_admin_enabled: true,
+        expires_at: "2026-09-01T00:00:00.000Z",
+        shops: {
+          id: 4,
+          owner_id: "seller-2",
+          name: "Casa pendiente",
+          slug: "casa-pendiente",
+          country_code: "MX",
+          administrative_area_codes: [],
+          trust_tier: "standard",
+          is_publishing_approved: false,
+        },
+        product_translations: [],
+      },
+      {
+        id: 3,
+        slug: "taza-deshabilitada",
+        name: "Taza deshabilitada",
+        units_available: 1,
+        description: "Admin disabled.",
+        price_mxn: 100,
+        condition: "new",
+        used_condition: null,
+        image_path: null,
+        created_at: "2026-08-01T00:00:00.000Z",
+        category_id: null,
+        currency_code: "MXN",
+        status: "published",
+        is_admin_enabled: false,
+        expires_at: "2026-09-01T00:00:00.000Z",
+        shops: {
+          id: 5,
+          owner_id: "seller-3",
+          name: "Casa deshabilitada",
+          slug: "casa-deshabilitada",
+          country_code: "MX",
+          administrative_area_codes: [],
+          trust_tier: "standard",
+          is_publishing_approved: true,
+        },
+        product_translations: [],
+      },
+    ];
+    const filters = new Map<string, unknown>();
+    let requiresExpiry = false;
+    const productsQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn(function (column: string, value: unknown) {
+        filters.set(column, value);
+        return productsQuery;
+      }),
+      not: vi.fn(function (column: string, operator: string, value: unknown) {
+        requiresExpiry = column === "expires_at" && operator === "is" && value === null;
+        return productsQuery;
+      }),
+      gt: vi.fn(function () {
+        return productsQuery;
+      }),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockImplementation(async () => ({
+        data: rows.filter((row) =>
+          (!filters.has("status") || row.status === filters.get("status")) &&
+          (!filters.has("is_admin_enabled") || row.is_admin_enabled === filters.get("is_admin_enabled")) &&
+          (!filters.has("shops.is_publishing_approved") ||
+            row.shops.is_publishing_approved === filters.get("shops.is_publishing_approved")) &&
+          (!requiresExpiry || row.expires_at !== null),
+        ),
+      })),
+    };
+    const shopsQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      limit: vi.fn().mockResolvedValue({ data: [] }),
+    };
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      from: vi.fn((table: string) => (table === "products" ? productsQuery : shopsQuery)),
+    } as never);
+    vi.mocked(getProductCategoryTree).mockResolvedValue([]);
+
+    const result = await getHomeCatalog();
+
+    expect(result.products.map((product) => product.slug)).toEqual(["taza-visible"]);
+  });
 });
 
 describe("getPublicShop", () => {

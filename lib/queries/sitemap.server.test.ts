@@ -17,13 +17,49 @@ describe("getSitemapCatalog", () => {
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue({ data: [] }),
     };
+    const rows = [
+      {
+        slug: "taza-pendiente",
+        updated_at: "2026-08-01T00:00:00.000Z",
+        status: "published",
+        is_admin_enabled: true,
+        expires_at: "2026-09-01T00:00:00.000Z",
+        shops: { is_publishing_approved: false },
+      },
+      {
+        slug: "taza-deshabilitada",
+        updated_at: "2026-08-01T00:00:00.000Z",
+        status: "published",
+        is_admin_enabled: false,
+        expires_at: "2026-09-01T00:00:00.000Z",
+        shops: { is_publishing_approved: true },
+      },
+    ];
+    const filters = new Map<string, unknown>();
+    let requiresExpiry = false;
     const productsQuery = {
       select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      not: vi.fn().mockReturnThis(),
-      gt: vi.fn().mockReturnThis(),
+      eq: vi.fn(function (column: string, value: unknown) {
+        filters.set(column, value);
+        return productsQuery;
+      }),
+      not: vi.fn(function (column: string, operator: string, value: unknown) {
+        requiresExpiry = column === "expires_at" && operator === "is" && value === null;
+        return productsQuery;
+      }),
+      gt: vi.fn(function () {
+        return productsQuery;
+      }),
       order: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockResolvedValue({ data: [] }),
+      limit: vi.fn().mockImplementation(async () => ({
+        data: rows.filter((row) =>
+          (!filters.has("status") || row.status === filters.get("status")) &&
+          (!filters.has("is_admin_enabled") || row.is_admin_enabled === filters.get("is_admin_enabled")) &&
+          (!filters.has("shops.is_publishing_approved") ||
+            row.shops.is_publishing_approved === filters.get("shops.is_publishing_approved")) &&
+          (!requiresExpiry || row.expires_at !== null),
+        ),
+      })),
     };
     vi.mocked(createServerSupabaseClient).mockResolvedValue({
       from: vi.fn((table: string) => (table === "products" ? productsQuery : shopsQuery)),

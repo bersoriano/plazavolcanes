@@ -48,15 +48,45 @@ describe("POST /api/search-events/selection", () => {
     expect(response.status).toBe(503);
   });
 
-  it("does not record a selection for a product hidden by a moderation gate", async () => {
+  it.each([
+    ["pending shop", { is_admin_enabled: true, shops: { is_publishing_approved: false } }],
+    ["admin-disabled product", { is_admin_enabled: false, shops: { is_publishing_approved: true } }],
+  ])("does not record a selection for a published product from a %s", async (_reason, gate) => {
     mocks.isSupabaseConfigured.mockReturnValue(true);
-    const maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
-    const gt = vi.fn(() => ({ maybeSingle }));
-    const not = vi.fn(() => ({ gt }));
-    const eq = vi.fn(() => ({ eq, not, maybeSingle }));
+    const candidate = {
+      id: 42,
+      status: "published",
+      expires_at: "2026-09-01T00:00:00.000Z",
+      ...gate,
+    };
+    const filters = new Map<string, unknown>();
+    let requiresExpiry = false;
+    const query = {
+      eq: vi.fn(function (column: string, value: unknown) {
+        filters.set(column, value);
+        return query;
+      }),
+      not: vi.fn(function (column: string, operator: string, value: unknown) {
+        requiresExpiry = column === "expires_at" && operator === "is" && value === null;
+        return query;
+      }),
+      gt: vi.fn(function () {
+        return query;
+      }),
+      maybeSingle: vi.fn().mockImplementation(async () => ({
+        data: (!filters.has("status") || candidate.status === filters.get("status")) &&
+          (!filters.has("is_admin_enabled") ||
+            candidate.is_admin_enabled === filters.get("is_admin_enabled")) &&
+          (!filters.has("shops.is_publishing_approved") ||
+            candidate.shops.is_publishing_approved === filters.get("shops.is_publishing_approved")) &&
+          (!requiresExpiry || candidate.expires_at !== null)
+          ? candidate
+          : null,
+      })),
+    };
     const rpc = vi.fn();
     mocks.createServerSupabaseClient.mockResolvedValue({
-      from: vi.fn(() => ({ select: vi.fn(() => ({ eq, not, maybeSingle })) })),
+      from: vi.fn(() => ({ select: vi.fn(() => query) })),
       rpc,
     });
 
@@ -73,11 +103,11 @@ describe("POST /api/search-events/selection", () => {
     );
 
     expect(response.status).toBe(400);
-    expect(eq).toHaveBeenCalledWith("status", "published");
-    expect(eq).toHaveBeenCalledWith("is_admin_enabled", true);
-    expect(eq).toHaveBeenCalledWith("shops.is_publishing_approved", true);
-    expect(not).toHaveBeenCalledWith("expires_at", "is", null);
-    expect(gt).toHaveBeenCalledWith("expires_at", expect.any(String));
+    expect(query.eq).toHaveBeenCalledWith("status", "published");
+    expect(query.eq).toHaveBeenCalledWith("is_admin_enabled", true);
+    expect(query.eq).toHaveBeenCalledWith("shops.is_publishing_approved", true);
+    expect(query.not).toHaveBeenCalledWith("expires_at", "is", null);
+    expect(query.gt).toHaveBeenCalledWith("expires_at", expect.any(String));
     expect(rpc).not.toHaveBeenCalled();
   });
 });

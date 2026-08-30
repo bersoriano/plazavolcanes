@@ -21,7 +21,7 @@ vi.mock("next/navigation", () => ({ notFound: vi.fn(), redirect: vi.fn() }));
 
 let conversationButtonProps: Record<string, unknown> = {};
 
-const { default: ProductPage } = await import("@/app/productos/[slug]/page");
+const { default: ProductPage, generateMetadata } = await import("@/app/productos/[slug]/page");
 const { openConversation } = await import("@/lib/actions/start-conversation");
 const { notFound } = await import("next/navigation");
 
@@ -60,13 +60,18 @@ afterEach(cleanup);
 
 describe("Product page purchase notices", () => {
   it("treats a moderation-hidden published product as not found", async () => {
+    const adminDisabledPublishedProduct = { slug: "taza-deshabilitada", is_admin_enabled: false };
     getPublicProduct.mockResolvedValue(null);
     vi.mocked(notFound).mockImplementation(() => {
       throw new Error("not found");
     });
 
+    await expect(
+      generateMetadata({ params: Promise.resolve({ slug: adminDisabledPublishedProduct.slug }) }),
+    ).resolves.toEqual({ title: "Producto no encontrado" });
     await expect(renderPage()).rejects.toThrow("not found");
 
+    expect(getPublicProduct).toHaveBeenCalledWith(adminDisabledPublishedProduct.slug);
     expect(notFound).toHaveBeenCalledOnce();
   });
 

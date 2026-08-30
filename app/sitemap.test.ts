@@ -41,6 +41,18 @@ describe("sitemap", () => {
     expect(urls.some((url) => url.includes("/mensajes"))).toBe(false);
   });
 
+  it("omits a published product URL when the shop approval gate filters it out", async () => {
+    const pendingShopPublishedProduct = "taza-pendiente";
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://plazavolcanes.com");
+    vi.mocked(getSitemapCatalog).mockResolvedValue({ shops: [], products: [] });
+
+    const urls = (await sitemap()).map((entry) => entry.url);
+
+    expect(urls).not.toContain(
+      `https://plazavolcanes.com/productos/${pendingShopPublishedProduct}`,
+    );
+  });
+
   it("dates catalog entries from their last update", async () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://plazavolcanes.com");
     vi.mocked(getSitemapCatalog).mockResolvedValue({
