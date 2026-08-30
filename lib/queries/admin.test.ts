@@ -85,9 +85,19 @@ describe("mapAdminMarketplaceUsers", () => {
   it("derives the effective administrative state from every publication gate", () => {
     const users = mapAdminMarketplaceUsers([
       { ...base, product_id: 20, product_status: "draft" },
-      { ...base, product_id: 21, shop_is_publishing_approved: false },
+      {
+        ...base,
+        product_id: 21,
+        shop_is_publishing_approved: false,
+        product_expires_at: null,
+      },
       { ...base, product_id: 22 },
-      { ...base, product_id: 23, product_is_admin_enabled: false },
+      {
+        ...base,
+        product_id: 23,
+        product_is_admin_enabled: false,
+        product_expires_at: null,
+      },
       { ...base, product_id: 24, product_status: "expired", product_expires_at: "2026-01-01T00:00:00.000Z" },
     ]);
 

@@ -40,15 +40,15 @@ export type AdminMarketplaceProduct = {
 
 function adminProductState(row: AdminMarketplaceRpcRow): AdminMarketplaceProductState {
   if (row.product_status === "draft") return "draft";
+  if (row.product_status === "expired") return "expired";
+  if (!row.product_is_admin_enabled) return "admin-disabled";
+  if (!row.shop_is_publishing_approved) return "pending";
   if (
-    row.product_status === "expired" ||
     row.product_expires_at === null ||
     new Date(row.product_expires_at).getTime() <= Date.now()
   ) {
     return "expired";
   }
-  if (!row.shop_is_publishing_approved) return "pending";
-  if (!row.product_is_admin_enabled) return "admin-disabled";
   return "public";
 }
 
