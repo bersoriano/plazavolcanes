@@ -7,7 +7,13 @@ import type { ActionState } from "@/lib/action-state";
 import { hasListingCapacity } from "@/lib/listing-limits";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { validateProductImages } from "@/lib/storage";
+import {
+  countProductImages,
+  productImageKeys,
+  storeProductImages,
+} from "@/lib/media/product-images";
+import { deleteObjects } from "@/lib/media/store";
+import { validateProductImages } from "@/lib/media/validation";
 import { productCreationSchema, productSchema, productStatusSchema } from "@/lib/validation/product";
 import { uniqueProductSlug } from "@/lib/slug";
 
@@ -29,58 +35,6 @@ function galleryImagesFrom(formData: FormData) {
   return formData
     .getAll("images")
     .filter((value): value is File => value instanceof File && value.size > 0);
-}
-
-/** Uploads a gallery selection and records it, rolling back the objects on failure. */
-async function storeGalleryImages(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  userId: string,
-  productId: number,
-  images: File[],
-  startPosition: number,
-) {
-  const uploaded: string[] = [];
-
-  for (const [index, image] of images.entries()) {
-    const path = `${userId}/products/${crypto.randomUUID()}.${imageExtension(image)}`;
-    const { error } = await supabase.storage
-      .from("catalogo")
-      .upload(path, image, { contentType: image.type, upsert: false });
-
-    if (error) {
-      if (uploaded.length) await supabase.storage.from("catalogo").remove(uploaded);
-      return { error: "No pudimos subir las imágenes." as const };
-    }
-
-    uploaded.push(path);
-    const { error: rowError } = await supabase
-      .from("product_images")
-      .insert({ product_id: productId, storage_path: path, position: startPosition + index });
-
-    if (rowError) {
-      await supabase.storage.from("catalogo").remove(uploaded);
-      return { error: "No pudimos guardar las imágenes." as const };
-    }
-  }
-
-  return { error: null };
-}
-
-async function storedImageCount(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  productId: number,
-) {
-  const { count } = await supabase
-    .from("product_images")
-    .select("id", { count: "exact", head: true })
-    .eq("product_id", productId);
-  return count ?? 0;
-}
-
-function imageExtension(file: File) {
-  if (file.type === "image/jpeg") return "jpg";
-  if (file.type === "image/png") return "png";
-  return "webp";
 }
 
 async function getAuthenticatedContext() {
@@ -208,7 +162,7 @@ export async function createProduct(
 
   // The cover is derived from the gallery by trigger, so images are stored after the row.
   if (images.length) {
-    const stored = await storeGalleryImages(supabase, userId, data.id, images, 0);
+    const stored = await storeProductImages(supabase, userId, data.id, images);
     if (stored.error) return { status: "error", message: stored.error };
   }
 
@@ -255,7 +209,7 @@ export async function updateProduct(
     }
   }
 
-  const alreadyStored = await storedImageCount(supabase, productId);
+  const alreadyStored = await countProductImages(supabase, productId);
   const imagesError = validateProductImages(images, alreadyStored);
   if (imagesError) return { status: "error", message: imagesError, errors: { images: [imagesError] } };
 
@@ -287,7 +241,7 @@ export async function updateProduct(
   }
 
   if (images.length) {
-    const stored = await storeGalleryImages(supabase, userId, productId, images, alreadyStored);
+    const stored = await storeProductImages(supabase, userId, productId, images);
     if (stored.error) return { status: "error", message: stored.error };
   }
 
@@ -362,7 +316,7 @@ export async function deleteProduct(productId: number) {
   if (!product) redirect("/panel");
   const { data: shop } = await supabase.from("shops").select("slug").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
   if (!shop) redirect("/panel");
-  const { data: gallery } = await supabase.from("product_images").select("storage_path").eq("product_id", productId);
+  const galleryKeys = await productImageKeys(supabase, productId);
   // Dropping the gallery rows clears products.image_path through the cover trigger.
   await supabase.from("product_images").delete().eq("product_id", productId);
   const { error } = await supabase
@@ -370,10 +324,9 @@ export async function deleteProduct(productId: number) {
     .update({ status: "deleted", image_path: null, updated_at: new Date().toISOString() })
     .eq("id", productId);
   if (!error) {
-    const paths = [...(gallery ?? []).map((image) => image.storage_path), product.image_path].filter(
-      (path): path is string => Boolean(path),
-    );
-    if (paths.length) await supabase.storage.from("catalogo").remove(paths);
+    await deleteObjects(supabase, [...galleryKeys, product.image_path].filter(
+      (key): key is string => Boolean(key),
+    ));
   }
   revalidatePath("/");
   revalidatePath(`/productos/${product.slug}`);
@@ -410,7 +363,7 @@ export async function removeProductImage(productId: number, imageId: number) {
     .eq("product_id", productId);
   if (error) throw new Error("No pudimos eliminar la imagen.");
 
-  await supabase.storage.from("catalogo").remove([image.storage_path]);
+  await deleteObjects(supabase, [image.storage_path]);
 
   revalidatePath("/");
   revalidatePath(`/productos/${product.slug}`);

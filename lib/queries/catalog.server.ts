@@ -12,7 +12,7 @@ import { escapePostgresLikePattern, normalizeSearchQuery } from "@/lib/queries/c
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { signCatalogImagePaths } from "@/lib/storage";
+import { mediaUrls } from "@/lib/media/url";
 import type { PublicTrustMetrics } from "@/lib/public-trust";
 
 export type CatalogProduct = Pick<
@@ -29,7 +29,7 @@ export type CatalogProduct = Pick<
 > & {
   category_id?: Product["category_id"];
   currency_code?: Product["currency_code"];
-  image_path: string | null;
+  imageUrl: string | null;
   shop: Pick<Shop, "name" | "slug" | "country_code" | "trust_tier"> & {
     administrative_area_codes: string[];
   };
@@ -94,7 +94,7 @@ function mapProduct(
     price_mxn: item.price_mxn,
     condition: item.condition,
     used_condition: item.used_condition,
-    image_path: item.image_path ? (imageUrls.get(item.image_path) ?? null) : null,
+    imageUrl: item.image_path ? (imageUrls.get(item.image_path) ?? null) : null,
     created_at: item.created_at,
     category_id: item.category_id,
     currency_code: item.currency_code,
@@ -284,7 +284,7 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
 
   const shopsResult = await shopsQuery;
   const shopRows = shopsResult.data ?? [];
-  const imageUrls = await signCatalogImagePaths(supabase, [
+  const imageUrls = mediaUrls([
     ...productRows.map((product) => product.image_path),
     ...shopRows.map((shop) => shop.image_path),
   ]);
@@ -418,7 +418,7 @@ export async function getPublicShop(
     getPublicTrustMetrics(shop.id),
   ]);
   const productRows = (products ?? []) as unknown as ProductQueryRow[];
-  const imageUrls = await signCatalogImagePaths(supabase, [
+  const imageUrls = mediaUrls([
     shop.image_path,
     ...productRows.map((product) => product.image_path),
   ]);
@@ -464,7 +464,7 @@ export async function getPublicProduct(
     .select("storage_path, position")
     .eq("product_id", row.id)
     .order("position");
-  const imageUrls = await signCatalogImagePaths(supabase, [
+  const imageUrls = mediaUrls([
     row.image_path,
     ...(gallery ?? []).map((image) => image.storage_path),
   ]);
@@ -476,7 +476,7 @@ export async function getPublicProduct(
   // A product from before galleries existed still has its single cover image.
   return {
     ...product,
-    images: images.length ? images : product.image_path ? [product.image_path] : [],
+    images: images.length ? images : product.imageUrl ? [product.imageUrl] : [],
     // Only the detail page offers to message the shop, so the identifiers it
     // needs stay here rather than widening the type every catalog card uses.
     shopId: row.shops.id,

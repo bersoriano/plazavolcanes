@@ -10,7 +10,7 @@ import {
 import type { ConversationType, ThreadMessage } from "@/lib/queries/messages";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { signCatalogImagePaths } from "@/lib/storage";
+import { mediaUrls } from "@/lib/media/url";
 
 type ThreadRow = {
   id: number;
@@ -26,9 +26,7 @@ export async function listConversations(role: InboxRole): Promise<ConversationSu
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc("list_conversations", { p_role: role });
   if (error || !data) return [];
-  const imageUrls = await signCatalogImagePaths(
-    supabase,
-    data.map((row) => row.product_image_path),
+  const imageUrls = mediaUrls(data.map((row) => row.product_image_path),
   );
 
   return mapConversationRows(data, imageUrls);
