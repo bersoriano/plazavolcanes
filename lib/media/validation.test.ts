@@ -28,8 +28,8 @@ describe("validateProductImages", () => {
     return new File([new Uint8Array(bytes)], "producto.jpg", { type });
   }
 
-  it("accepts up to five images of two megabytes each", () => {
-    const files = Array.from({ length: 5 }, () => imageOf(2 * 1024 * 1024));
+  it("accepts up to five images of one megabyte each", () => {
+    const files = Array.from({ length: 5 }, () => imageOf(1024 * 1024));
 
     expect(validateProductImages(files)).toBeNull();
   });
@@ -40,9 +40,9 @@ describe("validateProductImages", () => {
     expect(validateProductImages(files)).toBe("Puedes subir hasta 5 imágenes.");
   });
 
-  it("rejects an image above two megabytes", () => {
-    expect(validateProductImages([imageOf(2 * 1024 * 1024 + 1)])).toBe(
-      "Cada imagen debe pesar 2 MB o menos.",
+  it("rejects an image above one megabyte", () => {
+    expect(validateProductImages([imageOf(1024 * 1024 + 1)])).toBe(
+      "Cada imagen debe pesar 1 MB o menos.",
     );
   });
 

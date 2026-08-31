@@ -7,6 +7,7 @@ import { ImagePlus } from "lucide-react";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
 import { Button } from "@/components/ui/button";
+import { normalizeImages, replaceInputFiles } from "@/lib/media/normalize";
 import { Field } from "@/components/ui/field";
 import {
   MEXICO_ADMINISTRATIVE_AREAS,
@@ -33,11 +34,11 @@ type ShopFormProps = {
   } | null;
 };
 
-function SaveButton({ editing }: { editing: boolean }) {
+function SaveButton({ busy, editing }: { busy: boolean; editing: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <Button disabled={pending} type="submit">
-      {pending ? "Guardando…" : editing ? "Guardar cambios" : "Crear tienda"}
+    <Button disabled={pending || busy} type="submit">
+      {pending ? "Guardando…" : busy ? "Preparando imagen…" : editing ? "Guardar cambios" : "Crear tienda"}
     </Button>
   );
 }
@@ -45,6 +46,21 @@ function SaveButton({ editing }: { editing: boolean }) {
 export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
   const [state, formAction] = useFormAction(action);
   const [preview, setPreview] = useState(shop?.imageUrl ?? null);
+  const [normalizing, setNormalizing] = useState(false);
+
+  async function handleImage(input: HTMLInputElement) {
+    const chosen = input.files?.[0];
+    if (!chosen) return;
+
+    setNormalizing(true);
+    try {
+      const [normalized] = await normalizeImages([chosen]);
+      replaceInputFiles(input, [normalized]);
+      setPreview(URL.createObjectURL(normalized));
+    } finally {
+      setNormalizing(false);
+    }
+  }
   const [primaryArea, setPrimaryArea] = useState(shop?.administrativeAreaCodes?.[0] ?? "");
   const [secondaryArea, setSecondaryArea] = useState(shop?.administrativeAreaCodes?.[1] ?? "");
   const [offersPickup, setOffersPickup] = useState(Boolean(pickupPoint));
@@ -253,7 +269,7 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
               <img alt="Vista previa" className="size-full object-cover" src={preview} />
             ) : <ImagePlus aria-hidden="true" className="size-6" />}
           </span>
-          <span><strong className="block text-sm text-ink">Elige una imagen</strong><span className="mt-1 block text-xs text-muted">JPEG, PNG o WebP · máximo 5 MB</span></span>
+          <span><strong className="block text-sm text-ink">Elige una imagen</strong><span className="mt-1 block text-xs text-muted">JPEG, PNG o WebP · la reducimos por ti</span></span>
         </label>
         <input
           accept="image/jpeg,image/png,image/webp"
@@ -261,8 +277,7 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
           id="image"
           name="image"
           onChange={(event) => {
-            const file = event.currentTarget.files?.[0];
-            if (file) setPreview(URL.createObjectURL(file));
+            void handleImage(event.currentTarget);
           }}
           type="file"
         />
@@ -270,7 +285,7 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
       </div>
 
       {state.message ? <p className={`rounded-2xl px-4 py-3 text-sm font-medium ${state.status === "success" ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"}`} role="status">{state.message}</p> : null}
-      <div className="flex justify-end"><SaveButton editing={Boolean(shop)} /></div>
+      <div className="flex justify-end"><SaveButton busy={normalizing} editing={Boolean(shop)} /></div>
     </form>
   );
 }

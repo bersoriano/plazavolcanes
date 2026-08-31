@@ -7,6 +7,7 @@ import { ImagePlus } from "lucide-react";
 import { CategoryFields } from "@/components/products/category-fields";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { normalizeImages, replaceInputFiles } from "@/lib/media/normalize";
 import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
@@ -37,25 +38,26 @@ type ProductFormProps = {
 
 export type ProductImage = { id: number; url: string | null; position: number };
 
-function ProductActions({ status }: { status?: "draft" | "published" }) {
+function ProductActions({ busy, status }: { busy: boolean; status?: "draft" | "published" }) {
   const { pending } = useFormStatus();
+  const disabled = pending || busy;
   if (!status) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-md text-sm leading-6 text-muted">Tu producto se guardará oculto como borrador. Podrás publicarlo cuando esté listo.</p>
-        <Button disabled={pending} type="submit">
-          {pending ? "Guardando…" : "Guardar producto"}
+        <Button disabled={disabled} type="submit">
+          {pending ? "Guardando…" : busy ? "Preparando imágenes…" : "Guardar producto"}
         </Button>
       </div>
     );
   }
   return (
     <div className="flex flex-wrap justify-end gap-3">
-      <Button disabled={pending} name="status" type="submit" value="draft" variant="secondary">
+      <Button disabled={disabled} name="status" type="submit" value="draft" variant="secondary">
         {status === "published" ? "Despublicar" : "Guardar borrador"}
       </Button>
-      <Button disabled={pending} name="status" type="submit" value="published">
-        {pending ? "Guardando…" : status === "published" ? "Guardar cambios" : "Publicar producto"}
+      <Button disabled={disabled} name="status" type="submit" value="published">
+        {pending ? "Guardando…" : busy ? "Preparando imágenes…" : status === "published" ? "Guardar cambios" : "Publicar producto"}
       </Button>
     </div>
   );
@@ -65,6 +67,23 @@ export function ProductForm({ action, categories, product, images = [] }: Produc
   const [state, formAction] = useFormAction(action);
   const [preview, setPreview] = useState(product?.imageUrl ?? null);
   const [condition, setCondition] = useState<ProductCondition>(product?.condition ?? "new");
+  const [normalizing, setNormalizing] = useState(false);
+
+  // The input keeps carrying the files, so the plain submit needs no changes —
+  // it just sends the re-encoded ones. Submitting is blocked until they are ready.
+  async function handleImages(input: HTMLInputElement) {
+    const chosen = Array.from(input.files ?? []);
+    if (!chosen.length) return;
+
+    setNormalizing(true);
+    try {
+      const normalized = await normalizeImages(chosen);
+      replaceInputFiles(input, normalized);
+      setPreview(URL.createObjectURL(normalized[0]));
+    } finally {
+      setNormalizing(false);
+    }
+  }
 
   useEffect(() => () => {
     if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
@@ -142,18 +161,18 @@ export function ProductForm({ action, categories, product, images = [] }: Produc
           </span>
           <span>
             <strong className="block text-sm text-ink">Elige tus imágenes</strong>
-            <span className="mt-1 block text-xs text-muted">JPEG, PNG o WebP · hasta 5 imágenes · máximo 2 MB cada una</span>
+            <span className="mt-1 block text-xs text-muted">JPEG, PNG o WebP · hasta 5 imágenes · las reducimos por ti</span>
             <span className="mt-1 block text-xs text-muted">La primera imagen es la portada.</span>
           </span>
         </label>
-        <input accept="image/jpeg,image/png,image/webp" className="sr-only" id="product-images" multiple name="images" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (file) setPreview(URL.createObjectURL(file)); }} type="file" />
+        <input accept="image/jpeg,image/png,image/webp" className="sr-only" id="product-images" multiple name="images" onChange={(event) => { void handleImages(event.currentTarget); }} type="file" />
         {images.length ? (
           <p className="text-xs text-muted">{`Quedan ${MAX_PRODUCT_IMAGES - images.length} espacios de ${MAX_PRODUCT_IMAGES}.`}</p>
         ) : null}
         {state.errors?.images?.[0] ? <p className="text-sm font-medium text-sale">{state.errors.images[0]}</p> : null}
       </div>
       {state.message ? <p className={`rounded-2xl px-4 py-3 text-sm font-medium ${state.status === "success" ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"}`} role="status">{state.message}</p> : null}
-      <ProductActions status={product?.status} />
+      <ProductActions busy={normalizing} status={product?.status} />
     </form>
   );
 }
