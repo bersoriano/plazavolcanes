@@ -3,17 +3,22 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MarketplaceUsers } from "@/components/admin/marketplace-users";
 
-const { setShopPublishingApproval } = vi.hoisted(() => ({
+const { setShopPublishingApproval, setUserShopLimit } = vi.hoisted(() => ({
   setShopPublishingApproval: vi.fn(),
+  setUserShopLimit: vi.fn(),
 }));
 
-vi.mock("@/lib/actions/admin-publication", () => ({ setShopPublishingApproval }));
+vi.mock("@/lib/actions/admin-publication", () => ({
+  setShopPublishingApproval,
+  setUserShopLimit,
+}));
 
 afterEach(cleanup);
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(setShopPublishingApproval).mockResolvedValue({ status: "idle", message: "" });
+  vi.mocked(setUserShopLimit).mockResolvedValue({ status: "idle", message: "" });
 });
 
 function deferred<T>() {
@@ -35,6 +40,7 @@ describe("MarketplaceUsers", () => {
             email: "lucia@tallervolcan.mx",
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
+            shopLimit: 3,
             shops: [
               {
                 id: 1,
@@ -82,6 +88,7 @@ describe("MarketplaceUsers", () => {
             email: null,
             displayName: null,
             createdAt: "2026-08-08T00:00:00.000Z",
+            shopLimit: 1,
             shops: [],
           },
         ]}
@@ -112,6 +119,45 @@ describe("MarketplaceUsers", () => {
     expect(screen.getByText("Sin tiendas")).toBeInTheDocument();
   });
 
+  it("lets administration change a user's shop limit", async () => {
+    vi.mocked(setUserShopLimit).mockResolvedValueOnce({
+      status: "success",
+      message: "Límite de tiendas actualizado.",
+      values: { shop_limit: "4" },
+    });
+
+    render(
+      <MarketplaceUsers
+        users={[{
+          id: "persona-1",
+          email: "lucia@tallervolcan.mx",
+          displayName: "Lucía Martínez",
+          createdAt: "2026-08-01T00:00:00.000Z",
+          shopLimit: 1,
+          shops: [],
+        }]}
+      />,
+    );
+
+    const input = screen.getByRole("spinbutton", {
+      name: "Límite de tiendas para Lucía Martínez",
+    });
+    expect(input).toHaveValue(1);
+    expect(input).toHaveAttribute("max", "2147483647");
+
+    fireEvent.change(input, { target: { value: "4" } });
+    fireEvent.click(screen.getByRole("button", { name: "Guardar límite" }));
+
+    await waitFor(() => expect(setUserShopLimit).toHaveBeenCalledOnce());
+    const submitted = vi.mocked(setUserShopLimit).mock.calls[0]?.[1];
+    expect(submitted?.get("user_id")).toBe("persona-1");
+    expect(submitted?.get("shop_limit")).toBe("4");
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "Límite de tiendas actualizado.",
+    );
+    expect(input).toHaveValue(4);
+  });
+
   it("submits the opposite shop approval without optimistically changing the switch", async () => {
     render(
       <MarketplaceUsers
@@ -121,6 +167,7 @@ describe("MarketplaceUsers", () => {
             email: "lucia@tallervolcan.mx",
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
+            shopLimit: 1,
             shops: [
               {
                 id: 1,
@@ -162,6 +209,7 @@ describe("MarketplaceUsers", () => {
             email: "lucia@tallervolcan.mx",
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
+            shopLimit: 1,
             shops: [
               {
                 id: 1,
@@ -198,6 +246,7 @@ describe("MarketplaceUsers", () => {
             email: "lucia@tallervolcan.mx",
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
+            shopLimit: 1,
             shops: [
               {
                 id: 1,
@@ -235,6 +284,7 @@ describe("MarketplaceUsers", () => {
             email: "lucia@tallervolcan.mx",
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
+            shopLimit: 1,
             shops: [
               {
                 id: 1,
@@ -269,6 +319,7 @@ describe("MarketplaceUsers", () => {
             email: "lucia@tallervolcan.mx",
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
+            shopLimit: 1,
             shops: [
               {
                 id: 1,
@@ -329,6 +380,7 @@ describe("MarketplaceUsers", () => {
           email: "lucia@tallervolcan.mx",
           displayName: "Lucía Martínez",
           createdAt: "2026-08-01T00:00:00.000Z",
+          shopLimit: 1,
           shops: [{
             id: 1,
             name: "Taller Volcán",

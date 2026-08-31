@@ -17,6 +17,7 @@ const row = {
   email: "elena@example.com",
   user_created_at: "2026-08-01T00:00:00.000Z",
   display_name: "Elena",
+  shop_limit: 2,
   shop_id: 7,
   shop_name: "Casa Niebla",
   shop_slug: "casa-niebla",
@@ -37,6 +38,7 @@ const grouped: AdminMarketplaceUser[] = [{
   email: "elena@example.com",
   displayName: "Elena",
   createdAt: "2026-08-01T00:00:00.000Z",
+  shopLimit: 2,
   shops: [],
 }];
 

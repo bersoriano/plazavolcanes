@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { UsersRound } from "lucide-react";
+import { useState } from "react";
 
 import { EmptyState } from "@/components/ui/empty-state";
-import { setShopPublishingApproval } from "@/lib/actions/admin-publication";
+import {
+  setShopPublishingApproval,
+  setUserShopLimit,
+} from "@/lib/actions/admin-publication";
 import { formatDate } from "@/lib/format";
 import type {
   AdminMarketplaceProductState,
@@ -90,6 +94,55 @@ function ShopPublishingApproval({ shop }: { shop: AdminMarketplaceShop }) {
   );
 }
 
+function UserShopLimit({ user }: { user: AdminMarketplaceUser }) {
+  const [state, formAction, pending] = useFormAction(setUserShopLimit);
+  const [value, setValue] = useState(String(user.shopLimit));
+  const labelName = user.displayName ?? user.email ?? "cuenta sin nombre";
+  const inputId = `shop-limit-${user.id}`;
+
+  return (
+    <form
+      action={formAction}
+      className="mt-5 flex flex-wrap items-end gap-3 rounded-2xl border border-line bg-background p-4"
+    >
+      <input name="user_id" type="hidden" value={user.id} />
+      <div className="min-w-48 flex-1 space-y-2">
+        <label className="block text-sm font-semibold" htmlFor={inputId}>
+          Límite de tiendas para {labelName}
+        </label>
+        <input
+          className="min-h-11 w-full rounded-xl border border-line bg-surface px-3 text-ink focus:border-brand focus:outline-none"
+          id={inputId}
+          inputMode="numeric"
+          max="2147483647"
+          min="0"
+          name="shop_limit"
+          onChange={(event) => setValue(event.target.value)}
+          pattern="0|[1-9][0-9]*"
+          required
+          type="number"
+          value={value}
+        />
+      </div>
+      <button
+        className="min-h-11 rounded-full bg-brand px-5 text-sm font-semibold text-white disabled:opacity-60"
+        disabled={pending}
+        type="submit"
+      >
+        {pending ? "Guardando…" : "Guardar límite"}
+      </button>
+      {state.message ? (
+        <p
+          className={`w-full text-sm ${state.status === "error" ? "text-sale" : "text-success"}`}
+          role="status"
+        >
+          {state.message}
+        </p>
+      ) : null}
+    </form>
+  );
+}
+
 export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
   if (!users.length) {
     return (
@@ -113,6 +166,7 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
           </h2>
           <p className="mt-1 text-sm text-muted">{user.email ?? "Sin correo registrado"}</p>
           <p className="mt-1 text-sm text-muted">Registro: {formatDate(user.createdAt)}</p>
+          <UserShopLimit user={user} />
           {user.shops.length ? (
             <div className="mt-6 space-y-4">
               {user.shops.map((shop) => (

@@ -10,6 +10,7 @@ const base = {
   email: "seller@test.local",
   user_created_at: "2026-08-03T00:00:00.000Z",
   display_name: "María Taller",
+  shop_limit: 3,
   shop_id: 10,
   shop_name: "Taller Volcán",
   shop_slug: "taller-volcan",
@@ -45,6 +46,7 @@ describe("mapAdminMarketplaceUsers", () => {
         email: "seller@test.local",
         displayName: "María Taller",
         createdAt: "2026-08-03T00:00:00.000Z",
+        shopLimit: 3,
         shops: [
           {
             id: 10,
@@ -153,6 +155,7 @@ describe("mapAdminMarketplaceUsers", () => {
       email: null,
       displayName: "María Taller",
       createdAt: "2026-08-03T00:00:00.000Z",
+      shopLimit: 3,
       shops: [],
     });
     expect(users[1]?.shops[0]?.products).toEqual([]);
