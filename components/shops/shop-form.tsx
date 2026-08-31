@@ -8,6 +8,8 @@ import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
 import { Button } from "@/components/ui/button";
 import { normalizeImages, replaceInputFiles } from "@/lib/media/normalize";
+import { inspectImage } from "@/lib/media/signature";
+import { rejectionMessage } from "@/lib/media/validation";
 import { Field } from "@/components/ui/field";
 import {
   MEXICO_ADMINISTRATIVE_AREAS,
@@ -34,10 +36,10 @@ type ShopFormProps = {
   } | null;
 };
 
-function SaveButton({ busy, editing }: { busy: boolean; editing: boolean }) {
+function SaveButton({ blocked, busy, editing }: { blocked: boolean; busy: boolean; editing: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <Button disabled={pending || busy} type="submit">
+    <Button disabled={pending || busy || blocked} type="submit">
       {pending ? "Guardando…" : busy ? "Preparando imagen…" : editing ? "Guardar cambios" : "Crear tienda"}
     </Button>
   );
@@ -47,6 +49,7 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
   const [state, formAction] = useFormAction(action);
   const [preview, setPreview] = useState(shop?.imageUrl ?? null);
   const [normalizing, setNormalizing] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   async function handleImage(input: HTMLInputElement) {
     const chosen = input.files?.[0];
@@ -54,6 +57,13 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
 
     setNormalizing(true);
     try {
+      const verdict = await inspectImage(chosen);
+      if (!verdict.supported) {
+        setImageError(rejectionMessage(verdict.reason));
+        return;
+      }
+      setImageError(null);
+
       const [normalized] = await normalizeImages([chosen]);
       replaceInputFiles(input, [normalized]);
       setPreview(URL.createObjectURL(normalized));
@@ -281,11 +291,12 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
           }}
           type="file"
         />
+        {imageError ? <p className="text-sm font-medium text-sale" role="alert">{imageError}</p> : null}
         {state.errors?.image?.[0] ? <p className="text-sm font-medium text-sale">{state.errors.image[0]}</p> : null}
       </div>
 
       {state.message ? <p className={`rounded-2xl px-4 py-3 text-sm font-medium ${state.status === "success" ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"}`} role="status">{state.message}</p> : null}
-      <div className="flex justify-end"><SaveButton busy={normalizing} editing={Boolean(shop)} /></div>
+      <div className="flex justify-end"><SaveButton blocked={Boolean(imageError)} busy={normalizing} editing={Boolean(shop)} /></div>
     </form>
   );
 }

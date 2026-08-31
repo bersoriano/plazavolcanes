@@ -22,6 +22,25 @@ const SIGNATURES: { type: MediaContentType; parts: { offset: number; bytes: numb
   },
 ];
 
+/**
+ * HEIF files, which is what an iPhone camera writes, are ISO base media
+ * containers: a `ftyp` box at offset 4 followed by a brand. Nothing in a
+ * browser decodes them, so they are recognised only to say so plainly.
+ */
+const FTYP = [0x66, 0x74, 0x79, 0x70];
+const HEIF_BRANDS = new Set([
+  "heic",
+  "heix",
+  "heim",
+  "heis",
+  "hevc",
+  "hevx",
+  "hevm",
+  "hevs",
+  "mif1",
+  "msf1",
+]);
+
 const HEADER_BYTES = 12;
 
 function matches(header: Uint8Array, parts: { offset: number; bytes: number[] }[]) {
@@ -30,10 +49,33 @@ function matches(header: Uint8Array, parts: { offset: number; bytes: number[] }[
   );
 }
 
+function brandOf(header: Uint8Array) {
+  return String.fromCharCode(...Array.from(header.slice(8, 12)));
+}
+
+export type ImageVerdict =
+  | { supported: true; type: MediaContentType }
+  | { supported: false; reason: "heif" | "unsupported" };
+
+/** What the bytes are, and when they are not usable, enough to explain why. */
+export async function inspectImage(file: Blob): Promise<ImageVerdict> {
+  const header = new Uint8Array(await file.slice(0, HEADER_BYTES).arrayBuffer());
+  if (header.length < 3) return { supported: false, reason: "unsupported" };
+
+  const found = SIGNATURES.find((signature) => matches(header, signature.parts));
+  if (found) return { supported: true, type: found.type };
+
+  const heif =
+    header.length >= HEADER_BYTES &&
+    matches(header, [{ offset: 4, bytes: FTYP }]) &&
+    HEIF_BRANDS.has(brandOf(header));
+
+  return { supported: false, reason: heif ? "heif" : "unsupported" };
+}
+
 /** The content type the bytes actually are, or null when they are not an image we take. */
 export async function sniffImageType(file: Blob): Promise<MediaContentType | null> {
-  const header = new Uint8Array(await file.slice(0, HEADER_BYTES).arrayBuffer());
-  if (header.length < 3) return null;
+  const verdict = await inspectImage(file);
 
-  return SIGNATURES.find((signature) => matches(header, signature.parts))?.type ?? null;
+  return verdict.supported ? verdict.type : null;
 }

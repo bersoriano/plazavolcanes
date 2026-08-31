@@ -1,9 +1,9 @@
 import "server-only";
 
 import { productImageKey } from "@/lib/media/keys";
-import { sniffImageType } from "@/lib/media/signature";
+import { inspectImage } from "@/lib/media/signature";
 import { deleteObjects, putObject } from "@/lib/media/store";
-import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
+import { MAX_PRODUCT_IMAGES, rejectionMessage } from "@/lib/media/validation";
 import type { createServerSupabaseClient } from "@/lib/supabase/server";
 
 type MediaClient = Awaited<ReturnType<typeof createServerSupabaseClient>>;
@@ -55,11 +55,12 @@ export async function storeProductImages(
     return { error: `Puedes subir hasta ${MAX_PRODUCT_IMAGES} imágenes.` as const };
   }
 
-  // Every file is sniffed before anything is written, so a batch carrying one
+  // Every file is inspected before anything is written, so a batch carrying one
   // file that is not really an image fails without leaving objects behind.
-  const contentTypes = await Promise.all(images.map((image) => sniffImageType(image)));
-  if (contentTypes.some((contentType) => contentType === null)) {
-    return { error: "Usa una imagen JPEG, PNG o WebP." as const };
+  const verdicts = await Promise.all(images.map((image) => inspectImage(image)));
+  const rejected = verdicts.find((verdict) => !verdict.supported);
+  if (rejected && !rejected.supported) {
+    return { error: rejectionMessage(rejected.reason) };
   }
 
   const keys: string[] = [];
@@ -71,7 +72,8 @@ export async function storeProductImages(
   }
 
   for (const [index, image] of images.entries()) {
-    const contentType = contentTypes[index]!;
+    const verdict = verdicts[index];
+    const contentType = verdict.supported ? verdict.type : "image/jpeg";
     const key = productImageKey(userId, productId, contentType);
     if (!(await putObject(client, key, image, contentType))) {
       await rollback();
