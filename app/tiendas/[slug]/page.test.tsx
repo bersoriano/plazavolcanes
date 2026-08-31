@@ -88,3 +88,23 @@ test("keeps a pending shop reachable while its published products are withheld",
     screen.queryByRole("link", { name: new RegExp(pendingShopPublishedProduct.name) }),
   ).not.toBeInTheDocument();
 });
+
+test("shows the delivery policy the shop published", async () => {
+  getPublicShop.mockResolvedValue({
+    ...shop,
+    delivery_policy: "Envío por paquetería en 3 días.\nEntrego en persona los sábados.",
+  });
+
+  await renderPage();
+
+  expect(screen.getByRole("heading", { name: "Política de entregas" })).toBeInTheDocument();
+  expect(screen.getByText(/Envío por paquetería en 3 días/)).toBeInTheDocument();
+});
+
+test("says nothing about entregas when the shop has written no policy", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, delivery_policy: null });
+
+  await renderPage();
+
+  expect(screen.queryByRole("heading", { name: "Política de entregas" })).not.toBeInTheDocument();
+});

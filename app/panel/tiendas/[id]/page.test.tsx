@@ -11,8 +11,20 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: () => true }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: vi.fn() }));
 vi.mock("@/lib/queries/trust.server", () => ({ getShopTrustDashboard: vi.fn().mockResolvedValue(null) }));
-vi.mock("@/lib/actions/shops", () => ({ deleteShop: vi.fn(), updateShop: vi.fn() }));
+vi.mock("@/lib/actions/shops", () => ({
+  deleteShop: vi.fn(),
+  updateShop: vi.fn(),
+  updateDeliveryPolicy: vi.fn(),
+}));
 vi.mock("@/components/shops/shop-form", () => ({ ShopForm: () => null }));
+
+let deliveryPolicyProps: Record<string, unknown> = {};
+vi.mock("@/components/shops/delivery-policy-form", () => ({
+  DeliveryPolicyForm: (props: Record<string, unknown>) => {
+    deliveryPolicyProps = props;
+    return null;
+  },
+}));
 
 afterEach(cleanup);
 
@@ -189,5 +201,65 @@ describe("shop workspace layout", () => {
       .closest("details");
 
     expect(within(settings as HTMLElement).getByText("Eliminar tienda")).toBeInTheDocument();
+  });
+});
+
+describe("delivery policy panel", () => {
+  function renderShopWith(policy: string | null, policyUpdatedAt: string | null) {
+    deliveryPolicyProps = {};
+    const shopQuery = chained({
+      data: {
+        id: 4,
+        owner_id: "seller-1",
+        name: "Casa Niebla",
+        slug: "casa-niebla",
+        description: "Objetos hechos en un taller al pie del volcán.",
+        image_path: null,
+        country_code: "MX",
+        administrative_area_codes: ["MX-JAL"],
+        is_publishing_approved: true,
+        publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
+        delivery_policy: policy,
+        delivery_policy_updated_at: policyUpdatedAt,
+      },
+      error: null,
+    });
+    const pickupQuery = chained({ data: null, error: null });
+    const productsQuery = chained({ data: [], error: null });
+
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      auth: { getClaims: vi.fn().mockResolvedValue({ data: { claims: { sub: "seller-1" } } }) },
+      from: vi.fn((table: string) => {
+        if (table === "shops") return shopQuery;
+        if (table === "shop_pickup_points") return pickupQuery;
+        return productsQuery;
+      }),
+    } as never);
+
+    return ShopManagePage({ params: Promise.resolve({ id: "4" }) });
+  }
+
+  it("opens the field for a shop that never wrote a policy", async () => {
+    render(await renderShopWith(null, null));
+
+    expect(deliveryPolicyProps.policy).toBe("");
+    expect(deliveryPolicyProps.unlocksAt).toBeNull();
+  });
+
+  it("shuts the field for a shop that wrote one this month", async () => {
+    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    render(await renderShopWith("Entrego los sábados.", yesterday.toISOString()));
+
+    expect(deliveryPolicyProps.policy).toBe("Entrego los sábados.");
+    expect(deliveryPolicyProps.unlocksAt).toBe(
+      new Date(yesterday.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    );
+  });
+
+  it("opens the field again once the month has passed", async () => {
+    const longAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
+    render(await renderShopWith("Entrego los sábados.", longAgo.toISOString()));
+
+    expect(deliveryPolicyProps.unlocksAt).toBeNull();
   });
 });

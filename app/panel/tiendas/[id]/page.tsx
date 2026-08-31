@@ -2,12 +2,17 @@ import Link from "next/link";
 import { ArrowLeft, ChevronDown, ExternalLink, PackageOpen, Plus, Trash2 } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
+import { DeliveryPolicyForm } from "@/components/shops/delivery-policy-form";
 import { ShopForm } from "@/components/shops/shop-form";
 import { TrustDashboardCard } from "@/components/shops/trust-dashboard-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProductRow } from "@/components/products/product-row";
 import type { ListingStatus } from "@/components/ui/status-badge";
-import { deleteShop, updateShop } from "@/lib/actions/shops";
+import { deleteShop, updateDeliveryPolicy, updateShop } from "@/lib/actions/shops";
+import {
+  deliveryPolicyUnlocksAt,
+  isDeliveryPolicyEditable,
+} from "@/lib/delivery-policy";
 import { getShopTrustDashboard } from "@/lib/queries/trust.server";
 import { PICKUP_POINT_READ_ERROR } from "@/lib/queries/checkout";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -44,6 +49,12 @@ export default async function ShopManagePage({ params }: { params: Promise<{ id:
   const trustDashboard = await getShopTrustDashboard(shopId);
   const updateAction = updateShop.bind(null, shopId);
   const deleteAction = deleteShop.bind(null, shopId);
+  const deliveryPolicyAction = updateDeliveryPolicy.bind(null, shopId);
+  // The database decides this, and refuses a change either way; the panel reads
+  // the same clock so the seller sees a shut field instead of a rejected save.
+  const deliveryPolicyUnlocksOn = isDeliveryPolicyEditable(shop.delivery_policy_updated_at)
+    ? null
+    : (deliveryPolicyUnlocksAt(shop.delivery_policy_updated_at)?.toISOString() ?? null);
 
   return (
     <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
@@ -67,7 +78,20 @@ export default async function ShopManagePage({ params }: { params: Promise<{ id:
             administrativeAreaCode: pickupPoint.administrative_area_code,
             postalCode: pickupPoint.postal_code,
             notes: pickupPoint.notes ?? "",
-          } : null} /><details className="mt-8 border-t border-line pt-6"><summary className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-sale"><Trash2 aria-hidden="true" className="size-4" />Eliminar tienda</summary><div className="mt-4 rounded-2xl bg-sale/10 p-4"><p className="text-sm leading-6 text-ink">Se eliminarán también todos sus productos e imágenes. Esta acción no se puede deshacer.</p><form action={deleteAction} className="mt-3"><button className="rounded-full bg-sale px-4 py-2 text-sm font-semibold text-white" type="submit">Confirmar eliminación</button></form></div></details>
+          } : null} />
+          {/* Its own form, next to the shop's: the delivery policy is saved by
+              its own button because it may only change once a month. */}
+          <section aria-labelledby="delivery-policy-title" className="mt-8 border-t border-line pt-6">
+            <h3 className="font-display text-xl font-semibold" id="delivery-policy-title">Entregas</h3>
+            <div className="mt-4">
+              <DeliveryPolicyForm
+                action={deliveryPolicyAction}
+                policy={shop.delivery_policy ?? ""}
+                unlocksAt={deliveryPolicyUnlocksOn}
+              />
+            </div>
+          </section>
+          <details className="mt-8 border-t border-line pt-6"><summary className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-sale"><Trash2 aria-hidden="true" className="size-4" />Eliminar tienda</summary><div className="mt-4 rounded-2xl bg-sale/10 p-4"><p className="text-sm leading-6 text-ink">Se eliminarán también todos sus productos e imágenes. Esta acción no se puede deshacer.</p><form action={deleteAction} className="mt-3"><button className="rounded-full bg-sale px-4 py-2 text-sm font-semibold text-white" type="submit">Confirmar eliminación</button></form></div></details>
         </details>
       </div>
     </section>
