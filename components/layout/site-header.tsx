@@ -1,20 +1,13 @@
 import Link from "next/link";
-import { CircleUserRound, LayoutDashboard, MessageCircle } from "lucide-react";
+import { CircleUserRound, LayoutDashboard, MessageCircle, Scale, UsersRound } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { fetchUnreadCount } from "@/lib/queries/messages.server";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getCurrentUserAdminStatus } from "@/lib/admin-auth.server";
 
 export async function SiteHeader() {
-  let signedIn = false;
-
-  if (isSupabaseConfigured()) {
-    const supabase = await createServerSupabaseClient();
-    const { data } = await supabase.auth.getClaims();
-    signedIn = Boolean(data?.claims);
-  }
+  const { isAdmin, signedIn } = await getCurrentUserAdminStatus();
 
   const unread = signedIn ? await fetchUnreadCount() : 0;
 
@@ -38,6 +31,18 @@ export async function SiteHeader() {
               <Link className="hidden rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background sm:inline-flex" href="/compras">
                 Mis compras
               </Link>
+              {isAdmin ? (
+                <>
+                  <Link aria-label="Usuarios" className="grid min-h-11 min-w-11 place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background md:inline-flex md:min-w-0 md:px-4 md:py-2.5" href="/admin/usuarios">
+                    <UsersRound aria-hidden="true" className="size-5 md:hidden" />
+                    <span className="hidden md:inline">Usuarios</span>
+                  </Link>
+                  <Link aria-label="Disputas" className="grid min-h-11 min-w-11 place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background md:inline-flex md:min-w-0 md:px-4 md:py-2.5" href="/admin/disputas">
+                    <Scale aria-hidden="true" className="size-5 md:hidden" />
+                    <span className="hidden md:inline">Disputas</span>
+                  </Link>
+                </>
+              ) : null}
               <Link aria-label="Mensajes" className="relative grid min-h-11 min-w-11 place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background md:inline-flex md:min-w-0 md:px-4 md:py-2.5" href="/mensajes">
                 <MessageCircle aria-hidden="true" className="size-5 md:hidden" />
                 <span className="hidden md:inline">Mensajes</span>

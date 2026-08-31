@@ -18,7 +18,7 @@ vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: mocks.createServerSupabaseClient,
 }));
 
-const { requireAdmin } = await import("@/lib/admin-auth.server");
+const { getCurrentUserAdminStatus, requireAdmin } = await import("@/lib/admin-auth.server");
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -30,6 +30,16 @@ beforeEach(() => {
 });
 
 describe("requireAdmin", () => {
+  it("reports administrator status only after an authenticated admin check", async () => {
+    mocks.getClaims.mockResolvedValue({ data: { claims: { sub: "admin-1" } } });
+    mocks.rpc.mockResolvedValue({ data: true });
+
+    await expect(getCurrentUserAdminStatus()).resolves.toEqual({
+      isAdmin: true,
+      signedIn: true,
+    });
+  });
+
   it("redirects to the panel when Supabase is unconfigured", async () => {
     mocks.isSupabaseConfigured.mockReturnValue(false);
 
