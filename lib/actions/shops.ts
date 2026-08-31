@@ -13,10 +13,10 @@ import { uniqueShopSlug } from "@/lib/slug";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { shopImageKey } from "@/lib/media/keys";
-import { sniffImageType } from "@/lib/media/signature";
+import { inspectImage } from "@/lib/media/signature";
 import { shopImageKeys } from "@/lib/media/product-images";
 import { deleteObjects, putObject } from "@/lib/media/store";
-import { validateImage } from "@/lib/media/validation";
+import { rejectionMessage, validateImage } from "@/lib/media/validation";
 import { shopSchema } from "@/lib/validation/shop";
 
 const authError: ActionState = {
@@ -98,14 +98,14 @@ export async function createShop(
 
   if (image) {
     // The declared type is only a claim; the stored type comes from the bytes.
-    const contentType = await sniffImageType(image);
-    if (!contentType) {
-      const message = "Usa una imagen JPEG, PNG o WebP.";
+    const verdict = await inspectImage(image);
+    if (!verdict.supported) {
+      const message = rejectionMessage(verdict.reason);
       return { status: "error", message, errors: { image: [message] } };
     }
 
-    imagePath = shopImageKey(userId, contentType);
-    if (!(await putObject(supabase, imagePath, image, contentType))) {
+    imagePath = shopImageKey(userId, verdict.type);
+    if (!(await putObject(supabase, imagePath, image, verdict.type))) {
       return { status: "error", message: "No pudimos subir la imagen." };
     }
   }
@@ -191,14 +191,14 @@ export async function updateShop(
 
   let nextImagePath = existing.image_path;
   if (image) {
-    const contentType = await sniffImageType(image);
-    if (!contentType) {
-      const message = "Usa una imagen JPEG, PNG o WebP.";
+    const verdict = await inspectImage(image);
+    if (!verdict.supported) {
+      const message = rejectionMessage(verdict.reason);
       return { status: "error", message, errors: { image: [message] } };
     }
 
-    nextImagePath = shopImageKey(userId, contentType);
-    if (!(await putObject(supabase, nextImagePath, image, contentType))) {
+    nextImagePath = shopImageKey(userId, verdict.type);
+    if (!(await putObject(supabase, nextImagePath, image, verdict.type))) {
       return { status: "error", message: "No pudimos subir la imagen." };
     }
   }

@@ -13,6 +13,8 @@ import {
   replaceInputFiles,
   totalBytes,
 } from "@/lib/media/normalize";
+import { inspectImage } from "@/lib/media/signature";
+import { rejectionMessage } from "@/lib/media/validation";
 import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
@@ -73,7 +75,7 @@ export function ProductForm({ action, categories, product, images = [] }: Produc
   const [preview, setPreview] = useState(product?.imageUrl ?? null);
   const [condition, setCondition] = useState<ProductCondition>(product?.condition ?? "new");
   const [normalizing, setNormalizing] = useState(false);
-  const [sizeError, setSizeError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
 
   // The input keeps carrying the files, so the plain submit needs no changes —
   // it just sends the re-encoded ones. Submitting is blocked until they are ready.
@@ -83,12 +85,21 @@ export function ProductForm({ action, categories, product, images = [] }: Produc
 
     setNormalizing(true);
     try {
+      // Reading twelve bytes is cheaper than decoding, and a HEIC selection is
+      // worth refusing before the browser spends anything trying.
+      const verdicts = await Promise.all(chosen.map((file) => inspectImage(file)));
+      const rejected = verdicts.find((verdict) => !verdict.supported);
+      if (rejected && !rejected.supported) {
+        setImageError(rejectionMessage(rejected.reason));
+        return;
+      }
+
       const normalized = await normalizeImages(chosen);
       replaceInputFiles(input, normalized);
       setPreview(URL.createObjectURL(normalized[0]));
       // Normalization usually brings a selection far under this. When the
       // browser could not re-encode, saying so beats letting the upload fail.
-      setSizeError(
+      setImageError(
         totalBytes(normalized) > MAX_UPLOAD_BYTES
           ? "Tus imágenes pesan demasiado juntas. Elige menos imágenes o fotos más pequeñas."
           : null,
@@ -182,11 +193,11 @@ export function ProductForm({ action, categories, product, images = [] }: Produc
         {images.length ? (
           <p className="text-xs text-muted">{`Quedan ${MAX_PRODUCT_IMAGES - images.length} espacios de ${MAX_PRODUCT_IMAGES}.`}</p>
         ) : null}
-        {sizeError ? <p className="text-sm font-medium text-sale" role="alert">{sizeError}</p> : null}
+        {imageError ? <p className="text-sm font-medium text-sale" role="alert">{imageError}</p> : null}
         {state.errors?.images?.[0] ? <p className="text-sm font-medium text-sale">{state.errors.images[0]}</p> : null}
       </div>
       {state.message ? <p className={`rounded-2xl px-4 py-3 text-sm font-medium ${state.status === "success" ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"}`} role="status">{state.message}</p> : null}
-      <ProductActions blocked={Boolean(sizeError)} busy={normalizing} status={product?.status} />
+      <ProductActions blocked={Boolean(imageError)} busy={normalizing} status={product?.status} />
     </form>
   );
 }

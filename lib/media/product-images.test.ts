@@ -178,6 +178,21 @@ describe("storeProductImages", () => {
     expect(fake.uploaded[0]).toMatch(/\.png$/);
   });
 
+  it("tells an iPhone owner what to do instead of listing formats", async () => {
+    const fake = fakeClient({});
+    const heic = new File(
+      [new Uint8Array([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63])],
+      "IMG_0001.HEIC",
+      { type: "image/heic" },
+    );
+
+    const result = await storeProductImages(asClient(fake.client), "seller-1", 42, [heic]);
+
+    expect(result.error).toMatch(/HEIC/);
+    expect(result.error).toMatch(/iPhone/);
+    expect(fake.uploaded).toEqual([]);
+  });
+
   it("does nothing when there is no image to store", async () => {
     const fake = fakeClient({});
 
