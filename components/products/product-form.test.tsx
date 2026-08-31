@@ -230,7 +230,8 @@ describe("ProductForm gallery", () => {
     expect(input).toHaveAttribute("multiple");
     expect(input).toHaveAttribute("name", "images");
     expect(screen.getByText(/hasta 5 im[áa]genes/i)).toBeInTheDocument();
-    expect(screen.getByText(/2 MB/)).toBeInTheDocument();
+    // Sellers no longer meet a size limit: the browser re-encodes what they pick.
+    expect(screen.getByText(/las reducimos por ti/i)).toBeInTheDocument();
   });
 
   it("shows the images the product already holds", () => {
