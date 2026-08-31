@@ -192,6 +192,8 @@ describe("public sharing controls", () => {
       name: "Casa Niebla",
       slug: "casa-niebla",
       description: "Objetos hechos en un taller al pie del volcán.",
+      delivery_policy: null,
+      delivery_policy_updated_at: null,
       image_path: null,
       imageUrl: null,
       is_publishing_approved: true,

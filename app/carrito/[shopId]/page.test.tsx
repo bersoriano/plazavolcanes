@@ -92,6 +92,8 @@ beforeEach(() => {
     administrative_area_codes: ["JAL"],
     country_code: "MX",
     created_at: "2026-08-01T12:00:00Z",
+    delivery_policy: null,
+    delivery_policy_updated_at: null,
     description: "Barro y cerámica local.",
     image_path: null,
     imageUrl: null,

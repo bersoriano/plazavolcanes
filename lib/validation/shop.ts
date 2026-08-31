@@ -65,3 +65,19 @@ export const pickupPointSchema = z.object({
 });
 
 export type PickupPointInput = z.infer<typeof pickupPointSchema>;
+
+/**
+ * The delivery policy is saved on its own, by its own button, because the
+ * database only lets a shop change it once a month. Keeping it out of
+ * `shopSchema` is what makes the rest of the shop form freely editable.
+ */
+export const deliveryPolicySchema = z.object({
+  delivery_policy: z
+    .string()
+    .trim()
+    .max(1200, { error: "La política de entregas no puede pasar de 1200 caracteres." })
+    .nullish()
+    .transform((value) => value || null),
+});
+
+export type DeliveryPolicyInput = z.infer<typeof deliveryPolicySchema>;
