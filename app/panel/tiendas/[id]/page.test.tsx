@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import ShopManagePage from "@/app/panel/tiendas/[id]/page";
@@ -113,5 +113,81 @@ describe("seller pickup point read", () => {
 
     expect(productsQuery.select).toHaveBeenCalledWith("id, name, price_mxn, image_path, status, expires_at, is_admin_enabled");
     expect(screen.getByText(label)).toBeInTheDocument();
+  });
+});
+
+describe("shop workspace layout", () => {
+  function renderShop() {
+    const shopQuery = chained({
+      data: {
+        id: 4,
+        owner_id: "seller-1",
+        name: "Casa Niebla",
+        slug: "casa-niebla",
+        description: "Objetos hechos en un taller al pie del volcán.",
+        image_path: null,
+        country_code: "MX",
+        administrative_area_codes: ["MX-JAL"],
+        is_publishing_approved: true,
+        publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
+      },
+      error: null,
+    });
+    const pickupQuery = chained({ data: null, error: null });
+    const productsQuery = chained({ data: [], error: null });
+
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      auth: { getClaims: vi.fn().mockResolvedValue({ data: { claims: { sub: "seller-1" } } }) },
+      from: vi.fn((table: string) => {
+        if (table === "shops") return shopQuery;
+        if (table === "shop_pickup_points") return pickupQuery;
+        return productsQuery;
+      }),
+    } as never);
+
+    return ShopManagePage({ params: Promise.resolve({ id: "4" }) });
+  }
+
+  it("names the page after the shop", async () => {
+    render(await renderShop());
+
+    expect(screen.getByRole("heading", { level: 1, name: "Casa Niebla" })).toBeInTheDocument();
+  });
+
+  it("puts the catalogue ahead of the shop settings", async () => {
+    // Adding and checking listings is the daily errand; the shop's own details
+    // are edited once in a while, so the catalogue reads first and sits left.
+    render(await renderShop());
+
+    const catalogue = screen.getByRole("heading", { level: 2, name: "Productos" });
+    const settings = screen.getByRole("heading", { level: 2, name: "Editar tienda" });
+
+    expect(catalogue.compareDocumentPosition(settings)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
+  });
+
+  it("folds the shop settings away until they are asked for", async () => {
+    render(await renderShop());
+
+    const settings = screen
+      .getByRole("heading", { level: 2, name: "Editar tienda" })
+      .closest("details");
+
+    expect(settings).toHaveClass("disclosure-mobile");
+    // Closed in the markup: a phone opens it on a tap, a wide screen shows it
+    // anyway, so the panel never depends on JavaScript to be reachable.
+    expect(settings).not.toHaveAttribute("open");
+    expect(settings?.querySelector("summary")).toHaveTextContent("Editar tienda");
+  });
+
+  it("keeps the delete confirmation inside the settings panel", async () => {
+    render(await renderShop());
+
+    const settings = screen
+      .getByRole("heading", { level: 2, name: "Editar tienda" })
+      .closest("details");
+
+    expect(within(settings as HTMLElement).getByText("Eliminar tienda")).toBeInTheDocument();
   });
 });
