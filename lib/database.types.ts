@@ -653,6 +653,7 @@ export type Database = {
       confirm_order_satisfied: { Args: { p_order_id: number; p_idempotency_key: string }; Returns: undefined };
       create_order_review: { Args: { p_order_id: number; p_rating: number; p_matched_description: boolean; p_comment: string | null }; Returns: number };
       current_legal_document: { Args: { p_type: string }; Returns: Database["public"]["Tables"]["legal_document_versions"]["Row"] };
+      current_user_shop_limit: { Args: Record<never, never>; Returns: number };
       is_current_user_admin: { Args: Record<never, never>; Returns: boolean };
       set_shop_publishing_approval: {
         Args: { p_shop_id: number; p_enabled: boolean };
@@ -662,6 +663,10 @@ export type Database = {
         Args: { p_product_id: number; p_enabled: boolean };
         Returns: { product_id: number; product_slug: string; shop_id: number; shop_slug: string }[];
       };
+      set_user_shop_limit: {
+        Args: { p_shop_limit: number; p_user_id: string };
+        Returns: number;
+      };
       list_admin_marketplace_users: {
         Args: Record<never, never>;
         Returns: {
@@ -669,6 +674,7 @@ export type Database = {
           email: string | null;
           user_created_at: string;
           display_name: string | null;
+          shop_limit: number;
           shop_id: number | null;
           shop_name: string | null;
           shop_slug: string | null;

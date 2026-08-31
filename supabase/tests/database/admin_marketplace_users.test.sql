@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(28);
+select plan(29);
 
 select has_function('private', 'bootstrap_initial_admin', array[]::text[],
   'operator-only bootstrap helper exists');
@@ -17,8 +17,8 @@ select is(
    from pg_catalog.pg_proc p
    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'public' and p.proname = 'list_admin_marketplace_users'),
-  '{user_id,email,user_created_at,display_name,shop_id,shop_name,shop_slug,shop_created_at,shop_is_publishing_approved,product_id,product_name,product_slug,product_status,product_is_admin_enabled,product_expires_at,product_created_at,product_updated_at}',
-  'RPC exposes exactly the approved 17 fields in order'
+  '{user_id,email,user_created_at,display_name,shop_limit,shop_id,shop_name,shop_slug,shop_created_at,shop_is_publishing_approved,product_id,product_name,product_slug,product_status,product_is_admin_enabled,product_expires_at,product_created_at,product_updated_at}',
+  'RPC exposes exactly the approved 18 fields in order'
 );
 
 select is(private.bootstrap_initial_admin(), false,
@@ -125,6 +125,11 @@ select results_eq(
   $$select display_name from public.list_admin_marketplace_users()
     where email = 'seller@test.local' limit 1$$,
   array['María Taller'::text], 'display name is returned when present'
+);
+select results_eq(
+  $$select shop_limit from public.list_admin_marketplace_users()
+    where email = 'seller@test.local' limit 1$$,
+  array[1], 'default shop limit is returned for administration'
 );
 select isnt_empty(
   $$select 1 from public.list_admin_marketplace_users()
