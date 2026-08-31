@@ -1,5 +1,7 @@
 -- Product media now follows product RLS instead of remaining permanently public.
 -- Existing object paths stay unchanged; only read authorization changes.
+-- Deployment note: direct SQL does not invoke Storage API cache invalidation.
+-- Purge the catalogo bucket CDN after migrating an existing public bucket.
 
 update storage.buckets
 set public = false

@@ -88,6 +88,8 @@ The `catalogo` bucket is private and its former broad object-read policy is remo
 
 Server-only catalog, seller-panel, edit, checkout, and messaging reads batch unique object paths through `createSignedUrls(..., 300)`. A failed or unauthorized path renders no image instead of falling back to a public URL.
 
+Production rollout deploys signed-URL application code first, applies the private-bucket migration second, then purges the `catalogo` CDN cache. Purging is required because the migration updates `storage.buckets` directly and therefore does not invoke Storage API cache invalidation for formerly public URLs.
+
 ## Migration and Expiration
 
 Use `supabase migration new` to create the migration filename. Migration order is:

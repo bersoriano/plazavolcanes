@@ -352,4 +352,4 @@
 
 - [ ] **Step 4: Verify and deploy in safe order**
 
-  Run full application/database checks. Deploy signed-URL application code before applying private-bucket migration; older public-URL code cannot display private objects.
+  Run full application/database checks. Deploy signed-URL application code before applying private-bucket migration; older public-URL code cannot display private objects. After migration, purge the `catalogo` CDN cache because direct SQL bucket updates do not invoke Storage API cache invalidation.
