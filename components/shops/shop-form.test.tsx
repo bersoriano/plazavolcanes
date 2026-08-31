@@ -158,4 +158,28 @@ describe("ShopForm", () => {
       "Selecciona un estado de recolección.",
     );
   });
+  it("offers the delivery policy while the shop is being created", () => {
+    render(<ShopForm action={action} />);
+
+    const policy = screen.getByLabelText(/Política de entregas/);
+    expect(policy).toHaveAttribute("name", "delivery_policy");
+    expect(policy).not.toBeRequired();
+  });
+
+  it("leaves the delivery policy out of the edit form, where it saves on its own", () => {
+    render(
+      <ShopForm
+        action={action}
+        shop={{
+          name: "Casa Niebla",
+          description: "Objetos hechos en un taller al pie del volcán.",
+          imageUrl: null,
+          countryCode: "MX",
+          administrativeAreaCodes: ["MX-PUE"],
+        }}
+      />,
+    );
+
+    expect(screen.queryByLabelText(/Política de entregas/)).not.toBeInTheDocument();
+  });
 });

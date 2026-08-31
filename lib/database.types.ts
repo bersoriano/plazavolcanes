@@ -413,6 +413,8 @@ export type Database = {
           administrative_area_codes: string[] | null;
           country_code: string;
           created_at: string;
+          delivery_policy: string | null;
+          delivery_policy_updated_at: string | null;
           description: string;
           id: number;
           image_path: string | null;
@@ -431,6 +433,8 @@ export type Database = {
           administrative_area_codes?: string[] | null;
           country_code?: string;
           created_at?: string;
+          delivery_policy?: string | null;
+          delivery_policy_updated_at?: string | null;
           description: string;
           id?: never;
           image_path?: string | null;
@@ -449,6 +453,8 @@ export type Database = {
           administrative_area_codes?: string[] | null;
           country_code?: string;
           created_at?: string;
+          delivery_policy?: string | null;
+          delivery_policy_updated_at?: string | null;
           description?: string;
           id?: never;
           image_path?: string | null;

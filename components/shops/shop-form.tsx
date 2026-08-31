@@ -171,6 +171,33 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
         </div>
       </div>
 
+      {/* Only while creating: once the shop exists the policy is saved on its
+          own, because the database accepts a change to it once a month. */}
+      {shop ? null : (
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-ink" htmlFor="delivery_policy">
+            Política de entregas <span className="font-normal text-muted">(opcional)</span>
+          </label>
+          <textarea
+            aria-describedby="delivery-policy-hint"
+            aria-invalid={Boolean(state.errors?.delivery_policy)}
+            className="min-h-28 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none"
+            defaultValue={state.values?.delivery_policy}
+            id="delivery_policy"
+            maxLength={1200}
+            name="delivery_policy"
+            placeholder="Cómo envías, a dónde llegas en persona, cuánto tardas y qué necesitas de quien compra."
+          />
+          <p className="text-xs text-muted" id="delivery-policy-hint">
+            Quien compre la verá en tu tienda pública. Después de crearla podrás cambiarla una vez
+            al mes.
+          </p>
+          {state.errors?.delivery_policy?.[0] ? (
+            <p className="text-sm font-medium text-sale">{state.errors.delivery_policy[0]}</p>
+          ) : null}
+        </div>
+      )}
+
       <div className="space-y-4 border-t border-line pt-6">
         <label className="flex items-center gap-3 text-sm font-semibold text-ink" htmlFor="offers_pickup">
           <input

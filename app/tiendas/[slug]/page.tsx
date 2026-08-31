@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Store } from "lucide-react";
+import { ArrowLeft, MapPin, Store, Truck } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { ProductCard } from "@/components/catalog/product-card";
@@ -71,6 +71,26 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
             {formatShopLocation(shop.country_code, shop.administrative_area_codes)}
           </p>
           <p className="mt-4 max-w-2xl text-base leading-8 text-muted">{shop.description}</p>
+
+          {/* The seller's own terms, in their own words, kept next to the
+              description a buyer is already reading. */}
+          {shop.delivery_policy ? (
+            <section
+              aria-labelledby="delivery-policy-title"
+              className="mt-7 max-w-2xl rounded-2xl border border-line bg-background p-5 sm:p-6"
+            >
+              <h2
+                className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.16em] text-brand"
+                id="delivery-policy-title"
+              >
+                <Truck aria-hidden="true" className="size-4" />
+                Política de entregas
+              </h2>
+              <p className="mt-3 whitespace-pre-line text-base leading-8 text-muted">
+                {shop.delivery_policy}
+              </p>
+            </section>
+          ) : null}
 
           <TrustBadges
             metrics={shop.trust_metrics}

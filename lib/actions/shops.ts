@@ -9,6 +9,11 @@ import {
   pickupValidationError,
   savePickupPoint,
 } from "@/lib/actions/shop-pickup-point";
+import {
+  DELIVERY_POLICY_CADENCE_ERROR,
+  deliveryPolicyUnlocksAt,
+} from "@/lib/delivery-policy";
+import { formatDate } from "@/lib/format";
 import { uniqueShopSlug } from "@/lib/slug";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -17,7 +22,7 @@ import { inspectImage } from "@/lib/media/signature";
 import { shopImageKeys } from "@/lib/media/product-images";
 import { deleteObjects, putObject } from "@/lib/media/store";
 import { rejectionMessage, validateImage } from "@/lib/media/validation";
-import { shopSchema } from "@/lib/validation/shop";
+import { deliveryPolicySchema, shopSchema } from "@/lib/validation/shop";
 
 const authError: ActionState = {
   status: "error",
@@ -34,6 +39,10 @@ function shopInputFrom(formData: FormData) {
       .getAll("administrative_area_codes")
       .filter((value) => typeof value === "string" && value.length > 0),
   };
+}
+
+function deliveryPolicyFrom(formData: FormData) {
+  return deliveryPolicySchema.safeParse({ delivery_policy: formData.get("delivery_policy") });
 }
 
 function imageFrom(formData: FormData) {
@@ -56,13 +65,17 @@ export async function createShop(
   formData: FormData,
 ): Promise<ActionState> {
   const parsed = shopSchema.safeParse(shopInputFrom(formData));
+  const deliveryPolicy = deliveryPolicyFrom(formData);
   const image = imageFrom(formData);
 
-  if (!parsed.success) {
+  if (!parsed.success || !deliveryPolicy.success) {
     return {
       status: "error",
       message: "Revisa los campos marcados.",
-      errors: parsed.error.flatten().fieldErrors,
+      errors: {
+        ...(parsed.success ? {} : parsed.error.flatten().fieldErrors),
+        ...(deliveryPolicy.success ? {} : deliveryPolicy.error.flatten().fieldErrors),
+      },
     };
   }
 
@@ -112,7 +125,13 @@ export async function createShop(
 
   const { data, error } = await supabase
     .from("shops")
-    .insert({ ...parsed.data, slug, owner_id: userId, image_path: imagePath })
+    .insert({
+      ...parsed.data,
+      delivery_policy: deliveryPolicy.data.delivery_policy,
+      slug,
+      owner_id: userId,
+      image_path: imagePath,
+    })
     .select("id, slug")
     .single();
 
@@ -227,6 +246,70 @@ export async function updateShop(
   revalidatePath(`/panel/tiendas/${shopId}`);
   revalidatePath(`/tiendas/${existing.slug}`);
   return { status: "success", message: "Tienda actualizada." };
+}
+
+/**
+ * The delivery policy is saved apart from the rest of the shop because the
+ * database only accepts a change to it once a month: folding it into
+ * `updateShop` would make every ordinary edit hostage to that clock. The
+ * timestamp behind the clock is stamped by the trigger, never sent from here.
+ */
+export async function updateDeliveryPolicy(
+  shopId: number,
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = deliveryPolicyFrom(formData);
+
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Revisa los campos marcados.",
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+
+  const context = await getAuthenticatedContext();
+  if (!context) return authError;
+
+  const { supabase, userId } = context;
+  const { data: existing } = await supabase
+    .from("shops")
+    .select("slug, delivery_policy_updated_at")
+    .eq("id", shopId)
+    .eq("owner_id", userId)
+    .maybeSingle();
+
+  if (!existing) {
+    return { status: "error", message: "No encontramos esa tienda." };
+  }
+
+  const { error } = await supabase
+    .from("shops")
+    .update({
+      delivery_policy: parsed.data.delivery_policy,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", shopId)
+    .eq("owner_id", userId);
+
+  if (error) {
+    if (error.code === "P0001" && error.message === DELIVERY_POLICY_CADENCE_ERROR) {
+      const unlocksAt = deliveryPolicyUnlocksAt(existing.delivery_policy_updated_at);
+      return {
+        status: "error",
+        message: unlocksAt
+          ? `Solo puedes cambiar tu política de entregas una vez al mes. Podrás editarla el ${formatDate(unlocksAt)}.`
+          : "Solo puedes cambiar tu política de entregas una vez al mes.",
+      };
+    }
+    return { status: "error", message: "No pudimos guardar la política de entregas." };
+  }
+
+  revalidatePath("/panel");
+  revalidatePath(`/panel/tiendas/${shopId}`);
+  revalidatePath(`/tiendas/${existing.slug}`);
+  return { status: "success", message: "Política de entregas actualizada." };
 }
 
 export async function deleteShop(shopId: number) {

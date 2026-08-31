@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { shopSchema } from "@/lib/validation/shop";
+import { deliveryPolicySchema, shopSchema } from "@/lib/validation/shop";
 
 const baseShop = {
   name: "Casa Niebla",
@@ -101,6 +101,46 @@ describe("shopSchema", () => {
       );
       expect(result.error.flatten().fieldErrors.description?.[0]).toBe(
         "La descripción debe tener entre 20 y 1200 caracteres.",
+      );
+    }
+  });
+});
+
+describe("deliveryPolicySchema", () => {
+  it("accepts a written policy and trims it", () => {
+    const result = deliveryPolicySchema.safeParse({
+      delivery_policy: "  Entrego en persona los sábados.  ",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.delivery_policy).toBe("Entrego en persona los sábados.");
+    }
+  });
+
+  it("reads a blank field as no policy at all", () => {
+    const result = deliveryPolicySchema.safeParse({ delivery_policy: "   " });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.delivery_policy).toBeNull();
+  });
+
+  it("reads a missing field as no policy at all", () => {
+    const result = deliveryPolicySchema.safeParse({ delivery_policy: null });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.delivery_policy).toBeNull();
+  });
+
+  it("rejects a policy longer than 1200 characters", () => {
+    const result = deliveryPolicySchema.safeParse({
+      delivery_policy: "a".repeat(1201),
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.delivery_policy?.[0]).toBe(
+        "La política de entregas no puede pasar de 1200 caracteres.",
       );
     }
   });

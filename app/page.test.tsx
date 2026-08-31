@@ -182,6 +182,8 @@ function sampleShop() {
     administrative_area_codes: ["MX-OAX"],
     country_code: "MX",
     created_at: "2026-08-01T00:00:00.000Z",
+    delivery_policy: null,
+    delivery_policy_updated_at: null,
     description: "Piezas de barro negro hechas en Oaxaca.",
     id: 3,
     image_path: null,
