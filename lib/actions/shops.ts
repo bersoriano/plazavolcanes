@@ -12,7 +12,11 @@ import {
 import { uniqueShopSlug } from "@/lib/slug";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { validateImage } from "@/lib/storage";
+import { shopImageKey } from "@/lib/media/keys";
+import { sniffImageType } from "@/lib/media/signature";
+import { shopImageKeys } from "@/lib/media/product-images";
+import { deleteObjects, putObject } from "@/lib/media/store";
+import { validateImage } from "@/lib/media/validation";
 import { shopSchema } from "@/lib/validation/shop";
 
 const authError: ActionState = {
@@ -35,12 +39,6 @@ function shopInputFrom(formData: FormData) {
 function imageFrom(formData: FormData) {
   const value = formData.get("image");
   return value instanceof File && value.size > 0 ? value : null;
-}
-
-function imageExtension(file: File) {
-  if (file.type === "image/jpeg") return "jpg";
-  if (file.type === "image/png") return "png";
-  return "webp";
 }
 
 async function getAuthenticatedContext() {
@@ -99,11 +97,15 @@ export async function createShop(
   let imagePath: string | null = null;
 
   if (image) {
-    imagePath = `${userId}/shops/${crypto.randomUUID()}.${imageExtension(image)}`;
-    const { error } = await supabase.storage
-      .from("catalogo")
-      .upload(imagePath, image, { contentType: image.type, upsert: false });
-    if (error) {
+    // The declared type is only a claim; the stored type comes from the bytes.
+    const contentType = await sniffImageType(image);
+    if (!contentType) {
+      const message = "Usa una imagen JPEG, PNG o WebP.";
+      return { status: "error", message, errors: { image: [message] } };
+    }
+
+    imagePath = shopImageKey(userId, contentType);
+    if (!(await putObject(supabase, imagePath, image, contentType))) {
       return { status: "error", message: "No pudimos subir la imagen." };
     }
   }
@@ -115,7 +117,7 @@ export async function createShop(
     .single();
 
   if (error || !data) {
-    if (imagePath) await supabase.storage.from("catalogo").remove([imagePath]);
+    if (imagePath) await deleteObjects(supabase, [imagePath]);
     if (
       error?.code === "P0001" &&
       error.message === "Alcanzaste el límite de tiendas."
@@ -189,11 +191,16 @@ export async function updateShop(
 
   let nextImagePath = existing.image_path;
   if (image) {
-    nextImagePath = `${userId}/shops/${crypto.randomUUID()}.${imageExtension(image)}`;
-    const { error } = await supabase.storage
-      .from("catalogo")
-      .upload(nextImagePath, image, { contentType: image.type, upsert: false });
-    if (error) return { status: "error", message: "No pudimos subir la imagen." };
+    const contentType = await sniffImageType(image);
+    if (!contentType) {
+      const message = "Usa una imagen JPEG, PNG o WebP.";
+      return { status: "error", message, errors: { image: [message] } };
+    }
+
+    nextImagePath = shopImageKey(userId, contentType);
+    if (!(await putObject(supabase, nextImagePath, image, contentType))) {
+      return { status: "error", message: "No pudimos subir la imagen." };
+    }
   }
 
   const { error } = await supabase
@@ -207,14 +214,12 @@ export async function updateShop(
     .eq("owner_id", userId);
 
   if (error) {
-    if (image && nextImagePath) {
-      await supabase.storage.from("catalogo").remove([nextImagePath]);
-    }
+    if (image && nextImagePath) await deleteObjects(supabase, [nextImagePath]);
     return { status: "error", message: "No pudimos guardar los cambios." };
   }
 
-  if (image && existing.image_path) {
-    await supabase.storage.from("catalogo").remove([existing.image_path]);
+  if (image && existing.image_path && nextImagePath !== existing.image_path) {
+    await deleteObjects(supabase, [existing.image_path]);
   }
 
   revalidatePath("/");
@@ -238,22 +243,15 @@ export async function deleteShop(shopId: number) {
 
   if (!shop) redirect("/panel");
 
-  const { data: products } = await supabase
-    .from("products")
-    .select("image_path")
-    .eq("shop_id", shopId);
+  // Collected before the delete, because the cascade takes product_images with it.
+  const keys = await shopImageKeys(supabase, shopId, shop.image_path);
   const { error } = await supabase
     .from("shops")
     .delete()
     .eq("id", shopId)
     .eq("owner_id", userId);
 
-  if (!error) {
-    const paths = [shop.image_path, ...(products ?? []).map((item) => item.image_path)].filter(
-      (path): path is string => Boolean(path),
-    );
-    if (paths.length) await supabase.storage.from("catalogo").remove(paths);
-  }
+  if (!error) await deleteObjects(supabase, keys);
 
   revalidatePath("/");
   revalidatePath("/panel");

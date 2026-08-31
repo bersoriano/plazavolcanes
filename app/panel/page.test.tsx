@@ -8,17 +8,12 @@ const mocks = vi.hoisted(() => ({
   rpc: vi.fn(),
   select: vi.fn(),
   order: vi.fn(),
-  signCatalogImagePaths: vi.fn(),
 }));
 
 vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: mocks.configured }));
 vi.mock("@/lib/supabase/server", () => ({
   createServerSupabaseClient: mocks.createServerSupabaseClient,
 }));
-vi.mock("@/lib/storage", () => ({
-  signCatalogImagePaths: mocks.signCatalogImagePaths,
-}));
-
 const { default: PanelPage } = await import("@/app/panel/page");
 
 const shop = {
@@ -46,7 +41,6 @@ beforeEach(() => {
   mocks.getClaims.mockResolvedValue({ data: { claims: { sub: "seller-1" } } });
   mocks.order.mockResolvedValue({ data: [shop], count: 1, error: null });
   mocks.rpc.mockResolvedValue({ data: 1, error: null });
-  mocks.signCatalogImagePaths.mockResolvedValue(new Map());
   mocks.select.mockReturnValue({
     eq: vi.fn().mockReturnValue({ order: mocks.order }),
   });

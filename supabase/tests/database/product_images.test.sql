@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(17);
+select plan(19);
 
 select has_table('public', 'product_images', 'product images table exists');
 
@@ -40,8 +40,8 @@ insert into storage.objects (bucket_id, name, owner_id) values
 
 select is(
   (select public from storage.buckets where id = 'catalogo'),
-  false,
-  'catalog bucket is private'
+  true,
+  'catalog bucket is public'
 );
 
 select results_eq(
@@ -84,7 +84,7 @@ select results_eq(
 );
 
 set local role anon;
-set local "storage.operation" = 'storage.object.sign_many';
+set local "storage.operation" = 'storage.object.get_authenticated';
 
 select results_eq(
   $$select count(*) from public.product_images$$,
@@ -94,13 +94,13 @@ select results_eq(
 
 select results_eq(
   $$select name from storage.objects where bucket_id = 'catalogo' order by name$$,
-  $$values ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
-  'anonymous visitors can sign public shop and effective product images only'
+  $$values ('owner/products/a.jpg'::text), ('owner/products/b.jpg'::text), ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
+  'a public bucket serves every catalog object to anonymous visitors'
 );
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "22223333-2222-4222-8222-222233334444", "role": "authenticated"}';
-set local "storage.operation" = 'storage.object.sign_many';
+set local "storage.operation" = 'storage.object.get_authenticated';
 
 select results_eq(
   $$select count(*) from public.product_images$$,
@@ -110,8 +110,8 @@ select results_eq(
 
 select results_eq(
   $$select name from storage.objects where bucket_id = 'catalogo' order by name$$,
-  $$values ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
-  'an authenticated stranger cannot sign hidden product images'
+  $$values ('owner/products/a.jpg'::text), ('owner/products/b.jpg'::text), ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
+  'object reads no longer depend on who is asking'
 );
 
 select throws_ok(
@@ -127,7 +127,7 @@ set is_admin_enabled = false
 where name = 'Con imagen previa';
 
 set local role anon;
-set local "storage.operation" = 'storage.object.sign_many';
+set local "storage.operation" = 'storage.object.get_authenticated';
 
 select results_eq(
   $$select count(*) from public.product_images where storage_path = 'owner/products/publicada.jpg'$$,
@@ -137,13 +137,13 @@ select results_eq(
 
 select results_eq(
   $$select name from storage.objects where bucket_id = 'catalogo' order by name$$,
-  array['owner/shops/galeria.jpg'::text],
-  'closing product visibility prevents new public image signatures'
+  $$values ('owner/products/a.jpg'::text), ('owner/products/b.jpg'::text), ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
+  'closing product visibility hides the row, not the object'
 );
 
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "11112222-1111-4111-8111-111122223333", "role": "authenticated"}';
-set local "storage.operation" = 'storage.object.sign_many';
+set local "storage.operation" = 'storage.object.get_authenticated';
 
 select results_eq(
   $$select count(*) from public.product_images where storage_path = 'owner/products/publicada.jpg'$$,
@@ -153,16 +153,33 @@ select results_eq(
 
 select results_eq(
   $$select name from storage.objects where bucket_id = 'catalogo' order by name$$,
-  $$values ('owner/products/b.jpg'::text), ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
-  'the owner can sign every image belonging to the shop'
+  $$values ('owner/products/a.jpg'::text), ('owner/products/b.jpg'::text), ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
+  'the owner reads every object belonging to the shop'
 );
 
 set local request.jwt.claims = '{"sub": "33334444-3333-4333-8333-333344445555", "role": "authenticated"}';
 
 select results_eq(
   $$select name from storage.objects where bucket_id = 'catalogo' order by name$$,
-  $$values ('owner/products/b.jpg'::text), ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
-  'an administrator can sign hidden product images for moderation'
+  $$values ('owner/products/a.jpg'::text), ('owner/products/b.jpg'::text), ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
+  'an administrator reads hidden product objects for moderation'
+);
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub": "11112222-1111-4111-8111-111122223333", "role": "authenticated"}';
+
+select lives_ok(
+  $$insert into storage.objects (bucket_id, name, owner_id) values ('catalogo', 'products/11112222-1111-4111-8111-111122223333/1/nueva.jpg', '11112222-1111-4111-8111-111122223333')$$,
+  'an owner writes an object under the product key layout'
+);
+
+set local request.jwt.claims = '{"sub": "22223333-2222-4222-8222-222233334444", "role": "authenticated"}';
+
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name, owner_id) values ('catalogo', 'products/11112222-1111-4111-8111-111122223333/1/ajena.jpg', '22223333-2222-4222-8222-222233334444')$$,
+  '42501',
+  null,
+  'a stranger cannot write under somebody else''s product folder'
 );
 
 select * from finish();

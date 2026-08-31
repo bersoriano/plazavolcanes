@@ -1,8 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
-import * as storage from "@/lib/storage";
-
-const { validateImage, validateProductImages } = storage;
+import { validateImage, validateProductImages } from "@/lib/media/validation";
 
 describe("validateImage", () => {
   it("accepts JPEG, PNG, and WebP up to 5 MB", () => {
@@ -22,63 +20,6 @@ describe("validateImage", () => {
       type: "image/jpeg",
     });
     expect(validateImage(file)).toBe("La imagen debe pesar 5 MB o menos.");
-  });
-});
-
-describe("signCatalogImagePaths", () => {
-  afterEach(() => vi.restoreAllMocks());
-
-  it("batches unique image paths into one five-minute signing request", async () => {
-    const signCatalogImagePaths = (storage as unknown as {
-      signCatalogImagePaths?: (
-        client: unknown,
-        paths: (string | null)[],
-      ) => Promise<Map<string, string>>;
-    }).signCatalogImagePaths;
-    expect(typeof signCatalogImagePaths).toBe("function");
-
-    const createSignedUrls = vi.fn().mockResolvedValue({
-      data: [
-        {
-          error: null,
-          path: "seller/products/café.png",
-          signedURL: "/object/sign/catalogo/seller/products/caf%C3%A9.png?token=token",
-          signedUrl:
-            "https://abc.supabase.co/storage/v1/object/sign/catalogo/seller/products/caf%C3%A9.png?token=token",
-        },
-        {
-          error: "not found",
-          path: "seller/products/missing.png",
-          signedURL: null,
-          signedUrl: null,
-        },
-      ],
-      error: null,
-    });
-    const client = {
-      storage: {
-        from: vi.fn().mockReturnValue({ createSignedUrls }),
-      },
-    };
-
-    const urls = await signCatalogImagePaths!(client, [
-      "seller/products/café.png",
-      null,
-      "seller/products/café.png",
-      "seller/products/missing.png",
-    ]);
-
-    expect(client.storage.from).toHaveBeenCalledWith("catalogo");
-    expect(createSignedUrls).toHaveBeenCalledWith(
-      ["seller/products/café.png", "seller/products/missing.png"],
-      300,
-    );
-    expect([...urls.entries()]).toEqual([
-      [
-        "seller/products/café.png",
-        "https://abc.supabase.co/storage/v1/object/sign/catalogo/seller/products/caf%C3%A9.png?token=token",
-      ],
-    ]);
   });
 });
 

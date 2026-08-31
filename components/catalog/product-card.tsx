@@ -18,7 +18,7 @@ type ProductCardProps = {
   product: {
     id: number;
     slug: string;
-    image_path: string | null;
+    imageUrl: string | null;
     name: string;
     price_mxn: number | string;
     currency_code?: string;
@@ -73,7 +73,7 @@ export function ProductCard({
           alt={product.name}
           className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.035]"
           fallback={<div className="grid size-full place-items-center text-brand/35"><ImageIcon aria-hidden="true" className="size-10" /></div>}
-          src={product.image_path}
+          src={product.imageUrl}
         />
       </div>
       <div className="px-1 pt-4">

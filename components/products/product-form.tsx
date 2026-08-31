@@ -7,7 +7,7 @@ import { ImagePlus } from "lucide-react";
 import { CategoryFields } from "@/components/products/category-fields";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { MAX_PRODUCT_IMAGES } from "@/lib/storage";
+import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
 import type { CategoryTree } from "@/lib/categories";

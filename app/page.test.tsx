@@ -163,7 +163,7 @@ function sampleProduct() {
     price_mxn: 480,
     condition: "new" as const,
     used_condition: null,
-    image_path: null,
+    imageUrl: null,
     created_at: "2026-08-01T00:00:00.000Z",
     category_id: null,
     currency_code: "MXN",

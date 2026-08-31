@@ -74,7 +74,7 @@ describe("public sharing controls", () => {
       category_id: 11,
       condition: "new",
       used_condition: null,
-      image_path: null,
+      imageUrl: null,
       created_at: "2026-08-19T00:00:00.000Z",
       shop: {
         name: "Casa Niebla",
@@ -144,7 +144,7 @@ describe("public sharing controls", () => {
       category_id: 11,
       condition: "new",
       used_condition: null,
-      image_path: null,
+      imageUrl: null,
       created_at: "2026-08-19T00:00:00.000Z",
       shop: {
         name: "Casa Niebla",
@@ -246,7 +246,7 @@ describe("product slug routing", () => {
       category_id: null,
       condition: "used",
       used_condition: "good",
-      image_path: null,
+      imageUrl: null,
       created_at: "2026-08-19T00:00:00.000Z",
       shop: {
         name: "Tecno Plaza",

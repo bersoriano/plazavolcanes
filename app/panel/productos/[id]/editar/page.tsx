@@ -13,7 +13,7 @@ import { DEFAULT_CATALOG_LOCALE } from "@/lib/catalog-locale";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { signCatalogImagePaths } from "@/lib/storage";
+import { mediaUrls } from "@/lib/media/url";
 
 export default async function EditProductPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ categoria?: string | string[]; limite?: string | string[] }> }) {
   if (!isSupabaseConfigured()) redirect("/panel");
@@ -33,7 +33,7 @@ export default async function EditProductPage({ params, searchParams }: { params
     .order("position");
   const { data: shop } = await supabase.from("shops").select("id, name, is_publishing_approved, publishing_reviewed_at").eq("id", product.shop_id).eq("owner_id", claimsData?.claims?.sub ?? "").maybeSingle();
   if (!shop) notFound();
-  const imageUrls = await signCatalogImagePaths(supabase, [
+  const imageUrls = mediaUrls([
     product.image_path,
     ...(galleryRows ?? []).map((image) => image.storage_path),
   ]);
