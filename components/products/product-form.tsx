@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { ImagePlus, X } from "lucide-react";
 import { unstable_rethrow } from "next/navigation";
@@ -19,6 +19,7 @@ import { rejectionMessage } from "@/lib/media/validation";
 import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
+import { useFormDraft } from "@/lib/form-draft";
 import type { CategoryTree } from "@/lib/categories";
 import {
   USED_CONDITION_OPTIONS,
@@ -171,6 +172,15 @@ export function ProductForm({ action, categories, product, images = [], removeIm
   const [condition, setCondition] = useState<ProductCondition>(product?.condition ?? "new");
   const [normalizing, setNormalizing] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [recovered, setRecovered] = useState(false);
+  const onRestored = useCallback(() => setRecovered(true), []);
+  // Scoped per form, so a draft never leaks between products or shops.
+  const draftKey = `producto:${product ? `editar:${product.name}` : "nuevo"}`;
+  const { clear: clearDraft, formRef, save: saveDraft } = useFormDraft(draftKey, onRestored);
+
+  useEffect(() => {
+    if (state.status === "success") clearDraft();
+  }, [clearDraft, state.status]);
 
   // The input keeps carrying the files, so the plain submit needs no changes —
   // it just sends the re-encoded ones. Submitting is blocked until they are ready.
@@ -209,7 +219,12 @@ export function ProductForm({ action, categories, product, images = [], removeIm
   }, [preview]);
 
   return (
-    <form action={formAction} className="space-y-6" noValidate>
+    <form action={formAction} className="space-y-6" noValidate onInput={saveDraft} ref={formRef}>
+      {recovered ? (
+        <p className="rounded-2xl bg-accent/45 px-4 py-3 text-sm font-medium text-brand-hover" role="status">
+          Recuperamos lo que habías escrito. Vuelve a elegir tus imágenes.
+        </p>
+      ) : null}
       <input name="currency_code" type="hidden" value="MXN" />
       <input name="content_locale" type="hidden" value="es-MX" />
       <CategoryFields

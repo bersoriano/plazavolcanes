@@ -8,6 +8,8 @@
  * This is a convenience, not a control: anything can be posted to the action
  * directly. The server's own rules stay load-bearing.
  */
+import { probeImageSize } from "@/lib/media/dimensions";
+
 export const MAX_IMAGE_EDGE = 1600;
 export const IMAGE_QUALITY = 0.8;
 export const NORMALIZED_TYPE = "image/webp";
@@ -63,14 +65,36 @@ async function encode(bitmap: ImageBitmap) {
  * larger as WebP, and uploading the bigger of the two helps nobody. Whatever
  * comes back, the server validates it as it would any upload.
  */
+/**
+ * Asks the decoder to downscale as it reads, so a 24-megapixel photo never
+ * exists as a 97 MB bitmap. Only one edge is constrained: the other follows the
+ * aspect ratio, which keeps the result undistorted however the decoder orders
+ * resizing against the EXIF rotation. The canvas then applies the real cap.
+ */
+async function decodeOptions(file: Blob): Promise<ImageBitmapOptions> {
+  const options: ImageBitmapOptions = { imageOrientation: "from-image" };
+  const size = await probeImageSize(file);
+  if (!size) return options;
+
+  const longest = Math.max(size.width, size.height);
+  // Never ask for more pixels than the picture has.
+  if (longest <= MAX_IMAGE_EDGE) return options;
+
+  options.resizeQuality = "high";
+  if (size.width >= size.height) options.resizeWidth = MAX_IMAGE_EDGE;
+  else options.resizeHeight = MAX_IMAGE_EDGE;
+
+  return options;
+}
+
 export async function normalizeImage(file: File): Promise<File> {
   if (!canNormalize()) return file;
 
   let bitmap: ImageBitmap;
   try {
-    // Applies the EXIF rotation, which the re-encode then discards along with
-    // the rest of the metadata — the GPS coordinates in it included.
-    bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
+    // The rotation is applied here and the metadata discarded by the re-encode,
+    // the GPS coordinates in it included.
+    bitmap = await createImageBitmap(file, await decodeOptions(file));
   } catch {
     return file;
   }

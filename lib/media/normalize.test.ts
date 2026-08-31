@@ -59,6 +59,66 @@ describe("scaledSize", () => {
   });
 });
 
+describe("normalizeImage decode budget", () => {
+  /** A PNG header is enough for the probe to report a size. */
+  function pngOf(width: number, height: number) {
+    const be32 = (value: number) => [
+      (value >>> 24) & 0xff,
+      (value >>> 16) & 0xff,
+      (value >>> 8) & 0xff,
+      value & 0xff,
+    ];
+    return new File(
+      [
+        new Uint8Array([
+          0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+          ...be32(13), 0x49, 0x48, 0x44, 0x52,
+          ...be32(width), ...be32(height),
+        ]),
+      ],
+      "foto.png",
+      { type: "image/png" },
+    );
+  }
+
+  it("asks the decoder to downscale a phone photo as it reads it", async () => {
+    // 24 megapixels is about 97 MB decoded at full size, which is what killed
+    // the tab. Only one edge is constrained, so nothing can be distorted.
+    stubBitmap(1600, 1067);
+    stubCanvas(new Blob([new Uint8Array(10)]));
+
+    await normalizeImage(pngOf(6048, 4032));
+
+    expect(createImageBitmap).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ resizeWidth: MAX_IMAGE_EDGE, imageOrientation: "from-image" }),
+    );
+    expect(vi.mocked(createImageBitmap).mock.calls[0]![1]).not.toHaveProperty("resizeHeight");
+  });
+
+  it("constrains the tall edge of a portrait photo", async () => {
+    stubBitmap(1200, 1600);
+    stubCanvas(new Blob([new Uint8Array(10)]));
+
+    await normalizeImage(pngOf(3024, 4032));
+
+    expect(vi.mocked(createImageBitmap).mock.calls[0]![1]).toMatchObject({
+      resizeHeight: MAX_IMAGE_EDGE,
+    });
+  });
+
+  it("never asks for more pixels than the picture has", async () => {
+    stubBitmap(800, 600);
+    stubCanvas(new Blob([new Uint8Array(10)]));
+
+    await normalizeImage(pngOf(800, 600));
+
+    const options = vi.mocked(createImageBitmap).mock.calls[0]![1]!;
+    expect(options).not.toHaveProperty("resizeWidth");
+    expect(options).not.toHaveProperty("resizeHeight");
+  });
+});
+
 describe("normalizeImage", () => {
   it("follows the type the encoder actually produced", async () => {
     stubBitmap(4000, 3000);
