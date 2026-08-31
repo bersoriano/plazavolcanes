@@ -89,3 +89,21 @@ a {
     font-size: 0.8em;
   }
 }
+
+/*
+ * A disclosure on small screens, a plain block on large ones.
+ *
+ * A closed <details> hides its content through ::details-content, so overriding
+ * that one pseudo-element reveals the panel on a wide screen without anyone
+ * having to open it. The summary stays put and keeps carrying the heading; it
+ * simply stops looking and behaving like a toggle up there. Where the
+ * pseudo-element is unsupported the rule is skipped and the panel stays a
+ * disclosure at every width: still reachable, just one click further away.
+ */
+@media (min-width: 1024px) {
+  @supports selector(::details-content) {
+    .disclosure-mobile::details-content {
+      content-visibility: visible;
+    }
+  }
+}
