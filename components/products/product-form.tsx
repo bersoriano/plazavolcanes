@@ -7,7 +7,12 @@ import { ImagePlus } from "lucide-react";
 import { CategoryFields } from "@/components/products/category-fields";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { normalizeImages, replaceInputFiles } from "@/lib/media/normalize";
+import {
+  MAX_UPLOAD_BYTES,
+  normalizeImages,
+  replaceInputFiles,
+  totalBytes,
+} from "@/lib/media/normalize";
 import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
@@ -38,9 +43,9 @@ type ProductFormProps = {
 
 export type ProductImage = { id: number; url: string | null; position: number };
 
-function ProductActions({ busy, status }: { busy: boolean; status?: "draft" | "published" }) {
+function ProductActions({ blocked, busy, status }: { blocked: boolean; busy: boolean; status?: "draft" | "published" }) {
   const { pending } = useFormStatus();
-  const disabled = pending || busy;
+  const disabled = pending || busy || blocked;
   if (!status) {
     return (
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -68,6 +73,7 @@ export function ProductForm({ action, categories, product, images = [] }: Produc
   const [preview, setPreview] = useState(product?.imageUrl ?? null);
   const [condition, setCondition] = useState<ProductCondition>(product?.condition ?? "new");
   const [normalizing, setNormalizing] = useState(false);
+  const [sizeError, setSizeError] = useState<string | null>(null);
 
   // The input keeps carrying the files, so the plain submit needs no changes —
   // it just sends the re-encoded ones. Submitting is blocked until they are ready.
@@ -80,6 +86,13 @@ export function ProductForm({ action, categories, product, images = [] }: Produc
       const normalized = await normalizeImages(chosen);
       replaceInputFiles(input, normalized);
       setPreview(URL.createObjectURL(normalized[0]));
+      // Normalization usually brings a selection far under this. When the
+      // browser could not re-encode, saying so beats letting the upload fail.
+      setSizeError(
+        totalBytes(normalized) > MAX_UPLOAD_BYTES
+          ? "Tus imágenes pesan demasiado juntas. Elige menos imágenes o fotos más pequeñas."
+          : null,
+      );
     } finally {
       setNormalizing(false);
     }
@@ -169,10 +182,11 @@ export function ProductForm({ action, categories, product, images = [] }: Produc
         {images.length ? (
           <p className="text-xs text-muted">{`Quedan ${MAX_PRODUCT_IMAGES - images.length} espacios de ${MAX_PRODUCT_IMAGES}.`}</p>
         ) : null}
+        {sizeError ? <p className="text-sm font-medium text-sale" role="alert">{sizeError}</p> : null}
         {state.errors?.images?.[0] ? <p className="text-sm font-medium text-sale">{state.errors.images[0]}</p> : null}
       </div>
       {state.message ? <p className={`rounded-2xl px-4 py-3 text-sm font-medium ${state.status === "success" ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"}`} role="status">{state.message}</p> : null}
-      <ProductActions busy={normalizing} status={product?.status} />
+      <ProductActions blocked={Boolean(sizeError)} busy={normalizing} status={product?.status} />
     </form>
   );
 }
