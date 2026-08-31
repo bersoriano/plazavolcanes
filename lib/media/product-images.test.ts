@@ -60,8 +60,17 @@ function fakeClient({
   return { client, uploaded, removed, inserted, deletedRowIds };
 }
 
+const JPEG_BYTES = [0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0];
+
 function imageOf(name = "producto.jpg") {
-  return new File([new Uint8Array(8)], name, { type: "image/jpeg" });
+  return new File([new Uint8Array(JPEG_BYTES)], name, { type: "image/jpeg" });
+}
+
+/** A file that claims to be a JPEG but carries zip bytes. */
+function disguisedFile() {
+  return new File([new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0, 0, 0, 0, 0])], "falso.jpg", {
+    type: "image/jpeg",
+  });
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -130,6 +139,43 @@ describe("storeProductImages", () => {
     // Both objects are gone, and the one row that did commit goes with them.
     expect(fake.deletedRowIds).toEqual([[100]]);
     expect(fake.removed[0]).toHaveLength(2);
+  });
+
+  it("refuses a file whose bytes are not an image, whatever it calls itself", async () => {
+    const fake = fakeClient({});
+
+    const result = await storeProductImages(asClient(fake.client), "seller-1", 42, [
+      disguisedFile(),
+    ]);
+
+    expect(result.error).toBe("Usa una imagen JPEG, PNG o WebP.");
+    expect(fake.uploaded).toEqual([]);
+  });
+
+  it("writes nothing when one file in the batch is not an image", async () => {
+    const fake = fakeClient({});
+
+    const result = await storeProductImages(asClient(fake.client), "seller-1", 42, [
+      imageOf(),
+      disguisedFile(),
+    ]);
+
+    expect(result.error).toBe("Usa una imagen JPEG, PNG o WebP.");
+    expect(fake.uploaded).toEqual([]);
+    expect(fake.inserted).toEqual([]);
+  });
+
+  it("names the object for the format found in the bytes, not the declared one", async () => {
+    const fake = fakeClient({});
+    const pngLabelledJpeg = new File(
+      [new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0])],
+      "producto.jpg",
+      { type: "image/jpeg" },
+    );
+
+    await storeProductImages(asClient(fake.client), "seller-1", 42, [pngLabelledJpeg]);
+
+    expect(fake.uploaded[0]).toMatch(/\.png$/);
   });
 
   it("does nothing when there is no image to store", async () => {

@@ -12,7 +12,8 @@ import {
 import { uniqueShopSlug } from "@/lib/slug";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { isMediaContentType, shopImageKey } from "@/lib/media/keys";
+import { shopImageKey } from "@/lib/media/keys";
+import { sniffImageType } from "@/lib/media/signature";
 import { shopImageKeys } from "@/lib/media/product-images";
 import { deleteObjects, putObject } from "@/lib/media/store";
 import { validateImage } from "@/lib/media/validation";
@@ -95,10 +96,16 @@ export async function createShop(
   });
   let imagePath: string | null = null;
 
-  // validateImage already rejected anything outside the allowlist; this narrows it.
-  if (image && isMediaContentType(image.type)) {
-    imagePath = shopImageKey(userId, image.type);
-    if (!(await putObject(supabase, imagePath, image, image.type))) {
+  if (image) {
+    // The declared type is only a claim; the stored type comes from the bytes.
+    const contentType = await sniffImageType(image);
+    if (!contentType) {
+      const message = "Usa una imagen JPEG, PNG o WebP.";
+      return { status: "error", message, errors: { image: [message] } };
+    }
+
+    imagePath = shopImageKey(userId, contentType);
+    if (!(await putObject(supabase, imagePath, image, contentType))) {
       return { status: "error", message: "No pudimos subir la imagen." };
     }
   }
@@ -183,9 +190,15 @@ export async function updateShop(
   if (pickupError) return pickupError;
 
   let nextImagePath = existing.image_path;
-  if (image && isMediaContentType(image.type)) {
-    nextImagePath = shopImageKey(userId, image.type);
-    if (!(await putObject(supabase, nextImagePath, image, image.type))) {
+  if (image) {
+    const contentType = await sniffImageType(image);
+    if (!contentType) {
+      const message = "Usa una imagen JPEG, PNG o WebP.";
+      return { status: "error", message, errors: { image: [message] } };
+    }
+
+    nextImagePath = shopImageKey(userId, contentType);
+    if (!(await putObject(supabase, nextImagePath, image, contentType))) {
       return { status: "error", message: "No pudimos subir la imagen." };
     }
   }
