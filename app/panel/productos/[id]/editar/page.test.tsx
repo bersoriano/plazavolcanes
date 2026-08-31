@@ -11,7 +11,7 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: () => true }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: vi.fn() }));
 vi.mock("@/lib/queries/categories.server", () => ({ getProductCategoryTree: vi.fn().mockResolvedValue([]) }));
-vi.mock("@/lib/actions/products", () => ({ updateProduct: vi.fn() }));
+vi.mock("@/lib/actions/products", () => ({ updateProduct: vi.fn(), removeProductImage: vi.fn() }));
 vi.mock("@/lib/actions/product-translations", () => ({ saveEnglishProductTranslation: vi.fn() }));
 vi.mock("@/lib/actions/categories", () => ({ createCategorySuggestion: vi.fn() }));
 vi.mock("@/components/products/product-form", () => ({ ProductForm: () => null }));
