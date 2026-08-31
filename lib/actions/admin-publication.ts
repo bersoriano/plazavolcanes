@@ -85,5 +85,6 @@ export async function setShopPublishingApproval(
   return {
     status: "success",
     message: enabled ? "Publicaciones habilitadas." : "Publicaciones pendientes.",
+    values: { enabled: String(enabled) },
   };
 }

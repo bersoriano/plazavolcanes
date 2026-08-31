@@ -6,16 +6,15 @@ Separate seller publication intent from administration publication approval. A p
 
 ## Scope and Non-Goals
 
-This project includes shop-level administration approval, product-level administration moderation backend, seller publication controls, effective-visibility enforcement, expiration behavior, admin and seller UI, and database/application tests.
+This project includes shop-level administration approval, product-level administration moderation backend, seller publication controls, effective-visibility enforcement, expiration behavior, private product media delivery, admin and seller UI, and database/application tests.
 
 This project does not include:
 
 - Product-level administration switch UI
 - Moderation reasons, comments, notifications, or audit dashboard
-- Private Storage, signed URLs, Storage-policy changes, or image URL changes
 - Private shop pages, seller-content deletion, or service-role browser access
 
-`catalogo` remains public. Hiding a product prevents new marketplace discovery and commerce actions; it does not revoke an existing public image URL. Private images remain separate future work.
+`catalogo` is private. Server-side reads issue five-minute signed URLs only when Storage RLS can read the corresponding shop or product-image row. Hidden product images remain available to their seller and administrators, but not to anonymous visitors or unrelated authenticated users. Existing object paths remain unchanged and no service-role key enters browser code.
 
 ## Approved Policy Decisions
 
@@ -83,6 +82,12 @@ Replace public product select condition with effective visibility. Shop owners r
 
 Shops remain publicly readable. An unapproved shop page may render shop data but must show no hidden products.
 
+### Private image delivery
+
+The `catalogo` bucket is private and its former broad object-read policy is removed. Shop images remain signable because shop pages stay public. Product object reads require a matching `product_images.storage_path` row already visible through product-image RLS; orphaned objects are not signable. Administrators receive explicit read policies on products and product images so future moderation UI can inspect hidden media.
+
+Server-only catalog, seller-panel, edit, checkout, and messaging reads batch unique object paths through `createSignedUrls(..., 300)`. A failed or unauthorized path renders no image instead of falling back to a public URL.
+
 ## Migration and Expiration
 
 Use `supabase migration new` to create the migration filename. Migration order is:
@@ -130,7 +135,7 @@ Seller product panels derive state from all gates:
 - `Deshabilitado por administración`
 - `Vencido`
 
-“Ver publicación” appears only for effective-public products. Sellers still see their own existing public-bucket images for hidden products.
+“Ver publicación” appears only for effective-public products. Sellers still see their own hidden-product images through short-lived signed URLs.
 
 ### Administration
 
@@ -156,4 +161,4 @@ Final verification runs:
 - `npm run build`
 - Relevant Playwright flows when local Supabase supports them
 
-Verification also searches for remaining published-only product gates, validates generated database types and migration ordering, confirms no service-role client appears in browser code, and confirms no private-image migration/signing work was introduced.
+Verification also searches for remaining published-only product gates and permanent public catalog URLs, validates generated database types and migration ordering, confirms no service-role client appears in browser code, and proves Storage reads follow effective visibility.

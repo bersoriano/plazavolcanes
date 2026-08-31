@@ -224,6 +224,7 @@ describe("MarketplaceUsers", () => {
     vi.mocked(setShopPublishingApproval).mockResolvedValueOnce({
       status: "success",
       message: "Publicaciones habilitadas.",
+      values: { enabled: "true" },
     });
 
     render(
@@ -249,11 +250,14 @@ describe("MarketplaceUsers", () => {
       />,
     );
 
-    fireEvent.click(screen.getByRole("switch", { name: "Publicaciones habilitadas" }));
+    const approval = screen.getByRole("switch", { name: "Publicaciones habilitadas" });
+    fireEvent.click(approval);
 
     const status = await screen.findByRole("status");
     expect(status).toHaveTextContent("Publicaciones habilitadas.");
     expect(status).toHaveClass("text-success");
+    expect(approval).toBeChecked();
+    expect(screen.getAllByText("Publicaciones habilitadas")).toHaveLength(2);
   });
 
   it("links products publicly only when all visibility gates are effective", () => {

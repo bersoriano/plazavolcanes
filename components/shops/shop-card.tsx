@@ -2,17 +2,14 @@ import Link from "next/link";
 import { ArrowUpRight, Store } from "lucide-react";
 
 import type { Shop } from "@/lib/database.types";
-import { getCatalogImageUrl } from "@/lib/storage";
 
-export function ShopCard({ shop }: { shop: Shop }) {
-  const imageUrl = getCatalogImageUrl(shop.image_path);
-
+export function ShopCard({ shop }: { shop: Shop & { imageUrl: string | null } }) {
   return (
     <Link className="group overflow-hidden rounded-[1.5rem] border border-line bg-surface" href={`/panel/tiendas/${shop.id}`}>
       <div className="aspect-[16/9] overflow-hidden bg-background">
-        {imageUrl ? (
+        {shop.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img alt="" className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" src={imageUrl} />
+          <img alt="" className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" src={shop.imageUrl} />
         ) : <div className="grid size-full place-items-center text-brand/35"><Store aria-hidden="true" className="size-9" /></div>}
       </div>
       <div className="flex items-start justify-between gap-4 p-5">

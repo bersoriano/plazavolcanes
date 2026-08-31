@@ -19,7 +19,7 @@ function product(overrides: Partial<Parameters<typeof ProductRow>[0]["product"]>
     id: 1,
     name: "Taza de barro",
     price_mxn: 480,
-    image_path: null,
+    image_url: null,
     status: "published" as const,
     expires_at: "2026-09-20T00:00:00.000Z",
     is_admin_enabled: true,

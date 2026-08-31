@@ -4,7 +4,7 @@
 
 **Goal:** Require seller publication, shop approval, and product administration enablement for every public product while preserving seller intent and historical commerce data.
 
-**Architecture:** PostgreSQL owns defaults, moderation authorization, expiry, RLS, and privileged commerce checks. Next.js actions call protected RPCs; UI renders derived state. Catalog image storage remains public and unchanged.
+**Architecture:** PostgreSQL owns defaults, moderation authorization, expiry, RLS, Storage read authorization, and privileged commerce checks. Next.js actions call protected RPCs; server reads create short-lived signed media URLs; UI renders derived state.
 
 **Tech Stack:** Next.js 16.3.1 App Router, React 19, TypeScript, Supabase/Postgres, pgTAP, Vitest, Playwright.
 
@@ -16,7 +16,7 @@
 - Create migration with: npx supabase migration new shop_publication_moderation. Use generated filename.
 - Security-definer functions use empty search path, qualified names, internal authorization, revoked default execution, and minimum grants.
 - New products insert as draft; seller forms never send moderation fields.
-- catalogo remains public. No signed URLs, bucket/privacy policy changes, or service-role browser use.
+- catalogo becomes private. Server code batches five-minute signed URLs; no service-role browser use.
 - Public visibility requires published seller status, approved shop, admin-enabled product, and an active non-expired listing window.
 - Listing capacity deliberately counts seller-published products even if administration hides them.
 - Each task begins with a focused failing test and ends green.
@@ -325,10 +325,31 @@
 
 - [ ] **Step 3: Final security and scope audit**
 
-  Confirm no product public path checks status alone; no seller can mutate moderation fields; no non-admin/anonymous RPC caller succeeds; existing history remains readable; no private Storage/signed URL change entered diff.
+  Confirm no product public path checks status alone; no seller can mutate moderation fields; no non-admin/anonymous RPC caller succeeds; existing history remains readable; no permanent public catalog URL remains.
 
 - [ ] **Step 4: Commit any verification fixes**
 
       git add app components lib supabase tests
       git commit -m "test: verify publication moderation gates"
 
+### Task 9: Private catalog media and repaired switch feedback
+
+**Files:**
+- Create: generated `supabase/migrations/<timestamp>_private_catalog_image_access.sql`
+- Modify: `lib/storage.ts`, catalog/message server queries, seller routes, admin action/switch, and focused tests
+
+- [x] **Step 1: Add failing tests**
+
+  Prove hidden Storage objects are broadly readable, bucket is public, signing helper is absent, and successful admin action leaves switch stale.
+
+- [x] **Step 2: Restrict Storage reads**
+
+  Make `catalogo` private, remove broad read policy, permit shop media and RLS-visible product media, and allow administrators to read hidden product media. Preserve object paths and upload/update/delete ownership policies.
+
+- [x] **Step 3: Use signed URLs and post-success switch state**
+
+  Batch unique paths into `createSignedUrls(paths, 300)` from server reads. Never emit permanent public URLs. Return applied switch value from Server Action and update controlled client state only after success.
+
+- [ ] **Step 4: Verify and deploy in safe order**
+
+  Run full application/database checks. Deploy signed-URL application code before applying private-bucket migration; older public-URL code cannot display private objects.

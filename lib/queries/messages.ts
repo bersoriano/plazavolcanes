@@ -1,5 +1,4 @@
 import { DEFAULT_CATALOG_CURRENCY } from "@/lib/catalog-locale";
-import { getCatalogImageUrl } from "@/lib/storage";
 
 export type InboxRole = "buyer" | "seller";
 
@@ -88,7 +87,10 @@ export function oldestFirst<T extends { created_at: string }>(entries: T[]) {
  * A thread's product, or nothing at all for a general enquiry. An order thread
  * never carries one: the order, not a listing, is what that conversation is about.
  */
-export function mapConversationProduct(row: ConversationRow): ConversationProduct | null {
+export function mapConversationProduct(
+  row: ConversationRow,
+  imageUrls: ReadonlyMap<string, string> = new Map(),
+): ConversationProduct | null {
   if (row.type !== "pre_sale" || row.product_id === null || row.product_name === null) return null;
 
   const isPublic = row.product_is_public === true;
@@ -96,7 +98,9 @@ export function mapConversationProduct(row: ConversationRow): ConversationProduc
   return {
     id: row.product_id,
     name: row.product_name,
-    image_url: getCatalogImageUrl(row.product_image_path),
+    image_url: row.product_image_path
+      ? (imageUrls.get(row.product_image_path) ?? null)
+      : null,
     price: Number(row.product_price ?? 0),
     currency_code: row.product_currency_code ?? DEFAULT_CATALOG_CURRENCY,
     is_available: isPublic && (row.product_units_available ?? 0) > 0,
@@ -106,7 +110,10 @@ export function mapConversationProduct(row: ConversationRow): ConversationProduc
   };
 }
 
-export function mapConversationRows(rows: ConversationRow[]): ConversationSummary[] {
+export function mapConversationRows(
+  rows: ConversationRow[],
+  imageUrls: ReadonlyMap<string, string> = new Map(),
+): ConversationSummary[] {
   return rows.map((row) => ({
     id: row.conversation_id,
     type: row.type,
@@ -115,7 +122,7 @@ export function mapConversationRows(rows: ConversationRow[]): ConversationSummar
     shop_name: row.shop_name,
     shop_slug: row.shop_slug,
     counterpart_label: row.counterpart_label,
-    product: mapConversationProduct(row),
+    product: mapConversationProduct(row, imageUrls),
     unread_count: row.unread_count,
     // A thread opened but never written in has no message to preview.
     last_message:

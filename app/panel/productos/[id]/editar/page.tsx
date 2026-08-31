@@ -13,7 +13,7 @@ import { DEFAULT_CATALOG_LOCALE } from "@/lib/catalog-locale";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getCatalogImageUrl } from "@/lib/storage";
+import { signCatalogImagePaths } from "@/lib/storage";
 
 export default async function EditProductPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ categoria?: string | string[]; limite?: string | string[] }> }) {
   if (!isSupabaseConfigured()) redirect("/panel");
@@ -31,13 +31,17 @@ export default async function EditProductPage({ params, searchParams }: { params
     .select("id, storage_path, position")
     .eq("product_id", productId)
     .order("position");
-  const galleryImages = (galleryRows ?? []).map((image) => ({
-    id: image.id,
-    url: getCatalogImageUrl(image.storage_path),
-    position: image.position,
-  }));
   const { data: shop } = await supabase.from("shops").select("id, name, is_publishing_approved, publishing_reviewed_at").eq("id", product.shop_id).eq("owner_id", claimsData?.claims?.sub ?? "").maybeSingle();
   if (!shop) notFound();
+  const imageUrls = await signCatalogImagePaths(supabase, [
+    product.image_path,
+    ...(galleryRows ?? []).map((image) => image.storage_path),
+  ]);
+  const galleryImages = (galleryRows ?? []).map((image) => ({
+    id: image.id,
+    url: imageUrls.get(image.storage_path) ?? null,
+    position: image.position,
+  }));
   const [categories, query, translationResult] = await Promise.all([
     getProductCategoryTree(DEFAULT_CATALOG_LOCALE, { includeInactive: true }),
     searchParams,
@@ -60,5 +64,5 @@ export default async function EditProductPage({ params, searchParams }: { params
     publishing_reviewed_at: shop.publishing_reviewed_at,
   });
 
-  return <section className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14"><div className="flex items-center justify-between gap-4"><Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand" href={`/panel/tiendas/${shop.id}`}><ArrowLeft aria-hidden="true" className="size-4" />{shop.name}</Link>{publicationState.isPublic ? <Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand" href={`/productos/${product.slug}`}><ExternalLink aria-hidden="true" className="size-4" />Ver publicación</Link> : null}</div><div className="mt-7 rounded-[2rem] border border-line bg-surface p-6 sm:p-9"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">{publicationState.label}</p><h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">Edita tu producto</h1><p className="mb-8 mt-3 leading-7 text-muted">Los cambios publicados aparecerán inmediatamente en la plaza.</p>{categoryRequired ? <p className="mb-6 rounded-2xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale" role="alert">Selecciona una subcategoría válida antes de publicar.</p> : null}{listingLimitReached ? <p className="mb-6 rounded-2xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale" role="alert">Alcanzaste el límite de publicaciones activas de tu tienda.</p> : null}<ProductForm action={action} categories={categories} product={{ name: product.name, description: product.description, price_mxn: product.price_mxn, status: product.status === "expired" ? "draft" : product.status, condition: product.condition, used_condition: product.used_condition, category_id: product.category_id, handling_days: product.handling_days, units_available: product.units_available, imageUrl: getCatalogImageUrl(product.image_path) }} images={galleryImages} /><ProductTranslationForm action={translationAction} translation={translationResult.data} /><CategorySuggestionForm action={createCategorySuggestion} categories={categories} /></div></section>;
+  return <section className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14"><div className="flex items-center justify-between gap-4"><Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand" href={`/panel/tiendas/${shop.id}`}><ArrowLeft aria-hidden="true" className="size-4" />{shop.name}</Link>{publicationState.isPublic ? <Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand" href={`/productos/${product.slug}`}><ExternalLink aria-hidden="true" className="size-4" />Ver publicación</Link> : null}</div><div className="mt-7 rounded-[2rem] border border-line bg-surface p-6 sm:p-9"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">{publicationState.label}</p><h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">Edita tu producto</h1><p className="mb-8 mt-3 leading-7 text-muted">Los cambios publicados aparecerán inmediatamente en la plaza.</p>{categoryRequired ? <p className="mb-6 rounded-2xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale" role="alert">Selecciona una subcategoría válida antes de publicar.</p> : null}{listingLimitReached ? <p className="mb-6 rounded-2xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale" role="alert">Alcanzaste el límite de publicaciones activas de tu tienda.</p> : null}<ProductForm action={action} categories={categories} product={{ name: product.name, description: product.description, price_mxn: product.price_mxn, status: product.status === "expired" ? "draft" : product.status, condition: product.condition, used_condition: product.used_condition, category_id: product.category_id, handling_days: product.handling_days, units_available: product.units_available, imageUrl: product.image_path ? (imageUrls.get(product.image_path) ?? null) : null }} images={galleryImages} /><ProductTranslationForm action={translationAction} translation={translationResult.data} /><CategorySuggestionForm action={createCategorySuggestion} categories={categories} /></div></section>;
 }

@@ -21,7 +21,7 @@ export const requireAdmin = cache(async (): Promise<void> => {
   if (!isSupabaseConfigured()) redirect("/panel");
 
   const { isAdmin, signedIn } = await getCurrentUserAdminStatus();
-  if (!signedIn) redirect("/ingresar?continuar=/admin/disputas");
+  if (!signedIn) redirect("/ingresar?continuar=/admin/usuarios");
 
   if (!isAdmin) redirect("/panel");
 });

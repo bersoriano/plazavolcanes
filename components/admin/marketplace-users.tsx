@@ -38,7 +38,13 @@ function AdminProductStateBadge({ state }: { state: AdminMarketplaceProductState
 
 function ShopPublishingApproval({ shop }: { shop: AdminMarketplaceShop }) {
   const [state, formAction, pending] = useFormAction(setShopPublishingApproval);
-  const isApproved = shop.isPublishingApproved;
+  const appliedValue = state.status === "success" ? state.values?.enabled : undefined;
+  const isApproved =
+    appliedValue === "true"
+      ? true
+      : appliedValue === "false"
+        ? false
+        : shop.isPublishingApproved;
 
   return (
     <form action={formAction} className="mt-4 rounded-2xl border border-line bg-surface p-4">
@@ -121,7 +127,10 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
                       <p className="mt-1 text-sm text-muted">Creada: {formatDate(shop.createdAt)}</p>
                     </div>
                   </div>
-                  <ShopPublishingApproval shop={shop} />
+                  <ShopPublishingApproval
+                    key={`${shop.id}:${shop.isPublishingApproved}`}
+                    shop={shop}
+                  />
                   {shop.products.length ? (
                     <ul className="mt-4 divide-y divide-line">
                       {shop.products.map((product) => (

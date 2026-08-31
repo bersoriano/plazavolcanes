@@ -55,7 +55,7 @@ describe("requireAdmin", () => {
     await expect(requireAdmin()).rejects.toThrow("REDIRECT");
 
     expect(mocks.redirect).toHaveBeenCalledWith(
-      "/ingresar?continuar=/admin/disputas",
+      "/ingresar?continuar=/admin/usuarios",
     );
     expect(mocks.rpc).not.toHaveBeenCalled();
   });

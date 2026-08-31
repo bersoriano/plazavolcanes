@@ -2,19 +2,27 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(11);
+select plan(17);
 
 select has_table('public', 'product_images', 'product images table exists');
 
 insert into auth.users (id, email, created_at) values
   ('11112222-1111-4111-8111-111122223333', 'gallery-owner@test.local', now()),
-  ('22223333-2222-4222-8222-222233334444', 'gallery-stranger@test.local', now());
+  ('22223333-2222-4222-8222-222233334444', 'gallery-stranger@test.local', now()),
+  ('33334444-3333-4333-8333-333344445555', 'gallery-admin@test.local', now());
+
+insert into private.admin_users (user_id, granted_by)
+values (
+  '33334444-3333-4333-8333-333344445555',
+  '33334444-3333-4333-8333-333344445555'
+);
 
 insert into public.shops (owner_id, name, slug, description, country_code, administrative_area_codes) values
   ('11112222-1111-4111-8111-111122223333', 'Galería', 'galeria', 'Descripción completa de la tienda con galería.', 'MX', array['MX-JAL']);
 
 update public.shops
-set is_publishing_approved = true
+set is_publishing_approved = true,
+    image_path = 'owner/shops/galeria.jpg'
 where slug = 'galeria';
 
 insert into public.products (shop_id, name, description, price_mxn, status, category_id, image_path) values
@@ -23,6 +31,18 @@ insert into public.products (shop_id, name, description, price_mxn, status, cate
 
 insert into public.product_images (product_id, storage_path, position) values
   ((select id from public.products where name='Con imagen previa'), 'owner/products/publicada.jpg', 0);
+
+insert into storage.objects (bucket_id, name, owner_id) values
+  ('catalogo', 'owner/shops/galeria.jpg', '11112222-1111-4111-8111-111122223333'),
+  ('catalogo', 'owner/products/publicada.jpg', '11112222-1111-4111-8111-111122223333'),
+  ('catalogo', 'owner/products/a.jpg', '11112222-1111-4111-8111-111122223333'),
+  ('catalogo', 'owner/products/b.jpg', '11112222-1111-4111-8111-111122223333');
+
+select is(
+  (select public from storage.buckets where id = 'catalogo'),
+  false,
+  'catalog bucket is private'
+);
 
 select results_eq(
   $$select image_path from public.products where name='Con imagen previa'$$,
@@ -64,6 +84,7 @@ select results_eq(
 );
 
 set local role anon;
+set local "storage.operation" = 'storage.object.sign_many';
 
 select results_eq(
   $$select count(*) from public.product_images$$,
@@ -71,13 +92,26 @@ select results_eq(
   'anonymous visitors see gallery images of published products only'
 );
 
+select results_eq(
+  $$select name from storage.objects where bucket_id = 'catalogo' order by name$$,
+  $$values ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
+  'anonymous visitors can sign public shop and effective product images only'
+);
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "22223333-2222-4222-8222-222233334444", "role": "authenticated"}';
+set local "storage.operation" = 'storage.object.sign_many';
 
 select results_eq(
   $$select count(*) from public.product_images$$,
   array[1::bigint],
   'a stranger cannot see images belonging to somebody else''s draft'
+);
+
+select results_eq(
+  $$select name from storage.objects where bucket_id = 'catalogo' order by name$$,
+  $$values ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
+  'an authenticated stranger cannot sign hidden product images'
 );
 
 select throws_ok(
@@ -93,6 +127,7 @@ set is_admin_enabled = false
 where name = 'Con imagen previa';
 
 set local role anon;
+set local "storage.operation" = 'storage.object.sign_many';
 
 select results_eq(
   $$select count(*) from public.product_images where storage_path = 'owner/products/publicada.jpg'$$,
@@ -100,13 +135,34 @@ select results_eq(
   'product images leave the public catalogue when the product visibility gate closes'
 );
 
+select results_eq(
+  $$select name from storage.objects where bucket_id = 'catalogo' order by name$$,
+  array['owner/shops/galeria.jpg'::text],
+  'closing product visibility prevents new public image signatures'
+);
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub": "11112222-1111-4111-8111-111122223333", "role": "authenticated"}';
+set local "storage.operation" = 'storage.object.sign_many';
 
 select results_eq(
   $$select count(*) from public.product_images where storage_path = 'owner/products/publicada.jpg'$$,
   array[1::bigint],
   'the owner retains gallery access after the parent product becomes hidden'
+);
+
+select results_eq(
+  $$select name from storage.objects where bucket_id = 'catalogo' order by name$$,
+  $$values ('owner/products/b.jpg'::text), ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
+  'the owner can sign every image belonging to the shop'
+);
+
+set local request.jwt.claims = '{"sub": "33334444-3333-4333-8333-333344445555", "role": "authenticated"}';
+
+select results_eq(
+  $$select name from storage.objects where bucket_id = 'catalogo' order by name$$,
+  $$values ('owner/products/b.jpg'::text), ('owner/products/publicada.jpg'::text), ('owner/shops/galeria.jpg'::text)$$,
+  'an administrator can sign hidden product images for moderation'
 );
 
 select * from finish();

@@ -12,7 +12,7 @@ import { escapePostgresLikePattern, normalizeSearchQuery } from "@/lib/queries/c
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { getCatalogImageUrl } from "@/lib/storage";
+import { signCatalogImagePaths } from "@/lib/storage";
 import type { PublicTrustMetrics } from "@/lib/public-trust";
 
 export type CatalogProduct = Pick<
@@ -73,7 +73,11 @@ type ProductQueryRow = {
   }[];
 };
 
-function mapProduct(item: ProductQueryRow, locale: CatalogLocale): CatalogProduct {
+function mapProduct(
+  item: ProductQueryRow,
+  locale: CatalogLocale,
+  imageUrls: ReadonlyMap<string, string>,
+): CatalogProduct {
   const translation =
     locale === "en-US"
       ? item.product_translations.find(
@@ -90,7 +94,7 @@ function mapProduct(item: ProductQueryRow, locale: CatalogLocale): CatalogProduc
     price_mxn: item.price_mxn,
     condition: item.condition,
     used_condition: item.used_condition,
-    image_path: getCatalogImageUrl(item.image_path),
+    image_path: item.image_path ? (imageUrls.get(item.image_path) ?? null) : null,
     created_at: item.created_at,
     category_id: item.category_id,
     currency_code: item.currency_code,
@@ -278,7 +282,15 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
     productRows = (data ?? []) as unknown as ProductQueryRow[];
   }
 
-  const products = productRows.map((item) => mapProduct(item, normalizedFilters.locale));
+  const shopsResult = await shopsQuery;
+  const shopRows = shopsResult.data ?? [];
+  const imageUrls = await signCatalogImagePaths(supabase, [
+    ...productRows.map((product) => product.image_path),
+    ...shopRows.map((shop) => shop.image_path),
+  ]);
+  const products = productRows.map((item) =>
+    mapProduct(item, normalizedFilters.locale, imageUrls),
+  );
   let searchEventId: string | null = null;
 
   if (hasCatalogFilter) {
@@ -303,13 +315,11 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
     }
   }
 
-  const shopsResult = await shopsQuery;
-
   return {
     products,
-    shops: (shopsResult.data ?? []).map((shop) => ({
+    shops: shopRows.map((shop) => ({
       ...shop,
-      imageUrl: getCatalogImageUrl(shop.image_path),
+      imageUrl: shop.image_path ? (imageUrls.get(shop.image_path) ?? null) : null,
     })),
     categories,
     selectedCategory: selection.selectedCategory,
@@ -407,10 +417,15 @@ export async function getPublicShop(
     supabase.rpc("shop_seller_display_name", { p_shop_id: shop.id }),
     getPublicTrustMetrics(shop.id),
   ]);
+  const productRows = (products ?? []) as unknown as ProductQueryRow[];
+  const imageUrls = await signCatalogImagePaths(supabase, [
+    shop.image_path,
+    ...productRows.map((product) => product.image_path),
+  ]);
 
   return {
     ...shop,
-    imageUrl: getCatalogImageUrl(shop.image_path),
+    imageUrl: shop.image_path ? (imageUrls.get(shop.image_path) ?? null) : null,
     seller_display_name:
       sellerDisplayName
       ?? `Vendedor #${shop.owner_id.replace(/-/g, "").slice(0, 4).toUpperCase()}`,
@@ -419,8 +434,8 @@ export async function getPublicShop(
       UserTrustProfile,
       "joined_on" | "verification_level"
     > | null,
-    products: ((products ?? []) as unknown as ProductQueryRow[]).map((product) =>
-      mapProduct(product, locale),
+    products: productRows.map((product) =>
+      mapProduct(product, locale, imageUrls),
     ),
   };
 }
@@ -443,19 +458,22 @@ export async function getPublicProduct(
     .maybeSingle();
   if (!data) return null;
 
-  const product = mapProduct(data as unknown as ProductQueryRow, locale);
+  const row = data as unknown as ProductQueryRow;
   const { data: gallery } = await supabase
     .from("product_images")
     .select("storage_path, position")
-    .eq("product_id", product.id)
+    .eq("product_id", row.id)
     .order("position");
+  const imageUrls = await signCatalogImagePaths(supabase, [
+    row.image_path,
+    ...(gallery ?? []).map((image) => image.storage_path),
+  ]);
+  const product = mapProduct(row, locale, imageUrls);
   const images = (gallery ?? [])
-    .map((image) => getCatalogImageUrl(image.storage_path))
+    .map((image) => imageUrls.get(image.storage_path) ?? null)
     .filter((url): url is string => url !== null);
 
   // A product from before galleries existed still has its single cover image.
-  const row = data as unknown as ProductQueryRow;
-
   return {
     ...product,
     images: images.length ? images : product.image_path ? [product.image_path] : [],

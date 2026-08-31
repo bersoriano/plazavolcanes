@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getCatalogImageUrl, validateImage, validateProductImages } from "@/lib/storage";
+import * as storage from "@/lib/storage";
+
+const { validateImage, validateProductImages } = storage;
 
 describe("validateImage", () => {
   it("accepts JPEG, PNG, and WebP up to 5 MB", () => {
@@ -23,23 +25,60 @@ describe("validateImage", () => {
   });
 });
 
-describe("getCatalogImageUrl", () => {
-  afterEach(() => vi.unstubAllEnvs());
+describe("signCatalogImagePaths", () => {
+  afterEach(() => vi.restoreAllMocks());
 
-  it("builds a public URL and safely encodes each path segment", () => {
-    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "https://abc.supabase.co");
-    vi.stubEnv(
-      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-      "sb_publishable_live",
+  it("batches unique image paths into one five-minute signing request", async () => {
+    const signCatalogImagePaths = (storage as unknown as {
+      signCatalogImagePaths?: (
+        client: unknown,
+        paths: (string | null)[],
+      ) => Promise<Map<string, string>>;
+    }).signCatalogImagePaths;
+    expect(typeof signCatalogImagePaths).toBe("function");
+
+    const createSignedUrls = vi.fn().mockResolvedValue({
+      data: [
+        {
+          error: null,
+          path: "seller/products/café.png",
+          signedURL: "/object/sign/catalogo/seller/products/caf%C3%A9.png?token=token",
+          signedUrl:
+            "https://abc.supabase.co/storage/v1/object/sign/catalogo/seller/products/caf%C3%A9.png?token=token",
+        },
+        {
+          error: "not found",
+          path: "seller/products/missing.png",
+          signedURL: null,
+          signedUrl: null,
+        },
+      ],
+      error: null,
+    });
+    const client = {
+      storage: {
+        from: vi.fn().mockReturnValue({ createSignedUrls }),
+      },
+    };
+
+    const urls = await signCatalogImagePaths!(client, [
+      "seller/products/café.png",
+      null,
+      "seller/products/café.png",
+      "seller/products/missing.png",
+    ]);
+
+    expect(client.storage.from).toHaveBeenCalledWith("catalogo");
+    expect(createSignedUrls).toHaveBeenCalledWith(
+      ["seller/products/café.png", "seller/products/missing.png"],
+      300,
     );
-
-    expect(getCatalogImageUrl("seller/shops/café.png")).toBe(
-      "https://abc.supabase.co/storage/v1/object/public/catalogo/seller/shops/caf%C3%A9.png",
-    );
-  });
-
-  it("returns null without an image path", () => {
-    expect(getCatalogImageUrl(null)).toBeNull();
+    expect([...urls.entries()]).toEqual([
+      [
+        "seller/products/café.png",
+        "https://abc.supabase.co/storage/v1/object/sign/catalogo/seller/products/caf%C3%A9.png?token=token",
+      ],
+    ]);
   });
 });
 

@@ -38,7 +38,7 @@ describe("AdminLayout", () => {
 
     await expect(AdminLayout({ children: <p>Privado</p> })).rejects.toThrow("REDIRECT");
 
-    expect(mocks.redirect).toHaveBeenCalledWith("/ingresar?continuar=/admin/disputas");
+    expect(mocks.redirect).toHaveBeenCalledWith("/ingresar?continuar=/admin/usuarios");
   });
 
   it("redirects authenticated non-admins to the panel", async () => {

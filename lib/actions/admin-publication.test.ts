@@ -103,7 +103,11 @@ describe("setShopPublishingApproval", () => {
       formOf({ shop_id: "7", enabled: "true" }),
     );
 
-    expect(state).toEqual({ status: "success", message: "Publicaciones habilitadas." });
+    expect(state).toEqual({
+      status: "success",
+      message: "Publicaciones habilitadas.",
+      values: { enabled: "true" },
+    });
     expect(mocks.revalidatePath).toHaveBeenCalledTimes(7);
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/usuarios");

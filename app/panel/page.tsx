@@ -5,6 +5,7 @@ import { ShopCard } from "@/components/shops/shop-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { signCatalogImagePaths } from "@/lib/storage";
 
 export default async function PanelPage() {
   if (!isSupabaseConfigured()) return null;
@@ -17,6 +18,10 @@ export default async function PanelPage() {
     .select("*")
     .eq("owner_id", userId ?? "")
     .order("created_at", { ascending: false });
+  const imageUrls = await signCatalogImagePaths(
+    supabase,
+    (shops ?? []).map((shop) => shop.image_path),
+  );
 
   return (
     <section className="mx-auto max-w-[1200px] px-5 py-10 sm:px-8 sm:py-14">
@@ -25,7 +30,7 @@ export default async function PanelPage() {
         <div className="flex flex-wrap gap-3"><Link className="inline-flex items-center justify-center gap-2 rounded-full border border-line bg-surface px-5 py-3 text-sm font-semibold text-brand transition-colors hover:border-brand" href="/panel/cuenta"><CircleUserRound aria-hidden="true" className="size-4" />Mi cuenta</Link><Link className="inline-flex items-center justify-center gap-2 rounded-full border border-line bg-surface px-5 py-3 text-sm font-semibold text-brand transition-colors hover:border-brand" href="/panel/pedidos"><PackageOpen aria-hidden="true" className="size-4" />Pedidos</Link><Link className="inline-flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-brand-hover" href="/panel/tiendas/nueva"><Plus aria-hidden="true" className="size-4" />Crear tienda</Link></div>
       </div>
 
-      {shops?.length ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{shops.map((shop) => <ShopCard key={shop.id} shop={shop} />)}</div> : (
+      {shops?.length ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{shops.map((shop) => <ShopCard key={shop.id} shop={{ ...shop, imageUrl: shop.image_path ? (imageUrls.get(shop.image_path) ?? null) : null }} />)}</div> : (
         <EmptyState icon={<Store aria-hidden="true" className="size-7" />} title="Tu primera tienda te espera" description="Dale nombre, cuenta su historia y empieza a publicar productos." action={<Link className="font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href="/panel/tiendas/nueva">Crear mi primera tienda</Link>} />
       )}
     </section>
