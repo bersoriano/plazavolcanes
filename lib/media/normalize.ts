@@ -29,6 +29,11 @@ function canNormalize() {
   );
 }
 
+/**
+ * Draws the bitmap and releases it before encoding. A 12-megapixel phone photo
+ * decodes to roughly 48 MB, and holding that alive across the encode is what
+ * put a gallery selection over a mobile browser's memory ceiling.
+ */
 async function encode(bitmap: ImageBitmap) {
   const { width, height } = scaledSize(bitmap.width, bitmap.height);
   const canvas = document.createElement("canvas");
@@ -36,8 +41,16 @@ async function encode(bitmap: ImageBitmap) {
   canvas.height = height;
 
   const context = canvas.getContext("2d");
-  if (!context) return null;
-  context.drawImage(bitmap, 0, 0, width, height);
+  if (!context) {
+    bitmap.close();
+    return null;
+  }
+
+  try {
+    context.drawImage(bitmap, 0, 0, width, height);
+  } finally {
+    bitmap.close();
+  }
 
   return new Promise<Blob | null>((resolve) => {
     canvas.toBlob(resolve, NORMALIZED_TYPE, IMAGE_QUALITY);
@@ -66,16 +79,37 @@ export async function normalizeImage(file: File): Promise<File> {
     const blob = await encode(bitmap);
     if (!blob || blob.size >= file.size) return file;
 
-    return new File([blob], "imagen.webp", { type: NORMALIZED_TYPE });
+    // A browser without WebP encoding silently produces PNG instead, so the
+    // name and type follow what came back rather than what was asked for.
+    const type = blob.type || NORMALIZED_TYPE;
+    const extension = type === "image/png" ? "png" : type === "image/jpeg" ? "jpg" : "webp";
+
+    return new File([blob], `imagen.${extension}`, { type });
   } catch {
     return file;
-  } finally {
-    bitmap.close();
   }
 }
 
-export function normalizeImages(files: readonly File[]): Promise<File[]> {
-  return Promise.all(files.map((file) => normalizeImage(file)));
+/**
+ * One picture at a time, on purpose. Decoding a four-photo gallery selection at
+ * once costs around 200 MB of bitmap, which is enough for a phone browser to
+ * kill the tab before anything is uploaded.
+ */
+export async function normalizeImages(files: readonly File[]): Promise<File[]> {
+  const normalized: File[] = [];
+  for (const file of files) normalized.push(await normalizeImage(file));
+
+  return normalized;
+}
+
+/**
+ * What a request can carry once normalization has run or been skipped. Well
+ * under the Server Action limit, because a platform may cap the body below it.
+ */
+export const MAX_UPLOAD_BYTES = 6 * 1024 * 1024;
+
+export function totalBytes(files: readonly File[]) {
+  return files.reduce((sum, file) => sum + file.size, 0);
 }
 
 /** Puts the normalized files back on the input, so the plain form submit sends them. */

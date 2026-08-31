@@ -2,9 +2,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   MAX_IMAGE_EDGE,
+  MAX_UPLOAD_BYTES,
   normalizeImage,
   normalizeImages,
   scaledSize,
+  totalBytes,
 } from "@/lib/media/normalize";
 
 const originalCreateImageBitmap = globalThis.createImageBitmap;
@@ -58,6 +60,17 @@ describe("scaledSize", () => {
 });
 
 describe("normalizeImage", () => {
+  it("follows the type the encoder actually produced", async () => {
+    stubBitmap(4000, 3000);
+    // Browsers without WebP encoding fall back to PNG rather than failing.
+    stubCanvas(new Blob([new Uint8Array(200)], { type: "image/png" }));
+
+    const result = await normalizeImage(fileOf(5000));
+
+    expect(result.type).toBe("image/png");
+    expect(result.name).toBe("imagen.png");
+  });
+
   it("returns the re-encoded WebP when it is smaller", async () => {
     stubBitmap(4000, 3000);
     stubCanvas(new Blob([new Uint8Array(200)], { type: "image/webp" }));
@@ -137,5 +150,61 @@ describe("normalizeImages", () => {
 
     expect(result).toHaveLength(2);
     expect(result.every((file) => file.type === "image/webp")).toBe(true);
+  });
+
+  it("never holds two decoded pictures at once", async () => {
+    // A phone photo decodes to tens of megabytes. Decoding a whole gallery
+    // selection together is what crashed the tab before anything uploaded.
+    let live = 0;
+    let peak = 0;
+    vi.stubGlobal(
+      "createImageBitmap",
+      vi.fn().mockImplementation(async () => {
+        live += 1;
+        peak = Math.max(peak, live);
+        return {
+          width: 4000,
+          height: 3000,
+          close: () => {
+            live -= 1;
+          },
+        } as unknown as ImageBitmap;
+      }),
+    );
+    stubCanvas(new Blob([new Uint8Array(10)]));
+
+    await normalizeImages([fileOf(5000), fileOf(5000), fileOf(5000), fileOf(5000)]);
+
+    expect(peak).toBe(1);
+    expect(live).toBe(0);
+  });
+
+  it("releases the picture before encoding it", async () => {
+    const close = stubBitmap(4000, 3000);
+    let closedBeforeEncode = false;
+    vi.spyOn(document, "createElement").mockReturnValue({
+      width: 0,
+      height: 0,
+      getContext: () => ({ drawImage: vi.fn() }),
+      toBlob: (callback: (result: Blob | null) => void) => {
+        closedBeforeEncode = close.mock.calls.length > 0;
+        callback(new Blob([new Uint8Array(10)]));
+      },
+    } as unknown as HTMLCanvasElement);
+
+    await normalizeImage(fileOf(5000));
+
+    expect(closedBeforeEncode).toBe(true);
+  });
+});
+
+describe("upload budget", () => {
+  it("adds up what a selection would send", () => {
+    expect(totalBytes([fileOf(1000), fileOf(2000)])).toBe(3000);
+    expect(totalBytes([])).toBe(0);
+  });
+
+  it("keeps the budget under the Server Action limit", () => {
+    expect(MAX_UPLOAD_BYTES).toBeLessThan(12 * 1024 * 1024);
   });
 });
