@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
-import { ImagePlus } from "lucide-react";
+import { ImagePlus, X } from "lucide-react";
+import { unstable_rethrow } from "next/navigation";
 
 import { CategoryFields } from "@/components/products/category-fields";
 import { Button } from "@/components/ui/button";
@@ -41,9 +42,103 @@ type ProductFormProps = {
     imageUrl: string | null;
   };
   images?: ProductImage[];
+  /** Bound to the product on the server; absent while the product does not exist yet. */
+  removeImageAction?: (imageId: number) => Promise<void>;
 };
 
 export type ProductImage = { id: number; url: string | null; position: number };
+
+/**
+ * The gallery a product already holds. Removal asks first and asks inline: the
+ * picture stays on screen next to the question, so a seller confirms the image
+ * they meant rather than the one a modal took away from them.
+ */
+function StoredImages({
+  images,
+  onRemove,
+}: {
+  images: ProductImage[];
+  onRemove?: (imageId: number) => Promise<void>;
+}) {
+  const [confirming, setConfirming] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  function remove(imageId: number) {
+    if (!onRemove) return;
+    setError(null);
+    startTransition(async () => {
+      try {
+        await onRemove(imageId);
+        setConfirming(null);
+      } catch (cause) {
+        // A rejected action may be Next redirecting or a page going missing,
+        // and swallowing that would strand the seller on a dead page.
+        unstable_rethrow(cause);
+        setError("No pudimos eliminar la imagen. Intenta de nuevo.");
+      }
+    });
+  }
+
+  if (!images.length) return null;
+
+  return (
+    <>
+      <ul className="flex flex-wrap gap-3">
+        {images.map((image, index) => (
+          <li className="relative" key={image.id}>
+            <span className="block size-24 overflow-hidden rounded-xl bg-background">
+              {image.url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img alt={`Imagen ${index + 1}`} className="size-full object-cover" src={image.url} />
+              ) : null}
+            </span>
+            {index === 0 ? (
+              <span className="absolute left-1 top-1 rounded-full bg-accent px-2 py-0.5 text-[0.65rem] font-bold text-brand-hover">Portada</span>
+            ) : null}
+            {onRemove ? (
+              confirming === image.id ? (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-xl bg-ink/80 px-1 text-center">
+                  <p className="text-[0.65rem] font-bold text-white">¿Eliminar?</p>
+                  <button
+                    aria-label={`Sí, eliminar imagen ${index + 1}`}
+                    className="rounded-full bg-sale px-2 py-0.5 text-[0.65rem] font-semibold text-white disabled:opacity-60"
+                    disabled={pending}
+                    onClick={() => remove(image.id)}
+                    type="button"
+                  >
+                    {pending ? "Eliminando…" : "Sí"}
+                  </button>
+                  <button
+                    className="text-[0.65rem] font-semibold text-white/80 underline disabled:opacity-60"
+                    disabled={pending}
+                    onClick={() => setConfirming(null)}
+                    type="button"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <button
+                  aria-label={`Eliminar imagen ${index + 1}`}
+                  className="absolute -right-1 -top-1 grid size-6 place-items-center rounded-full border border-line bg-surface text-sale transition-colors hover:bg-sale hover:text-white"
+                  onClick={() => {
+                    setError(null);
+                    setConfirming(image.id);
+                  }}
+                  type="button"
+                >
+                  <X aria-hidden="true" className="size-3.5" />
+                </button>
+              )
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      {error ? <p className="text-sm font-medium text-sale" role="alert">{error}</p> : null}
+    </>
+  );
+}
 
 function ProductActions({ blocked, busy, status }: { blocked: boolean; busy: boolean; status?: "draft" | "published" }) {
   const { pending } = useFormStatus();
@@ -70,7 +165,7 @@ function ProductActions({ blocked, busy, status }: { blocked: boolean; busy: boo
   );
 }
 
-export function ProductForm({ action, categories, product, images = [] }: ProductFormProps) {
+export function ProductForm({ action, categories, product, images = [], removeImageAction }: ProductFormProps) {
   const [state, formAction] = useFormAction(action);
   const [preview, setPreview] = useState(product?.imageUrl ?? null);
   const [condition, setCondition] = useState<ProductCondition>(product?.condition ?? "new");
@@ -158,23 +253,7 @@ export function ProductForm({ action, categories, product, images = [] }: Produc
       <div className="space-y-2">
         <label className="block text-sm font-semibold text-ink" htmlFor="product-images">Imágenes del producto <span className="font-normal text-muted">(opcional)</span></label>
 
-        {images.length ? (
-          <ul className="flex flex-wrap gap-3">
-            {images.map((image, index) => (
-              <li className="relative" key={image.id}>
-                <span className="block size-24 overflow-hidden rounded-xl bg-background">
-                  {image.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img alt={`Imagen ${index + 1}`} className="size-full object-cover" src={image.url} />
-                  ) : null}
-                </span>
-                {index === 0 ? (
-                  <span className="absolute left-1 top-1 rounded-full bg-accent px-2 py-0.5 text-[0.65rem] font-bold text-brand-hover">Portada</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        <StoredImages images={images} onRemove={removeImageAction} />
 
         <label className="flex cursor-pointer items-center gap-4 rounded-2xl border border-dashed border-line bg-background p-4 transition-colors hover:border-brand" htmlFor="product-images">
           <span className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-xl bg-surface text-brand">

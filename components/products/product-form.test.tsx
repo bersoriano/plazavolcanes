@@ -1,5 +1,5 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ProductForm } from "@/components/products/product-form";
 import type { ActionState } from "@/lib/action-state";
@@ -260,5 +260,89 @@ describe("ProductForm gallery", () => {
     expect(screen.getAllByRole("img", { name: /Imagen \d/ })).toHaveLength(2);
     expect(screen.getByText("Portada")).toBeInTheDocument();
     expect(screen.getByText("Quedan 3 espacios de 5.")).toBeInTheDocument();
+  });
+});
+
+describe("ProductForm image removal", () => {
+  const storedImages = [
+    { id: 7, url: "https://example.test/a.jpg", position: 0 },
+    { id: 9, url: "https://example.test/b.jpg", position: 1 },
+  ];
+
+  function renderWithRemoval(removeImageAction: (imageId: number) => Promise<void>) {
+    return render(
+      <ProductForm
+        action={action}
+        categories={[]}
+        images={storedImages}
+        product={{
+          name: "Taza volcánica",
+          description: "Taza hecha a mano con barro de alta temperatura.",
+          price_mxn: 349,
+          status: "published",
+          condition: "new",
+          used_condition: null,
+          category_id: null,
+          units_available: 1,
+          imageUrl: null,
+        }}
+        removeImageAction={removeImageAction}
+      />,
+    );
+  }
+
+  it("offers no removal when the page passes no action", () => {
+    render(<ProductForm action={action} categories={[]} images={storedImages} />);
+
+    expect(screen.queryByRole("button", { name: /Eliminar imagen/ })).not.toBeInTheDocument();
+  });
+
+  it("asks before removing an image", async () => {
+    const removeImageAction = vi.fn(async () => {});
+    renderWithRemoval(removeImageAction);
+
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar imagen 2" }));
+
+    expect(screen.getByText("¿Eliminar?")).toBeInTheDocument();
+    expect(removeImageAction).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("button", { name: "Sí, eliminar imagen 2" }));
+
+    await waitFor(() => expect(removeImageAction).toHaveBeenCalledWith(9));
+  });
+
+  it("lets the seller back out of a removal", () => {
+    const removeImageAction = vi.fn(async () => {});
+    renderWithRemoval(removeImageAction);
+
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar imagen 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+
+    expect(screen.queryByText("¿Eliminar?")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Eliminar imagen 1" })).toBeInTheDocument();
+    expect(removeImageAction).not.toHaveBeenCalled();
+  });
+
+  it("asks about one image at a time", () => {
+    const removeImageAction = vi.fn(async () => {});
+    renderWithRemoval(removeImageAction);
+
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar imagen 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar imagen 2" }));
+
+    expect(screen.getAllByText("¿Eliminar?")).toHaveLength(1);
+    expect(screen.getByRole("button", { name: "Sí, eliminar imagen 2" })).toBeInTheDocument();
+  });
+
+  it("says what went wrong when a removal fails", async () => {
+    const removeImageAction = vi.fn(async () => {
+      throw new Error("network");
+    });
+    renderWithRemoval(removeImageAction);
+
+    fireEvent.click(screen.getByRole("button", { name: "Eliminar imagen 1" }));
+    fireEvent.click(screen.getByRole("button", { name: "Sí, eliminar imagen 1" }));
+
+    expect(await screen.findByText("No pudimos eliminar la imagen. Intenta de nuevo.")).toBeInTheDocument();
   });
 });
