@@ -11,6 +11,7 @@ export type AdminMarketplaceRpcRow = {
   email: string | null;
   user_created_at: string;
   display_name: string | null;
+  shop_limit: number;
   shop_id: number | null;
   shop_name: string | null;
   shop_slug: string | null;
@@ -66,6 +67,7 @@ export type AdminMarketplaceUser = {
   email: string | null;
   displayName: string | null;
   createdAt: string;
+  shopLimit: number;
   shops: AdminMarketplaceShop[];
 };
 
@@ -85,6 +87,7 @@ export function mapAdminMarketplaceUsers(
         email: row.email,
         displayName: row.display_name,
         createdAt: row.user_created_at,
+        shopLimit: row.shop_limit,
         shops: [],
       };
       usersById.set(row.user_id, user);

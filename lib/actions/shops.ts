@@ -116,6 +116,16 @@ export async function createShop(
 
   if (error || !data) {
     if (imagePath) await supabase.storage.from("catalogo").remove([imagePath]);
+    if (
+      error?.code === "P0001" &&
+      error.message === "Alcanzaste el límite de tiendas."
+    ) {
+      return {
+        status: "error",
+        message:
+          "Alcanzaste el límite de tiendas. Contacta a administración si necesitas otra.",
+      };
+    }
     return { status: "error", message: "No pudimos crear la tienda." };
   }
 
