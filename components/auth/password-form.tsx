@@ -82,7 +82,7 @@ export function PasswordForm({ mode }: { mode: PasswordFormMode }) {
       {requesting ? (
         <p className="text-center text-sm text-muted">
           <Link
-            className="font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
+            className="inline-flex min-h-11 items-center font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
             href="/ingresar"
           >
             Volver a ingresar

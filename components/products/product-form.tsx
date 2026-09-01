@@ -244,7 +244,7 @@ export function ProductForm({ action, categories, product, images = [], removeIm
 
       <fieldset className="space-y-3">
         <legend className="text-sm font-semibold text-ink">Condición</legend>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {(["new", "used"] as const).map((value) => (
             <label className={`cursor-pointer rounded-2xl border px-4 py-3 text-center text-sm font-semibold transition-colors ${condition === value ? "border-brand bg-accent/45 text-brand-hover" : "border-line bg-surface text-muted hover:border-brand"}`} key={value}>
               <input checked={condition === value} className="sr-only" name="condition" onChange={() => setCondition(value)} type="radio" value={value} />

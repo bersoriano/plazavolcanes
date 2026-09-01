@@ -108,18 +108,18 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
         </div>
         <nav aria-label="Vistas del catálogo" className="flex flex-wrap gap-2">
           {hasFilters ? (
-            <Link className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href={resetHref}>
+            <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href={resetHref}>
               Limpiar filtros
             </Link>
           ) : (
-            <span className="rounded-full bg-accent px-4 py-2 text-sm font-semibold text-brand-hover">
+            <span className="inline-flex min-h-11 items-center rounded-full bg-accent px-4 py-2 text-sm font-semibold text-brand-hover">
               Todos
             </span>
           )}
-          <span className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-muted">
+          <span className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-muted">
             Más recientes
           </span>
-          <Link className="rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-muted" href="#tiendas">
+          <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-muted" href="#tiendas">
             Tiendas
           </Link>
         </nav>
@@ -140,7 +140,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
         ) : (
           <EmptyState
             action={
-              <Link className="inline-flex items-center gap-2 font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href={hasFilters ? resetHref : "/registro"}>
+              <Link className="inline-flex min-h-11 items-center gap-2 font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href={hasFilters ? resetHref : "/registro"}>
                 {hasFilters ? "Limpiar filtros" : "Crear una tienda"}
                 <ArrowRight aria-hidden="true" className="size-4" />
               </Link>
@@ -227,7 +227,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
             </div>
           ) : (
             <div className="relative mx-auto max-w-4xl text-center">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-brand-hover">
+              <div className="mb-5 inline-flex items-center gap-2 inline-flex min-h-11 items-center rounded-full bg-accent px-4 py-2 text-sm font-semibold text-brand-hover">
                 {area ? <MapPin aria-hidden="true" className="size-4" /> : <Sparkles aria-hidden="true" className="size-4" />}
                 {area
                   ? `Tiendas de ${area.label}`

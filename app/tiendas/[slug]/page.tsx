@@ -39,13 +39,13 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
 
   return (
     <section className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
-      <Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand" href="/">
+      <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href="/">
         <ArrowLeft aria-hidden="true" className="size-4" />
         Volver a la plaza
       </Link>
 
       <div className="mt-7 overflow-hidden rounded-[2rem] border border-line bg-surface">
-        <div className="relative aspect-[4/1] min-h-40 bg-[#eee8e1]">
+        <div className="relative aspect-[16/9] bg-[#eee8e1] sm:aspect-[4/1] sm:min-h-40">
           {shop.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img alt="" className="size-full object-cover" src={shop.imageUrl} />

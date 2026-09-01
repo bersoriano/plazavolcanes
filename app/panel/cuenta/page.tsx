@@ -25,7 +25,7 @@ export default async function AccountPage() {
 
   return (
     <section className="mx-auto max-w-2xl px-5 py-10 sm:px-8 sm:py-14">
-      <Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand" href="/panel">
+      <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href="/panel">
         <ArrowLeft aria-hidden="true" className="size-4" />
         Mi panel
       </Link>

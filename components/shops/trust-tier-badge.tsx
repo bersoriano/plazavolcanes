@@ -19,7 +19,7 @@ export function TrustTierBadge({
         <button
           aria-describedby="trust-tier-tooltip"
           aria-label="Más información sobre el nivel de confianza"
-          className="grid size-5 place-items-center rounded-full text-muted hover:text-brand"
+          className="tap-halo grid size-5 place-items-center rounded-full text-muted hover:text-brand"
           type="button"
         >
           <CircleHelp aria-hidden="true" className="size-3.5" />
