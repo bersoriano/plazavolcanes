@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process";
+
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
 // Like the other end-to-end specs, this one registers a real account, so it
@@ -33,6 +35,21 @@ const signedInRoutes = [
   "/panel/tiendas/nueva",
   "/terminos",
 ] as const;
+
+/**
+ * A long name, because `ProductRow` truncates it and `truncate` sets
+ * `white-space: nowrap`, so the name reports its whole width as the row's
+ * minimum. That minimum is what made the shop dashboard scroll sideways once a
+ * grid column had no floor under it.
+ *
+ * The seeded row here has never reproduced that overflow on the local stack,
+ * only against production data, so treat this route as tap-target coverage and
+ * not as the guard for that bug.
+ */
+const longProductName = `Reloj Citizen Eco Drive Sapphire ${stamp}`;
+
+const shopName = `Tienda movil ${stamp}`;
+const shopSlug = `tienda-movil-${stamp}`;
 
 const signedOutRoutes = ["/", "/ingresar", "/registro", "/vender"] as const;
 
@@ -108,6 +125,24 @@ async function expectNoDocumentOverflow(page: Page) {
     .toBe(width);
 }
 
+/** A shop may only take listings once administration has approved it. */
+function approveShopForPublication(slug: string) {
+  execFileSync(
+    "npx",
+    [
+      "supabase",
+      "db",
+      "query",
+      "--local",
+      `do $$ begin
+        update public.shops set is_publishing_approved = true where slug = '${slug}';
+        if not found then raise exception 'Could not approve local e2e shop.'; end if;
+      end $$;`,
+    ],
+    { stdio: "pipe" },
+  );
+}
+
 async function register(page: Page) {
   await page.goto("/registro");
   await page.getByLabel("Tu nombre").fill(shopper.name);
@@ -122,6 +157,8 @@ test.describe("mobile polish", () => {
   test.describe.configure({ mode: "serial" });
 
   let signedInState: Awaited<ReturnType<BrowserContext["storageState"]>>;
+  /** The shop dashboard, which only exists once a shop does. */
+  let shopRoute: string;
 
   test.beforeAll(async ({ browser }) => {
     if (!isLocal) {
@@ -136,6 +173,30 @@ test.describe("mobile polish", () => {
 
     try {
       await register(page);
+
+      await page.goto("/panel/tiendas/nueva");
+      await page.getByLabel("Nombre de la tienda").fill(shopName);
+      await page
+        .getByLabel("Descripción")
+        .fill("Tienda de prueba para medir la portada del panel en un telefono.");
+      await page.getByLabel("Estado principal").selectOption({ index: 1 });
+      await page.getByRole("button", { name: "Crear tienda" }).click();
+      await expect(page).toHaveURL(/\/panel\/tiendas\/\d+/);
+      shopRoute = new URL(page.url()).pathname;
+      approveShopForPublication(shopSlug);
+
+      // A listing, so the dashboard renders the row the overflow came from.
+      await page.getByRole("link", { name: /agregar producto/i }).first().click();
+      await expect(page).toHaveURL(/\/productos\/nuevo/);
+      await page.getByLabel("Categoría", { exact: true }).selectOption({ index: 1 });
+      await page.getByLabel("Subcategoría").selectOption({ index: 1 });
+      await page.getByLabel("Nombre del producto").fill(longProductName);
+      await page.getByLabel("Descripción").fill("Pieza de prueba para la portada del panel.");
+      await page.getByLabel("Precio en MXN").fill("1899");
+      await page.getByLabel("Unidades disponibles").fill("2");
+      await page.getByRole("button", { name: "Guardar producto" }).click();
+      await expect(page).toHaveURL(/\/panel\/productos\/\d+\/editar/);
+
       signedInState = await context.storageState();
     } finally {
       await context.close();
@@ -172,7 +233,7 @@ test.describe("mobile polish", () => {
       const page = await context.newPage();
 
       try {
-        for (const route of signedInRoutes) {
+        for (const route of [...signedInRoutes, shopRoute]) {
           await page.goto(route);
           await expectNoDocumentOverflow(page);
           expect(await undersizedTapTargets(page), `${route} at ${width}px`).toEqual([]);
