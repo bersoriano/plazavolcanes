@@ -33,7 +33,7 @@ export function CategorySuggestionForm({ action, categories }: CategorySuggestio
     <section className="mt-6 border-t border-line pt-6">
       <button
         aria-expanded={isExpanded}
-        className="text-sm font-semibold text-brand hover:text-brand-hover"
+        className="inline-flex min-h-11 items-center text-sm font-semibold text-brand hover:text-brand-hover"
         onClick={() => setIsExpanded((expanded) => !expanded)}
         type="button"
       >

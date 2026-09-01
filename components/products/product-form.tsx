@@ -95,7 +95,7 @@ function StoredImages({
               ) : null}
             </span>
             {index === 0 ? (
-              <span className="absolute left-1 top-1 rounded-full bg-accent px-2 py-0.5 text-[0.65rem] font-bold text-brand-hover">Portada</span>
+              <span className="absolute left-1 top-1 rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-brand-hover">Portada</span>
             ) : null}
             {onRemove ? (
               confirming === image.id ? (
@@ -122,7 +122,7 @@ function StoredImages({
               ) : (
                 <button
                   aria-label={`Eliminar imagen ${index + 1}`}
-                  className="absolute -right-1 -top-1 grid size-6 place-items-center rounded-full border border-line bg-surface text-sale transition-colors hover:bg-sale hover:text-white"
+                  className="tap-halo absolute -right-1 -top-1 grid size-6 place-items-center rounded-full border border-line bg-surface text-sale transition-colors hover:bg-sale hover:text-white"
                   onClick={() => {
                     setError(null);
                     setConfirming(image.id);
