@@ -2,6 +2,7 @@
 
 import { isMediaContentType, productImageKey, shopImageKey } from "@/lib/media/keys";
 import { countProductImages } from "@/lib/media/product-images";
+import { sweepOrphanedImages } from "@/lib/media/orphans";
 import { createUploadTicket } from "@/lib/media/store";
 import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -84,4 +85,16 @@ export async function requestShopImageUpload(contentType: string): Promise<Ticke
   );
 
   return ticket ? { tickets: [ticket], error: null } : denied;
+}
+
+/**
+ * Clears away the caller's own abandoned uploads. Safe to call whenever a
+ * seller opens a form: it only ever touches their folder, only objects older
+ * than the grace period, and only ones nothing points at.
+ */
+export async function sweepMyOrphanedImages() {
+  const context = await authenticated();
+  if (!context) return 0;
+
+  return sweepOrphanedImages(context.supabase, context.userId);
 }

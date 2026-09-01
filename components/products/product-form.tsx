@@ -8,7 +8,7 @@ import { unstable_rethrow } from "next/navigation";
 import { CategoryFields } from "@/components/products/category-fields";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import { requestProductImageUploads } from "@/lib/actions/media";
+import { requestProductImageUploads, sweepMyOrphanedImages } from "@/lib/actions/media";
 import { inspectImage } from "@/lib/media/signature";
 import { uploadWithTickets } from "@/lib/media/upload-client";
 import { rejectionMessage } from "@/lib/media/validation";
@@ -189,6 +189,13 @@ export function ProductForm({
   useEffect(() => {
     if (state.status === "success") clearDraft();
   }, [clearDraft, state.status]);
+
+  // Pictures reach storage the moment they are chosen, so a form somebody
+  // walked away from left objects behind. Opening one is a good moment to
+  // clear away the last abandoned attempt; failing to is not worth reporting.
+  useEffect(() => {
+    void sweepMyOrphanedImages().catch(() => {});
+  }, []);
 
   /**
    * The pictures go straight to storage from here, and the form submits only
