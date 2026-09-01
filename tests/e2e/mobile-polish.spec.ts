@@ -157,8 +157,10 @@ test.describe("mobile polish", () => {
   test.describe.configure({ mode: "serial" });
 
   let signedInState: Awaited<ReturnType<BrowserContext["storageState"]>>;
-  /** The shop dashboard, which only exists once a shop does. */
+  /** Routes that only exist once a shop and a listing do. */
   let shopRoute: string;
+  let newProductRoute: string;
+  let editProductRoute: string;
 
   test.beforeAll(async ({ browser }) => {
     if (!isLocal) {
@@ -194,8 +196,10 @@ test.describe("mobile polish", () => {
       await page.getByLabel("Descripción").fill("Pieza de prueba para la portada del panel.");
       await page.getByLabel("Precio en MXN").fill("1899");
       await page.getByLabel("Unidades disponibles").fill("2");
+      newProductRoute = new URL(page.url()).pathname;
       await page.getByRole("button", { name: "Guardar producto" }).click();
       await expect(page).toHaveURL(/\/panel\/productos\/\d+\/editar/);
+      editProductRoute = new URL(page.url()).pathname;
 
       signedInState = await context.storageState();
     } finally {
@@ -233,7 +237,7 @@ test.describe("mobile polish", () => {
       const page = await context.newPage();
 
       try {
-        for (const route of [...signedInRoutes, shopRoute]) {
+        for (const route of [...signedInRoutes, shopRoute, newProductRoute, editProductRoute]) {
           await page.goto(route);
           await expectNoDocumentOverflow(page);
           expect(await undersizedTapTargets(page), `${route} at ${width}px`).toEqual([]);

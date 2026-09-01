@@ -68,7 +68,7 @@ function BehaviorMarker({ name, marker }: { name: keyof BuyerTrustOutput["marker
         <button
           aria-describedby={tooltipId}
           aria-label={`Más información sobre ${markerLabels[name].toLowerCase()}`}
-          className="grid size-7 shrink-0 place-items-center rounded-full text-muted hover:text-brand"
+          className="tap-halo grid size-7 shrink-0 place-items-center rounded-full text-muted hover:text-brand"
           type="button"
         >
           <CircleHelp aria-hidden="true" className="size-4" />
@@ -111,7 +111,7 @@ export function BuyerTrustCard({ trust }: { trust: BuyerTrustOutput }) {
       </div>
 
       {trust.reasons.length ? <div className="mt-6"><h3 className="flex items-center gap-2 font-semibold"><CheckCircle2 aria-hidden="true" className="size-4 text-brand" />Por qué tiene este nivel</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-muted">{trust.reasons.map((reason) => <li key={reason}>• {reason}</li>)}</ul></div> : null}
-      {trust.next_tier_requirements.length ? <details className="mt-6 rounded-2xl bg-background p-4"><summary className="flex cursor-pointer items-center gap-2 font-semibold"><Target aria-hidden="true" className="size-4 text-brand" />Cómo llegar al siguiente nivel</summary><ul className="mt-3 space-y-2 text-sm leading-6 text-muted">{trust.next_tier_requirements.map((requirement) => <li key={requirement}>• {requirement}</li>)}</ul></details> : null}
+      {trust.next_tier_requirements.length ? <details className="mt-6 rounded-2xl bg-background p-4"><summary className="flex min-h-11 cursor-pointer items-center gap-2 font-semibold"><Target aria-hidden="true" className="size-4 text-brand" />Cómo llegar al siguiente nivel</summary><ul className="mt-3 space-y-2 text-sm leading-6 text-muted">{trust.next_tier_requirements.map((requirement) => <li key={requirement}>• {requirement}</li>)}</ul></details> : null}
     </section>
   );
 }

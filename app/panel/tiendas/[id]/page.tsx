@@ -91,7 +91,7 @@ export default async function ShopManagePage({ params }: { params: Promise<{ id:
               />
             </div>
           </section>
-          <details className="mt-8 border-t border-line pt-6"><summary className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-sale"><Trash2 aria-hidden="true" className="size-4" />Eliminar tienda</summary><div className="mt-4 rounded-2xl bg-sale/10 p-4"><p className="text-sm leading-6 text-ink">Se eliminarán también todos sus productos e imágenes. Esta acción no se puede deshacer.</p><form action={deleteAction} className="mt-3"><button className="rounded-full bg-sale px-4 py-2 text-sm font-semibold text-white" type="submit">Confirmar eliminación</button></form></div></details>
+          <details className="mt-8 border-t border-line pt-6"><summary className="inline-flex min-h-11 cursor-pointer items-center gap-2 text-sm font-semibold text-sale"><Trash2 aria-hidden="true" className="size-4" />Eliminar tienda</summary><div className="mt-4 rounded-2xl bg-sale/10 p-4"><p className="text-sm leading-6 text-ink">Se eliminarán también todos sus productos e imágenes. Esta acción no se puede deshacer.</p><form action={deleteAction} className="mt-3"><button className="inline-flex min-h-11 items-center rounded-full bg-sale px-4 py-2 text-sm font-semibold text-white" type="submit">Confirmar eliminación</button></form></div></details>
         </details>
       </div>
     </section>

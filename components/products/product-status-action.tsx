@@ -17,7 +17,7 @@ export function ProductStatusAction({
 
   return (
     <form action={formAction}>
-      <button className="text-xs font-semibold text-brand" disabled={pending} type="submit">
+      <button className="inline-flex min-h-11 items-center text-xs font-semibold text-brand" disabled={pending} type="submit">
         {label}
       </button>
       {state.message ? (
