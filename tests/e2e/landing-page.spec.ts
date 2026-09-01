@@ -245,8 +245,20 @@ test.describe("landing responsive and accessibility gate", () => {
           }),
         ).toBeVisible();
         await expect(page.getByRole("link", { name: "Plaza Volcanes, inicio" })).toBeVisible();
-        await expect(page.getByRole("link", { name: "Mi panel" })).toBeVisible();
         await expect(page.getByRole("button", { name: "Salir" })).toBeVisible();
+
+        // Below the medium breakpoint the quick access bar carries the
+        // destinations; the header only shows them once there is room to
+        // spell them out.
+        const quickAccess = page.getByRole("navigation", { name: "Navegación rápida" });
+        if (width < 768) {
+          await expect(quickAccess.getByRole("link", { name: /Panel/ })).toBeVisible();
+          await expect(quickAccess.getByRole("link", { name: /Compras/ })).toBeVisible();
+          await expect(page.getByRole("link", { name: "Mi panel" })).toBeHidden();
+        } else {
+          await expect(page.getByRole("link", { name: "Mi panel" })).toBeVisible();
+          await expect(quickAccess).toBeHidden();
+        }
         await expectNoDocumentOverflow(page);
 
         const productCard = page.getByRole("link", { name: new RegExp(productName) });
@@ -364,8 +376,8 @@ test.describe("landing responsive and accessibility gate", () => {
 
       const focusOrder = [
         page.getByRole("link", { name: "Plaza Volcanes, inicio" }),
-        page.getByRole("link", { name: "Mi panel" }),
-        page.getByRole("link", { name: "Mensajes" }),
+        // "Mi panel" and "Mensajes" are display:none at this width now: the
+        // quick access bar holds them, so they leave the tab sequence here.
         page.getByRole("button", { name: "Salir" }),
         page.getByRole("link", { name: "Explorar productos" }),
         page.getByRole("link", { name: "Abrir mi tienda" }).first(),
