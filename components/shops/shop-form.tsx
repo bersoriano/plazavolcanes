@@ -7,8 +7,9 @@ import { ImagePlus } from "lucide-react";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
 import { Button } from "@/components/ui/button";
-import { normalizeImages, replaceInputFiles } from "@/lib/media/normalize";
+import { requestShopImageUpload } from "@/lib/actions/media";
 import { inspectImage } from "@/lib/media/signature";
+import { uploadWithTickets } from "@/lib/media/upload-client";
 import { rejectionMessage } from "@/lib/media/validation";
 import { Field } from "@/components/ui/field";
 import {
@@ -40,7 +41,7 @@ function SaveButton({ blocked, busy, editing }: { blocked: boolean; busy: boolea
   const { pending } = useFormStatus();
   return (
     <Button disabled={pending || busy || blocked} type="submit">
-      {pending ? "Guardando…" : busy ? "Preparando imagen…" : editing ? "Guardar cambios" : "Crear tienda"}
+      {pending ? "Guardando…" : busy ? "Subiendo imagen…" : editing ? "Guardar cambios" : "Crear tienda"}
     </Button>
   );
 }
@@ -48,29 +49,46 @@ function SaveButton({ blocked, busy, editing }: { blocked: boolean; busy: boolea
 export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
   const [state, formAction] = useFormAction(action);
   const [preview, setPreview] = useState(shop?.imageUrl ?? null);
-  const [normalizing, setNormalizing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [imageKey, setImageKey] = useState<string | null>(null);
   const [imageError, setImageError] = useState<string | null>(null);
 
+  /** The picture goes straight to storage; the form submits only its key. */
   async function handleImage(input: HTMLInputElement) {
     const chosen = input.files?.[0];
     if (!chosen) return;
 
-    setNormalizing(true);
+    setUploading(true);
+    setImageError(null);
     try {
       const verdict = await inspectImage(chosen);
       if (!verdict.supported) {
         setImageError(rejectionMessage(verdict.reason));
         return;
       }
-      setImageError(null);
 
-      const [normalized] = await normalizeImages([chosen]);
-      replaceInputFiles(input, [normalized]);
-      setPreview(URL.createObjectURL(normalized));
+      const { tickets, error } = await requestShopImageUpload(verdict.type);
+      if (!tickets) {
+        setImageError(error);
+        return;
+      }
+
+      const sent = await uploadWithTickets(tickets, [chosen]);
+      if (sent.error || !sent.keys[0]) {
+        setImageError(sent.error ?? "No pudimos subir la imagen.");
+        return;
+      }
+
+      setImageKey(sent.keys[0]);
+      setPreview(URL.createObjectURL(chosen));
+      input.value = "";
+    } catch {
+      setImageError("No pudimos subir la imagen. Intenta de nuevo.");
     } finally {
-      setNormalizing(false);
+      setUploading(false);
     }
   }
+
   const [primaryArea, setPrimaryArea] = useState(shop?.administrativeAreaCodes?.[0] ?? "");
   const [secondaryArea, setSecondaryArea] = useState(shop?.administrativeAreaCodes?.[1] ?? "");
   const [offersPickup, setOffersPickup] = useState(Boolean(pickupPoint));
@@ -318,12 +336,13 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
           }}
           type="file"
         />
+        {imageKey ? <input name="image_key" type="hidden" value={imageKey} /> : null}
         {imageError ? <p className="text-sm font-medium text-sale" role="alert">{imageError}</p> : null}
         {state.errors?.image?.[0] ? <p className="text-sm font-medium text-sale">{state.errors.image[0]}</p> : null}
       </div>
 
       {state.message ? <p className={`rounded-2xl px-4 py-3 text-sm font-medium ${state.status === "success" ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"}`} role="status">{state.message}</p> : null}
-      <div className="flex justify-end"><SaveButton blocked={Boolean(imageError)} busy={normalizing} editing={Boolean(shop)} /></div>
+      <div className="flex justify-end"><SaveButton blocked={Boolean(imageError)} busy={uploading} editing={Boolean(shop)} /></div>
     </form>
   );
 }

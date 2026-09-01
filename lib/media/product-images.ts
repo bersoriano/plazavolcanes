@@ -1,8 +1,8 @@
 import "server-only";
 
-import { productImageKey } from "@/lib/media/keys";
+import { keyExtension, keyOwner, mediaExtension } from "@/lib/media/keys";
 import { inspectImage } from "@/lib/media/signature";
-import { deleteObjects, putObject } from "@/lib/media/store";
+import { deleteObjects, readObjectHeader } from "@/lib/media/store";
 import { MAX_PRODUCT_IMAGES, rejectionMessage } from "@/lib/media/validation";
 import type { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -37,60 +37,54 @@ export async function countProductImages(client: MediaClient, productId: number)
 }
 
 /**
- * Uploads a gallery selection and records it. A failure part-way through undoes
- * the whole batch — both the objects and the rows already written — so a
- * half-stored gallery never outlives the request that made it.
+ * Records objects the browser uploaded straight to storage.
+ *
+ * The bytes never passed through here, so each one is checked before it is
+ * recorded: the key has to belong to the caller, the object has to exist, and
+ * its leading bytes have to be the format its name claims. Anything that fails
+ * is deleted rather than left in a public bucket.
  */
-export async function storeProductImages(
+export async function attachProductImages(
   client: MediaClient,
   userId: string,
   productId: number,
-  images: File[],
+  keys: readonly string[],
 ) {
-  if (!images.length) return { error: null };
+  if (!keys.length) return { error: null };
+
+  const unique = [...new Set(keys)];
+  if (unique.some((key) => keyOwner(key) !== userId)) {
+    return { error: "No pudimos guardar las imágenes." as const };
+  }
 
   const positions = await freePositions(client, productId);
   if (!positions) return { error: "No pudimos guardar las imágenes." as const };
-  if (images.length > positions.length) {
+  if (unique.length > positions.length) {
     return { error: `Puedes subir hasta ${MAX_PRODUCT_IMAGES} imágenes.` as const };
   }
 
-  // Every file is inspected before anything is written, so a batch carrying one
-  // file that is not really an image fails without leaving objects behind.
-  const verdicts = await Promise.all(images.map((image) => inspectImage(image)));
-  const rejected = verdicts.find((verdict) => !verdict.supported);
-  if (rejected && !rejected.supported) {
-    return { error: rejectionMessage(rejected.reason) };
+  const headers = await Promise.all(unique.map((key) => readObjectHeader(key)));
+  for (const [index, header] of headers.entries()) {
+    const verdict = header ? await inspectImage(header) : null;
+    const extension = keyExtension(unique[index]!);
+    const honest =
+      verdict?.supported === true && mediaExtension(verdict.type) === extension;
+
+    if (!honest) {
+      await deleteObjects(client, unique);
+      return { error: rejectionMessage(verdict?.supported === false ? verdict.reason : "unsupported") };
+    }
   }
 
-  const keys: string[] = [];
-  const rowIds: number[] = [];
-
-  async function rollback() {
-    if (rowIds.length) await client.from("product_images").delete().in("id", rowIds);
-    await deleteObjects(client, keys);
-  }
-
-  for (const [index, image] of images.entries()) {
-    const verdict = verdicts[index];
-    const contentType = verdict.supported ? verdict.type : "image/jpeg";
-    const key = productImageKey(userId, productId, contentType);
-    if (!(await putObject(client, key, image, contentType))) {
-      await rollback();
-      return { error: "No pudimos subir las imágenes." as const };
-    }
-    keys.push(key);
-
-    const { data, error } = await client
-      .from("product_images")
-      .insert({ product_id: productId, storage_path: key, position: positions[index] })
-      .select("id")
-      .single();
-    if (error || !data) {
-      await rollback();
-      return { error: "No pudimos guardar las imágenes." as const };
-    }
-    rowIds.push(data.id);
+  const rows = unique.map((key, index) => ({
+    product_id: productId,
+    storage_path: key,
+    position: positions[index]!,
+  }));
+  const { error } = await client.from("product_images").insert(rows);
+  if (error) {
+    await deleteObjects(client, unique);
+    return { error: "No pudimos guardar las imágenes." as const };
   }
 
   return { error: null };

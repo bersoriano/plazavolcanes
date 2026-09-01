@@ -1,8 +1,8 @@
 import { isMediaContentType } from "@/lib/media/keys";
 import type { ImageVerdict } from "@/lib/media/signature";
 
-const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
-const MAX_PRODUCT_IMAGE_SIZE = 2 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+const MAX_PRODUCT_IMAGE_SIZE = 10 * 1024 * 1024;
 
 export const MAX_PRODUCT_IMAGES = 5;
 
@@ -26,16 +26,15 @@ export function validateImage(file: File) {
   }
 
   if (file.size > MAX_IMAGE_SIZE) {
-    return "La imagen debe pesar 5 MB o menos.";
+    return "La imagen debe pesar 10 MB o menos.";
   }
 
   return null;
 }
 
 /**
- * Product galleries are capped tighter than the bucket: five images, 2 MB each.
- * The browser re-encodes uploads to well under that, so this is the envelope a
- * client that skipped the form has to fit in, not a limit sellers meet.
+ * Product galleries are capped at five images. The size is what a phone photo
+ * actually weighs, since nothing re-encodes it before it reaches storage.
  * `alreadyStored` lets an edit count what the product already holds.
  */
 export function validateProductImages(files: File[], alreadyStored = 0) {
@@ -45,7 +44,7 @@ export function validateProductImages(files: File[], alreadyStored = 0) {
 
   for (const file of files) {
     if (!isMediaContentType(file.type)) return UNSUPPORTED_IMAGE_MESSAGE;
-    if (file.size > MAX_PRODUCT_IMAGE_SIZE) return "Cada imagen debe pesar 2 MB o menos.";
+    if (file.size > MAX_PRODUCT_IMAGE_SIZE) return "Cada imagen debe pesar 10 MB o menos.";
   }
 
   return null;

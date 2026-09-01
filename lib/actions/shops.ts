@@ -17,11 +17,11 @@ import { formatDate } from "@/lib/format";
 import { uniqueShopSlug } from "@/lib/slug";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { shopImageKey } from "@/lib/media/keys";
+import { keyOwner } from "@/lib/media/keys";
 import { inspectImage } from "@/lib/media/signature";
 import { shopImageKeys } from "@/lib/media/product-images";
-import { deleteObjects, putObject } from "@/lib/media/store";
-import { rejectionMessage, validateImage } from "@/lib/media/validation";
+import { deleteObjects, readObjectHeader } from "@/lib/media/store";
+import { rejectionMessage } from "@/lib/media/validation";
 import { deliveryPolicySchema, shopSchema } from "@/lib/validation/shop";
 
 const authError: ActionState = {
@@ -45,9 +45,25 @@ function deliveryPolicyFrom(formData: FormData) {
   return deliveryPolicySchema.safeParse({ delivery_policy: formData.get("delivery_policy") });
 }
 
-function imageFrom(formData: FormData) {
-  const value = formData.get("image");
-  return value instanceof File && value.size > 0 ? value : null;
+/** The browser uploads the picture itself and submits only where it landed. */
+function imageKeyFrom(formData: FormData) {
+  const value = formData.get("image_key");
+  return typeof value === "string" && value.length > 0 ? value : null;
+}
+
+/**
+ * The bytes never reached this process, so a recorded key has to be checked:
+ * it must belong to the caller and the object must really be the format its
+ * name claims. Anything else is deleted rather than left in a public bucket.
+ */
+async function verifyImageKey(userId: string, key: string) {
+  if (keyOwner(key) !== userId) return false;
+
+  const header = await readObjectHeader(key);
+  if (!header) return false;
+  const verdict = await inspectImage(header);
+
+  return verdict.supported;
 }
 
 async function getAuthenticatedContext() {
@@ -66,7 +82,7 @@ export async function createShop(
 ): Promise<ActionState> {
   const parsed = shopSchema.safeParse(shopInputFrom(formData));
   const deliveryPolicy = deliveryPolicyFrom(formData);
-  const image = imageFrom(formData);
+  const imageKey = imageKeyFrom(formData);
 
   if (!parsed.success || !deliveryPolicy.success) {
     return {
@@ -77,13 +93,6 @@ export async function createShop(
         ...(deliveryPolicy.success ? {} : deliveryPolicy.error.flatten().fieldErrors),
       },
     };
-  }
-
-  if (image) {
-    const imageError = validateImage(image);
-    if (imageError) {
-      return { status: "error", message: imageError, errors: { image: [imageError] } };
-    }
   }
 
   // The shop row must exist before a pickup point can reference it, so its
@@ -109,18 +118,12 @@ export async function createShop(
   });
   let imagePath: string | null = null;
 
-  if (image) {
-    // The declared type is only a claim; the stored type comes from the bytes.
-    const verdict = await inspectImage(image);
-    if (!verdict.supported) {
-      const message = rejectionMessage(verdict.reason);
+  if (imageKey) {
+    if (!(await verifyImageKey(userId, imageKey))) {
+      const message = rejectionMessage("unsupported");
       return { status: "error", message, errors: { image: [message] } };
     }
-
-    imagePath = shopImageKey(userId, verdict.type);
-    if (!(await putObject(supabase, imagePath, image, verdict.type))) {
-      return { status: "error", message: "No pudimos subir la imagen." };
-    }
+    imagePath = imageKey;
   }
 
   const { data, error } = await supabase
@@ -174,7 +177,7 @@ export async function updateShop(
   formData: FormData,
 ): Promise<ActionState> {
   const parsed = shopSchema.safeParse(shopInputFrom(formData));
-  const image = imageFrom(formData);
+  const imageKey = imageKeyFrom(formData);
 
   if (!parsed.success) {
     return {
@@ -182,13 +185,6 @@ export async function updateShop(
       message: "Revisa los campos marcados.",
       errors: parsed.error.flatten().fieldErrors,
     };
-  }
-
-  if (image) {
-    const imageError = validateImage(image);
-    if (imageError) {
-      return { status: "error", message: imageError, errors: { image: [imageError] } };
-    }
   }
 
   const context = await getAuthenticatedContext();
@@ -209,17 +205,12 @@ export async function updateShop(
   if (pickupError) return pickupError;
 
   let nextImagePath = existing.image_path;
-  if (image) {
-    const verdict = await inspectImage(image);
-    if (!verdict.supported) {
-      const message = rejectionMessage(verdict.reason);
+  if (imageKey) {
+    if (!(await verifyImageKey(userId, imageKey))) {
+      const message = rejectionMessage("unsupported");
       return { status: "error", message, errors: { image: [message] } };
     }
-
-    nextImagePath = shopImageKey(userId, verdict.type);
-    if (!(await putObject(supabase, nextImagePath, image, verdict.type))) {
-      return { status: "error", message: "No pudimos subir la imagen." };
-    }
+    nextImagePath = imageKey;
   }
 
   const { error } = await supabase
@@ -233,11 +224,11 @@ export async function updateShop(
     .eq("owner_id", userId);
 
   if (error) {
-    if (image && nextImagePath) await deleteObjects(supabase, [nextImagePath]);
+    if (imageKey && nextImagePath) await deleteObjects(supabase, [nextImagePath]);
     return { status: "error", message: "No pudimos guardar los cambios." };
   }
 
-  if (image && existing.image_path && nextImagePath !== existing.image_path) {
+  if (imageKey && existing.image_path && nextImagePath !== existing.image_path) {
     await deleteObjects(supabase, [existing.image_path]);
   }
 
