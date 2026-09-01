@@ -17,7 +17,7 @@ import { getShopTrustDashboard } from "@/lib/queries/trust.server";
 import { PICKUP_POINT_READ_ERROR } from "@/lib/queries/checkout";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { mediaUrls } from "@/lib/media/url";
+import { MEDIA_WIDTHS, mediaUrls } from "@/lib/media/url";
 
 export default async function ShopManagePage({ params }: { params: Promise<{ id: string }> }) {
   if (!isSupabaseConfigured()) redirect("/panel");
@@ -42,10 +42,9 @@ export default async function ShopManagePage({ params }: { params: Promise<{ id:
   const listings = (products ?? []).filter(
     (product): product is typeof product & { status: ListingStatus } => product.status !== "deleted",
   );
-  const imageUrls = mediaUrls([
-    shop.image_path,
-    ...listings.map((product) => product.image_path),
-  ]);
+  const imageUrls = mediaUrls([shop.image_path, ...listings.map((product) => product.image_path)], {
+    width: MEDIA_WIDTHS.thumbnail,
+  });
   const trustDashboard = await getShopTrustDashboard(shopId);
   const updateAction = updateShop.bind(null, shopId);
   const deleteAction = deleteShop.bind(null, shopId);

@@ -1,35 +1,88 @@
+import { MEDIA_BUCKET } from "@/lib/media/keys";
+
 /**
- * The only place a media URL is built. Everything else passes storage keys
- * around, so repointing this prefix is what a change of object store costs.
+ * The only place a media URL is built.
+ *
+ * Storage keys in the database are vendor-neutral; these prefixes are what make
+ * them fetchable, so switching object stores is a change of environment plus a
+ * copy of the objects.
  */
-const SUPABASE_PUBLIC_PREFIX = "/storage/v1/object/public/catalogo";
+const SUPABASE_OBJECT_PREFIX = "/storage/v1/object/public";
+const SUPABASE_RENDER_PREFIX = "/storage/v1/render/image/public";
 
-function mediaBase() {
-  const configured = process.env.NEXT_PUBLIC_MEDIA_BASE?.trim();
-  if (configured) return configured.replace(/\/+$/, "");
+const DEFAULT_QUALITY = 75;
 
-  // Until NEXT_PUBLIC_MEDIA_BASE is deployed, fall back to the bucket's own
-  // public origin. This function is the one place allowed to know that shape.
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
-  return supabaseUrl
-    ? `${supabaseUrl.replace(/\/+$/, "")}${SUPABASE_PUBLIC_PREFIX}`
-    : null;
+/**
+ * What each surface actually needs, at roughly twice its layout size so the
+ * result still looks right on a dense screen. Nothing decodes on the device to
+ * produce these: the object store renders them on the way out.
+ */
+export const MEDIA_WIDTHS = {
+  thumbnail: 300,
+  card: 600,
+  hero: 1200,
+  detail: 1400,
+} as const;
+
+export type MediaVariant = { width: number; quality?: number };
+
+function trimmed(value: string | undefined) {
+  const text = value?.trim();
+
+  return text ? text.replace(/\/+$/, "") : null;
 }
 
-export function mediaUrl(key: string) {
-  const base = mediaBase();
-  if (!base) return null;
+/**
+ * Originals and resized renditions can live at different origins, and on a
+ * store with no resizing of its own only the first exists.
+ */
+function mediaBase(kind: "object" | "render") {
+  const configured =
+    kind === "object"
+      ? trimmed(process.env.NEXT_PUBLIC_MEDIA_BASE)
+      : trimmed(process.env.NEXT_PUBLIC_MEDIA_RESIZE_BASE);
+  if (configured) return configured;
 
-  return `${base}/${key.split("/").map(encodeURIComponent).join("/")}`;
+  const origin = trimmed(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  if (!origin) return null;
+  const prefix = kind === "object" ? SUPABASE_OBJECT_PREFIX : SUPABASE_RENDER_PREFIX;
+
+  return `${origin}${prefix}/${MEDIA_BUCKET}`;
+}
+
+function encodeKey(key: string) {
+  return key.split("/").map(encodeURIComponent).join("/");
+}
+
+/**
+ * A variant asks the store for a resized rendition. Where none is configured
+ * the original is served instead, which is correct but heavier — never broken.
+ */
+export function mediaUrl(key: string, variant?: MediaVariant) {
+  if (variant) {
+    const base = mediaBase("render");
+    if (base) {
+      const query = new URLSearchParams({
+        width: String(variant.width),
+        quality: String(variant.quality ?? DEFAULT_QUALITY),
+      });
+
+      return `${base}/${encodeKey(key)}?${query}`;
+    }
+  }
+
+  const base = mediaBase("object");
+
+  return base ? `${base}/${encodeKey(key)}` : null;
 }
 
 /** Keeps the shape readers already expect from a batch of keys. */
-export function mediaUrls(keys: readonly (string | null | undefined)[]) {
+export function mediaUrls(keys: readonly (string | null | undefined)[], variant?: MediaVariant) {
   const urls = new Map<string, string>();
 
   for (const key of keys) {
     if (!key || urls.has(key)) continue;
-    const url = mediaUrl(key);
+    const url = mediaUrl(key, variant);
     if (url) urls.set(key, url);
   }
 

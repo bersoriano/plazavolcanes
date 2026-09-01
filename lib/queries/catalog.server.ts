@@ -12,7 +12,7 @@ import { escapePostgresLikePattern, normalizeSearchQuery } from "@/lib/queries/c
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { mediaUrls } from "@/lib/media/url";
+import { MEDIA_WIDTHS, mediaUrls } from "@/lib/media/url";
 import type { PublicTrustMetrics } from "@/lib/public-trust";
 
 export type CatalogProduct = Pick<
@@ -284,10 +284,13 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
 
   const shopsResult = await shopsQuery;
   const shopRows = shopsResult.data ?? [];
-  const imageUrls = mediaUrls([
-    ...productRows.map((product) => product.image_path),
-    ...shopRows.map((shop) => shop.image_path),
-  ]);
+  const imageUrls = mediaUrls(
+    [
+      ...productRows.map((product) => product.image_path),
+      ...shopRows.map((shop) => shop.image_path),
+    ],
+    { width: MEDIA_WIDTHS.card },
+  );
   const products = productRows.map((item) =>
     mapProduct(item, normalizedFilters.locale, imageUrls),
   );
@@ -418,14 +421,14 @@ export async function getPublicShop(
     getPublicTrustMetrics(shop.id),
   ]);
   const productRows = (products ?? []) as unknown as ProductQueryRow[];
-  const imageUrls = mediaUrls([
-    shop.image_path,
-    ...productRows.map((product) => product.image_path),
-  ]);
+  const imageUrls = mediaUrls(productRows.map((product) => product.image_path), {
+    width: MEDIA_WIDTHS.card,
+  });
+  const shopImageUrls = mediaUrls([shop.image_path], { width: MEDIA_WIDTHS.hero });
 
   return {
     ...shop,
-    imageUrl: shop.image_path ? (imageUrls.get(shop.image_path) ?? null) : null,
+    imageUrl: shop.image_path ? (shopImageUrls.get(shop.image_path) ?? null) : null,
     seller_display_name:
       sellerDisplayName
       ?? `Vendedor #${shop.owner_id.replace(/-/g, "").slice(0, 4).toUpperCase()}`,
@@ -464,10 +467,10 @@ export async function getPublicProduct(
     .select("storage_path, position")
     .eq("product_id", row.id)
     .order("position");
-  const imageUrls = mediaUrls([
-    row.image_path,
-    ...(gallery ?? []).map((image) => image.storage_path),
-  ]);
+  const imageUrls = mediaUrls(
+    [row.image_path, ...(gallery ?? []).map((image) => image.storage_path)],
+    { width: MEDIA_WIDTHS.detail },
+  );
   const product = mapProduct(row, locale, imageUrls);
   const images = (gallery ?? [])
     .map((image) => imageUrls.get(image.storage_path) ?? null)
