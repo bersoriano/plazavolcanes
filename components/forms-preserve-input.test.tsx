@@ -92,7 +92,7 @@ describe("a rejected submit never discards what was typed", () => {
   });
 
   it("keeps every product field, including price and units", async () => {
-    render(<ProductForm action={rejecting} categories={[]} />);
+    render(<ProductForm shopId={1} action={rejecting} categories={[]} />);
 
     fireEvent.change(screen.getByLabelText("Nombre del producto"), {
       target: { value: "Taza de barro negro" },

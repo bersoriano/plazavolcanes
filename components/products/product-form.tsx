@@ -8,13 +8,9 @@ import { unstable_rethrow } from "next/navigation";
 import { CategoryFields } from "@/components/products/category-fields";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
-import {
-  MAX_UPLOAD_BYTES,
-  normalizeImages,
-  replaceInputFiles,
-  totalBytes,
-} from "@/lib/media/normalize";
+import { requestProductImageUploads } from "@/lib/actions/media";
 import { inspectImage } from "@/lib/media/signature";
+import { uploadWithTickets } from "@/lib/media/upload-client";
 import { rejectionMessage } from "@/lib/media/validation";
 import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import type { ActionState } from "@/lib/action-state";
@@ -43,6 +39,9 @@ type ProductFormProps = {
     imageUrl: string | null;
   };
   images?: ProductImage[];
+  /** Needed to authorise an upload before the product row exists. */
+  shopId: number;
+  productId?: number;
   /** Bound to the product on the server; absent while the product does not exist yet. */
   removeImageAction?: (imageId: number) => Promise<void>;
 };
@@ -149,7 +148,7 @@ function ProductActions({ blocked, busy, status }: { blocked: boolean; busy: boo
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-md text-sm leading-6 text-muted">Tu producto se guardará oculto como borrador. Podrás publicarlo cuando esté listo.</p>
         <Button disabled={disabled} type="submit">
-          {pending ? "Guardando…" : busy ? "Preparando imágenes…" : "Guardar producto"}
+          {pending ? "Guardando…" : busy ? "Subiendo imágenes…" : "Guardar producto"}
         </Button>
       </div>
     );
@@ -160,17 +159,26 @@ function ProductActions({ blocked, busy, status }: { blocked: boolean; busy: boo
         {status === "published" ? "Despublicar" : "Guardar borrador"}
       </Button>
       <Button disabled={disabled} name="status" type="submit" value="published">
-        {pending ? "Guardando…" : busy ? "Preparando imágenes…" : status === "published" ? "Guardar cambios" : "Publicar producto"}
+        {pending ? "Guardando…" : busy ? "Subiendo imágenes…" : status === "published" ? "Guardar cambios" : "Publicar producto"}
       </Button>
     </div>
   );
 }
 
-export function ProductForm({ action, categories, product, images = [], removeImageAction }: ProductFormProps) {
+export function ProductForm({
+  action,
+  categories,
+  product,
+  images = [],
+  shopId,
+  productId,
+  removeImageAction,
+}: ProductFormProps) {
   const [state, formAction] = useFormAction(action);
   const [preview, setPreview] = useState(product?.imageUrl ?? null);
   const [condition, setCondition] = useState<ProductCondition>(product?.condition ?? "new");
-  const [normalizing, setNormalizing] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadedKeys, setUploadedKeys] = useState<string[]>([]);
   const [imageError, setImageError] = useState<string | null>(null);
   const [recovered, setRecovered] = useState(false);
   const onRestored = useCallback(() => setRecovered(true), []);
@@ -182,16 +190,18 @@ export function ProductForm({ action, categories, product, images = [], removeIm
     if (state.status === "success") clearDraft();
   }, [clearDraft, state.status]);
 
-  // The input keeps carrying the files, so the plain submit needs no changes —
-  // it just sends the re-encoded ones. Submitting is blocked until they are ready.
+  /**
+   * The pictures go straight to storage from here, and the form submits only
+   * where they landed. Nothing is decoded and no bytes pass through the server,
+   * which is what a phone could not survive.
+   */
   async function handleImages(input: HTMLInputElement) {
     const chosen = Array.from(input.files ?? []);
     if (!chosen.length) return;
 
-    setNormalizing(true);
+    setUploading(true);
+    setImageError(null);
     try {
-      // Reading twelve bytes is cheaper than decoding, and a HEIC selection is
-      // worth refusing before the browser spends anything trying.
       const verdicts = await Promise.all(chosen.map((file) => inspectImage(file)));
       const rejected = verdicts.find((verdict) => !verdict.supported);
       if (rejected && !rejected.supported) {
@@ -199,24 +209,36 @@ export function ProductForm({ action, categories, product, images = [], removeIm
         return;
       }
 
-      const normalized = await normalizeImages(chosen);
-      replaceInputFiles(input, normalized);
-      setPreview(URL.createObjectURL(normalized[0]));
-      // Normalization usually brings a selection far under this. When the
-      // browser could not re-encode, saying so beats letting the upload fail.
-      setImageError(
-        totalBytes(normalized) > MAX_UPLOAD_BYTES
-          ? "Tus imágenes pesan demasiado juntas. Elige menos imágenes o fotos más pequeñas."
-          : null,
+      const contentTypes = verdicts.flatMap((verdict) =>
+        verdict.supported ? [verdict.type] : [],
       );
+      const { tickets, error } = await requestProductImageUploads(
+        shopId,
+        productId ?? null,
+        contentTypes,
+      );
+      if (!tickets) {
+        setImageError(error);
+        return;
+      }
+
+      const sent = await uploadWithTickets(tickets, chosen);
+      if (sent.error) {
+        setImageError(sent.error);
+        return;
+      }
+
+      setUploadedKeys((current) => [...current, ...sent.keys]);
+      setPreview(URL.createObjectURL(chosen[0]!));
+      // The chosen files have served their purpose; keeping them on the input
+      // would send the bytes with the form after all.
+      input.value = "";
+    } catch {
+      setImageError("No pudimos subir las imágenes. Intenta de nuevo.");
     } finally {
-      setNormalizing(false);
+      setUploading(false);
     }
   }
-
-  useEffect(() => () => {
-    if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
-  }, [preview]);
 
   return (
     <form action={formAction} className="space-y-6" noValidate onInput={saveDraft} ref={formRef}>
@@ -291,7 +313,10 @@ export function ProductForm({ action, categories, product, images = [], removeIm
         {state.errors?.images?.[0] ? <p className="text-sm font-medium text-sale">{state.errors.images[0]}</p> : null}
       </div>
       {state.message ? <p className={`rounded-2xl px-4 py-3 text-sm font-medium ${state.status === "success" ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"}`} role="status">{state.message}</p> : null}
-      <ProductActions blocked={Boolean(imageError)} busy={normalizing} status={product?.status} />
+      {uploadedKeys.map((key) => (
+        <input key={key} name="image_keys" type="hidden" value={key} />
+      ))}
+      <ProductActions blocked={Boolean(imageError)} busy={uploading} status={product?.status} />
     </form>
   );
 }

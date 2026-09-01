@@ -57,7 +57,7 @@ afterEach(cleanup);
 
 describe("ProductForm", () => {
   it("saves new products hidden first with a single submit action", () => {
-    render(<ProductForm action={action} categories={categories} />);
+    render(<ProductForm shopId={1} action={action} categories={categories} />);
 
     expect(screen.getAllByRole("button").filter((button) => button.getAttribute("type") === "submit")).toHaveLength(1);
     expect(screen.getByRole("button", { name: "Guardar producto" })).toBeInTheDocument();
@@ -67,7 +67,7 @@ describe("ProductForm", () => {
 
   it("keeps the publication controls while editing", () => {
     render(
-      <ProductForm
+      <ProductForm shopId={1}
         action={action}
         categories={categories}
         product={{
@@ -88,7 +88,7 @@ describe("ProductForm", () => {
   });
 
   it("reveals used subcondition only when Usado is selected", () => {
-    render(<ProductForm action={action} categories={categories} />);
+    render(<ProductForm shopId={1} action={action} categories={categories} />);
 
     expect(screen.queryByLabelText("Estado del producto usado")).not.toBeInTheDocument();
 
@@ -100,14 +100,14 @@ describe("ProductForm", () => {
   });
 
   it("keeps subcategory disabled until a main category is selected", () => {
-    render(<ProductForm action={action} categories={categories} />);
+    render(<ProductForm shopId={1} action={action} categories={categories} />);
 
     expect(screen.getByLabelText("Categoría")).toHaveValue("");
     expect(screen.getByLabelText("Subcategoría")).toBeDisabled();
   });
 
   it("shows only the selected main category leaves and clears a stale leaf", () => {
-    render(<ProductForm action={action} categories={categories} />);
+    render(<ProductForm shopId={1} action={action} categories={categories} />);
 
     fireEvent.change(screen.getByLabelText("Categoría"), { target: { value: "1" } });
 
@@ -126,7 +126,7 @@ describe("ProductForm", () => {
 
   it("warns when the saved subcategory is inactive", () => {
     render(
-      <ProductForm
+      <ProductForm shopId={1}
         action={action}
         categories={categories}
         product={{
@@ -154,7 +154,7 @@ describe("ProductForm", () => {
       errors: { category_id: ["Selecciona una subcategoría válida antes de publicar."] },
     });
     render(
-      <ProductForm
+      <ProductForm shopId={1}
         action={invalidCategoryAction}
         categories={categories}
         product={{
@@ -177,7 +177,7 @@ describe("ProductForm", () => {
   });
 
   it("submits the fixed catalog currency and source locale", () => {
-    render(<ProductForm action={action} categories={categories} />);
+    render(<ProductForm shopId={1} action={action} categories={categories} />);
 
     const form = screen.getByRole("button", { name: "Guardar producto" }).closest("form");
 
@@ -188,7 +188,7 @@ describe("ProductForm", () => {
 
 describe("ProductForm units available", () => {
   it("offers a single unit by default", () => {
-    render(<ProductForm action={action} categories={[]} />);
+    render(<ProductForm shopId={1} action={action} categories={[]} />);
 
     const units = screen.getByLabelText("Unidades disponibles");
 
@@ -200,7 +200,7 @@ describe("ProductForm units available", () => {
 
   it("keeps the stated units while editing", () => {
     render(
-      <ProductForm
+      <ProductForm shopId={1}
         action={action}
         categories={[]}
         product={{
@@ -223,7 +223,7 @@ describe("ProductForm units available", () => {
 
 describe("ProductForm gallery", () => {
   it("accepts several images at once and states the limits", () => {
-    render(<ProductForm action={action} categories={[]} />);
+    render(<ProductForm shopId={1} action={action} categories={[]} />);
 
     const input = screen.getByLabelText(/Imágenes del producto/);
 
@@ -236,7 +236,7 @@ describe("ProductForm gallery", () => {
 
   it("shows the images the product already holds", () => {
     render(
-      <ProductForm
+      <ProductForm shopId={1}
         action={action}
         categories={[]}
         images={[
@@ -271,7 +271,7 @@ describe("ProductForm image removal", () => {
 
   function renderWithRemoval(removeImageAction: (imageId: number) => Promise<void>) {
     return render(
-      <ProductForm
+      <ProductForm shopId={1}
         action={action}
         categories={[]}
         images={storedImages}
@@ -292,7 +292,7 @@ describe("ProductForm image removal", () => {
   }
 
   it("offers no removal when the page passes no action", () => {
-    render(<ProductForm action={action} categories={[]} images={storedImages} />);
+    render(<ProductForm shopId={1} action={action} categories={[]} images={storedImages} />);
 
     expect(screen.queryByRole("button", { name: /Eliminar imagen/ })).not.toBeInTheDocument();
   });

@@ -10,10 +10,10 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   countProductImages,
   productImageKeys,
-  storeProductImages,
+  attachProductImages,
 } from "@/lib/media/product-images";
 import { deleteObjects } from "@/lib/media/store";
-import { validateProductImages } from "@/lib/media/validation";
+import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import { productCreationSchema, productSchema, productStatusSchema } from "@/lib/validation/product";
 import { uniqueProductSlug } from "@/lib/slug";
 
@@ -31,10 +31,15 @@ const listingLimitError: ActionState = {
   message: "Alcanzaste el límite de publicaciones activas de tu tienda.",
 };
 
-function galleryImagesFrom(formData: FormData) {
+/**
+ * The browser uploads the pictures itself and submits only where they landed,
+ * so a listing with five photos posts a few hundred bytes rather than tens of
+ * megabytes.
+ */
+function galleryKeysFrom(formData: FormData) {
   return formData
-    .getAll("images")
-    .filter((value): value is File => value instanceof File && value.size > 0);
+    .getAll("image_keys")
+    .filter((value): value is string => typeof value === "string" && value.length > 0);
 }
 
 async function getAuthenticatedContext() {
@@ -122,13 +127,15 @@ export async function createProduct(
     currency_code: formData.get("currency_code"),
     content_locale: formData.get("content_locale"),
   });
-  const images = galleryImagesFrom(formData);
+  const imageKeys = galleryKeysFrom(formData);
 
   if (!parsed.success) {
     return { status: "error", message: "Revisa los campos marcados.", errors: parsed.error.flatten().fieldErrors };
   }
-  const imagesError = validateProductImages(images);
-  if (imagesError) return { status: "error", message: imagesError, errors: { images: [imagesError] } };
+  if (imageKeys.length > MAX_PRODUCT_IMAGES) {
+    const message = `Puedes subir hasta ${MAX_PRODUCT_IMAGES} imágenes.`;
+    return { status: "error", message, errors: { images: [message] } };
+  }
 
   const context = await getAuthenticatedContext();
   if (!context) return authError;
@@ -161,8 +168,8 @@ export async function createProduct(
   }
 
   // The cover is derived from the gallery by trigger, so images are stored after the row.
-  if (images.length) {
-    const stored = await storeProductImages(supabase, userId, data.id, images);
+  if (imageKeys.length) {
+    const stored = await attachProductImages(supabase, userId, data.id, imageKeys);
     if (stored.error) return { status: "error", message: stored.error };
   }
 
@@ -190,7 +197,7 @@ export async function updateProduct(
     currency_code: formData.get("currency_code"),
     content_locale: formData.get("content_locale"),
   });
-  const images = galleryImagesFrom(formData);
+  const imageKeys = galleryKeysFrom(formData);
   if (!parsed.success) return { status: "error", message: "Revisa los campos marcados.", errors: parsed.error.flatten().fieldErrors };
 
   const context = await getAuthenticatedContext();
@@ -210,8 +217,10 @@ export async function updateProduct(
   }
 
   const alreadyStored = await countProductImages(supabase, productId);
-  const imagesError = validateProductImages(images, alreadyStored);
-  if (imagesError) return { status: "error", message: imagesError, errors: { images: [imagesError] } };
+  if (alreadyStored + imageKeys.length > MAX_PRODUCT_IMAGES) {
+    const message = `Puedes subir hasta ${MAX_PRODUCT_IMAGES} imágenes.`;
+    return { status: "error", message, errors: { images: [message] } };
+  }
 
   // A published slug is already out in the world, so only drafts may regenerate one.
   const slug = existing.status === "published"
@@ -240,8 +249,8 @@ export async function updateProduct(
     return { status: "error", message: "No pudimos guardar el producto." };
   }
 
-  if (images.length) {
-    const stored = await storeProductImages(supabase, userId, productId, images);
+  if (imageKeys.length) {
+    const stored = await attachProductImages(supabase, userId, productId, imageKeys);
     if (stored.error) return { status: "error", message: stored.error };
   }
 

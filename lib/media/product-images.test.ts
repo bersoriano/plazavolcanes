@@ -1,54 +1,42 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { storeProductImages } from "@/lib/media/product-images";
+import { attachProductImages } from "@/lib/media/product-images";
 
-type Row = { position: number };
+const JPEG_HEADER = [0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0];
+const PNG_HEADER = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0];
+const ZIP_HEADER = [0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0, 0, 0, 0, 0];
 
-function fakeClient({
-  existing = [] as Row[],
-  uploadFailsAt = -1,
-  insertFailsAt = -1,
-}) {
-  const uploaded: string[] = [];
-  const removed: string[][] = [];
+/** Objects are read back over HTTP now, because the bytes never came through. */
+function stubStorageContents(byKey: Record<string, number[]>) {
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (url: string) => {
+      const key = Object.keys(byKey).find((candidate) => url.includes(candidate));
+      if (!key) return { ok: false } as Response;
+
+      return {
+        ok: true,
+        blob: async () => new Blob([new Uint8Array(byKey[key]!)]),
+      } as unknown as Response;
+    }),
+  );
+}
+
+function fakeClient({ existing = [] as { position: number }[], insertFails = false } = {}) {
   const inserted: { storage_path: string; position: number }[] = [];
-  const deletedRowIds: number[][] = [];
-  let uploads = 0;
-  let inserts = 0;
+  const removed: string[][] = [];
 
   const client = {
-    from: (table: string) => {
-      if (table !== "product_images") throw new Error(`unexpected table ${table}`);
-      return {
-        select: () => ({ eq: async () => ({ data: existing, error: null }) }),
-        insert: (row: { storage_path: string; position: number }) => ({
-          select: () => ({
-            single: async () => {
-              const index = inserts;
-              inserts += 1;
-              if (index === insertFailsAt) return { data: null, error: { message: "boom" } };
-              inserted.push(row);
-              return { data: { id: 100 + index }, error: null };
-            },
-          }),
-        }),
-        delete: () => ({
-          in: async (_column: string, ids: number[]) => {
-            deletedRowIds.push(ids);
-            return { error: null };
-          },
-        }),
-      };
-    },
+    from: () => ({
+      select: () => ({ eq: async () => ({ data: existing, error: null }) }),
+      insert: async (rows: { storage_path: string; position: number }[]) => {
+        if (insertFails) return { error: { message: "boom" } };
+        inserted.push(...rows);
+        return { error: null };
+      },
+    }),
     storage: {
       from: () => ({
-        upload: async (key: string) => {
-          const index = uploads;
-          uploads += 1;
-          if (index === uploadFailsAt) return { error: { message: "boom" } };
-          uploaded.push(key);
-          return { error: null };
-        },
         remove: async (keys: string[]) => {
           removed.push(keys);
           return { error: null };
@@ -57,148 +45,123 @@ function fakeClient({
     },
   };
 
-  return { client, uploaded, removed, inserted, deletedRowIds };
-}
-
-const JPEG_BYTES = [0xff, 0xd8, 0xff, 0xe0, 0, 0, 0, 0, 0, 0, 0, 0];
-
-function imageOf(name = "producto.jpg") {
-  return new File([new Uint8Array(JPEG_BYTES)], name, { type: "image/jpeg" });
-}
-
-/** A file that claims to be a JPEG but carries zip bytes. */
-function disguisedFile() {
-  return new File([new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0, 0, 0, 0, 0, 0, 0, 0])], "falso.jpg", {
-    type: "image/jpeg",
-  });
+  return { client, inserted, removed };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const asClient = (client: unknown) => client as any;
 
-beforeEach(() => vi.clearAllMocks());
+// Objects are read back by URL, so the media origin has to be configured.
+beforeEach(() => {
+  process.env.NEXT_PUBLIC_MEDIA_BASE = "https://cdn.prueba.mx/catalogo";
+});
 
-describe("storeProductImages", () => {
-  it("fills the free slots left by a deleted image instead of counting rows", async () => {
-    // Positions 0 and 2 are taken, so the next upload must land on 1, not on 2.
-    const fake = fakeClient({ existing: [{ position: 0 }, { position: 2 }] });
+afterEach(() => {
+  delete process.env.NEXT_PUBLIC_MEDIA_BASE;
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
-    const result = await storeProductImages(asClient(fake.client), "seller-1", 42, [imageOf()]);
+describe("attachProductImages", () => {
+  it("records objects whose bytes match the format their key claims", async () => {
+    const key = "products/seller-1/a.jpg";
+    stubStorageContents({ [key]: JPEG_HEADER });
+    const fake = fakeClient();
+
+    const result = await attachProductImages(asClient(fake.client), "seller-1", 42, [key]);
 
     expect(result.error).toBeNull();
-    expect(fake.inserted.map((row) => row.position)).toEqual([1]);
+    expect(fake.inserted).toEqual([{ product_id: 42, storage_path: key, position: 0 }]);
   });
 
-  it("keys every image under its owner and its product", async () => {
-    const fake = fakeClient({});
+  it("refuses a key belonging to somebody else", async () => {
+    const key = "products/otro-vendedor/a.jpg";
+    stubStorageContents({ [key]: JPEG_HEADER });
+    const fake = fakeClient();
 
-    await storeProductImages(asClient(fake.client), "seller-1", 42, [imageOf(), imageOf()]);
+    const result = await attachProductImages(asClient(fake.client), "seller-1", 42, [key]);
 
-    for (const key of fake.uploaded) {
-      expect(key).toMatch(/^products\/seller-1\/42\/[0-9a-f-]{36}\.jpg$/);
-    }
-    expect(new Set(fake.uploaded).size).toBe(2);
+    expect(result.error).toBe("No pudimos guardar las imágenes.");
+    expect(fake.inserted).toEqual([]);
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it("deletes an object whose bytes are not an image at all", async () => {
+    const key = "products/seller-1/a.jpg";
+    stubStorageContents({ [key]: ZIP_HEADER });
+    const fake = fakeClient();
+
+    const result = await attachProductImages(asClient(fake.client), "seller-1", 42, [key]);
+
+    expect(result.error).toBe("Usa una imagen JPEG, PNG o WebP.");
+    expect(fake.removed).toEqual([[key]]);
+    expect(fake.inserted).toEqual([]);
+  });
+
+  it("deletes an object whose bytes disagree with its extension", async () => {
+    // A PNG uploaded under a .jpg key would be served with the wrong type.
+    const key = "products/seller-1/a.jpg";
+    stubStorageContents({ [key]: PNG_HEADER });
+    const fake = fakeClient();
+
+    const result = await attachProductImages(asClient(fake.client), "seller-1", 42, [key]);
+
+    expect(result.error).toBeTruthy();
+    expect(fake.removed).toEqual([[key]]);
+  });
+
+  it("deletes an object that is not there", async () => {
+    stubStorageContents({});
+    const fake = fakeClient();
+
+    const result = await attachProductImages(asClient(fake.client), "seller-1", 42, [
+      "products/seller-1/a.jpg",
+    ]);
+
+    expect(result.error).toBeTruthy();
+    expect(fake.inserted).toEqual([]);
+  });
+
+  it("fills the slots a removed image left free", async () => {
+    const key = "products/seller-1/a.jpg";
+    stubStorageContents({ [key]: JPEG_HEADER });
+    const fake = fakeClient({ existing: [{ position: 0 }, { position: 2 }] });
+
+    await attachProductImages(asClient(fake.client), "seller-1", 42, [key]);
+
+    expect(fake.inserted[0]!.position).toBe(1);
   });
 
   it("refuses a batch that does not fit in the remaining slots", async () => {
     const fake = fakeClient({
       existing: [{ position: 0 }, { position: 1 }, { position: 2 }, { position: 3 }],
     });
+    stubStorageContents({});
 
-    const result = await storeProductImages(asClient(fake.client), "seller-1", 42, [
-      imageOf(),
-      imageOf(),
+    const result = await attachProductImages(asClient(fake.client), "seller-1", 42, [
+      "products/seller-1/a.jpg",
+      "products/seller-1/b.jpg",
     ]);
 
     expect(result.error).toBe("Puedes subir hasta 5 imágenes.");
-    expect(fake.uploaded).toEqual([]);
   });
 
-  it("undoes the rows already written when a later upload fails", async () => {
-    const fake = fakeClient({ uploadFailsAt: 1 });
+  it("removes the objects when the rows cannot be written", async () => {
+    const key = "products/seller-1/a.jpg";
+    stubStorageContents({ [key]: JPEG_HEADER });
+    const fake = fakeClient({ insertFails: true });
 
-    const result = await storeProductImages(asClient(fake.client), "seller-1", 42, [
-      imageOf(),
-      imageOf(),
-    ]);
-
-    expect(result.error).toBe("No pudimos subir las imágenes.");
-    expect(fake.deletedRowIds).toEqual([[100]]);
-    expect(fake.removed).toEqual([fake.uploaded]);
-  });
-
-  it("undoes the whole batch when a row insert fails", async () => {
-    const fake = fakeClient({ insertFailsAt: 1 });
-
-    const result = await storeProductImages(asClient(fake.client), "seller-1", 42, [
-      imageOf(),
-      imageOf(),
-    ]);
+    const result = await attachProductImages(asClient(fake.client), "seller-1", 42, [key]);
 
     expect(result.error).toBe("No pudimos guardar las imágenes.");
-    // Both objects are gone, and the one row that did commit goes with them.
-    expect(fake.deletedRowIds).toEqual([[100]]);
-    expect(fake.removed[0]).toHaveLength(2);
+    expect(fake.removed).toEqual([[key]]);
   });
 
-  it("refuses a file whose bytes are not an image, whatever it calls itself", async () => {
-    const fake = fakeClient({});
+  it("does nothing when there is no key", async () => {
+    const fake = fakeClient();
 
-    const result = await storeProductImages(asClient(fake.client), "seller-1", 42, [
-      disguisedFile(),
-    ]);
-
-    expect(result.error).toBe("Usa una imagen JPEG, PNG o WebP.");
-    expect(fake.uploaded).toEqual([]);
-  });
-
-  it("writes nothing when one file in the batch is not an image", async () => {
-    const fake = fakeClient({});
-
-    const result = await storeProductImages(asClient(fake.client), "seller-1", 42, [
-      imageOf(),
-      disguisedFile(),
-    ]);
-
-    expect(result.error).toBe("Usa una imagen JPEG, PNG o WebP.");
-    expect(fake.uploaded).toEqual([]);
-    expect(fake.inserted).toEqual([]);
-  });
-
-  it("names the object for the format found in the bytes, not the declared one", async () => {
-    const fake = fakeClient({});
-    const pngLabelledJpeg = new File(
-      [new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0])],
-      "producto.jpg",
-      { type: "image/jpeg" },
-    );
-
-    await storeProductImages(asClient(fake.client), "seller-1", 42, [pngLabelledJpeg]);
-
-    expect(fake.uploaded[0]).toMatch(/\.png$/);
-  });
-
-  it("tells an iPhone owner what to do instead of listing formats", async () => {
-    const fake = fakeClient({});
-    const heic = new File(
-      [new Uint8Array([0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63])],
-      "IMG_0001.HEIC",
-      { type: "image/heic" },
-    );
-
-    const result = await storeProductImages(asClient(fake.client), "seller-1", 42, [heic]);
-
-    expect(result.error).toMatch(/HEIC/);
-    expect(result.error).toMatch(/iPhone/);
-    expect(fake.uploaded).toEqual([]);
-  });
-
-  it("does nothing when there is no image to store", async () => {
-    const fake = fakeClient({});
-
-    expect(await storeProductImages(asClient(fake.client), "seller-1", 42, [])).toEqual({
+    expect(await attachProductImages(asClient(fake.client), "seller-1", 42, [])).toEqual({
       error: null,
     });
-    expect(fake.uploaded).toEqual([]);
   });
 });

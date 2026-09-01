@@ -3,6 +3,10 @@
  * URL, so moving to another object store is a copy of the same keys plus a new
  * NEXT_PUBLIC_MEDIA_BASE — no row, query, or component changes.
  */
+/** Named here rather than in the server-only adapter, because the browser
+ * uploads straight to it now. */
+export const MEDIA_BUCKET = "catalogo";
+
 const EXTENSIONS = {
   "image/jpeg": "jpg",
   "image/png": "png",
@@ -20,13 +24,30 @@ export function mediaExtension(contentType: MediaContentType) {
   return EXTENSIONS[contentType];
 }
 
+/**
+ * The browser uploads before the product row exists, so the key cannot carry a
+ * product id. Which product an object belongs to is what the database row says;
+ * the folder only has to be the owner, which is what storage authorises on.
+ */
 export function productImageKey(
   userId: string,
-  productId: number,
   contentType: MediaContentType,
   id: string = crypto.randomUUID(),
 ) {
-  return `products/${userId}/${productId}/${id}.${mediaExtension(contentType)}`;
+  return `products/${userId}/${id}.${mediaExtension(contentType)}`;
+}
+
+/** The owner a key is scoped to, or null when it is not one of ours. */
+export function keyOwner(key: string) {
+  const [root, owner] = key.split("/");
+
+  return (root === "products" || root === "shops") && owner ? owner : null;
+}
+
+export function keyExtension(key: string) {
+  const dot = key.lastIndexOf(".");
+
+  return dot === -1 ? null : key.slice(dot + 1).toLowerCase();
 }
 
 /**

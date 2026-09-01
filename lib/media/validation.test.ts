@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { validateImage, validateProductImages } from "@/lib/media/validation";
 
 describe("validateImage", () => {
-  it("accepts JPEG, PNG, and WebP up to 5 MB", () => {
+  it("accepts JPEG, PNG, and WebP up to 10 MB", () => {
     for (const type of ["image/jpeg", "image/png", "image/webp"]) {
       const file = new File(["imagen"], "producto", { type });
       expect(validateImage(file)).toBeNull();
@@ -15,11 +15,11 @@ describe("validateImage", () => {
     expect(validateImage(file)).toBe("Usa una imagen JPEG, PNG o WebP.");
   });
 
-  it("rejects images above 5 MB", () => {
-    const file = new File([new Uint8Array(5 * 1024 * 1024 + 1)], "grande.jpg", {
+  it("rejects images above 10 MB", () => {
+    const file = new File([new Uint8Array(10 * 1024 * 1024 + 1)], "grande.jpg", {
       type: "image/jpeg",
     });
-    expect(validateImage(file)).toBe("La imagen debe pesar 5 MB o menos.");
+    expect(validateImage(file)).toBe("La imagen debe pesar 10 MB o menos.");
   });
 });
 
@@ -28,8 +28,8 @@ describe("validateProductImages", () => {
     return new File([new Uint8Array(bytes)], "producto.jpg", { type });
   }
 
-  it("accepts up to five images of two megabytes each", () => {
-    const files = Array.from({ length: 5 }, () => imageOf(2 * 1024 * 1024));
+  it("accepts up to five images of ten megabytes each", () => {
+    const files = Array.from({ length: 5 }, () => imageOf(10 * 1024 * 1024));
 
     expect(validateProductImages(files)).toBeNull();
   });
@@ -40,9 +40,9 @@ describe("validateProductImages", () => {
     expect(validateProductImages(files)).toBe("Puedes subir hasta 5 imágenes.");
   });
 
-  it("rejects an image above two megabytes", () => {
-    expect(validateProductImages([imageOf(2 * 1024 * 1024 + 1)])).toBe(
-      "Cada imagen debe pesar 2 MB o menos.",
+  it("rejects an image above ten megabytes", () => {
+    expect(validateProductImages([imageOf(10 * 1024 * 1024 + 1)])).toBe(
+      "Cada imagen debe pesar 10 MB o menos.",
     );
   });
 
