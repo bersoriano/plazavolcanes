@@ -29,6 +29,11 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=TU_CLAVE_PUBLICABLE
 # público de Supabase. Es la única variable que cambia al mover los objetos a
 # otro almacenamiento: se copian con las mismas claves y se apunta aquí.
 NEXT_PUBLIC_MEDIA_BASE=https://TU-PROYECTO.supabase.co/storage/v1/object/public/catalogo
+
+# Origen que entrega versiones redimensionadas. Si se omite, se usa el
+# transformador de Supabase. Déjalo vacío si el almacenamiento no redimensiona:
+# entonces se sirve el original, más pesado pero correcto.
+NEXT_PUBLIC_MEDIA_RESIZE_BASE=https://TU-PROYECTO.supabase.co/storage/v1/render/image/public/catalogo
 ```
 
 Vincula Supabase y aplica esquema, políticas RLS y bucket de imágenes:

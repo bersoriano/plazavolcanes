@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { mediaUrl, mediaUrls } from "@/lib/media/url";
+import { MEDIA_WIDTHS, mediaUrl, mediaUrls } from "@/lib/media/url";
 
 const original = { ...process.env };
 
 beforeEach(() => {
   delete process.env.NEXT_PUBLIC_MEDIA_BASE;
+  delete process.env.NEXT_PUBLIC_MEDIA_RESIZE_BASE;
   delete process.env.NEXT_PUBLIC_SUPABASE_URL;
 });
 
@@ -71,5 +72,64 @@ describe("mediaUrls", () => {
 
   it("is empty when no key is given", () => {
     expect(mediaUrls([null, undefined]).size).toBe(0);
+  });
+});
+
+describe("resized variants", () => {
+  it("asks the store to render the width a surface actually shows", () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://abc.supabase.co";
+
+    expect(mediaUrl("products/seller-1/a.jpg", { width: MEDIA_WIDTHS.card })).toBe(
+      "https://abc.supabase.co/storage/v1/render/image/public/catalogo/products/seller-1/a.jpg?width=600&quality=75",
+    );
+  });
+
+  it("carries an explicit quality through", () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://abc.supabase.co";
+
+    expect(mediaUrl("products/seller-1/a.jpg", { width: 300, quality: 60 })).toContain(
+      "width=300&quality=60",
+    );
+  });
+
+  it("serves the original when the store cannot resize", () => {
+    // A plain object host, such as a bucket behind a CDN with no renderer.
+    process.env.NEXT_PUBLIC_MEDIA_BASE = "https://cdn.plazavolcanes.mx/catalogo";
+    process.env.NEXT_PUBLIC_MEDIA_RESIZE_BASE = "";
+
+    expect(mediaUrl("products/seller-1/a.jpg", { width: 600 })).toBe(
+      "https://cdn.plazavolcanes.mx/catalogo/products/seller-1/a.jpg",
+    );
+  });
+
+  it("uses a separately configured renderer when there is one", () => {
+    process.env.NEXT_PUBLIC_MEDIA_BASE = "https://cdn.plazavolcanes.mx/catalogo";
+    process.env.NEXT_PUBLIC_MEDIA_RESIZE_BASE = "https://img.plazavolcanes.mx/catalogo";
+
+    expect(mediaUrl("products/seller-1/a.jpg", { width: 600 })).toBe(
+      "https://img.plazavolcanes.mx/catalogo/products/seller-1/a.jpg?width=600&quality=75",
+    );
+  });
+
+  it("escapes the key in a rendered URL too", () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://abc.supabase.co";
+
+    expect(mediaUrl("products/seller-1/café.png", { width: 300 })).toContain("caf%C3%A9.png?");
+  });
+
+  it("applies the same variant across a batch", () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://abc.supabase.co";
+
+    const urls = mediaUrls(["products/seller-1/a.jpg", "shops/seller-1/b.png"], { width: 300 });
+
+    expect([...urls.values()].every((url) => url.includes("width=300"))).toBe(true);
+  });
+
+  it("still serves originals when no variant is asked for", () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://abc.supabase.co";
+
+    expect(mediaUrl("products/seller-1/a.jpg")).toBe(
+      "https://abc.supabase.co/storage/v1/object/public/catalogo/products/seller-1/a.jpg",
+    );
   });
 });
