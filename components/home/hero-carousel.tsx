@@ -108,7 +108,7 @@ export function HeroCarousel() {
                   />
                 </>
               )}
-              <div className="relative z-10 flex min-h-[440px] flex-col items-center justify-center px-12 py-14 text-center sm:min-h-[480px] sm:px-20">
+              <div className="relative z-10 flex min-h-[440px] flex-col items-center justify-center px-6 py-14 text-center sm:min-h-[480px] sm:px-20">
                 <div
                   className={`mb-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold ${
                     slide.image ? "bg-accent text-brand-hover" : "bg-accent/20 text-accent"
@@ -118,7 +118,7 @@ export function HeroCarousel() {
                   {slide.badge}
                 </div>
                 <h1
-                  className={`max-w-4xl font-display text-4xl font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl lg:text-7xl ${
+                  className={`max-w-4xl font-display text-[2rem] font-semibold leading-[0.98] tracking-[-0.045em] sm:text-6xl lg:text-7xl ${
                     slide.image ? "text-brand" : "text-white"
                   }`}
                 >
@@ -159,7 +159,7 @@ export function HeroCarousel() {
           <button
             aria-current={slideIndex === index ? "true" : undefined}
             aria-label={`Ir a la diapositiva ${slideIndex + 1}`}
-            className={`size-3 rounded-full border border-brand/40 transition-colors ${
+            className={`tap-halo size-3 rounded-full border border-brand/40 transition-colors ${
               slideIndex === index ? "bg-brand" : "bg-surface/70 hover:bg-surface"
             }`}
             key={slide.title}

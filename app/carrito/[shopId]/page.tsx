@@ -27,7 +27,7 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
   if (!cart?.items.length) {
     return (
       <section className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
-        <Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand" href={backHref}>
+        <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href={backHref}>
           <ArrowLeft aria-hidden="true" className="size-4" />
           Seguir explorando
         </Link>
@@ -80,7 +80,7 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
 
   return (
     <section className="mx-auto max-w-[86rem] px-5 py-10 sm:px-8 sm:py-14">
-      <Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand" href={backHref}>
+      <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href={backHref}>
         <ArrowLeft aria-hidden="true" className="size-4" />
         Seguir explorando
       </Link>

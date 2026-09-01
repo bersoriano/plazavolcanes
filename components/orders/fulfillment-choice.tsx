@@ -128,7 +128,7 @@ export function FulfillmentChoice({
             </>
           ) : (
             <p className="font-semibold text-ink">
-              <a className="text-brand underline" href={threadHref}>
+              <a className="inline-flex min-h-11 items-center text-brand underline" href={threadHref}>
                 Acuerden el punto de recolección en el chat
               </a>
             </p>

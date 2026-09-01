@@ -136,7 +136,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
       <div className="mt-7 grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:gap-12">
         <ProductGallery images={product.images} name={product.name} />
         <div className="flex flex-col justify-center">
-          <Link className="inline-flex w-fit items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-sm font-semibold text-brand-hover" href={`/tiendas/${product.shop.slug}`}>
+          <Link className="inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-sm font-semibold text-brand-hover" href={`/tiendas/${product.shop.slug}`}>
             <Store aria-hidden="true" className="size-4" />
             {product.shop.name}
           </Link>

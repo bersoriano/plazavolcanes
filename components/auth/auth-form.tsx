@@ -105,7 +105,7 @@ export function AuthForm({
       {signingIn ? (
         <p className="text-right text-sm">
           <Link
-            className="font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
+            className="inline-flex min-h-11 items-center font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
             href="/recuperar"
           >
             ¿Olvidaste tu contraseña?
@@ -131,7 +131,7 @@ export function AuthForm({
       <p className="text-center text-sm text-muted">
         {signingIn ? "¿Aún no tienes cuenta?" : "¿Ya tienes cuenta?"}{" "}
         <Link
-          className="font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
+          className="inline-flex min-h-11 items-center font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
           href={alternativeHref}
         >
           {signingIn ? "Regístrate" : "Ingresa"}

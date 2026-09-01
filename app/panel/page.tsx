@@ -42,7 +42,7 @@ export default async function PanelPage() {
       ) : null}
 
       {shops?.length ? <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">{shops.map((shop) => <ShopCard key={shop.id} shop={{ ...shop, imageUrl: shop.image_path ? (imageUrls.get(shop.image_path) ?? null) : null }} />)}</div> : (
-        <EmptyState icon={<Store aria-hidden="true" className="size-7" />} title={canCreateShop ? "Tu primera tienda te espera" : "Aún no puedes crear tiendas"} description={canCreateShop ? "Dale nombre, cuenta su historia y empieza a publicar productos." : "Administración puede ampliar tu límite cuando lo necesites."} action={canCreateShop ? <Link className="font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href="/panel/tiendas/nueva">Crear mi primera tienda</Link> : undefined} />
+        <EmptyState icon={<Store aria-hidden="true" className="size-7" />} title={canCreateShop ? "Tu primera tienda te espera" : "Aún no puedes crear tiendas"} description={canCreateShop ? "Dale nombre, cuenta su historia y empieza a publicar productos." : "Administración puede ampliar tu límite cuando lo necesites."} action={canCreateShop ? <Link className="inline-flex min-h-11 items-center font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href="/panel/tiendas/nueva">Crear mi primera tienda</Link> : undefined} />
       )}
     </section>
   );

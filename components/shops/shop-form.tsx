@@ -199,7 +199,7 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
       )}
 
       <div className="space-y-4 border-t border-line pt-6">
-        <label className="flex items-center gap-3 text-sm font-semibold text-ink" htmlFor="offers_pickup">
+        <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold text-ink" htmlFor="offers_pickup">
           <input
             checked={offersPickup}
             className="size-5 rounded border-line accent-brand"

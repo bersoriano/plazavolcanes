@@ -21,7 +21,7 @@ export default async function MessageThreadPage({ params }: { params: Promise<{ 
 
   return (
     <section className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
-      <Link className="inline-flex items-center gap-2 text-sm font-semibold text-brand" href="/mensajes">
+      <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href="/mensajes">
         <ArrowLeft aria-hidden="true" className="size-4" />
         Mensajes
       </Link>

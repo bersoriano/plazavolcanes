@@ -64,7 +64,7 @@ function ShopPublishingApproval({ shop }: { shop: AdminMarketplaceShop }) {
         </div>
         <button
           aria-checked={isApproved}
-          className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition ${
+          className={`tap-halo relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition ${
             isApproved ? "bg-success" : "bg-line"
           }`}
           disabled={pending}
@@ -174,7 +174,7 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <h3 className="font-display text-xl font-semibold">
-                        <Link className="text-brand underline-offset-4 hover:underline" href={`/tiendas/${shop.slug}`}>
+                        <Link className="inline-flex min-h-11 items-center text-brand underline-offset-4 hover:underline" href={`/tiendas/${shop.slug}`}>
                           {shop.name}
                         </Link>
                       </h3>
@@ -192,7 +192,7 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
                           <div>
                             <h4 className="font-semibold">
                               {product.effectiveVisibility ? (
-                                <Link className="text-brand underline-offset-4 hover:underline" href={`/productos/${product.slug}`}>
+                                <Link className="inline-flex min-h-11 items-center text-brand underline-offset-4 hover:underline" href={`/productos/${product.slug}`}>
                                   {product.name}
                                 </Link>
                               ) : (
