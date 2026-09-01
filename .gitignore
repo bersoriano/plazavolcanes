@@ -52,6 +52,7 @@ next-env.d.ts
 
 # Local implementation notes, not for the repo
 /MESSAGING-IMPLEMENTATION.md
+/docs/item-pictures.html
 
 # Subagent-driven development scratch
 /.superpowers/
