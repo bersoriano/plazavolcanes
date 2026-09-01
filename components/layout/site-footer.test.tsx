@@ -42,6 +42,16 @@ describe("SiteFooter", () => {
     expect(within(nav).getByRole("link", { name: "Ingresar" })).toHaveAttribute("href", "/ingresar");
   });
 
+  it("folds the legal shelf behind a 44px summary on a phone", () => {
+    render(<SiteFooter />);
+
+    const shelf = screen.getByRole("group", { name: "Información legal" });
+
+    // `disclosure-mobile` reopens the panel from lg up, where height is free.
+    expect(shelf).toHaveClass("disclosure-mobile");
+    expect(shelf.querySelector("summary")).toHaveClass("tap");
+  });
+
   it("keeps the print stylesheet marker", () => {
     render(<SiteFooter />);
 

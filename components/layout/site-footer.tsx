@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ChevronDown } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { LEGAL_ROUTES } from "@/lib/legal/document-types";
@@ -18,13 +19,26 @@ export function SiteFooter() {
             <Link className="inline-flex min-h-11 items-center hover:text-accent" href="/registro">Crear tienda</Link>
             <Link className="inline-flex min-h-11 items-center hover:text-accent" href="/ingresar">Ingresar</Link>
           </nav>
-          <nav aria-label="Información legal" className="flex flex-col gap-1 text-sm font-medium text-white/80">
-            {LEGAL_ROUTES.map((route) => (
-              <Link className="inline-flex min-h-11 items-center hover:text-accent" href={route.path} key={route.path}>
-                {route.navLabel}
-              </Link>
-            ))}
-          </nav>
+          {/*
+            Eight legal links at 44px apiece stand taller than the content of a
+            short page on a phone, so they fold away there. `disclosure-mobile`
+            reopens the panel from `lg` up, where the height costs nothing.
+          */}
+          <details aria-label="Información legal" className="disclosure-mobile" name="footer-shelf">
+            <summary
+              className="tap flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-white/80 hover:text-accent lg:cursor-default lg:font-medium [&::-webkit-details-marker]:hidden"
+            >
+              Información legal
+              <ChevronDown aria-hidden="true" className="size-4 transition-transform lg:hidden [details[open]_&]:rotate-180" />
+            </summary>
+            <nav aria-label="Información legal" className="flex flex-col gap-1 text-sm font-medium text-white/80">
+              {LEGAL_ROUTES.map((route) => (
+                <Link className="inline-flex min-h-11 items-center hover:text-accent" href={route.path} key={route.path}>
+                  {route.navLabel}
+                </Link>
+              ))}
+            </nav>
+          </details>
         </div>
       </div>
       <div className="border-t border-white/10 px-5 py-5 text-center text-xs text-white/55">© 2026 Plaza Volcanes</div>

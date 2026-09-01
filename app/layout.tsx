@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
 
+import { BottomNav } from "@/components/layout/bottom-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getSiteUrl } from "@/lib/site-url";
@@ -30,6 +31,15 @@ export const metadata: Metadata = {
     "Descubre productos únicos de tiendas independientes en Plaza Volcanes.",
 };
 
+// `viewport-fit=cover` is what lets env(safe-area-inset-*) report anything but
+// zero, and the quick-access bar sits in the home indicator's lane.
+export const viewport: Viewport = {
+  initialScale: 1,
+  themeColor: "#b8ff6a",
+  viewportFit: "cover",
+  width: "device-width",
+};
+
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html
@@ -40,8 +50,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="antialiased">
         <div className="flex min-h-screen flex-col">
           <SiteHeader />
-          <main className="flex-1">{children}</main>
+          <main className="flex-1 pb-[calc(4.5rem+1px+env(safe-area-inset-bottom))] md:pb-0">
+            {children}
+          </main>
           <SiteFooter />
+          <BottomNav />
         </div>
       </body>
     </html>

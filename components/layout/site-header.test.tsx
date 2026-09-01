@@ -54,40 +54,40 @@ describe("SiteHeader", () => {
     );
   });
 
-  it("keeps compact signed-in actions explicitly named", async () => {
+  it("keeps the signed-in account control named", async () => {
     await renderHeader(true);
 
     expect(screen.getByRole("link", { name: "Plaza Volcanes, inicio" })).toBeInTheDocument();
-
-    const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
-    expect(within(navigation).getByRole("link", { name: "Mi panel" })).toHaveAttribute(
-      "aria-label",
-      "Mi panel",
-    );
-    expect(within(navigation).getByRole("link", { name: "Mensajes" })).toHaveAttribute(
-      "aria-label",
-      "Mensajes",
-    );
-    expect(within(navigation).getByRole("button", { name: "Salir" })).toHaveAttribute(
-      "aria-label",
-      "Salir",
-    );
+    expect(screen.getByRole("button", { name: "Salir" })).toHaveAttribute("aria-label", "Salir");
   });
 
-  it("keeps signed-in actions compact until the medium breakpoint", async () => {
+  it("hands the destinations to the quick access bar until the medium breakpoint", async () => {
     await renderHeader(true);
 
     const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
-    const panel = within(navigation).getByRole("link", { name: "Mi panel" });
-    const messages = within(navigation).getByRole("link", { name: "Mensajes" });
-    const signOut = within(navigation).getByRole("button", { name: "Salir" });
 
-    expect(panel).toHaveClass("md:inline-flex", "md:min-w-0");
-    expect(panel.querySelector("svg")).toHaveClass("md:hidden");
-    expect(within(panel).getByText("Mi panel")).toHaveClass("md:inline");
-    expect(messages).toHaveClass("md:inline-flex", "md:min-w-0");
-    expect(within(messages).getByText("Mensajes")).toHaveClass("md:inline");
-    expect(within(signOut).getByText("Salir")).toHaveClass("md:inline");
+    // The bar carries these on a phone, so the header only shows them once
+    // there is room for words instead of a row of unlabelled glyphs.
+    for (const name of ["Mi panel", "Mis compras", "Mensajes"]) {
+      expect(within(navigation).getByRole("link", { name })).toHaveClass(
+        "hidden",
+        "min-h-11",
+        "md:inline-flex",
+      );
+    }
+  });
+
+  it("keeps administration reachable from the header at every width", async () => {
+    await renderHeader(true, true);
+
+    const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
+
+    // Nothing in the quick access bar points at /admin, so these may not hide.
+    for (const name of ["Usuarios", "Disputas"]) {
+      const link = within(navigation).getByRole("link", { name });
+      expect(link).toHaveClass("tap");
+      expect(link).not.toHaveClass("hidden");
+    }
   });
 
   it("reveals the full brand separately from signed-in action labels", async () => {

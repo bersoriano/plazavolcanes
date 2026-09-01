@@ -1,11 +1,17 @@
 import Link from "next/link";
-import { CircleUserRound, LayoutDashboard, MessageCircle, Scale, UsersRound } from "lucide-react";
+import { CircleUserRound, Scale, UsersRound } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { fetchUnreadCount } from "@/lib/queries/messages.server";
 import { getCurrentUserAdminStatus } from "@/lib/admin-auth.server";
 
+/**
+ * Below `md` the header carries the brand and the account only: the quick
+ * access bar at the foot of the screen owns the destinations, which is what
+ * gives `/compras` a link on a phone at all. From `md` up there is room for
+ * the full row again and the bar hides itself.
+ */
 export async function SiteHeader() {
   const { isAdmin, signedIn } = await getCurrentUserAdminStatus();
 
@@ -24,37 +30,39 @@ export async function SiteHeader() {
         <nav aria-label="Navegación principal" className="flex items-center gap-1 sm:gap-3">
           {signedIn ? (
             <>
-              <Link aria-label="Mi panel" className="grid min-h-11 min-w-11 place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background md:inline-flex md:min-w-0 md:px-4 md:py-2.5" href="/panel">
-                <LayoutDashboard aria-hidden="true" className="size-5 md:hidden" />
-                <span className="hidden md:inline">Mi panel</span>
+              <Link className="hidden min-h-11 items-center rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background md:inline-flex" href="/panel">
+                Mi panel
               </Link>
-              <Link className="hidden rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background sm:inline-flex" href="/compras">
+              <Link className="hidden min-h-11 items-center rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background md:inline-flex" href="/compras">
                 Mis compras
               </Link>
-              {isAdmin ? (
-                <>
-                  <Link aria-label="Usuarios" className="grid min-h-11 min-w-11 place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background md:inline-flex md:min-w-0 md:px-4 md:py-2.5" href="/admin/usuarios">
-                    <UsersRound aria-hidden="true" className="size-5 md:hidden" />
-                    <span className="hidden md:inline">Usuarios</span>
-                  </Link>
-                  <Link aria-label="Disputas" className="grid min-h-11 min-w-11 place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background md:inline-flex md:min-w-0 md:px-4 md:py-2.5" href="/admin/disputas">
-                    <Scale aria-hidden="true" className="size-5 md:hidden" />
-                    <span className="hidden md:inline">Disputas</span>
-                  </Link>
-                </>
-              ) : null}
-              <Link aria-label="Mensajes" className="relative grid min-h-11 min-w-11 place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background md:inline-flex md:min-w-0 md:px-4 md:py-2.5" href="/mensajes">
-                <MessageCircle aria-hidden="true" className="size-5 md:hidden" />
-                <span className="hidden md:inline">Mensajes</span>
+              <Link className="relative hidden min-h-11 items-center rounded-full px-4 py-2.5 text-sm font-semibold text-brand transition-colors hover:bg-background md:inline-flex" href="/mensajes">
+                Mensajes
                 {unread > 0 ? (
                   <span
                     aria-label={`${unread} mensajes sin leer`}
-                    className="absolute -right-0.5 -top-0.5 grid min-w-5 place-items-center rounded-full bg-brand px-1.5 py-0.5 text-xs font-semibold text-white"
+                    className="ml-2 grid min-w-5 place-items-center rounded-full bg-brand px-1.5 py-0.5 text-xs font-semibold text-white"
                   >
                     {unread}
                   </span>
                 ) : null}
               </Link>
+              {isAdmin ? (
+                <>
+                  {/*
+                    Administration has no slot in the quick access bar, so these
+                    stay reachable from the header at every width.
+                  */}
+                  <Link aria-label="Usuarios" className="tap grid place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background md:inline-flex md:min-w-0 md:px-4 md:py-2.5" href="/admin/usuarios">
+                    <UsersRound aria-hidden="true" className="size-5 md:hidden" />
+                    <span className="hidden md:inline">Usuarios</span>
+                  </Link>
+                  <Link aria-label="Disputas" className="tap grid place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background md:inline-flex md:min-w-0 md:px-4 md:py-2.5" href="/admin/disputas">
+                    <Scale aria-hidden="true" className="size-5 md:hidden" />
+                    <span className="hidden md:inline">Disputas</span>
+                  </Link>
+                </>
+              ) : null}
               <SignOutButton />
             </>
           ) : (
