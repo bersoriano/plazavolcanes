@@ -202,51 +202,53 @@ function sampleShop() {
 }
 
 describe("Home conversion sections", () => {
-  it("opens the home hero on the welcome slide of the carousel", async () => {
+  it("opens the home hero on the first rotating message", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()] }),
     );
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const carousel = screen.getByRole("region", { name: "Novedades de Plaza Volcanes" });
-    expect(within(carousel).getByRole("heading", { level: 1 })).toHaveTextContent("Bienvenido");
-    expect(carousel.querySelector('img[src*="hero2.jpg"]')).toBeInTheDocument();
-    expect(carousel.querySelector('img[src*="hero1.jpg"]')).toBeInTheDocument();
+    const hero = screen.getByRole("region", { name: "Novedades de Plaza Volcanes" });
+    expect(within(hero).getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Encuentra productos únicos cerca de ti.",
+    );
+    expect(within(hero).getByText("Hecho cerca. Encontrado aquí.")).toBeInTheDocument();
   });
 
-  it("keeps the conversion links, the search and the categories outside the carousel", async () => {
+  it("carries the conversion links inside the hero and the search below it", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()] }),
     );
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const carousel = screen.getByRole("region", { name: "Novedades de Plaza Volcanes" });
-    const hero = carousel.closest("section");
-    expect(hero).not.toBeNull();
-    expect(within(hero!).getByRole("link", { name: "Explorar productos" })).toHaveAttribute(
+    const hero = screen.getByRole("region", { name: "Novedades de Plaza Volcanes" });
+    expect(within(hero).getByRole("link", { name: "Explorar productos" })).toHaveAttribute(
       "href",
       "#catalogo",
     );
-    expect(within(hero!).getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
+    expect(within(hero).getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
       "href",
       "/registro",
     );
-    expect(within(hero!).getByRole("search")).toBeInTheDocument();
-    expect(within(hero!).getByRole("navigation", { name: "Categorías de productos" })).toBeInTheDocument();
-    expect(within(carousel).queryByRole("search")).not.toBeInTheDocument();
-    expect(within(carousel).queryByRole("navigation")).not.toBeInTheDocument();
-    expect(within(carousel).queryByRole("link")).not.toBeInTheDocument();
+    expect(within(hero).queryByRole("search")).not.toBeInTheDocument();
+    expect(within(hero).queryByRole("navigation")).not.toBeInTheDocument();
+    expect(screen.getByRole("search")).toBeInTheDocument();
+    expect(
+      screen.getByRole("navigation", { name: "Categorías de productos" }),
+    ).toBeInTheDocument();
   });
 
-  it("carries the same carousel into the cold start home", async () => {
+  it("carries the same hero into the cold start home", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult());
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const carousel = screen.getByRole("region", { name: "Novedades de Plaza Volcanes" });
-    expect(within(carousel).getByRole("heading", { level: 1 })).toHaveTextContent("Bienvenido");
+    const hero = screen.getByRole("region", { name: "Novedades de Plaza Volcanes" });
+    expect(within(hero).getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Encuentra productos únicos cerca de ti.",
+    );
   });
 
   it("keeps the single adaptive hero on a search", async () => {
