@@ -125,15 +125,31 @@ describe("HomeHero", () => {
     expect(dots[1]).toHaveClass("w-[9px]", "bg-line");
   });
 
-  it("reserves three collage slots and hides them from assistive tech", () => {
+  it("frames the three collage photographs and hides them from assistive tech", () => {
     const { container } = render(<HomeHero />);
 
     const collage = container.querySelector('[aria-hidden="true"].grid');
     expect(collage).not.toBeNull();
     expect(collage!.children).toHaveLength(3);
-    expect(collage!.children[0]).toHaveClass("col-span-2", "aspect-[16/10]");
+    expect(collage!.children[0]).toHaveClass("col-span-2", "aspect-[4/3]");
     expect(collage!.children[1]).toHaveClass("aspect-square");
     expect(collage!.children[2]).toHaveClass("aspect-square");
+
+    const photos = collage!.querySelectorAll("img");
+    expect([...photos].map((photo) => photo.getAttribute("alt"))).toEqual(["", "", ""]);
+    expect(photos[0].src).toContain("herogirl.jpg");
+    expect(photos[1].src).toContain("new-items.jpg");
+    expect(photos[2].src).toContain("used-items.jpg");
+  });
+
+  it("stands the cut-out whole in its frame and fills the other two", () => {
+    const { container } = render(<HomeHero />);
+
+    const photos = container.querySelectorAll('[aria-hidden="true"].grid img');
+
+    expect(photos[0]).toHaveClass("object-contain");
+    expect(photos[1]).toHaveClass("object-cover");
+    expect(photos[2]).toHaveClass("object-cover");
   });
 
   it("collapses to one column without a media query", () => {

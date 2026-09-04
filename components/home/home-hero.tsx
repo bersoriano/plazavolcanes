@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 
@@ -33,22 +34,34 @@ const MESSAGES: Message[] = [
 
 const ROTATION_MS = 7_000;
 
-/** The three collage slots, waiting on real photography. */
-const SLOTS = [
-  { key: "puesto", className: "col-span-2 aspect-[16/10]" },
-  { key: "producto", className: "aspect-square" },
-  { key: "vendedora", className: "aspect-square" },
-];
-
 /**
- * The empty state of a photo slot: a hairline hatch on paper, so a missing
- * photograph reads as a reserved frame rather than as a hole in the layout.
+ * The collage: the woman on top, wide, then the two halves of the catalogue
+ * under her. Hers is a cut-out on white, so her frame keeps the white and lets
+ * her stand whole inside it; the two below are photographs and fill theirs.
  */
-const HATCH = {
-  backgroundColor: "#f2ece6",
-  backgroundImage:
-    "repeating-linear-gradient(135deg, rgba(50,23,77,0.08) 0 2px, transparent 2px 12px)",
-};
+const SLOTS = [
+  {
+    key: "vendedora",
+    className: "col-span-2 aspect-[4/3] bg-surface",
+    src: "/herogirl.jpg",
+    fit: "object-contain object-bottom",
+    sizes: "(max-width: 900px) 92vw, 590px",
+  },
+  {
+    key: "nuevos",
+    className: "aspect-square",
+    src: "/new-items.jpg",
+    fit: "object-cover object-center",
+    sizes: "(max-width: 900px) 46vw, 290px",
+  },
+  {
+    key: "usados",
+    className: "aspect-square",
+    src: "/used-items.jpg",
+    fit: "object-cover object-center",
+    sizes: "(max-width: 900px) 46vw, 290px",
+  },
+];
 
 /** One soft wash of accent behind the top-right corner. Nothing louder. */
 const WASH = {
@@ -163,12 +176,22 @@ export function HomeHero() {
         </div>
 
         <div aria-hidden="true" className="grid grid-cols-2 gap-[14px]">
-          {SLOTS.map((slot) => (
+          {SLOTS.map((slot, slotIndex) => (
             <div
-              className={`rounded-[3px] border border-line ${slot.className}`}
+              className={`relative overflow-hidden rounded-[3px] border border-line ${slot.className}`}
               key={slot.key}
-              style={HATCH}
-            />
+            >
+              <Image
+                alt=""
+                className={slot.fit}
+                fill
+                // Only the first frame is above the fold on a phone; the other
+                // two arrive on their own.
+                preload={slotIndex === 0}
+                sizes={slot.sizes}
+                src={slot.src}
+              />
+            </div>
           ))}
         </div>
       </div>
