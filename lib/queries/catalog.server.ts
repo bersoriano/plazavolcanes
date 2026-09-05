@@ -12,7 +12,7 @@ import { escapePostgresLikePattern, normalizeSearchQuery } from "@/lib/queries/c
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { MEDIA_WIDTHS, mediaUrls } from "@/lib/media/url";
+import { MEDIA_VARIANTS, mediaUrls } from "@/lib/media/url";
 import type { PublicTrustMetrics } from "@/lib/public-trust";
 
 export type CatalogProduct = Pick<
@@ -289,7 +289,7 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
       ...productRows.map((product) => product.image_path),
       ...shopRows.map((shop) => shop.image_path),
     ],
-    { width: MEDIA_WIDTHS.card },
+    MEDIA_VARIANTS.card,
   );
   const products = productRows.map((item) =>
     mapProduct(item, normalizedFilters.locale, imageUrls),
@@ -421,10 +421,8 @@ export async function getPublicShop(
     getPublicTrustMetrics(shop.id),
   ]);
   const productRows = (products ?? []) as unknown as ProductQueryRow[];
-  const imageUrls = mediaUrls(productRows.map((product) => product.image_path), {
-    width: MEDIA_WIDTHS.card,
-  });
-  const shopImageUrls = mediaUrls([shop.image_path], { width: MEDIA_WIDTHS.hero });
+  const imageUrls = mediaUrls(productRows.map((product) => product.image_path), MEDIA_VARIANTS.card);
+  const shopImageUrls = mediaUrls([shop.image_path], MEDIA_VARIANTS.hero);
 
   return {
     ...shop,
@@ -469,7 +467,7 @@ export async function getPublicProduct(
     .order("position");
   const imageUrls = mediaUrls(
     [row.image_path, ...(gallery ?? []).map((image) => image.storage_path)],
-    { width: MEDIA_WIDTHS.detail },
+    MEDIA_VARIANTS.detail,
   );
   const product = mapProduct(row, locale, imageUrls);
   const images = (gallery ?? [])

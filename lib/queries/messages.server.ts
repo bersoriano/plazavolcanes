@@ -10,7 +10,7 @@ import {
 import type { ConversationType, ThreadMessage } from "@/lib/queries/messages";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { MEDIA_WIDTHS, mediaUrls } from "@/lib/media/url";
+import { MEDIA_VARIANTS, mediaUrls } from "@/lib/media/url";
 
 type ThreadRow = {
   id: number;
@@ -27,9 +27,7 @@ export async function listConversations(role: InboxRole): Promise<ConversationSu
   const { data, error } = await supabase.rpc("list_conversations", { p_role: role });
   if (error || !data) return [];
   // A conversation shows the product at the size of a stamp.
-  const imageUrls = mediaUrls(data.map((row) => row.product_image_path), {
-    width: MEDIA_WIDTHS.thumbnail,
-  });
+  const imageUrls = mediaUrls(data.map((row) => row.product_image_path), MEDIA_VARIANTS.thumbnail);
 
   return mapConversationRows(data, imageUrls);
 }
