@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { MEDIA_WIDTHS, mediaUrl, mediaUrls } from "@/lib/media/url";
+import { MEDIA_VARIANTS, mediaUrl, mediaUrls } from "@/lib/media/url";
 
 const original = { ...process.env };
 
@@ -76,19 +76,38 @@ describe("mediaUrls", () => {
 });
 
 describe("resized variants", () => {
-  it("asks the store to render the width a surface actually shows", () => {
+  it("asks the store to render the size a surface actually shows", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://abc.supabase.co";
 
-    expect(mediaUrl("products/seller-1/a.jpg", { width: MEDIA_WIDTHS.card })).toBe(
-      "https://abc.supabase.co/storage/v1/render/image/public/catalogo/products/seller-1/a.jpg?width=600&quality=75",
+    expect(mediaUrl("products/seller-1/a.jpg", MEDIA_VARIANTS.card)).toBe(
+      "https://abc.supabase.co/storage/v1/render/image/public/catalogo/products/seller-1/a.jpg?width=600&height=600&resize=contain&quality=75",
     );
+  });
+
+  it("fits the picture inside the box instead of cropping it to fill", () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://abc.supabase.co";
+
+    // A renderer defaults to cropping, and crops on its own when only one
+    // dimension arrives, so both dimensions and the mode go out every time.
+    for (const variant of Object.values(MEDIA_VARIANTS)) {
+      const url = mediaUrl("products/seller-1/a.jpg", variant)!;
+
+      expect(url).toContain("resize=contain");
+      expect(url).toContain(`height=${variant.height}`);
+    }
+  });
+
+  it("squares the box when a variant gives only a width", () => {
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://abc.supabase.co";
+
+    expect(mediaUrl("products/seller-1/a.jpg", { width: 300 })).toContain("width=300&height=300");
   });
 
   it("carries an explicit quality through", () => {
     process.env.NEXT_PUBLIC_SUPABASE_URL = "https://abc.supabase.co";
 
     expect(mediaUrl("products/seller-1/a.jpg", { width: 300, quality: 60 })).toContain(
-      "width=300&quality=60",
+      "quality=60",
     );
   });
 
@@ -107,7 +126,7 @@ describe("resized variants", () => {
     process.env.NEXT_PUBLIC_MEDIA_RESIZE_BASE = "https://img.plazavolcanes.mx/catalogo";
 
     expect(mediaUrl("products/seller-1/a.jpg", { width: 600 })).toBe(
-      "https://img.plazavolcanes.mx/catalogo/products/seller-1/a.jpg?width=600&quality=75",
+      "https://img.plazavolcanes.mx/catalogo/products/seller-1/a.jpg?width=600&height=600&resize=contain&quality=75",
     );
   });
 
