@@ -79,6 +79,10 @@ body {
   --on-brand: #16131a;
   --photo-backdrop: #211c27;
   --premium-text: #e8c777;
+  /* The light theme's deep green all but disappears against obsidian, and the
+     status messages that use it — share confirmations, admin notices — have
+     to stay readable inside a premium shop. */
+  --success: #4ec98c;
   /* `font-display` compiles under @theme inline to `font-family: var(--font-bricolage)`
      directly — the utility never references --font-display at runtime, so redefining
      --font-display here would change nothing. --font-bricolage is the variable the

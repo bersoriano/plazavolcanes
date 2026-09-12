@@ -20,8 +20,11 @@ const instrument = Instrument_Sans({
   display: "swap",
 });
 
-// Bound to --font-display only inside the premium scope, so an ordinary page
-// keeps Bricolage and this face costs it nothing but the stylesheet entry.
+// Loaded as a variable only, not applied here: the premium scope in
+// globals.css swaps it in by overriding --font-bricolage, the variable the
+// compiled `font-display` utility actually reads. An ordinary page never
+// touches --font-bricolage, so it keeps Bricolage and this face costs it
+// nothing but the stylesheet entry.
 const fraunces = Fraunces({
   variable: "--font-fraunces-variable",
   subsets: ["latin"],

@@ -19,13 +19,17 @@ describe("PremiumScope", () => {
   });
 
   it("leaves an ordinary shop in the ordinary theme", () => {
-    render(
+    const { container } = render(
       <PremiumScope premium={false}>
         <p>Casa Niebla</p>
       </PremiumScope>,
     );
 
     expect(screen.getByText("Casa Niebla").closest("[data-theme]")).toBeNull();
+    // No wrapper element at all, not merely an unstyled one: the paragraph
+    // itself is the container's first (and only) child.
+    expect(container.firstChild).toBe(screen.getByText("Casa Niebla"));
+    expect(container.querySelector("div")).toBeNull();
   });
 
   it("keeps extra layout classes the caller needs on the scope", () => {
