@@ -13,7 +13,7 @@ import { getShopTrustDashboard } from "@/lib/queries/trust.server";
 import { organizeCatalog, parseCatalogTab } from "@/lib/seller-catalog";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { MEDIA_WIDTHS, mediaUrls } from "@/lib/media/url";
+import { MEDIA_VARIANTS, mediaUrls } from "@/lib/media/url";
 
 export default async function ShopCatalogPage({
   params,
@@ -55,9 +55,9 @@ export default async function ShopCatalogPage({
   // honest, since a listing's real state is not the `status` column alone.
   const { visible, counts } = organizeCatalog(listings, shop, { tab, search });
 
-  const imageUrls = mediaUrls([...visible.map((product) => product.image_path)], {
-    width: MEDIA_WIDTHS.thumbnail,
-  });
+  // The shop's own picture is no longer asked for here: it belongs to the form
+  // in /ajustes, which fetches it there.
+  const imageUrls = mediaUrls(visible.map((product) => product.image_path), MEDIA_VARIANTS.thumbnail);
   const trustDashboard = await getShopTrustDashboard(shopId);
   const isFiltered = tab !== "todos" || search.trim() !== "";
 

@@ -12,19 +12,26 @@ const SUPABASE_RENDER_PREFIX = "/storage/v1/render/image/public";
 
 const DEFAULT_QUALITY = 75;
 
+/** Fit the picture inside the box. The other modes crop or distort it. */
+const RESIZE_MODE = "contain";
+
 /**
  * What each surface actually needs, at roughly twice its layout size so the
  * result still looks right on a dense screen. Nothing decodes on the device to
  * produce these: the object store renders them on the way out.
+ *
+ * Each one is a square box the picture has to fit inside, not a shape it is cut
+ * to. A seller's photograph keeps whatever proportions it was taken at, and the
+ * box only bounds its longest edge.
  */
-export const MEDIA_WIDTHS = {
-  thumbnail: 300,
-  card: 600,
-  hero: 1200,
-  detail: 1400,
+export const MEDIA_VARIANTS = {
+  thumbnail: { width: 300, height: 300 },
+  card: { width: 600, height: 600 },
+  hero: { width: 1200, height: 1200 },
+  detail: { width: 1400, height: 1400 },
 } as const;
 
-export type MediaVariant = { width: number; quality?: number };
+export type MediaVariant = { width: number; height?: number; quality?: number };
 
 function trimmed(value: string | undefined) {
   const text = value?.trim();
@@ -57,6 +64,12 @@ function encodeKey(key: string) {
 /**
  * A variant asks the store for a resized rendition. Where none is configured
  * the original is served instead, which is correct but heavier — never broken.
+ *
+ * Both dimensions and `contain` are sent every time. A renderer given one
+ * dimension crops to reach it, and a renderer given two crops by default, so
+ * either omission returns a picture with its edges cut off. Weight comes off
+ * through scale and quality instead, which is lossy but never removes what the
+ * seller photographed.
  */
 export function mediaUrl(key: string, variant?: MediaVariant) {
   if (variant) {
@@ -64,6 +77,8 @@ export function mediaUrl(key: string, variant?: MediaVariant) {
     if (base) {
       const query = new URLSearchParams({
         width: String(variant.width),
+        height: String(variant.height ?? variant.width),
+        resize: RESIZE_MODE,
         quality: String(variant.quality ?? DEFAULT_QUALITY),
       });
 

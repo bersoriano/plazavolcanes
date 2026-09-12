@@ -13,7 +13,7 @@ import { PICKUP_POINT_READ_ERROR } from "@/lib/queries/checkout";
 import { getOwnedShop } from "@/lib/queries/shops.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { MEDIA_WIDTHS, mediaUrls } from "@/lib/media/url";
+import { MEDIA_VARIANTS, mediaUrls } from "@/lib/media/url";
 
 export default async function ShopSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   if (!isSupabaseConfigured()) redirect("/panel");
@@ -32,7 +32,7 @@ export default async function ShopSettingsPage({ params }: { params: Promise<{ i
     .maybeSingle();
   if (pickupPointError) throw new Error(PICKUP_POINT_READ_ERROR);
 
-  const imageUrls = mediaUrls([shop.image_path], { width: MEDIA_WIDTHS.thumbnail });
+  const imageUrls = mediaUrls([shop.image_path], MEDIA_VARIANTS.thumbnail);
   const updateAction = updateShop.bind(null, shopId);
   const deleteAction = deleteShop.bind(null, shopId);
   const deliveryPolicyAction = updateDeliveryPolicy.bind(null, shopId);

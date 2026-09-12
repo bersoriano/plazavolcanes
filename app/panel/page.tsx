@@ -5,7 +5,7 @@ import { ShopCard } from "@/components/shops/shop-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { MEDIA_WIDTHS, mediaUrls } from "@/lib/media/url";
+import { MEDIA_VARIANTS, mediaUrls } from "@/lib/media/url";
 
 export default async function PanelPage() {
   if (!isSupabaseConfigured()) return null;
@@ -25,9 +25,7 @@ export default async function PanelPage() {
   const shopCount = typeof count === "number" ? count : (shops?.length ?? 0);
   const canCreateShop = shopCount < shopLimit;
   const limitLabel = `${shopLimit} ${shopLimit === 1 ? "tienda" : "tiendas"}`;
-  const imageUrls = mediaUrls((shops ?? []).map((shop) => shop.image_path), {
-    width: MEDIA_WIDTHS.card,
-  });
+  const imageUrls = mediaUrls((shops ?? []).map((shop) => shop.image_path), MEDIA_VARIANTS.card);
 
   return (
     <section className="mx-auto max-w-[1200px] px-5 py-10 sm:px-8 sm:py-14">
