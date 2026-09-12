@@ -14,6 +14,9 @@
   --photo-backdrop: #eee8e1;
   --sale: #f05d4e;
   --success: #19734c;
+  --premium-gold: #e8c777;
+  --premium-ink: #16131a;
+  --premium-text: #6f5412;
 }
 
 @theme inline {
@@ -30,6 +33,9 @@
   --color-photo-backdrop: var(--photo-backdrop);
   --color-sale: var(--sale);
   --color-success: var(--success);
+  --color-premium-gold: var(--premium-gold);
+  --color-premium-ink: var(--premium-ink);
+  --color-premium-text: var(--premium-text);
   --font-sans: var(--font-instrument);
   --font-display: var(--font-bricolage);
 }
@@ -50,6 +56,60 @@ body {
   color: var(--text);
   font-family: var(--font-instrument), Arial, sans-serif;
   text-rendering: optimizeLegibility;
+}
+
+/*
+ * A distinguished shop's own room.
+ *
+ * Nothing here restyles a component: the same tokens every component already
+ * reads are given different values inside the scope, so the whole subtree turns
+ * obsidian and gold at once. The site's header and footer stay outside it, so
+ * the marketplace still reads as one place.
+ */
+[data-theme="premium"] {
+  --background: #0f0d12;
+  --surface: #16131a;
+  --surface-raised: #1e1a24;
+  --text: #f5f1ea;
+  --text-muted: #a9a0b0;
+  --border: #3a3142;
+  --brand: #e8c777;
+  --brand-hover: #f2d894;
+  --accent: #e8c777;
+  --on-brand: #16131a;
+  --photo-backdrop: #211c27;
+  --premium-text: #e8c777;
+  /* `font-display` compiles under @theme inline to `font-family: var(--font-bricolage)`
+     directly — the utility never references --font-display at runtime, so redefining
+     --font-display here would change nothing. --font-bricolage is the variable the
+     compiled rule actually reads, so it is the one this scope has to override. */
+  --font-bricolage: var(--font-fraunces-variable);
+
+  color: var(--text);
+}
+
+/* The site's focus ring pairs an aubergine outline with a lime shadow, and
+   aubergine is invisible on obsidian. Gold carries the same two-tone ring. */
+[data-theme="premium"] :where(a, button, input, textarea, select):focus-visible {
+  box-shadow: 0 0 0 3px var(--surface);
+  outline: 3px solid var(--brand);
+}
+
+[data-theme="premium"] ::selection {
+  background: var(--brand);
+  color: var(--premium-ink);
+}
+
+/* A hairline that reads as metal rather than as a border. */
+@utility gold-rule {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--premium-gold) 18%,
+    var(--premium-gold) 82%,
+    transparent
+  );
 }
 
 ::selection {
