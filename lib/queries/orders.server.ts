@@ -6,6 +6,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { mapOrderDetailRow, type OrderDetailRow } from "@/lib/queries/orders";
 
 import type { CartDetail, OrderDetail, OrderSummary } from "@/lib/queries/orders.types";
+import { MEDIA_VARIANTS, mediaUrls } from "@/lib/media/url";
 
 export type { CartDetail, OrderSummary, OrderDetail } from "@/lib/queries/orders.types";
 
@@ -23,7 +24,7 @@ export async function getCart(shopId: number): Promise<CartDetail | null> {
   const { supabase, userId } = context;
   const { data } = await supabase
     .from("carts")
-    .select("id, shops!inner(id, name, slug), cart_items(id, product_id, quantity, products(id, name, price_mxn, image_path))")
+    .select("id, shops!inner(id, name, slug), cart_items(id, product_id, quantity, products(id, name, price_mxn, image_path, units_available, currency_code))")
     .eq("buyer_id", userId)
     .eq("shop_id", shopId)
     .maybeSingle();
@@ -35,14 +36,28 @@ export async function getCart(shopId: number): Promise<CartDetail | null> {
       id: number;
       product_id: number;
       quantity: number;
-      products: CartDetail["items"][number]["product"];
+      products: Omit<NonNullable<CartDetail["items"][number]["product"]>, "image_url"> | null;
     }[];
   };
+  // Resolved here rather than in the page: the cart is the surface where a
+  // buyer checks they picked the right thing, so a row without its picture is
+  // an incomplete cart rather than a page-level styling choice.
+  const imageUrls = mediaUrls(
+    row.cart_items.map((item) => item.products?.image_path),
+    MEDIA_VARIANTS.thumbnail,
+  );
   const items = row.cart_items.map((item) => ({
     id: item.id,
     productId: item.product_id,
     quantity: item.quantity,
-    product: item.products,
+    product: item.products
+      ? {
+          ...item.products,
+          image_url: item.products.image_path
+            ? (imageUrls.get(item.products.image_path) ?? null)
+            : null,
+        }
+      : null,
   }));
   return {
     id: row.id,

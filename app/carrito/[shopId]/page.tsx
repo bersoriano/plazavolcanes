@@ -14,12 +14,16 @@ import { openConversation } from "@/lib/actions/start-conversation";
 import { getPublicShop } from "@/lib/queries/catalog.server";
 import { fetchBuyerProfile, fetchCartThreads, fetchPickupPoint } from "@/lib/queries/checkout.server";
 import { getCart } from "@/lib/queries/orders.server";
+import { requireSignedIn } from "@/lib/require-signed-in.server";
 import { formatShopLocation } from "@/lib/shop-location";
 
 export default async function CartPage({ params }: { params: Promise<{ shopId: string }> }) {
   const { shopId: rawShopId } = await params;
   const shopId = Number(rawShopId);
   if (!Number.isSafeInteger(shopId) || shopId < 1) notFound();
+  // A signed-in buyer with nothing in this cart still gets the empty state
+  // below; only a missing session is turned away.
+  await requireSignedIn(`/carrito/${shopId}`);
 
   const cart = await getCart(shopId);
   const backHref = cart ? `/tiendas/${cart.shop.slug}` : "/";

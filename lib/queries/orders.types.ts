@@ -7,7 +7,16 @@ export type CartDetail = {
     id: number;
     productId: number;
     quantity: number;
-    product: { id: number; name: string; price_mxn: number; image_path: string | null } | null;
+    product: {
+      id: number;
+      name: string;
+      price_mxn: number;
+      image_path: string | null;
+      /** Resolved by the page; the query only knows the storage path. */
+      image_url: string | null;
+      units_available: number;
+      currency_code: string;
+    } | null;
   }[];
   subtotal: number;
 };
