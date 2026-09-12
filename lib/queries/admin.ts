@@ -17,6 +17,7 @@ export type AdminMarketplaceRpcRow = {
   shop_slug: string | null;
   shop_created_at: string | null;
   shop_is_publishing_approved: boolean | null;
+  shop_is_premium: boolean | null;
   product_id: number | null;
   product_name: string | null;
   product_slug: string | null;
@@ -59,6 +60,7 @@ export type AdminMarketplaceShop = {
   slug: string;
   createdAt: string;
   isPublishingApproved: boolean;
+  isPremium: boolean;
   products: AdminMarketplaceProduct[];
 };
 
@@ -113,6 +115,7 @@ export function mapAdminMarketplaceUsers(
         slug: row.shop_slug,
         createdAt: row.shop_created_at,
         isPublishingApproved: row.shop_is_publishing_approved,
+        isPremium: row.shop_is_premium ?? false,
         products: [],
       };
       shopsByKey.set(shopKey, shop);

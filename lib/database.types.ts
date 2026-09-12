@@ -419,6 +419,9 @@ export type Database = {
           id: number;
           image_path: string | null;
           is_publishing_approved: boolean;
+          is_premium: boolean;
+          premium_granted_at: string | null;
+          premium_granted_by: string | null;
           publishing_reviewed_at: string | null;
           listing_limit: number;
           name: string;
@@ -439,6 +442,9 @@ export type Database = {
           id?: never;
           image_path?: string | null;
           is_publishing_approved?: boolean;
+          is_premium?: boolean;
+          premium_granted_at?: string | null;
+          premium_granted_by?: string | null;
           publishing_reviewed_at?: string | null;
           listing_limit?: number;
           name: string;
@@ -459,6 +465,9 @@ export type Database = {
           id?: never;
           image_path?: string | null;
           is_publishing_approved?: boolean;
+          is_premium?: boolean;
+          premium_granted_at?: string | null;
+          premium_granted_by?: string | null;
           publishing_reviewed_at?: string | null;
           listing_limit?: number;
           name?: string;
@@ -665,6 +674,10 @@ export type Database = {
         Args: { p_shop_id: number; p_enabled: boolean };
         Returns: { shop_id: number; shop_slug: string; product_slugs: string[] }[];
       };
+      set_shop_premium: {
+        Args: { p_shop_id: number; p_enabled: boolean };
+        Returns: { shop_id: number; shop_slug: string; product_slugs: string[] }[];
+      };
       set_product_admin_enabled: {
         Args: { p_product_id: number; p_enabled: boolean };
         Returns: { product_id: number; product_slug: string; shop_id: number; shop_slug: string }[];
@@ -686,6 +699,7 @@ export type Database = {
           shop_slug: string | null;
           shop_created_at: string | null;
           shop_is_publishing_approved: boolean | null;
+          shop_is_premium: boolean | null;
           product_id: number | null;
           product_name: string | null;
           product_slug: string | null;

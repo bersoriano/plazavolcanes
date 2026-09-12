@@ -54,6 +54,7 @@ describe("mapAdminMarketplaceUsers", () => {
             slug: "taller-volcan",
             createdAt: "2026-08-04T00:00:00.000Z",
             isPublishingApproved: true,
+            isPremium: false,
             products: [
               {
                 id: 20,
@@ -82,6 +83,14 @@ describe("mapAdminMarketplaceUsers", () => {
         ],
       },
     ]);
+  });
+
+  it("carries the premium distinction onto each mapped shop", () => {
+    const [user] = mapAdminMarketplaceUsers([
+      { ...base, shop_is_premium: true },
+    ]);
+
+    expect(user.shops[0].isPremium).toBe(true);
   });
 
   it("derives the effective administrative state from every publication gate", () => {

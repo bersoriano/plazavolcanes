@@ -30,7 +30,7 @@ export type CatalogProduct = Pick<
   category_id?: Product["category_id"];
   currency_code?: Product["currency_code"];
   imageUrl: string | null;
-  shop: Pick<Shop, "name" | "slug" | "country_code" | "trust_tier"> & {
+  shop: Pick<Shop, "name" | "slug" | "country_code" | "trust_tier" | "is_premium"> & {
     administrative_area_codes: string[];
   };
 };
@@ -38,7 +38,7 @@ export type CatalogProduct = Pick<
 export type CatalogShop = Shop & { imageUrl: string | null };
 
 const productSelection =
-  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, is_admin_enabled, expires_at, shops!inner(id, owner_id, name, slug, country_code, administrative_area_codes, trust_tier, is_publishing_approved), product_translations(locale, name, description, review_status)";
+  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, is_admin_enabled, expires_at, shops!inner(id, owner_id, name, slug, country_code, administrative_area_codes, trust_tier, is_publishing_approved, is_premium), product_translations(locale, name, description, review_status)";
 
 type ProductQueryRow = {
   id: number;
@@ -64,6 +64,7 @@ type ProductQueryRow = {
     administrative_area_codes: string[] | null;
     trust_tier: Shop["trust_tier"];
     is_publishing_approved: boolean;
+    is_premium: boolean;
   };
   product_translations: {
     locale: CatalogLocale;
@@ -104,6 +105,7 @@ function mapProduct(
       country_code: item.shops.country_code,
       administrative_area_codes: item.shops.administrative_area_codes ?? [],
       trust_tier: item.shops.trust_tier,
+      is_premium: item.shops.is_premium,
     },
   };
 }

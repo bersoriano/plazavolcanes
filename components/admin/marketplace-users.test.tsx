@@ -48,6 +48,7 @@ describe("MarketplaceUsers", () => {
                 slug: "taller-volcan",
                 createdAt: "2026-08-02T00:00:00.000Z",
                 isPublishingApproved: true,
+                isPremium: false,
                 products: [
                   {
                     id: 11,
@@ -79,6 +80,7 @@ describe("MarketplaceUsers", () => {
                 slug: "bodega-volcan",
                 createdAt: "2026-08-07T00:00:00.000Z",
                 isPublishingApproved: false,
+                isPremium: false,
                 products: [],
               },
             ],
@@ -175,6 +177,7 @@ describe("MarketplaceUsers", () => {
                 slug: "taller-volcan",
                 createdAt: "2026-08-02T00:00:00.000Z",
                 isPublishingApproved: false,
+                isPremium: false,
                 products: [],
               },
             ],
@@ -217,6 +220,7 @@ describe("MarketplaceUsers", () => {
                 slug: "taller-volcan",
                 createdAt: "2026-08-02T00:00:00.000Z",
                 isPublishingApproved: true,
+                isPremium: false,
                 products: [],
               },
             ],
@@ -254,6 +258,7 @@ describe("MarketplaceUsers", () => {
                 slug: "taller-volcan",
                 createdAt: "2026-08-02T00:00:00.000Z",
                 isPublishingApproved: true,
+                isPremium: false,
                 products: [],
               },
             ],
@@ -292,6 +297,7 @@ describe("MarketplaceUsers", () => {
                 slug: "taller-volcan",
                 createdAt: "2026-08-02T00:00:00.000Z",
                 isPublishingApproved: false,
+                isPremium: false,
                 products: [],
               },
             ],
@@ -327,6 +333,7 @@ describe("MarketplaceUsers", () => {
                 slug: "taller-volcan",
                 createdAt: "2026-08-02T00:00:00.000Z",
                 isPublishingApproved: false,
+                isPremium: false,
                 products: [
                   {
                     id: 11,
@@ -387,6 +394,7 @@ describe("MarketplaceUsers", () => {
             slug: "taller-volcan",
             createdAt: "2026-08-02T00:00:00.000Z",
             isPublishingApproved: true,
+            isPremium: false,
             products: [{
               id: 11,
               name: "Taza de barro",
