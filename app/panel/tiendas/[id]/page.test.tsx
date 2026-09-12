@@ -1,7 +1,8 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import ShopManagePage from "@/app/panel/tiendas/[id]/page";
+import ShopCatalogPage from "@/app/panel/tiendas/[id]/page";
+import { getOwnedShop } from "@/lib/queries/shops.server";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 vi.mock("next/navigation", () => ({
@@ -10,256 +11,166 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: () => true }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: vi.fn() }));
+vi.mock("@/lib/queries/shops.server", () => ({ getOwnedShop: vi.fn() }));
 vi.mock("@/lib/queries/trust.server", () => ({ getShopTrustDashboard: vi.fn().mockResolvedValue(null) }));
-vi.mock("@/lib/actions/shops", () => ({
-  deleteShop: vi.fn(),
-  updateShop: vi.fn(),
-  updateDeliveryPolicy: vi.fn(),
-}));
-vi.mock("@/components/shops/shop-form", () => ({ ShopForm: () => null }));
-
-let deliveryPolicyProps: Record<string, unknown> = {};
-vi.mock("@/components/shops/delivery-policy-form", () => ({
-  DeliveryPolicyForm: (props: Record<string, unknown>) => {
-    deliveryPolicyProps = props;
-    return null;
-  },
-}));
+vi.mock("@/lib/actions/products", () => ({ deleteProduct: vi.fn(), setProductStatus: vi.fn() }));
 
 afterEach(cleanup);
 
-function chained(result: unknown) {
-  const query = {
-    select: vi.fn(),
-    eq: vi.fn(),
-    neq: vi.fn(),
-    order: vi.fn(),
-    maybeSingle: vi.fn(),
-  };
+const FAR_FUTURE = "2099-01-01T00:00:00.000Z";
+const LONG_AGO = "2020-01-01T00:00:00.000Z";
+
+const SHOP = {
+  id: 4,
+  owner_id: "seller-1",
+  name: "Casa Niebla",
+  slug: "casa-niebla",
+  image_path: null,
+  is_publishing_approved: true,
+  publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
+};
+
+const CATALOGUE = [
+  { id: 1, name: "Taza de barro", price_mxn: 480, image_path: null, status: "published", expires_at: FAR_FUTURE, is_admin_enabled: true },
+  { id: 2, name: "Jarra negra", price_mxn: 720, image_path: null, status: "draft", expires_at: null, is_admin_enabled: true },
+  { id: 3, name: "Molcajete", price_mxn: 950, image_path: null, status: "published", expires_at: LONG_AGO, is_admin_enabled: true },
+];
+
+function mockCatalogue(products: unknown[] = CATALOGUE) {
+  const query = { select: vi.fn(), eq: vi.fn(), neq: vi.fn(), order: vi.fn() };
   query.select.mockReturnValue(query);
   query.eq.mockReturnValue(query);
   query.neq.mockReturnValue(query);
-  query.order.mockResolvedValue(result);
-  query.maybeSingle.mockResolvedValue(result);
+  query.order.mockResolvedValue({ data: products, error: null });
+
+  vi.mocked(createServerSupabaseClient).mockResolvedValue({
+    from: vi.fn().mockReturnValue(query),
+  } as never);
   return query;
 }
 
-describe("seller pickup point read", () => {
-  it("does not render an unchecked form when the pickup SELECT fails", async () => {
-    const shopQuery = chained({
-      data: {
-        id: 4,
-        owner_id: "seller-1",
-        name: "Casa Niebla",
-        slug: "casa-niebla",
-        description: "Objetos hechos en un taller al pie del volcán.",
-        image_path: null,
-        country_code: "MX",
-        administrative_area_codes: ["MX-JAL"],
-      },
-      error: null,
-    });
-    const pickupQuery = chained({
-      data: null,
-      error: { message: "connection reset" },
-    });
-    const productsQuery = chained({ data: [], error: null });
+function renderCatalog(searchParams: Record<string, string> = {}) {
+  return ShopCatalogPage({
+    params: Promise.resolve({ id: "4" }),
+    searchParams: Promise.resolve(searchParams),
+  });
+}
 
-    vi.mocked(createServerSupabaseClient).mockResolvedValue({
-      auth: { getClaims: vi.fn().mockResolvedValue({ data: { claims: { sub: "seller-1" } } }) },
-      from: vi.fn((table: string) => {
-        if (table === "shops") return shopQuery;
-        if (table === "shop_pickup_points") return pickupQuery;
-        return productsQuery;
-      }),
-    } as never);
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.mocked(getOwnedShop).mockResolvedValue(SHOP as never);
+  mockCatalogue();
+});
 
-    await expect(
-      ShopManagePage({ params: Promise.resolve({ id: "4" }) }),
-    ).rejects.toThrow("No pudimos consultar el punto de recolección.");
+describe("shop ownership", () => {
+  it("refuses a shop the signed-in user does not own", async () => {
+    vi.mocked(getOwnedShop).mockResolvedValue(null);
+
+    await expect(renderCatalog()).rejects.toThrow("NOT_FOUND");
   });
 
-  it.each([
-    [null, "Esperando aprobación de administración"],
-    ["2026-08-29T00:00:00.000Z", "Tienda deshabilitada por administración"],
-  ] as const)("renders a reviewed-at %s shop with effective state %s", async (publishingReviewedAt, label) => {
-    const shopQuery = chained({
-      data: {
-        id: 4,
-        owner_id: "seller-1",
-        name: "Casa Niebla",
-        slug: "casa-niebla",
-        description: "Objetos hechos en un taller al pie del volcán.",
-        image_path: null,
-        country_code: "MX",
-        administrative_area_codes: ["MX-JAL"],
-        is_publishing_approved: false,
-        publishing_reviewed_at: publishingReviewedAt,
-      },
-      error: null,
-    });
-    const pickupQuery = chained({ data: null, error: null });
-    const productsQuery = chained({
-      data: [{
-        id: 9,
-        name: "Taza de barro",
-        price_mxn: 480,
-        image_path: null,
-        status: "published",
-        expires_at: null,
-        is_admin_enabled: true,
-      }],
-      error: null,
-    });
-
-    vi.mocked(createServerSupabaseClient).mockResolvedValue({
-      auth: { getClaims: vi.fn().mockResolvedValue({ data: { claims: { sub: "seller-1" } } }) },
-      from: vi.fn((table: string) => {
-        if (table === "shops") return shopQuery;
-        if (table === "shop_pickup_points") return pickupQuery;
-        return productsQuery;
+  it("refuses an id that is not a shop id", async () => {
+    await expect(
+      ShopCatalogPage({
+        params: Promise.resolve({ id: "abc" }),
+        searchParams: Promise.resolve({}),
       }),
-    } as never);
-
-    render(await ShopManagePage({ params: Promise.resolve({ id: "4" }) }));
-
-    expect(productsQuery.select).toHaveBeenCalledWith("id, name, price_mxn, image_path, status, expires_at, is_admin_enabled");
-    expect(screen.getByText(label)).toBeInTheDocument();
+    ).rejects.toThrow("NOT_FOUND");
   });
 });
 
-describe("shop workspace layout", () => {
-  function renderShop() {
-    const shopQuery = chained({
-      data: {
-        id: 4,
-        owner_id: "seller-1",
-        name: "Casa Niebla",
-        slug: "casa-niebla",
-        description: "Objetos hechos en un taller al pie del volcán.",
-        image_path: null,
-        country_code: "MX",
-        administrative_area_codes: ["MX-JAL"],
-        is_publishing_approved: true,
-        publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
-      },
-      error: null,
-    });
-    const pickupQuery = chained({ data: null, error: null });
-    const productsQuery = chained({ data: [], error: null });
-
-    vi.mocked(createServerSupabaseClient).mockResolvedValue({
-      auth: { getClaims: vi.fn().mockResolvedValue({ data: { claims: { sub: "seller-1" } } }) },
-      from: vi.fn((table: string) => {
-        if (table === "shops") return shopQuery;
-        if (table === "shop_pickup_points") return pickupQuery;
-        return productsQuery;
-      }),
-    } as never);
-
-    return ShopManagePage({ params: Promise.resolve({ id: "4" }) });
-  }
-
+describe("the catalogue owns the page", () => {
   it("names the page after the shop", async () => {
-    render(await renderShop());
+    render(await renderCatalog());
 
     expect(screen.getByRole("heading", { level: 1, name: "Casa Niebla" })).toBeInTheDocument();
   });
 
-  it("puts the catalogue ahead of the shop settings", async () => {
-    // Adding and checking listings is the daily errand; the shop's own details
-    // are edited once in a while, so the catalogue reads first and sits left.
-    render(await renderShop());
+  it("leaves the shop settings to their own view", async () => {
+    // Settings used to take half the width here for edits made once in a
+    // while. Nothing but a link to them belongs on the catalogue.
+    render(await renderCatalog());
 
-    const catalogue = screen.getByRole("heading", { level: 2, name: "Productos" });
-    const settings = screen.getByRole("heading", { level: 2, name: "Editar tienda" });
-
-    expect(catalogue.compareDocumentPosition(settings)).toBe(
-      Node.DOCUMENT_POSITION_FOLLOWING,
+    expect(screen.queryByRole("heading", { name: "Editar tienda" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ajustes" })).toHaveAttribute(
+      "href",
+      "/panel/tiendas/4/ajustes",
     );
   });
 
-  it("folds the shop settings away until they are asked for", async () => {
-    render(await renderShop());
+  it("lists every product on the default view", async () => {
+    render(await renderCatalog());
 
-    const settings = screen
-      .getByRole("heading", { level: 2, name: "Editar tienda" })
-      .closest("details");
-
-    expect(settings).toHaveClass("disclosure-mobile");
-    // Closed in the markup: a phone opens it on a tap, a wide screen shows it
-    // anyway, so the panel never depends on JavaScript to be reachable.
-    expect(settings).not.toHaveAttribute("open");
-    expect(settings?.querySelector("summary")).toHaveTextContent("Editar tienda");
+    expect(screen.getByText("Taza de barro")).toBeInTheDocument();
+    expect(screen.getByText("Jarra negra")).toBeInTheDocument();
+    expect(screen.getByText("Molcajete")).toBeInTheDocument();
   });
 
-  it("keeps the delete confirmation inside the settings panel", async () => {
-    render(await renderShop());
+  it("counts the buckets from what the seller actually sees", async () => {
+    // "Molcajete" is status published with a date long gone. It has to be
+    // counted as expired, which is the state its badge already reports.
+    render(await renderCatalog());
 
-    const settings = screen
-      .getByRole("heading", { level: 2, name: "Editar tienda" })
-      .closest("details");
+    const tabs = screen.getByRole("navigation", { name: "Estado de las publicaciones" });
 
-    expect(within(settings as HTMLElement).getByText("Eliminar tienda")).toBeInTheDocument();
+    expect(within(tabs).getByRole("link", { name: "Todos 3" })).toBeInTheDocument();
+    expect(within(tabs).getByRole("link", { name: "Publicados 1" })).toBeInTheDocument();
+    expect(within(tabs).getByRole("link", { name: "Borradores 1" })).toBeInTheDocument();
+    expect(within(tabs).getByRole("link", { name: "Vencidos 1" })).toBeInTheDocument();
   });
 });
 
-describe("delivery policy panel", () => {
-  function renderShopWith(policy: string | null, policyUpdatedAt: string | null) {
-    deliveryPolicyProps = {};
-    const shopQuery = chained({
-      data: {
-        id: 4,
-        owner_id: "seller-1",
-        name: "Casa Niebla",
-        slug: "casa-niebla",
-        description: "Objetos hechos en un taller al pie del volcán.",
-        image_path: null,
-        country_code: "MX",
-        administrative_area_codes: ["MX-JAL"],
-        is_publishing_approved: true,
-        publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
-        delivery_policy: policy,
-        delivery_policy_updated_at: policyUpdatedAt,
-      },
-      error: null,
-    });
-    const pickupQuery = chained({ data: null, error: null });
-    const productsQuery = chained({ data: [], error: null });
+describe("filtering the catalogue", () => {
+  it("shows only the chosen state", async () => {
+    render(await renderCatalog({ estado: "borradores" }));
 
-    vi.mocked(createServerSupabaseClient).mockResolvedValue({
-      auth: { getClaims: vi.fn().mockResolvedValue({ data: { claims: { sub: "seller-1" } } }) },
-      from: vi.fn((table: string) => {
-        if (table === "shops") return shopQuery;
-        if (table === "shop_pickup_points") return pickupQuery;
-        return productsQuery;
-      }),
-    } as never);
-
-    return ShopManagePage({ params: Promise.resolve({ id: "4" }) });
-  }
-
-  it("opens the field for a shop that never wrote a policy", async () => {
-    render(await renderShopWith(null, null));
-
-    expect(deliveryPolicyProps.policy).toBe("");
-    expect(deliveryPolicyProps.unlocksAt).toBeNull();
+    expect(screen.getByText("Jarra negra")).toBeInTheDocument();
+    expect(screen.queryByText("Taza de barro")).not.toBeInTheDocument();
   });
 
-  it("shuts the field for a shop that wrote one this month", async () => {
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    render(await renderShopWith("Entrego los sábados.", yesterday.toISOString()));
+  it("narrows the list to a search", async () => {
+    render(await renderCatalog({ buscar: "molca" }));
 
-    expect(deliveryPolicyProps.policy).toBe("Entrego los sábados.");
-    expect(deliveryPolicyProps.unlocksAt).toBe(
-      new Date(yesterday.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    expect(screen.getByText("Molcajete")).toBeInTheDocument();
+    expect(screen.queryByText("Taza de barro")).not.toBeInTheDocument();
+  });
+
+  it("keeps every count whole while a filter is on", async () => {
+    render(await renderCatalog({ estado: "borradores" }));
+
+    const tabs = screen.getByRole("navigation", { name: "Estado de las publicaciones" });
+
+    expect(within(tabs).getByRole("link", { name: "Todos 3" })).toBeInTheDocument();
+  });
+
+  it("offers a way out when a filter matches nothing", async () => {
+    // A dead end here looks like a lost catalogue. The empty state has to say
+    // the filter is why, and undo it in one tap.
+    render(await renderCatalog({ estado: "vencidos", buscar: "taza" }));
+
+    expect(screen.getByText("Sin resultados")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver todos los productos" })).toHaveAttribute(
+      "href",
+      "/panel/tiendas/4",
     );
   });
+});
 
-  it("opens the field again once the month has passed", async () => {
-    const longAgo = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000);
-    render(await renderShopWith("Entrego los sábados.", longAgo.toISOString()));
+describe("an empty catalogue", () => {
+  it("invites the first product instead of blaming a filter", async () => {
+    mockCatalogue([]);
 
-    expect(deliveryPolicyProps.unlocksAt).toBeNull();
+    render(await renderCatalog());
+
+    expect(screen.getByText("Catálogo vacío")).toBeInTheDocument();
+    expect(screen.queryByText("Sin resultados")).not.toBeInTheDocument();
+  });
+});
+
+describe("confianza", () => {
+  it("stays out of the catalogue's way when there is no dashboard", async () => {
+    render(await renderCatalog());
+
+    expect(screen.queryByText("Confianza")).not.toBeInTheDocument();
   });
 });

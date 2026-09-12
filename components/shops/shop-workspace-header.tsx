@@ -1,0 +1,76 @@
+import Link from "next/link";
+import { ArrowLeft, ExternalLink, PackageOpen } from "lucide-react";
+
+type WorkspaceView = "catalogo" | "ajustes";
+
+const VIEWS: { id: WorkspaceView; label: string; segment: string }[] = [
+  { id: "catalogo", label: "Catálogo", segment: "" },
+  { id: "ajustes", label: "Ajustes", segment: "/ajustes" },
+];
+
+/**
+ * The lid on both halves of a shop's workspace.
+ *
+ * The catalogue and the settings are separate routes so neither crowds the
+ * other, and this header is what keeps them feeling like one place: same name,
+ * same two tabs, same way out to the public shop and to the day's orders.
+ */
+export function ShopWorkspaceHeader({
+  active,
+  shopId,
+  shopName,
+  shopSlug,
+}: {
+  active: WorkspaceView;
+  shopId: number;
+  shopName: string;
+  shopSlug: string;
+}) {
+  return (
+    <header className="mb-7">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <Link className="tap inline-flex items-center gap-2 text-sm font-semibold text-brand" href="/panel">
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          Mis tiendas
+        </Link>
+        <div className="flex flex-wrap items-center gap-x-4">
+          <Link className="tap inline-flex items-center gap-2 text-sm font-semibold text-brand" href="/panel/pedidos">
+            <PackageOpen aria-hidden="true" className="size-4" />
+            Pedidos
+          </Link>
+          <Link className="tap inline-flex items-center gap-2 text-sm font-semibold text-brand" href={`/tiendas/${shopSlug}`}>
+            <ExternalLink aria-hidden="true" className="size-4" />
+            Ver tienda pública
+          </Link>
+        </div>
+      </div>
+
+      <p className="mt-4 text-sm font-semibold uppercase tracking-[0.16em] text-brand">Tu tienda</p>
+      <h1 className="mt-1 font-display text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">{shopName}</h1>
+
+      {/* Underlined tabs rather than pills: the catalogue's own filters are
+          pills, and two rows of pills would read as one flat set of choices. */}
+      <nav aria-label="Secciones de la tienda" className="mt-6 border-b border-line">
+        <ul className="-mb-px flex gap-6">
+          {VIEWS.map((view) => {
+            const isOpen = view.id === active;
+
+            return (
+              <li key={view.id}>
+                <Link
+                  aria-current={isOpen ? "page" : undefined}
+                  className={`tap inline-flex items-center border-b-2 pb-3 text-sm font-semibold transition-colors ${
+                    isOpen ? "border-brand text-brand" : "border-transparent text-muted hover:text-brand"
+                  }`}
+                  href={`/panel/tiendas/${shopId}${view.segment}`}
+                >
+                  {view.label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+    </header>
+  );
+}
