@@ -108,3 +108,34 @@ test("says nothing about entregas when the shop has written no policy", async ()
 
   expect(screen.queryByRole("heading", { name: "Política de entregas" })).not.toBeInTheDocument();
 });
+
+test("shows a distinguished shop in its own premium room", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, is_premium: true });
+
+  const { container } = await renderPage();
+
+  expect(container.querySelector('[data-theme="premium"]')).not.toBeNull();
+  expect(screen.getByRole("group", { name: "Tienda Premium" })).toBeInTheDocument();
+});
+
+test("leaves an ordinary shop in the ordinary theme", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, is_premium: false });
+
+  const { container } = await renderPage();
+
+  expect(container.querySelector('[data-theme="premium"]')).toBeNull();
+  expect(screen.queryByRole("group", { name: "Tienda Premium" })).toBeNull();
+});
+
+test("keeps the measured trust badge beside the granted distinction", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, is_premium: true });
+
+  await renderPage();
+
+  // getByText("Nivel Estándar") would in fact match here too: Testing
+  // Library's default text matcher joins an element's direct text-node
+  // children ("Nivel " and the interpolated label are two such siblings),
+  // it does not require a single text node. The regex is kept anyway per
+  // the controller's ruling; see the task report for the verification.
+  expect(screen.getByText(/Estándar/)).toBeInTheDocument();
+});
