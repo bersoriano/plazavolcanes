@@ -9,7 +9,7 @@ import { formatShopLocation } from "@/lib/shop-location";
 export function PublicShopCard({ shop }: { shop: CatalogShop }) {
   return (
     <Link className="group min-w-[260px] flex-1 overflow-hidden rounded-[1.5rem] border border-line bg-surface" href={`/tiendas/${shop.slug}`}>
-      <div className="aspect-[16/10] overflow-hidden bg-[#eee8e1]">
+      <div className="aspect-[16/10] overflow-hidden bg-photo-backdrop">
         <CatalogImage
           alt=""
           className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"

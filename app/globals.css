@@ -9,6 +9,9 @@
   --text: #19171b;
   --text-muted: #6d6871;
   --border: #ded8d2;
+  --surface-raised: #ffffff;
+  --on-brand: #ffffff;
+  --photo-backdrop: #eee8e1;
   --sale: #f05d4e;
   --success: #19734c;
 }
@@ -22,6 +25,9 @@
   --color-ink: var(--text);
   --color-muted: var(--text-muted);
   --color-line: var(--border);
+  --color-surface-raised: var(--surface-raised);
+  --color-on-brand: var(--on-brand);
+  --color-photo-backdrop: var(--photo-backdrop);
   --color-sale: var(--sale);
   --color-success: var(--success);
   --font-sans: var(--font-instrument);

@@ -45,7 +45,7 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
       </Link>
 
       <div className="mt-7 overflow-hidden rounded-[2rem] border border-line bg-surface">
-        <div className="relative aspect-[16/9] bg-[#eee8e1] sm:aspect-[4/1] sm:min-h-40">
+        <div className="relative aspect-[16/9] bg-photo-backdrop sm:aspect-[4/1] sm:min-h-40">
           {shop.imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img alt="" className="size-full object-cover" src={shop.imageUrl} />

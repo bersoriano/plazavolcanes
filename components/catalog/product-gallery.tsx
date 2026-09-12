@@ -65,7 +65,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
 
   if (!count) {
     return (
-      <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-[#eee8e1]">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-[2rem] bg-photo-backdrop">
         <div className="grid size-full place-items-center text-brand/30" data-testid="gallery-placeholder">
           <ImageIcon aria-hidden="true" className="size-16" />
         </div>
@@ -77,7 +77,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
     <div className="space-y-3">
       <button
         aria-label="Ampliar imagen"
-        className="relative block aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-[2rem] bg-[#eee8e1] focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+        className="relative block aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-[2rem] bg-photo-backdrop focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
         onClick={() => setZoomed(true)}
         ref={zoomRef}
         type="button"
@@ -98,7 +98,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
               <button
                 aria-current={index === active ? "true" : undefined}
                 aria-label={`Ver imagen ${index + 1}`}
-                className={`block size-20 overflow-hidden rounded-xl border-2 bg-[#eee8e1] transition-colors sm:size-24 ${
+                className={`block size-20 overflow-hidden rounded-xl border-2 bg-photo-backdrop transition-colors sm:size-24 ${
                   index === active ? "border-brand" : "border-transparent hover:border-line"
                 }`}
                 onClick={() => setActive(index)}
