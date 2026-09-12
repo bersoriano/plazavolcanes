@@ -3,7 +3,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
 import { ProductForm } from "@/components/products/product-form";
-import { getSellerPublicationState } from "@/components/products/product-row";
+import { getSellerPublicationState } from "@/lib/seller-publication";
 import { ProductTranslationForm } from "@/components/products/product-translation-form";
 import { CategorySuggestionForm } from "@/components/products/category-suggestion-form";
 import { createCategorySuggestion } from "@/lib/actions/categories";
