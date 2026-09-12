@@ -33,6 +33,7 @@ vi.mock("@/lib/queries/checkout.server", () => ({
   fetchPickupPoint: vi.fn(),
 }));
 vi.mock("@/lib/queries/orders.server", () => ({ getCart: vi.fn() }));
+vi.mock("@/lib/require-signed-in.server", () => ({ requireSignedIn: vi.fn() }));
 
 const cart: CartDetail = {
   id: 20,
@@ -47,6 +48,9 @@ const cart: CartDetail = {
         name: "Taza volcánica",
         price_mxn: 240,
         image_path: null,
+        image_url: null,
+        units_available: 4,
+        currency_code: "MXN",
       },
     },
   ],
@@ -190,7 +194,12 @@ describe("cart purchase request", () => {
     render(await CartPage({ params: Promise.resolve({ shopId: "4" }) }));
 
     expect(screen.getByText("Ya no disponible")).toBeInTheDocument();
-    expect(screen.getAllByRole("button", { name: "Quitar" })).toHaveLength(2);
+    // Each remove button now names its own row: several buttons all called
+    // "Quitar" gave a screen reader no way to tell them apart.
+    expect(screen.getAllByRole("button", { name: /^Quitar .* del carrito$/ })).toHaveLength(2);
+    expect(
+      screen.getByRole("button", { name: "Quitar el producto no disponible del carrito" }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Quita los productos no disponibles antes de continuar.")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Confirmar solicitud" })).not.toBeInTheDocument();
     expect(fetchCartThreads).toHaveBeenCalledWith(4, [

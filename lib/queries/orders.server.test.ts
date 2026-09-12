@@ -40,14 +40,16 @@ describe("getCart", () => {
     const cart = await getCart(4);
 
     expect(select).toHaveBeenCalledWith(
-      "id, shops!inner(id, name, slug), cart_items(id, product_id, quantity, products(id, name, price_mxn, image_path))",
+      "id, shops!inner(id, name, slug), cart_items(id, product_id, quantity, products(id, name, price_mxn, image_path, units_available, currency_code))",
     );
     expect(cart?.items).toEqual([
       {
         id: 31,
         productId: 12,
         quantity: 2,
-        product: { id: 12, name: "Taza volcánica", price_mxn: 240, image_path: null },
+        // image_url is resolved by the query now, so the cart can show the
+        // picture without the page re-deriving it from the storage path.
+        product: { id: 12, name: "Taza volcánica", price_mxn: 240, image_path: null, image_url: null },
       },
       { id: 32, productId: 13, quantity: 1, product: null },
     ]);
