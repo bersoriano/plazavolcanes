@@ -237,4 +237,63 @@ describe("setProductStatus", () => {
       expect(state).toEqual({ status: "success", message });
     },
   );
+
+  it("clears a lapsed window when a listing is brought back", () => {
+    // A row keeps status "published" until the hourly sweep files it as
+    // expired, so for up to an hour the seller sees "Vencido" on a row the
+    // column still calls published. Writing the same status back would leave
+    // the stale date in place and the trigger would grant no new window, so
+    // the listing would come back already expired. Nulling the date is what
+    // asks the trigger for a fresh 30 days, exactly as reactivating a row the
+    // sweep already touched does.
+    return withProduct({ status: "published", expires_at: "2020-01-01T00:00:00.000Z" }, async () => {
+      await setProductStatus(22, "published");
+
+      expect(mocks.update).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "published", expires_at: null }),
+      );
+    });
+  });
+
+  it("leaves a live window alone when a listing is unpublished", () => {
+    return withProduct({ status: "published", expires_at: "2099-01-01T00:00:00.000Z" }, async () => {
+      await setProductStatus(22, "draft");
+
+      expect(mocks.update).toHaveBeenCalledWith(
+        expect.not.objectContaining({ expires_at: expect.anything() }),
+      );
+    });
+  });
+
+  it("leaves a live window alone when nothing has lapsed", () => {
+    return withProduct({ status: "published", expires_at: "2099-01-01T00:00:00.000Z" }, async () => {
+      await setProductStatus(22, "published");
+
+      expect(mocks.update).toHaveBeenCalledWith(
+        expect.not.objectContaining({ expires_at: expect.anything() }),
+      );
+    });
+  });
 });
+
+async function withProduct(
+  overrides: Record<string, unknown>,
+  assert: () => Promise<void>,
+) {
+  mocks.productsSelect.mockImplementationOnce(() => query({
+    data: {
+      shop_id: 7,
+      category_id: 11,
+      slug: "taza-volcanica",
+      is_admin_enabled: true,
+      ...overrides,
+    },
+    error: null,
+  }));
+  mocks.shop.mockResolvedValueOnce({
+    data: { slug: "barro-volcanico", listing_limit: 10, is_publishing_approved: true },
+    error: null,
+  });
+
+  await assert();
+}

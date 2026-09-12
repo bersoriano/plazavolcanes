@@ -278,7 +278,7 @@ export async function setProductStatus(
   const context = await getAuthenticatedContext();
   if (!parsedStatus.success || !context) redirect("/ingresar");
   const { supabase, userId } = context;
-  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, status, slug, is_admin_enabled").eq("id", productId).maybeSingle();
+  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, status, slug, is_admin_enabled, expires_at").eq("id", productId).maybeSingle();
   if (productError) throw new Error("No pudimos consultar el producto.");
   // Retiring a listing is one way: it stays out of the catalogue for good.
   if (!product || product.status === "deleted") redirect("/panel");
@@ -291,7 +291,23 @@ export async function setProductStatus(
   if (parsedStatus.data === "published" && product.status !== "published" && !(await shopHasListingCapacity(supabase, product.shop_id, shop.listing_limit))) {
     redirect(`/panel/productos/${productId}/editar?limite=alcanzado`);
   }
-  const { error } = await supabase.from("products").update({ status: parsedStatus.data, updated_at: new Date().toISOString() }).eq("id", productId);
+  // A listing keeps `status = 'published'` until the hourly sweep files it as
+  // expired, so for up to an hour the seller is looking at a row the catalogue
+  // already reports as "Vencido". Bringing that row back has to null the stale
+  // date: `set_product_expiry` grants a fresh 30 days when the incoming expiry
+  // is null, and would otherwise leave the lapsed one and republish something
+  // that is expired on arrival. A row the sweep already reached takes the same
+  // fresh window through its status change, so this only closes the gap.
+  const hasLapsedWindow = product.status === "published"
+    && product.expires_at !== null
+    && new Date(product.expires_at).getTime() <= Date.now();
+  const renewsWindow = parsedStatus.data === "published" && hasLapsedWindow;
+
+  const { error } = await supabase.from("products").update({
+    status: parsedStatus.data,
+    updated_at: new Date().toISOString(),
+    ...(renewsWindow ? { expires_at: null } : {}),
+  }).eq("id", productId);
   if (isListingLimitDatabaseError(error)) redirect(`/panel/productos/${productId}/editar?limite=alcanzado`);
   if (error) throw new Error("No pudimos actualizar el estado del producto.");
   revalidatePath("/");

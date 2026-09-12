@@ -119,3 +119,33 @@ describe("expiry urgency", () => {
     expect(screen.getByText("Vence en 2 días")).toHaveClass("text-sale");
   });
 });
+
+describe("bringing a lapsed listing back", () => {
+  it("offers to reactivate a row whose date has passed", () => {
+    // Until the hourly sweep runs, the column still says published while the
+    // badge already says "Vencido". Offering "Despublicar" there asks the
+    // seller to turn off something that already stopped selling.
+    render(<ProductRow product={product({ status: "published", expires_at: "2020-01-01T00:00:00.000Z" })} />);
+
+    expect(screen.getByText("Vencido")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Reactivar" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Despublicar" })).not.toBeInTheDocument();
+  });
+
+  it("publishes rather than unpublishes when that row is acted on", async () => {
+    // The label is only half the fix: the button has to send "published", or
+    // it would still unpublish a row the seller asked to bring back.
+    render(<ProductRow product={product({ status: "published", expires_at: "2020-01-01T00:00:00.000Z" })} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Reactivar" }));
+
+    await vi.waitFor(() => expect(setProductStatus).toHaveBeenCalled());
+    expect(vi.mocked(setProductStatus).mock.calls[0].slice(0, 2)).toEqual([1, "published"]);
+  });
+
+  it("still offers to unpublish a listing that is genuinely live", () => {
+    render(<ProductRow product={product({ status: "published", expires_at: inDays(40) })} />);
+
+    expect(screen.getByRole("button", { name: "Despublicar" })).toBeInTheDocument();
+  });
+});

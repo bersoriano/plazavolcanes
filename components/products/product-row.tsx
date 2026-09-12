@@ -54,19 +54,26 @@ function expiryNotice(
 
 export function ProductRow({ product }: ProductRowProps) {
   const publicationState = getSellerPublicationState(product);
-  const nextStatus = product.status === "published" ? "draft" : "published";
   const deleteAction = deleteProduct.bind(null, product.id);
-  const toggleLabel = product.status === "published"
-    ? "Despublicar"
-    : product.status === "expired"
-      ? "Reactivar"
+  // Read from the state the badge reports, not from the status column. For up
+  // to an hour after a listing lapses the column still says published while
+  // the badge already says "Vencido", and offering "Despublicar" there asks
+  // the seller to switch off something that has already stopped selling.
+  const hasLapsed = publicationState.label === "Vencido";
+  const nextStatus = product.status === "published" && !hasLapsed ? "draft" : "published";
+  const toggleLabel = hasLapsed
+    ? "Reactivar"
+    : product.status === "published"
+      ? "Despublicar"
       : "Publicar";
   const expiry = expiryNotice(product);
 
   return (
-    <li className="py-4"><div className="flex items-center gap-3"><div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-background text-brand/35">{product.image_url ? (
+    <li className="py-4"><div className="flex items-start gap-3"><div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-background text-brand/35">{product.image_url ? (
       // eslint-disable-next-line @next/next/no-img-element
       <img alt="" className="size-full object-cover" src={product.image_url} />
-    ) : <ImageIcon aria-hidden="true" className="size-5" />}</div><div className="min-w-0 flex-1"><p className="truncate font-semibold">{product.name}</p><p className="mt-1 text-sm text-muted">{formatMxn(product.price_mxn)}</p>{expiry ? <p className={`mt-1 text-xs ${expiry.isUrgent ? "font-semibold text-sale" : "text-muted"}`}>{expiry.text}</p> : null}</div><span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${publicationState.isPublic ? "bg-accent text-brand-hover" : "bg-background text-muted"}`}>{publicationState.label}</span></div><div className="mt-3 flex flex-wrap items-center gap-3 pl-[4.25rem]"><Link className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-brand" href={`/panel/productos/${product.id}/editar`}><Edit3 aria-hidden="true" className="size-3.5" />Editar</Link><ProductStatusAction label={toggleLabel} nextStatus={nextStatus} productId={product.id} /><details><summary className="inline-flex min-h-11 cursor-pointer items-center gap-1 text-xs font-semibold text-sale"><Trash2 aria-hidden="true" className="size-3.5" />Eliminar</summary><form action={deleteAction} className="mt-2 rounded-xl bg-sale/10 p-3"><p className="mb-2 text-xs text-ink">Esta acción no se puede deshacer.</p><button className="inline-flex min-h-11 items-center rounded-full bg-sale px-3 py-1.5 text-xs font-semibold text-white" type="submit">Confirmar</button></form></details></div></li>
+    ) : <ImageIcon aria-hidden="true" className="size-5" />}</div>{/* The badge sits beside the name only where there is room for both. On a
+        phone it drops below, because the name is what the seller scans for and
+        a pill next to it cut the name down to about two words. */}<div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3"><div className="min-w-0"><p className="truncate font-semibold">{product.name}</p><p className="mt-1 text-sm text-muted">{formatMxn(product.price_mxn)}</p>{expiry ? <p className={`mt-1 text-xs ${expiry.isUrgent ? "font-semibold text-sale" : "text-muted"}`}>{expiry.text}</p> : null}</div><span className={`inline-flex w-fit shrink-0 rounded-full px-3 py-1 text-xs font-bold ${publicationState.isPublic ? "bg-accent text-brand-hover" : "bg-background text-muted"}`}>{publicationState.label}</span></div></div><div className="mt-3 flex flex-wrap items-center gap-3 pl-[4.25rem]"><Link className="inline-flex min-h-11 items-center gap-1 text-xs font-semibold text-brand" href={`/panel/productos/${product.id}/editar`}><Edit3 aria-hidden="true" className="size-3.5" />Editar</Link><ProductStatusAction label={toggleLabel} nextStatus={nextStatus} productId={product.id} /><details><summary className="inline-flex min-h-11 cursor-pointer items-center gap-1 text-xs font-semibold text-sale"><Trash2 aria-hidden="true" className="size-3.5" />Eliminar</summary><form action={deleteAction} className="mt-2 rounded-xl bg-sale/10 p-3"><p className="mb-2 text-xs text-ink">Esta acción no se puede deshacer.</p><button className="inline-flex min-h-11 items-center rounded-full bg-sale px-3 py-1.5 text-xs font-semibold text-white" type="submit">Confirmar</button></form></details></div></li>
   );
 }
