@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(16);
+select plan(17);
 
 select has_column('public', 'shops', 'is_premium',
   'shop records whether administration distinguished it');
@@ -15,7 +15,8 @@ select has_function('public', 'set_shop_premium', array['bigint', 'boolean'],
 
 insert into auth.users (id, email, created_at) values
   ('30000000-0000-4000-8000-000000000001', 'admin-premium@test.local', now()),
-  ('30000000-0000-4000-8000-000000000002', 'seller-premium@test.local', now());
+  ('30000000-0000-4000-8000-000000000002', 'seller-premium@test.local', now()),
+  ('30000000-0000-4000-8000-000000000003', 'seller-premium-insert@test.local', now());
 
 insert into private.admin_users (user_id, granted_by) values
   ('30000000-0000-4000-8000-000000000001',
@@ -128,6 +129,36 @@ select is(
   (select premium_granted_by from public.shops where id = 9101),
   null,
   'withdrawal clears the granting administrator'
+);
+
+-- RLS lets a seller insert their own shop row with any column values; a
+-- dedicated before-insert trigger must scrub these columns the same way the
+-- update guard blocks a later write, or a seller could self-grant on arrival.
+set local role authenticated;
+set local request.jwt.claims =
+  '{"sub":"30000000-0000-4000-8000-000000000003","role":"authenticated"}';
+
+insert into public.shops (
+  id, owner_id, name, slug, description,
+  is_premium, premium_granted_at, premium_granted_by
+)
+overriding system value
+values (
+  9102,
+  '30000000-0000-4000-8000-000000000003',
+  'Tienda Autopremium',
+  'tienda-autopremium-test',
+  'Descripción suficientemente larga para la tienda de la prueba de autopremium.',
+  true,
+  now(),
+  '30000000-0000-4000-8000-000000000003'
+);
+
+select results_eq(
+  $$select is_premium, premium_granted_at, premium_granted_by
+    from public.shops where id = 9102$$,
+  $$values (false, null::timestamptz, null::uuid)$$,
+  'seller cannot self-grant the premium distinction via insert'
 );
 
 select * from finish();

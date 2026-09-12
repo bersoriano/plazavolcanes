@@ -3,6 +3,32 @@ alter table public.shops
   add column premium_granted_at timestamptz,
   add column premium_granted_by uuid references auth.users (id) on delete set null;
 
+-- RLS lets a seller insert their own shop row with any column values, so the
+-- update-time guard below is not enough: without this, an insert could hand
+-- a shop the premium distinction on arrival. Scrub the columns the same way
+-- apply_shop_publishing_approval scrubs publication approval on insert.
+create function private.apply_shop_premium_defaults()
+returns trigger
+language plpgsql
+set search_path = ''
+as $$
+begin
+  if current_user not in ('postgres', 'service_role') then
+    new.is_premium := false;
+    new.premium_granted_at := null;
+    new.premium_granted_by := null;
+  end if;
+  return new;
+end;
+$$;
+
+revoke all on function private.apply_shop_premium_defaults() from public, anon, authenticated;
+
+create trigger apply_shop_premium_defaults
+before insert on public.shops
+for each row
+execute function private.apply_shop_premium_defaults();
+
 -- The distinction is administration's decision, so it joins the trust fields a
 -- seller may read but never write.
 create or replace function private.guard_shop_trust_cache()
