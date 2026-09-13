@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { CatalogScreen } from "@/components/catalog/catalog-screen";
+import { JsonLd } from "@/components/seo/json-ld";
 import { buildCatalogHref, listingCategoryIds, resolveCategorySelection } from "@/lib/categories";
 import { normalizeCatalogFilters } from "@/lib/queries/catalog";
 import { getCatalogStateCounts, getHomeCatalog } from "@/lib/queries/catalog.server";
@@ -48,13 +49,7 @@ function HomeStructuredData() {
     ],
   };
 
-  return (
-    <script
-      type="application/ld+json"
-      // Static today, but escaped anyway: a "<" must never close the script.
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }}
-    />
-  );
+  return <JsonLd data={data} />;
 }
 
 export default async function Home({ searchParams }: { searchParams: HomeSearchParams }) {
