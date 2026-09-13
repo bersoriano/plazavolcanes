@@ -19,8 +19,19 @@ function parseEnabled(value: FormDataEntryValue | null) {
   return null;
 }
 
-export async function setShopPublishingApproval(
-  _previousState: ActionState,
+type ShopFlagRpc = "set_shop_publishing_approval" | "set_shop_premium";
+
+type ShopFlagMessages = {
+  invalid: string;
+  forbidden: string;
+  failed: string;
+  enabled: string;
+  disabled: string;
+};
+
+async function setShopFlag(
+  rpcName: ShopFlagRpc,
+  messages: ShopFlagMessages,
   formData: FormData,
 ): Promise<ActionState> {
   const shopId = parseShopId(formData.get("shop_id"));
@@ -28,7 +39,7 @@ export async function setShopPublishingApproval(
   if (shopId === null || enabled === null) {
     return {
       status: "error",
-      message: "Datos de aprobación inválidos.",
+      message: messages.invalid,
       values: formValues(formData),
     };
   }
@@ -53,23 +64,26 @@ export async function setShopPublishingApproval(
   if (authorizationError || !allowed) {
     return {
       status: "error",
-      message: "No tienes permiso para administrar publicaciones.",
+      message: messages.forbidden,
       values: formValues(formData),
     };
   }
 
-  const { data, error } = await supabase.rpc("set_shop_publishing_approval", {
+  const { data, error } = await supabase.rpc(rpcName, {
     p_shop_id: shopId,
     p_enabled: enabled,
   });
   if (error || !data?.[0]) {
     return {
       status: "error",
-      message: "No pudimos actualizar la aprobación de publicaciones.",
+      message: messages.failed,
       values: formValues(formData),
     };
   }
 
+  // Both flags change what the shop, every published product, and every grid
+  // those cards appear in show (visibility for approval, the look for Premium),
+  // so either switch clears the same paths.
   const affected = data[0];
   for (const path of [
     "/",
@@ -84,9 +98,26 @@ export async function setShopPublishingApproval(
 
   return {
     status: "success",
-    message: enabled ? "Publicaciones habilitadas." : "Publicaciones pendientes.",
+    message: enabled ? messages.enabled : messages.disabled,
     values: { enabled: String(enabled) },
   };
+}
+
+export async function setShopPublishingApproval(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  return setShopFlag(
+    "set_shop_publishing_approval",
+    {
+      invalid: "Datos de aprobación inválidos.",
+      forbidden: "No tienes permiso para administrar publicaciones.",
+      failed: "No pudimos actualizar la aprobación de publicaciones.",
+      enabled: "Publicaciones habilitadas.",
+      disabled: "Publicaciones pendientes.",
+    },
+    formData,
+  );
 }
 
 export async function setUserShopLimit(
