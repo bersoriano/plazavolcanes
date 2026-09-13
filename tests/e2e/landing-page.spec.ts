@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process";
+
 import {
   expect,
   test,
@@ -40,6 +42,24 @@ async function registerSeller(page: Page) {
   await expect(page).toHaveURL(/\/panel/);
 }
 
+/** New shops cannot publish until administration approves them. */
+function approveShopForPublication(slug: string) {
+  execFileSync(
+    "npx",
+    [
+      "supabase",
+      "db",
+      "query",
+      "--local",
+      `do $$ begin
+        update public.shops set is_publishing_approved = true where slug = '${slug}';
+        if not found then raise exception 'Could not approve local e2e shop.'; end if;
+      end $$;`,
+    ],
+    { stdio: "pipe" },
+  );
+}
+
 async function createPublishedListing(browser: Browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -55,8 +75,10 @@ async function createPublishedListing(browser: Browser) {
     await page.getByLabel("Estado principal").selectOption("MX-JAL");
     await page.getByRole("button", { name: "Crear tienda" }).click();
     await expect(page).toHaveURL(/\/panel\/tiendas\/\d+/);
+    const publicShopHref = await page.getByRole("link", { name: "Ver tienda pública" }).getAttribute("href");
+    approveShopForPublication(publicShopHref?.split("/").pop() ?? "");
 
-    await page.getByLabel("Agregar producto", { exact: true }).click();
+    await page.getByRole("link", { name: "Agregar producto", exact: true }).first().click();
     await expect(page).toHaveURL(/\/productos\/nuevo/);
     await page.getByLabel("Categoría", { exact: true }).selectOption({ index: 1 });
     await page.getByLabel("Subcategoría").selectOption({ index: 1 });
@@ -71,8 +93,11 @@ async function createPublishedListing(browser: Browser) {
       mimeType: "image/png",
       name: `portada-${runId}.png`,
     });
-    await page.getByRole("button", { name: "Publicar producto" }).click();
+    // A new product is saved as a draft, then published from its edit page.
+    await page.getByRole("button", { name: "Guardar producto" }).click();
     await expect(page).toHaveURL(/\/panel\/productos\/\d+\/editar\?creado=1/);
+    await page.getByRole("button", { name: "Publicar producto" }).click();
+    await expect(page.getByRole("status")).toHaveText("Producto publicado.");
 
     sellerStorageState = await context.storageState();
   } finally {
@@ -174,19 +199,6 @@ async function expectLightSurfaceFocusContrast(locator: Locator) {
   expect(contrastRatio(outlineColor, "rgb(255, 255, 255)")).toBeGreaterThanOrEqual(3);
 }
 
-async function expectDarkSurfaceFocusContrast(locator: Locator) {
-  const colors = await locator.evaluate((element) => {
-    const style = getComputedStyle(element);
-    return {
-      backgroundColor: style.backgroundColor,
-      innerRingColor: style.boxShadow.match(/rgba?\([^)]*\)/)?.[0] ?? "",
-    };
-  });
-
-  expect(colors.innerRingColor).not.toBe("");
-  expect(contrastRatio(colors.innerRingColor, colors.backgroundColor)).toBeGreaterThanOrEqual(3);
-}
-
 test.describe("landing responsive and accessibility gate", () => {
   test.describe.configure({ mode: "serial" });
 
@@ -205,6 +217,7 @@ test.describe("landing responsive and accessibility gate", () => {
     test(`preserves the landing accessibility contract at ${width}px`, async ({ browser }) => {
       const context = await browser.newContext({
         storageState: sellerStorageState,
+        reducedMotion: "reduce",
         viewport: { height: 900, width },
       });
       const page = await context.newPage();
@@ -222,7 +235,8 @@ test.describe("landing responsive and accessibility gate", () => {
           const request = route.request();
           const isCatalogImage =
             request.resourceType() === "image" &&
-            request.url().includes("/storage/v1/object/public/catalogo/");
+            // Cards ask the object store for a rendition, not the original.
+            /\/storage\/v1\/(object|render\/image)\/public\/catalogo\//.test(request.url());
 
           if (isCatalogImage) {
             failedCatalogImageRequests += 1;
@@ -240,9 +254,7 @@ test.describe("landing responsive and accessibility gate", () => {
         await page.goto("/");
 
         await expect(
-          page.getByRole("heading", {
-            name: "Bienvenido: crea tu tienda y sube lo que quieras vender.",
-          }),
+          page.getByRole("heading", { level: 1, name: "Encuentra productos únicos cerca de ti." }),
         ).toBeVisible();
         await expect(page.getByRole("link", { name: "Plaza Volcanes, inicio" })).toBeVisible();
         await expect(page.getByRole("button", { name: "Salir" })).toBeVisible();
@@ -335,6 +347,7 @@ test.describe("landing responsive and accessibility gate", () => {
     for (const width of [320, 390]) {
       const context = await browser.newContext({
         storageState: sellerStorageState,
+        reducedMotion: "reduce",
         viewport: { height: 900, width },
       });
       const page = await context.newPage();
@@ -367,6 +380,7 @@ test.describe("landing responsive and accessibility gate", () => {
   test("keeps the 320px keyboard sequence visible and unclipped", async ({ browser }) => {
     const context = await browser.newContext({
       storageState: sellerStorageState,
+      reducedMotion: "reduce",
       viewport: { height: 900, width: 320 },
     });
     const page = await context.newPage();
@@ -374,14 +388,20 @@ test.describe("landing responsive and accessibility gate", () => {
     try {
       await page.goto("/");
 
+      const home = page.getByRole("link", { name: "Plaza Volcanes, inicio" });
+      const search = page.getByRole("searchbox", { name: "Buscar productos" });
       const focusOrder = [
-        page.getByRole("link", { name: "Plaza Volcanes, inicio" }),
+        home,
         // "Mi panel" and "Mensajes" are display:none at this width now: the
         // quick access bar holds them, so they leave the tab sequence here.
         page.getByRole("button", { name: "Salir" }),
         page.getByRole("link", { name: "Explorar productos" }),
         page.getByRole("link", { name: "Abrir mi tienda" }).first(),
-        page.getByRole("searchbox", { name: "Buscar productos" }),
+        // The hero's message picker.
+        page.getByRole("button", { name: "Ver mensaje 1" }),
+        page.getByRole("button", { name: "Ver mensaje 2" }),
+        page.getByRole("button", { name: "Ver mensaje 3" }),
+        search,
         page.getByRole("combobox", { name: "Estado" }),
         page.getByRole("button", { name: "Buscar" }),
         page.getByRole("navigation", { name: "Categorías de productos" }).getByRole("link").first(),
@@ -391,8 +411,8 @@ test.describe("landing responsive and accessibility gate", () => {
         await page.keyboard.press("Tab");
         await expectFocusVisibleAndUnclipped(target);
 
-        if (target === focusOrder[0]) await expectLightSurfaceFocusContrast(target);
-        if (target === focusOrder[4]) await expectDarkSurfaceFocusContrast(target);
+        // The search field sits on the white search card, not on a dark hero.
+        if (target === home || target === search) await expectLightSurfaceFocusContrast(target);
       }
 
       const navigation = page.getByRole("navigation", { name: "Categorías de productos" });
@@ -420,6 +440,7 @@ test.describe("landing responsive and accessibility gate", () => {
     for (const width of headerBoundaryWidths) {
       const context = await browser.newContext({
         storageState: sellerStorageState,
+        reducedMotion: "reduce",
         viewport: { height: 900, width },
       });
       const page = await context.newPage();
