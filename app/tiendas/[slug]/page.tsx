@@ -79,7 +79,8 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
                 {shop.name}
               </h1>
               <TrustTierBadge tier={shop.trust_tier} />
-              {isPremium ? <PremiumBadge /> : null}
+              {/* Same top margin as the tier badge beside it, so the two sit level. */}
+              {isPremium ? <PremiumBadge className="mt-4" /> : null}
             </div>
             <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-brand">
               <MapPin aria-hidden="true" className="size-4" />

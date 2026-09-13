@@ -7,11 +7,18 @@ import { CircleHelp, Sparkles } from "lucide-react";
  * beside it is measured, this is chosen, and a buyer deserves to know which is
  * which.
  */
-export function PremiumBadge({ showDetails = true }: { showDetails?: boolean }) {
+export function PremiumBadge({
+  className = "",
+  showDetails = true,
+}: {
+  /** Outer spacing belongs to the row the badge joins, so none is built in. */
+  className?: string;
+  showDetails?: boolean;
+}) {
   return (
     <div
       aria-label="Tienda Premium"
-      className="group relative mt-4 inline-flex items-center gap-2 rounded-full border border-premium-gold bg-premium-ink px-3 py-2 text-sm font-bold text-premium-gold"
+      className={`group relative inline-flex items-center gap-2 rounded-full border border-premium-gold bg-premium-ink px-3 py-2 text-sm font-bold text-premium-gold ${className}`.trim()}
       role="group"
     >
       <Sparkles aria-hidden="true" className="size-4" />

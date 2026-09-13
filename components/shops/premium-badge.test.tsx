@@ -21,6 +21,20 @@ describe("PremiumBadge", () => {
     );
   });
 
+  it("brings no outer margin, so it centres on whatever row it joins", () => {
+    render(<PremiumBadge showDetails={false} />);
+
+    expect(screen.getByRole("group", { name: "Tienda Premium" }).className).not.toMatch(
+      /(^|\s)m[tyb]?-/,
+    );
+  });
+
+  it("takes the spacing its caller asks for", () => {
+    render(<PremiumBadge className="mt-4" />);
+
+    expect(screen.getByRole("group", { name: "Tienda Premium" })).toHaveClass("mt-4");
+  });
+
   it("drops the explanation where there is no room for it", () => {
     render(<PremiumBadge showDetails={false} />);
 
