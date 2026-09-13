@@ -12,7 +12,7 @@ export function TrustTierBadge({
   const marker = getTrustTierMarker(tier);
 
   return (
-    <div className="group relative mt-4 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-accent/40 px-3 py-2 text-sm font-bold text-brand-hover">
+    <div className="group relative mt-4 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-trust-tier-fill px-3 py-2 text-sm font-bold text-brand-hover">
       <ShieldCheck aria-hidden="true" className="size-4" />
       Nivel {marker.label}
       {showDetails ? <>

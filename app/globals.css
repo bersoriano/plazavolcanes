@@ -17,6 +17,9 @@
   --premium-gold: #e8c777;
   --premium-ink: #16131a;
   --premium-text: #6f5412;
+  /* The trust tier pill's fill: exactly what bg-accent/40 painted. It is its
+     own token so a theme can give the measured tier a look of its own. */
+  --trust-tier-fill: color-mix(in oklab, var(--accent) 40%, transparent);
 }
 
 @theme inline {
@@ -36,6 +39,7 @@
   --color-premium-gold: var(--premium-gold);
   --color-premium-ink: var(--premium-ink);
   --color-premium-text: var(--premium-text);
+  --color-trust-tier-fill: var(--trust-tier-fill);
   --font-sans: var(--font-instrument);
   --font-display: var(--font-bricolage);
 }
@@ -83,6 +87,10 @@ body {
   --on-brand: #16131a;
   --photo-backdrop: #211c27;
   --premium-text: #e8c777;
+  /* The measured tier sits beside the granted Premium badge, which is obsidian
+     with a gold rule. A toned bronze keeps the two apart at a glance: 2.09:1
+     against obsidian, with the tier's light-gold label at 6.28:1 on it. */
+  --trust-tier-fill: color-mix(in srgb, var(--premium-gold) 30%, var(--surface));
   /* The light theme's deep green all but disappears against obsidian, and the
      status messages that use it — share confirmations, admin notices — have
      to stay readable inside a premium shop. */
