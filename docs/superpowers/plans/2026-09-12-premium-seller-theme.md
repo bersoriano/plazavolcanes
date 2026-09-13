@@ -1,5 +1,16 @@
 # Premium Seller Theme Implementation Plan
 
+> **Status: executed, with deviations.** The tasks below are the plan as written. Where the shipped code differs, the controller recorded a ruling in `.superpowers/sdd/2026-09-12-premium-seller-theme/progress.md`, and the spec describes what shipped. The key superseded points:
+> - **Ruling 1:** the scope overrides `--font-bricolage: var(--font-fraunces-variable)`, not `--font-display`, because `@theme inline` bakes the variable into the utility.
+> - **Ruling 2:** `admin_marketplace_users.test.sql` lists `shop_is_premium` in the RPC's argument names (19 fields).
+> - **Ruling 8:** Task 2's pgTAP needed one more assertion than its `plan(15)`, and the product fixture needs `category_id`.
+> - **Ruling 9:** a `BEFORE INSERT` trigger, `private.apply_shop_premium_defaults()`, scrubs the flag on seller inserts; the update guard alone left insert open.
+> - **Ruling 13:** the workspace header stays light and renders `PremiumBadge` directly, with no scope wrapper.
+> - **Ruling 14:** `setShopPremium` and `setShopPublishingApproval` share one helper, the two admin switches share one component, and the action has its own tests.
+> - **Ruling 16:** `--accent` inside the scope is `#1e1a24`, not gold, because gold on gold measured 1:1. The tier pill uses a new `--trust-tier-fill` token.
+> - **Ruling 17:** the base `* { border-color }` rule moved into `@layer base` so border colour utilities render.
+> - **Ruling 18:** `premium_granted_at` and `premium_granted_by` are not on `public.shops`. They live in `private.shop_premium_grants`, written only by `set_shop_premium`, and a re-grant keeps the original row.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Give administratively distinguished shops an obsidian-and-gold presentation across their public shop page, their product pages, their catalog listings, and their seller workspace header, granted per shop by an administrator and unforgeable by sellers.

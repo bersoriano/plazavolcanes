@@ -8,11 +8,11 @@ Give administratively distinguished shops a visually distinct, higher-craft pres
 
 This project includes:
 
-- An administrator-controlled `is_premium` flag on `public.shops`, with grant provenance
+- An administrator-controlled `is_premium` flag on `public.shops`, with grant provenance kept in a private table
 - Database-level protection preventing sellers from awarding themselves the flag
 - An admin RPC and server action mirroring the existing publishing-approval control
 - A token-scoped premium theme (`[data-theme="premium"]`) in `app/globals.css`
-- Three new design tokens that remove hardcoded colors blocking any theme scope
+- Three new design tokens that remove hardcoded colors blocking any theme scope, plus a `--trust-tier-fill` token that keeps the measured tier apart from the Premium badge
 - A `PremiumBadge` component shown beside the existing trust tier badge
 - Premium presentation on the public shop page, public product page, catalog cards, and the seller workspace header
 
@@ -35,17 +35,26 @@ This project excludes:
 
 ## Canonical Evidence
 
-### `public.shops` additions
+### `public.shops` addition
 
 - `is_premium boolean not null default false`
-- `premium_granted_at timestamptz null`
-- `premium_granted_by uuid null`, referencing the administrator account that granted it, `on delete set null`
 
-These three columns are system-managed. `private.guard_shop_trust_cache()` is extended to raise `42501` when a role other than `postgres` or `service_role` changes any of them, matching the existing protection on `trust_tier`, `listing_limit`, `trust_evaluated_at`, `is_publishing_approved`, and `publishing_reviewed_at`.
+Pages need the flag, so it lives on the public table. It is system-managed and protected on both write paths:
+
+- **Update.** `private.guard_shop_trust_cache()` is extended to raise `42501` when a role other than `postgres` or `service_role` changes `is_premium`. This matches the existing protection on `trust_tier`, `listing_limit`, `trust_evaluated_at`, `is_publishing_approved`, and `publishing_reviewed_at`.
+- **Insert.** The guard is `BEFORE UPDATE` only. RLS lets a seller insert their own shop row with any column values, so a dedicated `BEFORE INSERT` trigger, `private.apply_shop_premium_defaults()`, forces `is_premium` to `false` for any role other than `postgres` or `service_role`. It mirrors `apply_shop_publishing_approval`. An upsert is closed too: its conflict branch is an update, which the guard rejects.
+
+### `private.shop_premium_grants`
+
+- `shop_id bigint primary key`, referencing `public.shops (id)` `on delete cascade`
+- `granted_at timestamptz not null default now()`
+- `granted_by uuid null`, referencing the administrator account that granted it, `on delete set null`
+
+Grant provenance is kept out of `public.shops` on purpose. That table is readable by `anon`, so a grantor column there would publish administrator account ids and, through `owner_id`, reveal which shop owners are administrators. The table grants nothing to `anon` or `authenticated`, has RLS enabled with no policies, and is written only by `set_shop_premium`.
 
 ### `public.set_shop_premium(p_shop_id bigint, p_enabled boolean)`
 
-`security definer`, `set search_path = ''`, execute granted to `authenticated` only. Raises `42501` unless the caller is an administrator. On success it writes `is_premium`, stamps `premium_granted_at` and `premium_granted_by` when enabling, clears both when disabling, and returns one row of `shop_id`, `shop_slug`, `product_slugs` so the caller can revalidate exactly the affected paths. This mirrors `set_shop_publishing_approval`.
+`security definer`, `set search_path = ''`, execute granted to `authenticated` only. Raises `42501` unless the caller is an administrator. Raises `P0002` when the shop does not exist. On success it writes `is_premium`. When enabling, it upserts the shop's `private.shop_premium_grants` row with `now()` and the caller. If the shop was already premium, the original grant row is kept rather than re-stamped. When disabling, it deletes the row. It returns one row of `shop_id`, `shop_slug`, `product_slugs` so the caller can revalidate exactly the affected paths. This mirrors `set_shop_publishing_approval`.
 
 ### `list_admin_marketplace_users`
 
@@ -77,12 +86,24 @@ The existing stylesheet already drives color through custom properties, but thre
   --border: #3a3142;
   --brand: #e8c777;
   --brand-hover: #f2d894;
-  --accent: #e8c777;
+  --accent: #1e1a24;
   --on-brand: #16131a;
   --photo-backdrop: #211c27;
-  --font-display: var(--font-fraunces);
+  --premium-text: #e8c777;
+  --trust-tier-fill: color-mix(in srgb, var(--premium-gold) 30%, var(--surface));
+  --success: #4ec98c;
+  --font-bricolage: var(--font-fraunces-variable);
+  color-scheme: dark;
 }
 ```
+
+Notes on values that differ from the first draft:
+
+- **`--accent` is `#1e1a24`, not gold.** Components pair brand and accent as fill and ink: a measured trust value on a brand pill, or the shop backlink in `text-brand-hover` on `bg-accent`. With both set to gold, those pairs measured 1.00:1. WCAG AA is the hard rule, so accent inside the scope is the raised obsidian, which reads against gold both ways.
+- **`--trust-tier-fill`** is a new token. At `:root` it is `color-mix(in oklab, var(--accent) 40%, transparent)`, which is exactly what `bg-accent/40` painted, so ordinary pages are unchanged. Inside the scope it is a toned bronze (30% gold over surface). That keeps the measured tier pill apart from the obsidian, gold-edged Premium badge beside it: 2.09:1 between the two fills, with the tier label at 6.28:1. The `:root` value resolves `var(--accent)` at the root, so any scope that overrides `--accent` must also override this token.
+- **`--success`** is lightened because the light theme's `#19734c` is about 3.1:1 on obsidian, and share and status messages render inside the scope.
+- **`color-scheme: dark`** makes native controls inside the scope, such as the quantity field, render dark.
+- The wrapper element carries `text-ink`, so the scope block itself sets no `color`.
 
 Because components are written against `bg-surface`, `text-brand`, `text-muted`, and `border-line`, they invert without prop threading or conditional class strings.
 
@@ -94,7 +115,7 @@ Additional scope rules:
 
 ### Typography
 
-Fraunces is added through `next/font/google` in `app/layout.tsx` as a CSS variable only. The premium scope binds `--font-display` to it; ordinary pages continue to use Bricolage Grotesque. Cost is one additional font file on first load.
+Fraunces is added through `next/font/google` in `app/layout.tsx` as the CSS variable `--font-fraunces-variable` only. `@theme inline` bakes each theme value into the utility, so `font-display` compiles to `font-family: var(--font-bricolage)` and never reads `--font-display` at runtime. Overriding `--font-display` in the scope would therefore change nothing. The premium scope overrides `--font-bricolage: var(--font-fraunces-variable)` instead; ordinary pages continue to use Bricolage Grotesque. Cost is one additional font file on first load.
 
 ### Contrast
 
@@ -116,7 +137,7 @@ Cards keep the ordinary light surface. A dark card inside a light grid reads as 
 
 ### Seller workspace — `app/panel/tiendas/[id]`
 
-The premium scope applies to the workspace header card only, carrying the badge and a short line confirming the shop is Premium. Forms stay in the ordinary theme: long form pages are a much wider surface to verify for contrast and state styling, and the seller's public page is where the distinction matters.
+The workspace header stays in the light theme and gains the `Premium` badge beside the shop name plus a short line confirming the shop is Premium. `ShopWorkspaceHeader` is a bare header (back links, name, tab nav), not a card. Darkening it would drop an obsidian block on a light work page, the same layout defect rejected for catalog cards. The badge paints with its own `--premium-gold` / `--premium-ink` tokens, so it needs no scope wrapper. Forms stay in the ordinary theme: long form pages are a much wider surface to verify for contrast and state styling, and the seller's public page is where the distinction matters.
 
 ## Administration
 
@@ -128,10 +149,12 @@ The admin screen gains a second switch below the publishing switch in `component
 
 Database tests in `supabase/tests/database/shop_premium.test.sql`:
 
-- A seller updating `is_premium` on their own shop raises `42501`.
-- A non-administrator calling `set_shop_premium` raises `42501`.
-- An administrator enabling the flag sets `is_premium`, `premium_granted_at`, and `premium_granted_by`, and the returned row names the shop and its product slugs.
-- Disabling clears the timestamp and grantor.
+- `public.shops` has `is_premium` and no grant provenance columns; `private.shop_premium_grants` exists and `anon` and `authenticated` cannot read it.
+- A seller setting `is_premium` on their own shop through update or upsert raises `42501`; through insert it is scrubbed to `false`.
+- A non-administrator calling `set_shop_premium` raises `42501`; a missing shop raises `P0002`.
+- An administrator enabling the flag sets `is_premium` and records the grant row with the grantor, and the returned row names the shop and its product slugs.
+- Re-granting an already-premium shop keeps the original grant row.
+- Disabling clears the flag and deletes the grant row.
 
 Application tests:
 
