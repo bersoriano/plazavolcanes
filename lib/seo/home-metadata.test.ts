@@ -44,7 +44,7 @@ describe("home metadata", () => {
   it("turns a category with listings into its own landing page", () => {
     const metadata = metadataFor({ categoria: "electronica" });
 
-    expect(metadata.title).toBe("Electrónica: productos de tiendas independientes");
+    expect(metadata.title).toEqual({ absolute: "Electrónica: productos de tiendas independientes | Plaza Volcanes" });
     expect(metadata.description).toMatch(/productos de Electrónica/);
     expect(metadata.alternates?.canonical).toBe("/?categoria=electronica");
     expect(metadata.robots).toBeUndefined();
@@ -57,7 +57,7 @@ describe("home metadata", () => {
   it("turns a subcategory into its own landing page, naming its parent", () => {
     const metadata = metadataFor({ categoria: "electronica", subcategoria: "celulares" });
 
-    expect(metadata.title).toBe("Celulares y accesorios: productos de tiendas independientes");
+    expect(metadata.title).toEqual({ absolute: "Celulares y accesorios: productos de tiendas independientes | Plaza Volcanes" });
     expect(metadata.description).toMatch(/Celulares y accesorios \(Electrónica\)/);
     expect(metadata.alternates?.canonical).toBe("/?categoria=electronica&subcategoria=celulares");
   });
@@ -81,7 +81,7 @@ describe("home metadata", () => {
   it("keeps search results out of the index, even inside a category", () => {
     const metadata = metadataFor({ q: "taza", categoria: "electronica" });
 
-    expect(metadata.title).toBe("Resultados para “taza”");
+    expect(metadata.title).toEqual({ absolute: "Resultados para “taza” | Plaza Volcanes" });
     expect(metadata.robots).toEqual({ index: false, follow: true });
     expect(metadata.alternates?.canonical).toBeUndefined();
     expect(metadata.openGraph).not.toHaveProperty("url");

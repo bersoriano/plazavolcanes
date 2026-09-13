@@ -34,16 +34,17 @@ function describeCategory(selection: ResolvedCategorySelection) {
 }
 
 function withSharing(
-  metadata: Metadata & { title: string | { absolute: string }; description: string },
+  { title, description }: { title: string; description: string },
   { canonical, robots }: { canonical?: string; robots?: typeof NOINDEX },
 ): Metadata {
-  // Open Graph does not go through the title template, so it spells out the
-  // name a shared link should carry.
-  const shareTitle =
-    typeof metadata.title === "string" ? `${metadata.title} | ${SITE_NAME}` : metadata.title.absolute;
+  // The layout's "%s | Plaza Volcanes" template only reaches child segments,
+  // and this page shares the root segment with the layout, so the brand is
+  // spelled out here, for the tab and for a shared link alike.
+  const shareTitle = title.startsWith(SITE_NAME) ? title : `${title} | ${SITE_NAME}`;
 
   return {
-    ...metadata,
+    title: { absolute: shareTitle },
+    description,
     ...(canonical ? { alternates: { canonical } } : {}),
     ...(robots ? { robots } : {}),
     openGraph: {
@@ -51,10 +52,10 @@ function withSharing(
       locale: "es_MX",
       siteName: SITE_NAME,
       title: shareTitle,
-      description: metadata.description,
+      description,
       ...(canonical ? { url: canonical } : {}),
     },
-    twitter: { card: "summary_large_image", title: shareTitle, description: metadata.description },
+    twitter: { card: "summary_large_image", title: shareTitle, description },
   };
 }
 
@@ -75,13 +76,13 @@ export function buildHomeMetadata({ filters, selection, listed }: HomeMetadataIn
   }
 
   if (selection.invalidCategorySelection) {
-    return withSharing({ title: { absolute: HOME_TITLE }, description: HOME_DESCRIPTION }, { robots: NOINDEX });
+    return withSharing({ title: HOME_TITLE, description: HOME_DESCRIPTION }, { robots: NOINDEX });
   }
 
   const category = describeCategory(selection);
 
   if (!category) {
-    return withSharing({ title: { absolute: HOME_TITLE }, description: HOME_DESCRIPTION }, { canonical: "/" });
+    return withSharing({ title: HOME_TITLE, description: HOME_DESCRIPTION }, { canonical: "/" });
   }
 
   const canonical = buildCatalogHref({
