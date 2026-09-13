@@ -23,7 +23,7 @@ describe("Seller page", () => {
     expect(screen.getByText("Mejor valorada")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
       "href",
-      "/registro",
+      "/registro?paso=vender",
     );
     expect(screen.getByRole("link", { name: "Ya tengo cuenta" })).toHaveAttribute(
       "href",

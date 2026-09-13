@@ -27,7 +27,7 @@ export function SellerPitch() {
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <Link
               className="inline-flex min-h-12 items-center gap-2 rounded-full bg-accent px-7 font-semibold text-brand-hover"
-              href="/registro"
+              href="/registro?paso=vender"
             >
               Abrir mi tienda
               <ArrowRight aria-hidden="true" className="size-4" />

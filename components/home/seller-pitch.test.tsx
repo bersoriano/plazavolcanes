@@ -18,7 +18,7 @@ describe("SellerPitch", () => {
     );
     expect(within(pitch).getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
       "href",
-      "/registro",
+      "/registro?paso=vender",
     );
     expect(within(pitch).getByRole("link", { name: "Conoce cómo funciona" })).toHaveAttribute(
       "href",
