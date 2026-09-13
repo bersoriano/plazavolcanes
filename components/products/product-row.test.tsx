@@ -31,11 +31,20 @@ function product(overrides: Partial<Parameters<typeof ProductRow>[0]["product"]>
 
 describe("ProductRow", () => {
   it("shows the effective seller publication state", () => {
-    render(<ProductRow product={product()} />);
+    // "Vence el" only appears more than 7 days before expiry, so the fixture's
+    // absolute date needs a fixed today: 1 September is 19 days out.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-09-01T12:00:00.000Z"));
 
-    expect(screen.getByText("Publicado")).toBeInTheDocument();
-    expect(screen.getByText(/Vence el/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Despublicar" })).toBeInTheDocument();
+    try {
+      render(<ProductRow product={product()} />);
+
+      expect(screen.getByText("Publicado")).toBeInTheDocument();
+      expect(screen.getByText(/Vence el/)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Despublicar" })).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it.each([
