@@ -120,6 +120,23 @@ export async function setShopPublishingApproval(
   );
 }
 
+export async function setShopPremium(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  return setShopFlag(
+    "set_shop_premium",
+    {
+      invalid: "Datos de distinción inválidos.",
+      forbidden: "No tienes permiso para administrar la distinción Premium.",
+      failed: "No pudimos actualizar la distinción Premium.",
+      enabled: "Distinción Premium otorgada.",
+      disabled: "Distinción Premium retirada.",
+    },
+    formData,
+  );
+}
+
 export async function setUserShopLimit(
   _previousState: ActionState,
   formData: FormData,

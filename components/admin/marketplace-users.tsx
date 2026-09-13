@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import {
+  setShopPremium,
   setShopPublishingApproval,
   setUserShopLimit,
 } from "@/lib/actions/admin-publication";
@@ -202,6 +203,18 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
                     shopId={shop.id}
                     switchName="Publicaciones habilitadas"
                     value={shop.isPublishingApproved}
+                  />
+                  <ShopFlagSwitch
+                    action={setShopPremium}
+                    description="La tienda y sus productos se muestran con el tema Premium. No cambia sus métricas de confianza."
+                    key={`premium:${shop.id}:${shop.isPremium}`}
+                    offHeading="Sin distinción Premium"
+                    onHeading="Distinción Premium otorgada"
+                    onKnobClassName="bg-premium-gold"
+                    onTrackClassName="bg-premium-ink"
+                    shopId={shop.id}
+                    switchName="Distinción Premium"
+                    value={shop.isPremium}
                   />
                   {shop.products.length ? (
                     <ul className="mt-4 divide-y divide-line">

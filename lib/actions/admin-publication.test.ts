@@ -14,7 +14,7 @@ vi.mock("@/lib/supabase/server", () => ({
 }));
 vi.mock("next/cache", () => ({ revalidatePath: mocks.revalidatePath }));
 
-const { setShopPublishingApproval } = await import("@/lib/actions/admin-publication");
+const { setShopPremium, setShopPublishingApproval } = await import("@/lib/actions/admin-publication");
 
 const idle = { status: "idle" as const, message: "" };
 
@@ -116,5 +116,79 @@ describe("setShopPublishingApproval", () => {
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/productos/plato");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/sitemap.xml");
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/panel/tiendas/7");
+  });
+});
+
+describe("setShopPremium", () => {
+  it("rejects malformed shop and boolean values before contacting Supabase", async () => {
+    const state = await setShopPremium(idle, formOf({ shop_id: "07", enabled: "on" }));
+
+    expect(state).toMatchObject({
+      status: "error",
+      message: "Datos de distinción inválidos.",
+    });
+    expect(mocks.createServerSupabaseClient).not.toHaveBeenCalled();
+  });
+
+  it("requires an authenticated server claim", async () => {
+    mocks.getClaims.mockResolvedValue({ data: null });
+
+    const state = await setShopPremium(idle, formOf({ shop_id: "7", enabled: "true" }));
+
+    expect(state.message).toBe("Tu sesión terminó. Ingresa nuevamente.");
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+
+  it("rejects an authenticated person who is no longer an administrator", async () => {
+    mocks.rpc.mockResolvedValueOnce({ data: false, error: null });
+
+    const state = await setShopPremium(idle, formOf({ shop_id: "7", enabled: "true" }));
+
+    expect(state.message).toBe("No tienes permiso para administrar la distinción Premium.");
+    expect(mocks.rpc).toHaveBeenCalledWith("is_current_user_admin");
+    expect(mocks.rpc).not.toHaveBeenCalledWith("set_shop_premium", expect.anything());
+  });
+
+  it("calls the Premium RPC with exact arguments and does not leak its error", async () => {
+    mocks.rpc.mockImplementation((name: string) => {
+      if (name === "is_current_user_admin") return Promise.resolve({ data: true, error: null });
+      return Promise.resolve({ data: null, error: { message: "internal table name" } });
+    });
+
+    const state = await setShopPremium(idle, formOf({ shop_id: "7", enabled: "false" }));
+
+    expect(mocks.rpc).toHaveBeenLastCalledWith("set_shop_premium", {
+      p_shop_id: 7,
+      p_enabled: false,
+    });
+    expect(state.message).toBe("No pudimos actualizar la distinción Premium.");
+  });
+
+  it("revalidates the public, administrative, shop, product, sitemap, and seller routes", async () => {
+    const state = await setShopPremium(idle, formOf({ shop_id: "7", enabled: "true" }));
+
+    expect(state).toEqual({
+      status: "success",
+      message: "Distinción Premium otorgada.",
+      values: { enabled: "true" },
+    });
+    expect(mocks.revalidatePath).toHaveBeenCalledTimes(7);
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/usuarios");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/tiendas/casa-niebla");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/productos/taza");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/productos/plato");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/sitemap.xml");
+    expect(mocks.revalidatePath).toHaveBeenCalledWith("/panel/tiendas/7");
+  });
+
+  it("confirms a withdrawn distinction", async () => {
+    const state = await setShopPremium(idle, formOf({ shop_id: "7", enabled: "false" }));
+
+    expect(state).toEqual({
+      status: "success",
+      message: "Distinción Premium retirada.",
+      values: { enabled: "false" },
+    });
   });
 });
