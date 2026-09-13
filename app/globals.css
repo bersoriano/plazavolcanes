@@ -17,8 +17,13 @@
   --premium-gold: #e8c777;
   --premium-ink: #16131a;
   --premium-text: #6f5412;
+  /* Light ink for text set on premium ink, such as the Premium badge tooltip. */
+  --premium-cream: #f5f1ea;
   /* The trust tier pill's fill: exactly what bg-accent/40 painted. It is its
-     own token so a theme can give the measured tier a look of its own. */
+     own token so a theme can give the measured tier a look of its own.
+     var(--accent) resolves here at :root, so a scope that overrides --accent
+     inherits this already-computed value, not one mixed from its own accent:
+     such a scope must override --trust-tier-fill too. */
   --trust-tier-fill: color-mix(in oklab, var(--accent) 40%, transparent);
 }
 
@@ -39,6 +44,7 @@
   --color-premium-gold: var(--premium-gold);
   --color-premium-ink: var(--premium-ink);
   --color-premium-text: var(--premium-text);
+  --color-premium-cream: var(--premium-cream);
   --color-trust-tier-fill: var(--trust-tier-fill);
   --font-sans: var(--font-instrument);
   --font-display: var(--font-bricolage);
@@ -107,7 +113,10 @@ body {
      compiled rule actually reads, so it is the one this scope has to override. */
   --font-bricolage: var(--font-fraunces-variable);
 
-  color: var(--text);
+  /* Native controls (the quantity field, scrollbars) follow the obsidian room
+     rather than painting light chrome inside it. Text colour comes from the
+     PremiumScope wrapper's own text-ink class. */
+  color-scheme: dark;
 }
 
 /* On a phone the layout pads <main> to clear the bottom nav, and that padding

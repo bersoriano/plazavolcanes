@@ -34,7 +34,7 @@ export function PremiumBadge({
             <CircleHelp aria-hidden="true" className="size-3.5" />
           </button>
           <span
-            className="pointer-events-none absolute left-0 top-[calc(100%+.5rem)] z-30 w-72 rounded-xl bg-premium-ink px-3 py-2 text-xs font-normal leading-5 text-[#f5f1ea] opacity-0 shadow-lg transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+            className="pointer-events-none absolute left-0 top-[calc(100%+.5rem)] z-30 w-72 rounded-xl border border-premium-gold/40 bg-premium-ink px-3 py-2 text-xs font-normal leading-5 text-premium-cream opacity-0 shadow-lg transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
             id="premium-badge-tooltip"
             role="tooltip"
           >

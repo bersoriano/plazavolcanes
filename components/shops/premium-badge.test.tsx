@@ -21,6 +21,14 @@ describe("PremiumBadge", () => {
     );
   });
 
+  it("frames its explanation in theme tokens, not literal colours", () => {
+    render(<PremiumBadge />);
+
+    const tooltip = screen.getByRole("tooltip");
+    expect(tooltip).toHaveClass("text-premium-cream", "border", "border-premium-gold/40");
+    expect(tooltip.className).not.toMatch(/\[#/);
+  });
+
   it("brings no outer margin, so it centres on whatever row it joins", () => {
     render(<PremiumBadge showDetails={false} />);
 

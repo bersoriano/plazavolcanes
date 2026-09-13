@@ -132,12 +132,7 @@ test("keeps the measured trust badge beside the granted distinction", async () =
 
   await renderPage();
 
-  // getByText("Nivel Estándar") would in fact match here too: Testing
-  // Library's default text matcher joins an element's direct text-node
-  // children ("Nivel " and the interpolated label are two such siblings),
-  // it does not require a single text node. The regex is kept anyway per
-  // the controller's ruling; see the task report for the verification.
-  expect(screen.getByText(/Estándar/)).toBeInTheDocument();
+  expect(screen.getByText("Nivel Estándar")).toBeInTheDocument();
 
   // The trust tooltip sits on gold in the premium theme (bg-brand-hover
   // becomes light gold there): it needs the token that flips with the

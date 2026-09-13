@@ -136,6 +136,11 @@ describe("PublicShopCard", () => {
 
     expect(screen.getByText("Premium")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Casa Premium/ })).toHaveClass("border-premium-gold");
+    // The same deeper gold ink the product card gives a distinguished shop's name.
+    expect(screen.getByRole("heading", { name: "Casa Premium" })).toHaveClass(
+      "font-semibold",
+      "text-premium-text",
+    );
   });
 
   it("leaves an ordinary shop unmarked", () => {
@@ -168,5 +173,6 @@ describe("PublicShopCard", () => {
 
     expect(screen.queryByText("Premium")).toBeNull();
     expect(screen.getByRole("link", { name: /Casa Niebla/ })).toHaveClass("border-line");
+    expect(screen.getByRole("heading", { name: "Casa Niebla" })).not.toHaveClass("text-premium-text");
   });
 });

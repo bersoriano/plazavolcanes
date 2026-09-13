@@ -50,3 +50,18 @@ describe("trust tier fill token", () => {
     expect(fill).not.toMatch(/--premium-ink|#16131a/i);
   });
 });
+
+describe("premium scope", () => {
+  it("asks native controls to render dark inside the scope", () => {
+    expect(token('[data-theme="premium"]', "color-scheme")).toBe("dark");
+  });
+
+  it("leaves text colour to the wrapper's text-ink class", () => {
+    expect(block('[data-theme="premium"]')).not.toMatch(/^\s*color:/m);
+  });
+
+  it("offers a cream ink token for light text on premium ink", () => {
+    expect(token(":root", "--premium-cream")).toBe("#f5f1ea");
+    expect(css).toMatch(/--color-premium-cream:\s*var\(--premium-cream\);/);
+  });
+});
