@@ -420,8 +420,6 @@ export type Database = {
           image_path: string | null;
           is_publishing_approved: boolean;
           is_premium: boolean;
-          premium_granted_at: string | null;
-          premium_granted_by: string | null;
           publishing_reviewed_at: string | null;
           listing_limit: number;
           name: string;
@@ -443,8 +441,6 @@ export type Database = {
           image_path?: string | null;
           is_publishing_approved?: boolean;
           is_premium?: boolean;
-          premium_granted_at?: string | null;
-          premium_granted_by?: string | null;
           publishing_reviewed_at?: string | null;
           listing_limit?: number;
           name: string;
@@ -466,8 +462,6 @@ export type Database = {
           image_path?: string | null;
           is_publishing_approved?: boolean;
           is_premium?: boolean;
-          premium_granted_at?: string | null;
-          premium_granted_by?: string | null;
           publishing_reviewed_at?: string | null;
           listing_limit?: number;
           name?: string;

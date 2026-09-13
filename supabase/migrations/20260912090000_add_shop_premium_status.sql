@@ -1,11 +1,23 @@
 alter table public.shops
-  add column is_premium boolean not null default false,
-  add column premium_granted_at timestamptz,
-  add column premium_granted_by uuid references auth.users (id) on delete set null;
+  add column is_premium boolean not null default false;
+
+-- Who granted the distinction, and when, is administration's record, not the
+-- shop's: public.shops is readable by anyone, so a grantor column there would
+-- publish administrator account ids and, through owner_id, which shop owners
+-- are administrators. Only set_shop_premium writes here, and no client role
+-- can read it.
+create table private.shop_premium_grants (
+  shop_id bigint primary key references public.shops (id) on delete cascade,
+  granted_at timestamptz not null default now(),
+  granted_by uuid references auth.users (id) on delete set null
+);
+
+revoke all on table private.shop_premium_grants from public, anon, authenticated;
+alter table private.shop_premium_grants enable row level security;
 
 -- RLS lets a seller insert their own shop row with any column values, so the
 -- update-time guard below is not enough: without this, an insert could hand
--- a shop the premium distinction on arrival. Scrub the columns the same way
+-- a shop the premium distinction on arrival. Scrub the flag the same way
 -- apply_shop_publishing_approval scrubs publication approval on insert.
 create function private.apply_shop_premium_defaults()
 returns trigger
@@ -15,8 +27,6 @@ as $$
 begin
   if current_user not in ('postgres', 'service_role') then
     new.is_premium := false;
-    new.premium_granted_at := null;
-    new.premium_granted_by := null;
   end if;
   return new;
 end;
@@ -44,8 +54,6 @@ begin
     or new.is_publishing_approved is distinct from old.is_publishing_approved
     or new.publishing_reviewed_at is distinct from old.publishing_reviewed_at
     or new.is_premium is distinct from old.is_premium
-    or new.premium_granted_at is distinct from old.premium_granted_at
-    or new.premium_granted_by is distinct from old.premium_granted_by
   ) then
     raise exception using
       errcode = '42501',
@@ -63,6 +71,7 @@ set search_path = ''
 as $$
 declare
   v_shop_slug text;
+  v_was_premium boolean;
   v_product_slugs text[];
 begin
   if auth.uid() is null or not (select public.is_current_user_admin()) then
@@ -71,16 +80,35 @@ begin
       message = 'Solo administración puede cambiar la distinción Premium.';
   end if;
 
+  select s.is_premium
+  into v_was_premium
+  from public.shops s
+  where s.id = p_shop_id
+  for update;
+
+  if not found then
+    raise exception using errcode = 'P0002', message = 'Tienda no encontrada.';
+  end if;
+
   update public.shops s
   set is_premium = p_enabled,
-      premium_granted_at = case when p_enabled then now() else null end,
-      premium_granted_by = case when p_enabled then auth.uid() else null end,
       updated_at = now()
   where s.id = p_shop_id
   returning s.slug into v_shop_slug;
 
-  if not found then
-    raise exception using errcode = 'P0002', message = 'Tienda no encontrada.';
+  if p_enabled then
+    -- Granting a shop that already holds the distinction is not a new
+    -- decision, so the original grant keeps its moment and its grantor.
+    insert into private.shop_premium_grants as g (shop_id, granted_at, granted_by)
+    values (p_shop_id, now(), auth.uid())
+    -- Named by constraint: a bare shop_id here collides with the output column.
+    on conflict on constraint shop_premium_grants_pkey do update
+      set granted_at = excluded.granted_at,
+          granted_by = excluded.granted_by
+      where not v_was_premium;
+  else
+    delete from private.shop_premium_grants g
+    where g.shop_id = p_shop_id;
   end if;
 
   select coalesce(array_agg(p.slug order by p.id), '{}'::text[])

@@ -191,8 +191,6 @@ function sampleShop() {
     imageUrl: null,
     is_publishing_approved: true,
     is_premium: false,
-    premium_granted_at: null,
-    premium_granted_by: null,
     publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
     listing_limit: 15,
     name: "Taller Volcán",
