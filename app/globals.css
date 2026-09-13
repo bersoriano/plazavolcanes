@@ -75,7 +75,11 @@ body {
   --border: #3a3142;
   --brand: #e8c777;
   --brand-hover: #f2d894;
-  --accent: #e8c777;
+  /* Accent is brand's partner, never its twin: components pair the two as
+     fill and ink (a measured trust value on a brand pill, the shop link on an
+     accent pill). Gold on gold measured 1:1, so inside the scope the partner
+     is the raised obsidian, which reads against gold both ways. */
+  --accent: #1e1a24;
   --on-brand: #16131a;
   --photo-backdrop: #211c27;
   --premium-text: #e8c777;
