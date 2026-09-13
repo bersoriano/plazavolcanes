@@ -5,7 +5,11 @@ import {
   DEFAULT_CATALOG_MARKET,
   type CatalogLocale,
 } from "@/lib/catalog-locale";
-import type { CategoryOption, CategoryTree } from "@/lib/categories";
+import {
+  listingCategoryIds,
+  resolveCategorySelection,
+  type CategoryTree,
+} from "@/lib/categories";
 import type { Product, Shop, UserTrustProfile } from "@/lib/database.types";
 import type { CatalogFilters } from "@/lib/queries/catalog";
 import { escapePostgresLikePattern, normalizeSearchQuery } from "@/lib/queries/catalog";
@@ -120,37 +124,6 @@ function defaultCatalogFilters(query?: string): CatalogFilters {
   };
 }
 
-function resolveCategorySelection(categories: CategoryTree[], filters: CatalogFilters) {
-  const selectedCategory =
-    categories.find((category) => category.slug === filters.categorySlug) ?? null;
-  const selectedSubcategory =
-    selectedCategory?.children.find(
-      (subcategory) => subcategory.slug === filters.subcategorySlug,
-    ) ?? null;
-  const invalidCategorySelection = Boolean(
-    filters.invalidCategorySelection ||
-      (filters.categorySlug && !selectedCategory) ||
-      (filters.subcategorySlug && !selectedSubcategory),
-  );
-
-  return {
-    selectedCategory,
-    selectedSubcategory,
-    invalidCategorySelection,
-    categoryId: invalidCategorySelection
-      ? null
-      : (selectedSubcategory?.id ?? selectedCategory?.id ?? null),
-  };
-}
-
-function getFallbackLeafIds(
-  selectedCategory: CategoryTree | null,
-  selectedSubcategory: CategoryOption | null,
-) {
-  if (selectedSubcategory) return [selectedSubcategory.id];
-  return selectedCategory?.children.map((category) => category.id) ?? [];
-}
-
 export async function getHomeCatalog(filters?: CatalogFilters | string) {
   const normalizedFilters =
     typeof filters === "string" || filters === undefined
@@ -230,10 +203,7 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
         );
       }
     } else {
-      const fallbackLeafIds = getFallbackLeafIds(
-        selection.invalidCategorySelection ? null : selection.selectedCategory,
-        selection.invalidCategorySelection ? null : selection.selectedSubcategory,
-      );
+      const fallbackLeafIds = listingCategoryIds(selection);
 
       if (
         selection.invalidCategorySelection ||

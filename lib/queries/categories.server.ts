@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { DEFAULT_CATALOG_LOCALE, type CatalogLocale } from "@/lib/catalog-locale";
 import type { CategoryTree } from "@/lib/categories";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -21,7 +23,9 @@ function compareCategories(
   return left.sortOrder - right.sortOrder || left.name.localeCompare(right.name);
 }
 
-export async function getProductCategoryTree(
+// The home page reads the tree for its metadata and again for its catalog in the
+// same request; cache() lets the second read reuse the first.
+export const getProductCategoryTree = cache(async function getProductCategoryTree(
   locale: CatalogLocale,
   { includeInactive = false }: { includeInactive?: boolean } = {},
 ): Promise<CategoryTree[]> {
@@ -62,4 +66,4 @@ export async function getProductCategoryTree(
       .filter((category) => category.parentId === root.id)
       .sort(compareCategories),
   }));
-}
+});

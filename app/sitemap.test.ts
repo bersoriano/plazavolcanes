@@ -19,6 +19,7 @@ describe("sitemap", () => {
     vi.mocked(getSitemapCatalog).mockResolvedValue({
       shops: [{ slug: "casa-niebla", updatedAt: "2026-08-01T00:00:00.000Z" }],
       products: [{ slug: "taza-de-barro", updatedAt: "2026-08-02T00:00:00.000Z" }],
+      categoryPaths: ["/?categoria=hogar-y-jardin", "/?categoria=hogar-y-jardin&subcategoria=cocina"],
     });
 
     const entries = await sitemap();
@@ -28,12 +29,15 @@ describe("sitemap", () => {
     expect(urls).toContain("https://plazavolcanes.com/tiendas/casa-niebla");
     expect(urls).toContain("https://plazavolcanes.com/productos/taza-de-barro");
     expect(urls).toContain("https://plazavolcanes.com/estado/jalisco");
-    expect(urls).toHaveLength(3 + MEXICO_ADMINISTRATIVE_AREAS.length + LEGAL_ROUTES.length);
+    expect(urls).toContain("https://plazavolcanes.com/?categoria=hogar-y-jardin");
+    // Next writes <loc> verbatim, so a raw "&" would make the whole file invalid XML.
+    expect(urls).toContain("https://plazavolcanes.com/?categoria=hogar-y-jardin&amp;subcategoria=cocina");
+    expect(urls).toHaveLength(5 + MEXICO_ADMINISTRATIVE_AREAS.length + LEGAL_ROUTES.length);
   });
 
   it("keeps signed-in areas out of the index", async () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://plazavolcanes.com");
-    vi.mocked(getSitemapCatalog).mockResolvedValue({ shops: [], products: [] });
+    vi.mocked(getSitemapCatalog).mockResolvedValue({ shops: [], products: [], categoryPaths: [] });
 
     const urls = (await sitemap()).map((entry) => entry.url);
 
@@ -52,6 +56,7 @@ describe("sitemap", () => {
         filters.isAdminEnabled === true && filters.isShopApproved === true
           ? []
           : [pendingShopPublishedProduct],
+      categoryPaths: [],
     });
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://plazavolcanes.com");
     expect(catalogDouble({ isAdminEnabled: true }).products).toEqual([pendingShopPublishedProduct]);
@@ -71,6 +76,7 @@ describe("sitemap", () => {
     vi.mocked(getSitemapCatalog).mockResolvedValue({
       shops: [{ slug: "casa-niebla", updatedAt: "2026-08-01T00:00:00.000Z" }],
       products: [],
+      categoryPaths: [],
     });
 
     const shopEntry = (await sitemap()).find((entry) => entry.url.includes("/tiendas/"));
@@ -80,7 +86,7 @@ describe("sitemap", () => {
 
   it("lists every legal route", async () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://plazavolcanes.com");
-    vi.mocked(getSitemapCatalog).mockResolvedValue({ shops: [], products: [] });
+    vi.mocked(getSitemapCatalog).mockResolvedValue({ shops: [], products: [], categoryPaths: [] });
 
     const entries = await sitemap();
     const urls = entries.map((entry) => entry.url);

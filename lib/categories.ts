@@ -47,6 +47,55 @@ export const CATEGORY_ICON_BY_ROOT_SLUG = {
   "libros-medios-y-coleccionables": "books",
 } as const satisfies Record<string, CategoryIconName>;
 
+export type ResolvedCategorySelection = {
+  selectedCategory: CategoryTree | null;
+  selectedSubcategory: CategoryOption | null;
+  invalidCategorySelection: boolean;
+  /** The category the catalog filters on: the subcategory when there is one. */
+  categoryId: number | null;
+};
+
+/**
+ * Matches the catalog's category and subcategory slugs against the tree. A
+ * subcategory only counts inside its own parent, so a slug that exists under a
+ * different category is as invalid as one that does not exist.
+ */
+export function resolveCategorySelection(
+  categories: CategoryTree[],
+  filters: { categorySlug?: string; subcategorySlug?: string; invalidCategorySelection: boolean },
+): ResolvedCategorySelection {
+  const selectedCategory =
+    categories.find((category) => category.slug === filters.categorySlug) ?? null;
+  const selectedSubcategory =
+    selectedCategory?.children.find(
+      (subcategory) => subcategory.slug === filters.subcategorySlug,
+    ) ?? null;
+  const invalidCategorySelection = Boolean(
+    filters.invalidCategorySelection ||
+      (filters.categorySlug && !selectedCategory) ||
+      (filters.subcategorySlug && !selectedSubcategory),
+  );
+
+  return {
+    selectedCategory,
+    selectedSubcategory,
+    invalidCategorySelection,
+    categoryId: invalidCategorySelection
+      ? null
+      : (selectedSubcategory?.id ?? selectedCategory?.id ?? null),
+  };
+}
+
+/**
+ * The leaf categories a selection's products are filed under. Products carry a
+ * subcategory, so a top-level category stands for all of its children.
+ */
+export function listingCategoryIds(selection: ResolvedCategorySelection): number[] {
+  if (selection.invalidCategorySelection) return [];
+  if (selection.selectedSubcategory) return [selection.selectedSubcategory.id];
+  return selection.selectedCategory?.children.map((category) => category.id) ?? [];
+}
+
 const EMPTY_SELECTION: CategorySelection = { parentId: null, leafId: null };
 
 export function findCategorySelection(
