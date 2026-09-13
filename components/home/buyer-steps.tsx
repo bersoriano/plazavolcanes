@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, ClipboardCheck, Compass, HandHeart } from "lucide-react";
 
-const steps = [
+export const buyerSteps = [
   {
     icon: Compass,
     title: "Explora y compara",
@@ -43,7 +43,7 @@ export function BuyerSteps({ catalogHref }: { catalogHref: string }) {
           pedido.
         </p>
         <ol className="mt-9 grid gap-5 sm:grid-cols-3">
-          {steps.map((step, index) => (
+          {buyerSteps.map((step, index) => (
             <li className="rounded-[1.5rem] border border-line bg-background p-6" key={step.title}>
               <div className="flex items-center gap-3">
                 <span className="grid size-10 place-items-center rounded-xl bg-brand text-accent">

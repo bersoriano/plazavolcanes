@@ -153,7 +153,7 @@ export function HomeHero() {
             </CatalogJumpLink>
             <Link
               className="rounded-full border border-line px-[26px] py-[15px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
-              href="/registro"
+              href="/registro?paso=vender"
             >
               Abrir mi tienda
             </Link>

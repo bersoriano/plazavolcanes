@@ -53,7 +53,7 @@ describe("HomeHero", () => {
     );
     expect(screen.getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
       "href",
-      "/registro",
+      "/registro?paso=vender",
     );
   });
 

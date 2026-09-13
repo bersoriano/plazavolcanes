@@ -41,7 +41,7 @@ describe("SellerProgram", () => {
     );
     expect(within(program).getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
       "href",
-      "/registro",
+      "/registro?paso=vender",
     );
     expect(within(program).getByRole("link", { name: "Ya tengo cuenta" })).toHaveAttribute(
       "href",

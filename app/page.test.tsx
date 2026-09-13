@@ -232,7 +232,7 @@ describe("Home conversion sections", () => {
     );
     expect(within(hero).getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
       "href",
-      "/registro",
+      "/registro?paso=vender",
     );
     expect(within(hero).queryByRole("search")).not.toBeInTheDocument();
     expect(within(hero).queryByRole("navigation")).not.toBeInTheDocument();
@@ -338,7 +338,7 @@ describe("Home conversion sections", () => {
     const pitch = screen.getByRole("region", { name: "Vende en Plaza Volcanes" });
     expect(within(pitch).getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
       "href",
-      "/registro",
+      "/registro?paso=vender",
     );
   });
 

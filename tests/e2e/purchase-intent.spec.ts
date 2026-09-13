@@ -22,7 +22,7 @@ const seller = { email: `seller-${stamp}@test.local`, password: "plaza-volcanes-
 const buyer = { email: `buyer-${stamp}@test.local`, password: "plaza-volcanes-1", name: "Ana Ruiz" };
 
 async function register(page: Page, account: { email: string; password: string; name: string }) {
-  await page.goto("/registro");
+  await page.goto("/registro?paso=formulario");
   await page.getByLabel("Tu nombre").fill(account.name);
   await page.getByLabel("Correo electrónico").fill(account.email);
   await page.getByLabel("Teléfono móvil").fill("3312345678");
