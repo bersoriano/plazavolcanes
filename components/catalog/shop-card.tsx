@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, MapPin, Store } from "lucide-react";
+import { ArrowUpRight, MapPin, Sparkles, Store } from "lucide-react";
 
 import { CatalogImage } from "@/components/catalog/catalog-image";
 import { TrustTierBadge } from "@/components/shops/trust-tier-badge";
@@ -7,9 +7,22 @@ import type { CatalogShop } from "@/lib/queries/catalog.server";
 import { formatShopLocation } from "@/lib/shop-location";
 
 export function PublicShopCard({ shop }: { shop: CatalogShop }) {
+  const isPremium = shop.is_premium === true;
+
   return (
-    <Link className="group min-w-[260px] flex-1 overflow-hidden rounded-[1.5rem] border border-line bg-surface" href={`/tiendas/${shop.slug}`}>
-      <div className="aspect-[16/10] overflow-hidden bg-photo-backdrop">
+    <Link
+      className={`group min-w-[260px] flex-1 overflow-hidden rounded-[1.5rem] border bg-surface ${
+        isPremium ? "border-premium-gold" : "border-line"
+      }`}
+      href={`/tiendas/${shop.slug}`}
+    >
+      <div className="relative aspect-[16/10] overflow-hidden bg-photo-backdrop">
+        {isPremium ? (
+          <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-premium-ink px-2.5 py-1.5 text-xs font-bold text-premium-gold shadow-sm">
+            <Sparkles aria-hidden="true" className="size-3" />
+            Premium
+          </span>
+        ) : null}
         <CatalogImage
           alt=""
           className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
