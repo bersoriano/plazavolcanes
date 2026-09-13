@@ -138,4 +138,11 @@ test("keeps the measured trust badge beside the granted distinction", async () =
   // it does not require a single text node. The regex is kept anyway per
   // the controller's ruling; see the task report for the verification.
   expect(screen.getByText(/Estándar/)).toBeInTheDocument();
+
+  // The trust tooltip sits on gold in the premium theme (bg-brand-hover
+  // becomes light gold there): it needs the token that flips with the
+  // theme, not a hardcoded white, or its text fails contrast. Selected by
+  // id, not role: the premium badge's own tooltip also has role="tooltip"
+  // on this page.
+  expect(document.getElementById("trust-tier-tooltip")).toHaveClass("text-on-brand");
 });
