@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, ExternalLink, PackageOpen } from "lucide-react";
 
+import { PremiumBadge } from "@/components/shops/premium-badge";
+
 type WorkspaceView = "catalogo" | "ajustes";
 
 const VIEWS: { id: WorkspaceView; label: string; segment: string }[] = [
@@ -17,11 +19,13 @@ const VIEWS: { id: WorkspaceView; label: string; segment: string }[] = [
  */
 export function ShopWorkspaceHeader({
   active,
+  isPremium = false,
   shopId,
   shopName,
   shopSlug,
 }: {
   active: WorkspaceView;
+  isPremium?: boolean;
   shopId: number;
   shopName: string;
   shopSlug: string;
@@ -46,7 +50,16 @@ export function ShopWorkspaceHeader({
       </div>
 
       <p className="mt-4 text-sm font-semibold uppercase tracking-[0.16em] text-brand">Tu tienda</p>
-      <h1 className="mt-1 font-display text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">{shopName}</h1>
+      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <h1 className="font-display text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">{shopName}</h1>
+        {isPremium ? <PremiumBadge showDetails={false} /> : null}
+      </div>
+      {isPremium ? (
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
+          Plaza Volcanes distinguió tu tienda. Tu tienda pública y tus productos se
+          muestran con el tema Premium.
+        </p>
+      ) : null}
 
       {/* Underlined tabs rather than pills: the catalogue's own filters are
           pills, and two rows of pills would read as one flat set of choices. */}

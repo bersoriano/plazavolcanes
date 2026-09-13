@@ -44,7 +44,7 @@ export default async function ShopSettingsPage({ params }: { params: Promise<{ i
 
   return (
     <section className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
-      <ShopWorkspaceHeader active="ajustes" shopId={shopId} shopName={shop.name} shopSlug={shop.slug} />
+      <ShopWorkspaceHeader active="ajustes" isPremium={shop.is_premium === true} shopId={shopId} shopName={shop.name} shopSlug={shop.slug} />
 
       {/* Narrower than the catalogue on purpose: this is a column of fields to
           read down, not a list to scan across. */}

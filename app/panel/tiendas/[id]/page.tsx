@@ -63,7 +63,7 @@ export default async function ShopCatalogPage({
 
   return (
     <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
-      <ShopWorkspaceHeader active="catalogo" shopId={shopId} shopName={shop.name} shopSlug={shop.slug} />
+      <ShopWorkspaceHeader active="catalogo" isPremium={shop.is_premium === true} shopId={shopId} shopName={shop.name} shopSlug={shop.slug} />
 
       {trustDashboard ? <div className="mb-6"><TrustDashboardCard dashboard={trustDashboard} /></div> : null}
 
