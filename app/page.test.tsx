@@ -1,13 +1,17 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import Home from "@/app/page";
+import Home, { generateMetadata } from "@/app/page";
 import { getHomeCatalog } from "@/lib/queries/catalog.server";
+import { getProductCategoryTree } from "@/lib/queries/categories.server";
+import { hasPublishedProducts } from "@/lib/queries/sitemap.server";
 
 vi.mock("@/lib/queries/catalog.server", () => ({
   getHomeCatalog: vi.fn(),
   getCatalogStateCounts: vi.fn(async () => []),
 }));
+vi.mock("@/lib/queries/categories.server", () => ({ getProductCategoryTree: vi.fn(async () => []) }));
+vi.mock("@/lib/queries/sitemap.server", () => ({ hasPublishedProducts: vi.fn(async () => false) }));
 
 const redirect = vi.hoisted(() => vi.fn());
 vi.mock("next/navigation", () => ({ redirect, notFound: vi.fn() }));
@@ -437,5 +441,98 @@ describe("Home state parameter", () => {
     render(await Home({ searchParams: Promise.resolve({}) }));
 
     expect(screen.getByRole("region", { name: "Explora por estado" })).toBeInTheDocument();
+  });
+});
+
+describe("Home search metadata", () => {
+  const electronics = {
+    id: 1,
+    parentId: null,
+    slug: "electronica",
+    name: "Electrónica",
+    sortOrder: 1,
+    isActive: true,
+    children: [{ id: 11, parentId: 1, slug: "celulares", name: "Celulares", sortOrder: 1, isActive: true }],
+  };
+  const emptyCatalog = {
+    products: [],
+    shops: [],
+    categories: [],
+    selectedCategory: null,
+    selectedSubcategory: null,
+    invalidCategorySelection: false,
+    searchEventId: null,
+  };
+
+  function structuredData() {
+    return [...document.querySelectorAll('script[type="application/ld+json"]')].map((script) =>
+      JSON.parse(script.textContent ?? ""),
+    );
+  }
+
+  it("gives the bare home page its canonical and nothing to count", async () => {
+    const metadata = await generateMetadata({ searchParams: Promise.resolve({}) });
+
+    expect(metadata.alternates?.canonical).toBe("/");
+    expect(hasPublishedProducts).not.toHaveBeenCalled();
+  });
+
+  it("indexes a category only once something is published under it", async () => {
+    vi.mocked(getProductCategoryTree).mockResolvedValue([electronics]);
+    vi.mocked(hasPublishedProducts).mockResolvedValueOnce(true);
+
+    const listed = await generateMetadata({ searchParams: Promise.resolve({ categoria: "electronica" }) });
+
+    expect(hasPublishedProducts).toHaveBeenCalledWith([11]);
+    expect(listed.alternates?.canonical).toBe("/?categoria=electronica");
+    expect(listed.robots).toBeUndefined();
+
+    const empty = await generateMetadata({
+      searchParams: Promise.resolve({ categoria: "electronica", subcategoria: "celulares" }),
+    });
+
+    expect(empty.robots).toEqual({ index: false, follow: true });
+  });
+
+  it("does not count anything for a search", async () => {
+    vi.mocked(getProductCategoryTree).mockResolvedValue([electronics]);
+
+    const metadata = await generateMetadata({
+      searchParams: Promise.resolve({ q: "funda", categoria: "electronica" }),
+    });
+
+    expect(metadata.robots).toEqual({ index: false, follow: true });
+    expect(hasPublishedProducts).not.toHaveBeenCalled();
+  });
+
+  it("describes the site and its publisher on the bare home page", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://plazavolcanes.com");
+    vi.mocked(getHomeCatalog).mockResolvedValue(emptyCatalog);
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    expect(structuredData()).toEqual([
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          expect.objectContaining({
+            "@type": "WebSite",
+            name: "Plaza Volcanes",
+            url: "https://plazavolcanes.com/",
+            inLanguage: "es-MX",
+          }),
+          expect.objectContaining({ "@type": "Organization", name: "Plaza Volcanes", url: "https://plazavolcanes.com/" }),
+        ],
+      },
+    ]);
+    vi.unstubAllEnvs();
+  });
+
+  it("leaves structured data to the bare home page", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(emptyCatalog);
+
+    render(await Home({ searchParams: Promise.resolve({ q: "funda" }) }));
+
+    expect(structuredData()).toEqual([]);
   });
 });
