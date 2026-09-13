@@ -144,7 +144,7 @@ function approveShopForPublication(slug: string) {
 }
 
 async function register(page: Page) {
-  await page.goto("/registro");
+  await page.goto("/registro?paso=formulario");
   await page.getByLabel("Tu nombre").fill(shopper.name);
   await page.getByLabel("Correo electrónico").fill(shopper.email);
   await page.getByLabel("Teléfono móvil").fill("3312345678");

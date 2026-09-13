@@ -31,7 +31,7 @@ const onePixelPng = Buffer.from(
 let sellerStorageState: Awaited<ReturnType<BrowserContext["storageState"]>>;
 
 async function registerSeller(page: Page) {
-  await page.goto("/registro");
+  await page.goto("/registro?paso=formulario");
   await page.getByLabel("Tu nombre").fill(seller.name);
   await page.getByLabel("Correo electrónico").fill(seller.email);
   await page.getByLabel("Teléfono móvil").fill("3312345678");

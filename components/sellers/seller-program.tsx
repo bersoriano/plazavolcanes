@@ -4,7 +4,7 @@ import { ArrowRight, ImagePlus, PackageCheck, Store } from "lucide-react";
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { getTrustTierMarker, type TrustTier } from "@/lib/trust-tiers";
 
-const steps = [
+export const sellerSteps = [
   {
     icon: Store,
     title: "Crea tu tienda",
@@ -53,7 +53,7 @@ export function SellerProgram() {
           </p>
 
           <ol className="mt-10 grid gap-5 sm:grid-cols-3">
-            {steps.map((step, index) => (
+            {sellerSteps.map((step, index) => (
               <li
                 className="rounded-[1.5rem] border border-white/15 bg-white/5 p-6"
                 key={step.title}
@@ -104,7 +104,7 @@ export function SellerProgram() {
           <div className="mt-9 flex flex-wrap items-center gap-4">
             <Link
               className="inline-flex min-h-12 items-center gap-2 rounded-full bg-accent px-7 font-semibold text-brand-hover"
-              href="/registro"
+              href="/registro?paso=vender"
             >
               Abrir mi tienda
               <ArrowRight aria-hidden="true" className="size-4" />
