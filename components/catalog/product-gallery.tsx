@@ -165,7 +165,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
               >
                 <ChevronRight aria-hidden="true" className="size-5" />
               </button>
-              <p className="absolute inset-x-0 bottom-5 text-center text-sm font-semibold text-white/80">
+              <p className="absolute inset-x-0 bottom-5 text-center text-sm font-semibold text-background/80">
                 {`${active + 1} / ${count}`}
               </p>
             </>
