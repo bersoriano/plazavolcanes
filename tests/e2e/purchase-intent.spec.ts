@@ -31,6 +31,21 @@ async function register(page: Page, account: { email: string; password: string; 
   await expect(page).toHaveURL(/\/panel/);
 }
 
+/**
+ * The cart shows a quantity as a stepper, not a field: each button submits the
+ * quantity it would leave, so the pair pins down the one on screen.
+ */
+async function expectCartQuantity(page: Page, productName: string, quantity: number) {
+  await expect(page.getByRole("button", { name: `Quitar una unidad de ${productName}` })).toHaveAttribute(
+    "value",
+    String(quantity - 1),
+  );
+  await expect(page.getByRole("button", { name: `Agregar una unidad de ${productName}` })).toHaveAttribute(
+    "value",
+    String(quantity + 1),
+  );
+}
+
 function approveShopForPublication(slug: string) {
   execFileSync(
     "npx",
@@ -117,7 +132,7 @@ test("a signed-out shopper keeps their purchase through sign-in", async ({ brows
   await expect(guestPage).toHaveURL(/\/carrito\/\d+/);
   await expect(guestPage.getByRole("heading", { name: new RegExp(`Tienda ${stamp}`) })).toBeVisible();
   await expect(guestPage.getByText(productName)).toBeVisible();
-  await expect(guestPage.getByLabel(`Cantidad de ${productName}`)).toHaveValue("2");
+  await expectCartQuantity(guestPage, productName, 2);
 
   // This is a real RSC boundary: the cart must serialize the imported/bound
   // start action, create nothing during render, then return here after the
@@ -130,7 +145,7 @@ test("a signed-out shopper keeps their purchase through sign-in", async ({ brows
 
   // Re-opening the destination must not add the product a second time.
   await guestPage.goto(cartUrl);
-  await expect(guestPage.getByLabel(`Cantidad de ${productName}`)).toHaveValue("2");
+  await expectCartQuantity(guestPage, productName, 2);
 
   // And an ordinary sign-in with nothing pending still lands on the panel.
   const plainContext = await browser.newContext();
@@ -215,7 +230,7 @@ test("a buyer must choose how they receive the item", async ({ browser }) => {
   await expect(buyerPage).toHaveURL(/\/compras\/\d+/);
 
   // Still pending, so still no street.
-  await expect(buyerPage.getByText("Solicitud enviada", { exact: true })).toBeVisible();
+  await expect(buyerPage.getByText("Estado: Solicitud enviada", { exact: true })).toBeVisible();
   await expect(buyerPage.getByText("Recolección en tienda")).toBeVisible();
   await expect(buyerPage.getByText("Av. Vallarta 1234")).toHaveCount(0);
 
