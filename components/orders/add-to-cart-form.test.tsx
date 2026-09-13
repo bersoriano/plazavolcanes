@@ -27,6 +27,16 @@ describe("AddToCartForm", () => {
     expect(field).toHaveValue("/productos/taza");
   });
 
+  it("inks the request button to match its brand fill in every theme", () => {
+    render(<AddToCartForm action={action} productPath="/productos/taza" unitsAvailable={1} />);
+
+    // The fill is gold inside a premium product page, where white ink fails.
+    const button = screen.getByRole("button", { name: /Solicitar compra/ });
+
+    expect(button).toHaveClass("bg-brand", "text-on-brand");
+    expect(button).not.toHaveClass("text-white");
+  });
+
   it("says so when a single unit is left", () => {
     render(<AddToCartForm action={action} productPath="/productos/taza" unitsAvailable={1} />);
 
