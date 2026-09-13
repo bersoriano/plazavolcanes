@@ -51,6 +51,10 @@ describe("TrustBadges", () => {
     expect(badge).toHaveAttribute("data-state", "measured");
     expect(badge).toHaveTextContent("Respuesta");
     expect(badge).toHaveTextContent("98%");
+    // The fill is the brand colour, which turns gold inside a premium shop:
+    // white ink would all but vanish there, so the ink follows the fill.
+    expect(badge).toHaveClass("text-on-brand");
+    expect(badge).not.toHaveClass("text-white");
   });
 
   it("greys out a signal with nothing measured yet", () => {
