@@ -109,6 +109,31 @@ describe("Product page purchase notices", () => {
   });
 });
 
+describe("Product page premium theming", () => {
+  it("shows a distinguished shop's product in the premium room", async () => {
+    getPublicProduct.mockResolvedValue({
+      ...product,
+      shop: { ...product.shop, is_premium: true },
+    });
+
+    const { container } = render(await renderPage());
+
+    expect(container.querySelector('[data-theme="premium"]')).not.toBeNull();
+    expect(screen.getByRole("group", { name: "Tienda Premium" })).toBeInTheDocument();
+  });
+
+  it("leaves an ordinary shop's product in the ordinary theme", async () => {
+    getPublicProduct.mockResolvedValue({
+      ...product,
+      shop: { ...product.shop, is_premium: false },
+    });
+
+    const { container } = render(await renderPage());
+
+    expect(container.querySelector('[data-theme="premium"]')).toBeNull();
+  });
+});
+
 describe("Product page messaging", () => {
   it("binds the shop and the product it loaded, not what the browser sends", async () => {
     render(await renderPage());
