@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import {
   DEFAULT_CATALOG_LOCALE,
   DEFAULT_CATALOG_MARKET,
@@ -413,7 +415,9 @@ export async function getPublicShop(
   };
 }
 
-export async function getPublicProduct(
+// A product page reads its listing for the metadata and again for the page in
+// one request; cache() lets both use a single read when they ask alike.
+export const getPublicProduct = cache(async function getPublicProduct(
   slug: string,
   locale: CatalogLocale = DEFAULT_CATALOG_LOCALE,
 ) {
@@ -455,4 +459,4 @@ export async function getPublicProduct(
     shopId: row.shops.id,
     shopOwnerId: row.shops.owner_id,
   };
-}
+});
