@@ -96,6 +96,13 @@ body {
   color: var(--text);
 }
 
+/* On a phone the layout pads <main> to clear the bottom nav, and that padding
+   sits outside the scope: without this a cream band opens between the
+   obsidian page and the footer. Same value as the scope's --background. */
+main:has(> [data-theme="premium"]) {
+  background: #0f0d12;
+}
+
 /* The site's focus ring pairs an aubergine outline with a lime shadow, and
    aubergine is invisible on obsidian. Gold carries the same two-tone ring. */
 [data-theme="premium"] :where(a, button, input, textarea, select):focus-visible {
