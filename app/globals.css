@@ -44,8 +44,14 @@
   --font-display: var(--font-bricolage);
 }
 
-* {
-  border-color: var(--border);
+/* Layered, not bare: Tailwind's utilities live in @layer utilities, and an
+   unlayered rule outranks every layer whatever its specificity. Left bare, this
+   default would repaint every border-brand, border-transparent and
+   border-premium-gold in the app as --border. */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
 }
 
 html {
