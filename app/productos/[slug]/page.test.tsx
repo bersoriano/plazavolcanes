@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const getPublicProduct = vi.fn();
 
 vi.mock("@/lib/queries/catalog.server", () => ({ getPublicProduct }));
-vi.mock("@/lib/queries/categories.server", () => ({ getProductCategoryTree: async () => [] }));
+const getProductCategoryTree = vi.fn(async () => [] as unknown[]);
+vi.mock("@/lib/queries/categories.server", () => ({ getProductCategoryTree }));
 vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: () => false }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: vi.fn() }));
 vi.mock("@/lib/actions/cart", () => ({ addToCart: vi.fn() }));
@@ -74,7 +75,7 @@ describe("Product page purchase notices", () => {
     ).resolves.toEqual({ title: "Producto no encontrado" });
     await expect(renderPage({}, adminDisabledPublishedProduct.slug)).rejects.toThrow("not found");
 
-    expect(getPublicProduct).toHaveBeenCalledWith(adminDisabledPublishedProduct.slug);
+    expect(getPublicProduct).toHaveBeenCalledWith(adminDisabledPublishedProduct.slug, "es-MX");
     expect(notFound).toHaveBeenCalledOnce();
   });
 
@@ -154,5 +155,51 @@ describe("Product page messaging", () => {
     render(await renderPage());
 
     expect(conversationButtonProps.returnTo).toBe("/productos/taza-de-barro");
+  });
+});
+
+describe("Product page search metadata", () => {
+  function structuredData() {
+    const script = document.querySelector('script[type="application/ld+json"]');
+    return JSON.parse(script?.textContent ?? "null");
+  }
+
+  it("reads the Spanish listing for its metadata, whatever the page was asked in", async () => {
+    const metadata = await generateMetadata({ params: Promise.resolve({ slug: "taza-de-barro" }) });
+
+    expect(getPublicProduct).toHaveBeenCalledWith("taza-de-barro", "es-MX");
+    expect(metadata.alternates?.canonical).toBe("/productos/taza-de-barro");
+    expect(metadata.title).toEqual({ absolute: "Taza de barro (Nuevo) | Plaza Volcanes" });
+  });
+
+  it("describes the product, its offer and where it sits in the catalog", async () => {
+    getProductCategoryTree.mockResolvedValueOnce([
+      {
+        id: 1,
+        parentId: null,
+        slug: "hogar-y-jardin",
+        name: "Hogar y jardín",
+        sortOrder: 1,
+        isActive: true,
+        children: [{ id: 11, parentId: 1, slug: "cocina", name: "Cocina", sortOrder: 1, isActive: true }],
+      },
+    ]);
+    getPublicProduct.mockResolvedValue({ ...product, category_id: 11 });
+
+    render(await renderPage());
+
+    const [item, breadcrumb] = structuredData()["@graph"];
+    expect(item).toMatchObject({
+      "@type": "Product",
+      name: "Taza de barro",
+      category: "Hogar y jardín > Cocina",
+      offers: { price: "25000.00", priceCurrency: "MXN", availability: "https://schema.org/InStock" },
+    });
+    expect(breadcrumb.itemListElement.map((entry: { name: string }) => entry.name)).toEqual([
+      "Plaza Volcanes",
+      "Hogar y jardín",
+      "Cocina",
+      "Taza de barro",
+    ]);
   });
 });

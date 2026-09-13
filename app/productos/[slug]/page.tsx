@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronRight, Store } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { ProductGallery } from "@/components/catalog/product-gallery";
+import { JsonLd } from "@/components/seo/json-ld";
 import { ShareActions } from "@/components/share/share-actions";
 import { StartConversationButton } from "@/components/messages/start-conversation-button";
 import { AddToCartForm } from "@/components/orders/add-to-cart-form";
@@ -24,6 +25,7 @@ import { normalizeCatalogFilters } from "@/lib/queries/catalog";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getPublicProduct } from "@/lib/queries/catalog.server";
+import { buildProductJsonLd, buildProductMetadata } from "@/lib/seo/product-metadata";
 
 // Where a purchase that could not be finished sends the buyer back to.
 const PURCHASE_NOTICES: Record<string, string> = {
@@ -47,8 +49,10 @@ type ProductPageProps = {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const product = await getPublicProduct(slug);
-  return product ? { title: product.name, description: product.description } : { title: "Producto no encontrado" };
+  // Always the Spanish listing: it is the canonical page, whatever ?locale= asks
+  // for. The page reads the same (slug, locale) pair, so the cached read is shared.
+  const product = await getPublicProduct(slug, DEFAULT_CATALOG_LOCALE);
+  return product ? buildProductMetadata(product) : { title: "Producto no encontrado" };
 }
 
 export default async function ProductPage({ params, searchParams }: ProductPageProps) {
@@ -102,6 +106,12 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
 
   return (
     <PremiumScope className="pb-4" premium={isPremium}>
+      <JsonLd
+        data={buildProductJsonLd(product, {
+          category: rootCategory,
+          subcategory: leafCategory,
+        })}
+      />
       <section className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
         <Link
           className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand"
