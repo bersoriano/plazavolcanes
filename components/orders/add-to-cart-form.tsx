@@ -8,7 +8,7 @@ import { useFormAction } from "@/lib/use-form-action";
 
 function SubmitButton() {
   const { pending } = useFormStatus();
-  return <button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-brand px-6 font-semibold text-white hover:bg-brand-hover disabled:opacity-60" disabled={pending} type="submit"><ShoppingBag aria-hidden="true" className="size-5" />{pending ? "Agregando…" : "Solicitar compra"}</button>;
+  return <button className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-brand px-6 font-semibold text-on-brand hover:bg-brand-hover disabled:opacity-60" disabled={pending} type="submit"><ShoppingBag aria-hidden="true" className="size-5" />{pending ? "Agregando…" : "Solicitar compra"}</button>;
 }
 
 export function AddToCartForm({

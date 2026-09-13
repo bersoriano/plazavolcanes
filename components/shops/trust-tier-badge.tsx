@@ -12,7 +12,7 @@ export function TrustTierBadge({
   const marker = getTrustTierMarker(tier);
 
   return (
-    <div className="group relative mt-4 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-accent/40 px-3 py-2 text-sm font-bold text-brand-hover">
+    <div className="group relative mt-4 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-trust-tier-fill px-3 py-2 text-sm font-bold text-brand-hover">
       <ShieldCheck aria-hidden="true" className="size-4" />
       Nivel {marker.label}
       {showDetails ? <>
@@ -25,7 +25,7 @@ export function TrustTierBadge({
           <CircleHelp aria-hidden="true" className="size-3.5" />
         </button>
         <span
-          className="pointer-events-none absolute left-0 top-[calc(100%+.5rem)] z-30 w-72 rounded-xl bg-brand-hover px-3 py-2 text-xs font-normal leading-5 text-white opacity-0 shadow-lg transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+          className="pointer-events-none absolute left-0 top-[calc(100%+.5rem)] z-30 w-72 rounded-xl bg-brand-hover px-3 py-2 text-xs font-normal leading-5 text-on-brand opacity-0 shadow-lg transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
           id="trust-tier-tooltip"
           role="tooltip"
         >

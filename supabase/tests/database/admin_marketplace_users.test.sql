@@ -17,8 +17,8 @@ select is(
    from pg_catalog.pg_proc p
    join pg_catalog.pg_namespace n on n.oid = p.pronamespace
    where n.nspname = 'public' and p.proname = 'list_admin_marketplace_users'),
-  '{user_id,email,user_created_at,display_name,shop_limit,shop_id,shop_name,shop_slug,shop_created_at,shop_is_publishing_approved,product_id,product_name,product_slug,product_status,product_is_admin_enabled,product_expires_at,product_created_at,product_updated_at}',
-  'RPC exposes exactly the approved 18 fields in order'
+  '{user_id,email,user_created_at,display_name,shop_limit,shop_id,shop_name,shop_slug,shop_created_at,shop_is_publishing_approved,shop_is_premium,product_id,product_name,product_slug,product_status,product_is_admin_enabled,product_expires_at,product_created_at,product_updated_at}',
+  'RPC exposes exactly the approved 19 fields in order'
 );
 
 select is(private.bootstrap_initial_admin(), false,

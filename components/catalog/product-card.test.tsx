@@ -250,4 +250,58 @@ describe("ProductCard", () => {
 
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  it("marks a distinguished shop's listing in the ordinary grid", () => {
+    const { container } = render(
+      <ProductCard
+        product={{
+          id: 7,
+          slug: "taza-de-barro",
+          imageUrl: null,
+          name: "Taza de barro",
+          price_mxn: 480,
+          currency_code: "MXN",
+          condition: "new",
+          used_condition: null,
+          shop: {
+            name: "Casa Premium",
+            country_code: "MX",
+            administrative_area_codes: ["MX-OAX"],
+            trust_tier: "standard",
+            is_premium: true,
+          },
+        }}
+      />,
+    );
+
+    expect(screen.getByText("Premium")).toBeInTheDocument();
+    expect(container.querySelector(".ring-premium-gold")).toBeInTheDocument();
+  });
+
+  it("leaves an ordinary listing unmarked", () => {
+    const { container } = render(
+      <ProductCard
+        product={{
+          id: 7,
+          slug: "taza-de-barro",
+          imageUrl: null,
+          name: "Taza de barro",
+          price_mxn: 480,
+          currency_code: "MXN",
+          condition: "new",
+          used_condition: null,
+          shop: {
+            name: "Casa Premium",
+            country_code: "MX",
+            administrative_area_codes: ["MX-OAX"],
+            trust_tier: "standard",
+            is_premium: false,
+          },
+        }}
+      />,
+    );
+
+    expect(screen.queryByText("Premium")).toBeNull();
+    expect(container.querySelector(".ring-premium-gold")).toBeNull();
+  });
 });

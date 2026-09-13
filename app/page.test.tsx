@@ -173,6 +173,7 @@ function sampleProduct() {
       country_code: "MX",
       administrative_area_codes: ["MX-OAX"],
       trust_tier: "standard" as const,
+      is_premium: false,
     },
   };
 }
@@ -189,6 +190,7 @@ function sampleShop() {
     image_path: null,
     imageUrl: null,
     is_publishing_approved: true,
+    is_premium: false,
     publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
     listing_limit: 15,
     name: "Taller Volcán",

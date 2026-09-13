@@ -108,3 +108,36 @@ test("says nothing about entregas when the shop has written no policy", async ()
 
   expect(screen.queryByRole("heading", { name: "Política de entregas" })).not.toBeInTheDocument();
 });
+
+test("shows a distinguished shop in its own premium room", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, is_premium: true });
+
+  const { container } = await renderPage();
+
+  expect(container.querySelector('[data-theme="premium"]')).not.toBeNull();
+  expect(screen.getByRole("group", { name: "Tienda Premium" })).toBeInTheDocument();
+});
+
+test("leaves an ordinary shop in the ordinary theme", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, is_premium: false });
+
+  const { container } = await renderPage();
+
+  expect(container.querySelector('[data-theme="premium"]')).toBeNull();
+  expect(screen.queryByRole("group", { name: "Tienda Premium" })).toBeNull();
+});
+
+test("keeps the measured trust badge beside the granted distinction", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, is_premium: true });
+
+  await renderPage();
+
+  expect(screen.getByText("Nivel Estándar")).toBeInTheDocument();
+
+  // The trust tooltip sits on gold in the premium theme (bg-brand-hover
+  // becomes light gold there): it needs the token that flips with the
+  // theme, not a hardcoded white, or its text fails contrast. Selected by
+  // id, not role: the premium badge's own tooltip also has role="tooltip"
+  // on this page.
+  expect(document.getElementById("trust-tier-tooltip")).toHaveClass("text-on-brand");
+});

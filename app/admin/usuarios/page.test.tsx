@@ -26,6 +26,7 @@ beforeEach(() => {
           slug: "taller-volcan",
           createdAt: "2026-08-02T00:00:00.000Z",
           isPublishingApproved: false,
+          isPremium: false,
           products: [],
         },
       ],

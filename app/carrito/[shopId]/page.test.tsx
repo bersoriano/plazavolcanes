@@ -102,6 +102,7 @@ beforeEach(() => {
     image_path: null,
     imageUrl: null,
     is_publishing_approved: true,
+    is_premium: false,
     publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
     listing_limit: 50,
     owner_id: "seller-1",

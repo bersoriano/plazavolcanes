@@ -62,4 +62,21 @@ describe("shop workspace header", () => {
 
     expect(screen.getByRole("link", { name: /Pedidos/ })).toHaveAttribute("href", "/panel/pedidos");
   });
+
+  it("tells a distinguished seller their shop carries the distinction", () => {
+    renderHeader({
+      isPremium: true,
+      shopName: "Casa Premium",
+      shopSlug: "casa-premium",
+    });
+
+    expect(screen.getByRole("group", { name: "Tienda Premium" })).toBeInTheDocument();
+    expect(screen.getByText(/Plaza Volcanes distinguió tu tienda/)).toBeInTheDocument();
+  });
+
+  it("says nothing about the distinction to an ordinary seller", () => {
+    renderHeader();
+
+    expect(screen.queryByRole("group", { name: "Tienda Premium" })).toBeNull();
+  });
 });

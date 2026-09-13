@@ -10,7 +10,7 @@ const CARD =
 function ProductCardBody({ product }: { product: ConversationProduct }) {
   return (
     <>
-      <span className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#eee8e1]">
+      <span className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-photo-backdrop">
         {product.image_url ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img alt={product.name} className="size-full object-cover" src={product.image_url} />

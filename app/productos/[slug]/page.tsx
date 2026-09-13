@@ -7,6 +7,8 @@ import { ProductGallery } from "@/components/catalog/product-gallery";
 import { ShareActions } from "@/components/share/share-actions";
 import { StartConversationButton } from "@/components/messages/start-conversation-button";
 import { AddToCartForm } from "@/components/orders/add-to-cart-form";
+import { PremiumBadge } from "@/components/shops/premium-badge";
+import { PremiumScope } from "@/components/shops/premium-scope";
 import {
   DEFAULT_CATALOG_CURRENCY,
   DEFAULT_CATALOG_LOCALE,
@@ -80,6 +82,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
       filters.locale !== DEFAULT_CATALOG_LOCALE ||
       filters.countryCode !== DEFAULT_CATALOG_MARKET,
   );
+  const isPremium = product.shop.is_premium === true;
   const currencyCode = product.currency_code ?? DEFAULT_CATALOG_CURRENCY;
   const addToCartAction = addToCart.bind(null, product.id);
   const purchaseNotice =
@@ -98,86 +101,91 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   }
 
   return (
-    <section className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
-      <Link
-        className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand"
-        href={hasCatalogState ? catalogHref : `/tiendas/${product.shop.slug}`}
-      >
-        <ArrowLeft aria-hidden="true" className="size-4" />
-        {hasCatalogState ? "Volver a resultados" : product.shop.name}
-      </Link>
+    <PremiumScope className="pb-4" premium={isPremium}>
+      <section className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+        <Link
+          className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand"
+          href={hasCatalogState ? catalogHref : `/tiendas/${product.shop.slug}`}
+        >
+          <ArrowLeft aria-hidden="true" className="size-4" />
+          {hasCatalogState ? "Volver a resultados" : product.shop.name}
+        </Link>
 
-      {rootCategory ? (
-        <nav aria-label="Categoría del producto" className="mt-4 flex flex-wrap items-center gap-1.5 text-sm font-medium text-muted">
-          <Link className="inline-flex min-h-11 items-center rounded-full px-3 py-2 hover:text-brand" href={buildCatalogHref({ query: filters.query, categorySlug: rootCategory.slug, locale: filters.locale, countryCode: filters.countryCode })}>
-            {rootCategory.name}
-          </Link>
-          {leafCategory ? (
-            <>
-              <ChevronRight aria-hidden="true" className="size-4" />
-              <Link
-                aria-current="page"
-                className="inline-flex min-h-11 items-center rounded-full px-3 py-2 font-semibold text-brand"
-                href={buildCatalogHref({
-                  query: filters.query,
-                  categorySlug: rootCategory.slug,
-                  subcategorySlug: leafCategory.slug,
-                  locale: filters.locale,
-                  countryCode: filters.countryCode,
-                })}
-              >
-                {leafCategory.name}
+        {rootCategory ? (
+          <nav aria-label="Categoría del producto" className="mt-4 flex flex-wrap items-center gap-1.5 text-sm font-medium text-muted">
+            <Link className="inline-flex min-h-11 items-center rounded-full px-3 py-2 hover:text-brand" href={buildCatalogHref({ query: filters.query, categorySlug: rootCategory.slug, locale: filters.locale, countryCode: filters.countryCode })}>
+              {rootCategory.name}
+            </Link>
+            {leafCategory ? (
+              <>
+                <ChevronRight aria-hidden="true" className="size-4" />
+                <Link
+                  aria-current="page"
+                  className="inline-flex min-h-11 items-center rounded-full px-3 py-2 font-semibold text-brand"
+                  href={buildCatalogHref({
+                    query: filters.query,
+                    categorySlug: rootCategory.slug,
+                    subcategorySlug: leafCategory.slug,
+                    locale: filters.locale,
+                    countryCode: filters.countryCode,
+                  })}
+                >
+                  {leafCategory.name}
+                </Link>
+              </>
+            ) : null}
+          </nav>
+        ) : null}
+
+        <div className="mt-7 grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:gap-12">
+          <ProductGallery images={product.images} name={product.name} />
+          <div className="flex flex-col justify-center">
+            <div className="flex flex-wrap items-center gap-3">
+              <Link className="inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-sm font-semibold text-brand-hover" href={`/tiendas/${product.shop.slug}`}>
+                <Store aria-hidden="true" className="size-4" />
+                {product.shop.name}
               </Link>
-            </>
-          ) : null}
-        </nav>
-      ) : null}
-
-      <div className="mt-7 grid gap-8 lg:grid-cols-[1.2fr_.8fr] lg:gap-12">
-        <ProductGallery images={product.images} name={product.name} />
-        <div className="flex flex-col justify-center">
-          <Link className="inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-sm font-semibold text-brand-hover" href={`/tiendas/${product.shop.slug}`}>
-            <Store aria-hidden="true" className="size-4" />
-            {product.shop.name}
-          </Link>
-          <h1 className="mt-5 font-display text-4xl font-semibold leading-tight tracking-[-0.04em] text-ink sm:text-5xl">{product.name}</h1>
-          <p className="mt-3 inline-flex w-fit rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-semibold text-brand">
-            {formatProductCondition(product.condition, product.used_condition)}
-          </p>
-          <p className="mt-5 text-3xl font-semibold text-brand">
-            {formatCurrency(product.price_mxn, currencyCode, filters.locale)}{" "}
-            <span className="text-sm font-medium text-muted">{currencyCode}</span>
-          </p>
-          <div className="my-7 h-px bg-line" />
-          <p className="whitespace-pre-wrap text-base leading-8 text-muted">{product.description}</p>
-          {purchaseNotice ? (
-            <p
-              className="mt-7 rounded-2xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale"
-              role="status"
-            >
-              {purchaseNotice}
+              {isPremium ? <PremiumBadge showDetails={false} /> : null}
+            </div>
+            <h1 className="mt-5 font-display text-4xl font-semibold leading-tight tracking-[-0.04em] text-ink sm:text-5xl">{product.name}</h1>
+            <p className="mt-3 inline-flex w-fit rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-semibold text-brand">
+              {formatProductCondition(product.condition, product.used_condition)}
             </p>
-          ) : null}
-          <AddToCartForm
-            action={addToCartAction}
-            productPath={productPath}
-            unitsAvailable={product.units_available}
-          />
-          <div className="mt-7 flex flex-wrap items-center gap-3">
-            <StartConversationButton
-              action={messageAction}
-              isOwnShop={viewerId === product.shopOwnerId}
-              label="Preguntar por este producto"
-              returnTo={productPath}
-              signedIn={Boolean(viewerId)}
+            <p className="mt-5 text-3xl font-semibold text-brand">
+              {formatCurrency(product.price_mxn, currencyCode, filters.locale)}{" "}
+              <span className="text-sm font-medium text-muted">{currencyCode}</span>
+            </p>
+            <div className="my-7 h-px bg-line" />
+            <p className="whitespace-pre-wrap text-base leading-8 text-muted">{product.description}</p>
+            {purchaseNotice ? (
+              <p
+                className="mt-7 rounded-2xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale"
+                role="status"
+              >
+                {purchaseNotice}
+              </p>
+            ) : null}
+            <AddToCartForm
+              action={addToCartAction}
+              productPath={productPath}
+              unitsAvailable={product.units_available}
             />
-            <ShareActions label="Compartir producto" title={product.name} />
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <StartConversationButton
+                action={messageAction}
+                isOwnShop={viewerId === product.shopOwnerId}
+                label="Preguntar por este producto"
+                returnTo={productPath}
+                signedIn={Boolean(viewerId)}
+              />
+              <ShareActions label="Compartir producto" title={product.name} />
+            </div>
+            <p className="mt-8 rounded-2xl border border-line bg-surface p-4 text-sm leading-6 text-muted">
+              Producto publicado por una tienda independiente de Plaza Volcanes.
+            </p>
           </div>
-          <p className="mt-8 rounded-2xl border border-line bg-surface p-4 text-sm leading-6 text-muted">
-            Producto publicado por una tienda independiente de Plaza Volcanes.
-          </p>
         </div>
-      </div>
-    </section>
+      </section>
+    </PremiumScope>
   );
 }

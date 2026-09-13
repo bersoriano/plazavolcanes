@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, Sparkles } from "lucide-react";
 
 import { CatalogImage } from "@/components/catalog/catalog-image";
 import {
@@ -30,6 +30,7 @@ type ProductCardProps = {
       country_code: string;
       administrative_area_codes: string[];
       trust_tier: TrustTier;
+      is_premium?: boolean;
     };
   };
   categoryName?: string | null;
@@ -51,6 +52,7 @@ export function ProductCard({
     ? catalogHref.slice(catalogHref.indexOf("?"))
     : "";
   const currencyCode = product.currency_code ?? DEFAULT_CATALOG_CURRENCY;
+  const isPremium = product.shop.is_premium === true;
 
   function recordSelection() {
     if (!eventId || position == null || !Number.isInteger(position) || position < 1) return;
@@ -65,10 +67,20 @@ export function ProductCard({
 
   return (
     <Link className="group block" href={`/productos/${product.slug}${catalogQuery}`} onClick={recordSelection}>
-      <div className="relative aspect-[4/3] overflow-hidden rounded-[1.4rem] bg-[#eee8e1]">
+      <div
+        className={`relative aspect-[4/3] overflow-hidden rounded-[1.4rem] bg-photo-backdrop ${
+          isPremium ? "ring-1 ring-premium-gold ring-offset-2 ring-offset-background" : ""
+        }`}
+      >
         <span className="absolute left-3 top-3 z-10 rounded-full bg-surface/95 px-3 py-1.5 text-xs font-semibold text-brand shadow-sm">
           {formatProductCondition(product.condition, product.used_condition)}
         </span>
+        {isPremium ? (
+          <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-premium-ink px-2.5 py-1.5 text-xs font-bold text-premium-gold shadow-sm">
+            <Sparkles aria-hidden="true" className="size-3" />
+            Premium
+          </span>
+        ) : null}
         <CatalogImage
           alt={product.name}
           className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.035]"
@@ -78,7 +90,7 @@ export function ProductCard({
       </div>
       <div className="px-1 pt-4">
         <p className="text-sm font-medium text-muted">
-          <span>{product.shop.name}</span>
+          <span className={isPremium ? "font-semibold text-premium-text" : undefined}>{product.shop.name}</span>
           <span aria-hidden="true"> · </span>
           <span>{formatShopLocation(product.shop.country_code, product.shop.administrative_area_codes)}</span>
           {categoryName ? <><span aria-hidden="true"> · </span><span>{categoryName}</span></> : null}

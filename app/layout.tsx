@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Instrument_Sans } from "next/font/google";
+import { Bricolage_Grotesque, Fraunces, Instrument_Sans } from "next/font/google";
 
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { SiteFooter } from "@/components/layout/site-footer";
@@ -16,6 +16,17 @@ const bricolage = Bricolage_Grotesque({
 
 const instrument = Instrument_Sans({
   variable: "--font-instrument",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+// Loaded as a variable only, not applied here: the premium scope in
+// globals.css swaps it in by overriding --font-bricolage, the variable the
+// compiled `font-display` utility actually reads. An ordinary page never
+// touches --font-bricolage, so it keeps Bricolage and this face costs it
+// nothing but the stylesheet entry.
+const fraunces = Fraunces({
+  variable: "--font-fraunces-variable",
   subsets: ["latin"],
   display: "swap",
 });
@@ -44,7 +55,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="es"
-      className={`${bricolage.variable} ${instrument.variable}`}
+      className={`${bricolage.variable} ${instrument.variable} ${fraunces.variable}`}
       data-scroll-behavior="smooth"
     >
       <body className="antialiased">

@@ -9,8 +9,22 @@
   --text: #19171b;
   --text-muted: #6d6871;
   --border: #ded8d2;
+  --surface-raised: #ffffff;
+  --on-brand: #ffffff;
+  --photo-backdrop: #eee8e1;
   --sale: #f05d4e;
   --success: #19734c;
+  --premium-gold: #e8c777;
+  --premium-ink: #16131a;
+  --premium-text: #6f5412;
+  /* Light ink for text set on premium ink, such as the Premium badge tooltip. */
+  --premium-cream: #f5f1ea;
+  /* The trust tier pill's fill: exactly what bg-accent/40 painted. It is its
+     own token so a theme can give the measured tier a look of its own.
+     var(--accent) resolves here at :root, so a scope that overrides --accent
+     inherits this already-computed value, not one mixed from its own accent:
+     such a scope must override --trust-tier-fill too. */
+  --trust-tier-fill: color-mix(in oklab, var(--accent) 40%, transparent);
 }
 
 @theme inline {
@@ -22,14 +36,28 @@
   --color-ink: var(--text);
   --color-muted: var(--text-muted);
   --color-line: var(--border);
+  --color-surface-raised: var(--surface-raised);
+  --color-on-brand: var(--on-brand);
+  --color-photo-backdrop: var(--photo-backdrop);
   --color-sale: var(--sale);
   --color-success: var(--success);
+  --color-premium-gold: var(--premium-gold);
+  --color-premium-ink: var(--premium-ink);
+  --color-premium-text: var(--premium-text);
+  --color-premium-cream: var(--premium-cream);
+  --color-trust-tier-fill: var(--trust-tier-fill);
   --font-sans: var(--font-instrument);
   --font-display: var(--font-bricolage);
 }
 
-* {
-  border-color: var(--border);
+/* Layered, not bare: Tailwind's utilities live in @layer utilities, and an
+   unlayered rule outranks every layer whatever its specificity. Left bare, this
+   default would repaint every border-brand, border-transparent and
+   border-premium-gold in the app as --border. */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
 }
 
 html {
@@ -44,6 +72,82 @@ body {
   color: var(--text);
   font-family: var(--font-instrument), Arial, sans-serif;
   text-rendering: optimizeLegibility;
+}
+
+/*
+ * A distinguished shop's own room.
+ *
+ * Nothing here restyles a component: the same tokens every component already
+ * reads are given different values inside the scope, so the whole subtree turns
+ * obsidian and gold at once. The site's header and footer stay outside it, so
+ * the marketplace still reads as one place.
+ */
+[data-theme="premium"] {
+  --background: #0f0d12;
+  --surface: #16131a;
+  --surface-raised: #1e1a24;
+  --text: #f5f1ea;
+  --text-muted: #a9a0b0;
+  --border: #3a3142;
+  --brand: #e8c777;
+  --brand-hover: #f2d894;
+  /* Accent is brand's partner, never its twin: components pair the two as
+     fill and ink (a measured trust value on a brand pill, the shop link on an
+     accent pill). Gold on gold measured 1:1, so inside the scope the partner
+     is the raised obsidian, which reads against gold both ways. */
+  --accent: #1e1a24;
+  --on-brand: #16131a;
+  --photo-backdrop: #211c27;
+  --premium-text: #e8c777;
+  /* The measured tier sits beside the granted Premium badge, which is obsidian
+     with a gold rule. A toned bronze keeps the two apart at a glance: 2.09:1
+     against obsidian, with the tier's light-gold label at 6.28:1 on it. */
+  --trust-tier-fill: color-mix(in srgb, var(--premium-gold) 30%, var(--surface));
+  /* The light theme's deep green all but disappears against obsidian, and the
+     status messages that use it — share confirmations, admin notices — have
+     to stay readable inside a premium shop. */
+  --success: #4ec98c;
+  /* `font-display` compiles under @theme inline to `font-family: var(--font-bricolage)`
+     directly — the utility never references --font-display at runtime, so redefining
+     --font-display here would change nothing. --font-bricolage is the variable the
+     compiled rule actually reads, so it is the one this scope has to override. */
+  --font-bricolage: var(--font-fraunces-variable);
+
+  /* Native controls (the quantity field, scrollbars) follow the obsidian room
+     rather than painting light chrome inside it. Text colour comes from the
+     PremiumScope wrapper's own text-ink class. */
+  color-scheme: dark;
+}
+
+/* On a phone the layout pads <main> to clear the bottom nav, and that padding
+   sits outside the scope: without this a cream band opens between the
+   obsidian page and the footer. Same value as the scope's --background. */
+main:has(> [data-theme="premium"]) {
+  background: #0f0d12;
+}
+
+/* The site's focus ring pairs an aubergine outline with a lime shadow, and
+   aubergine is invisible on obsidian. Gold carries the same two-tone ring. */
+[data-theme="premium"] :where(a, button, input, textarea, select):focus-visible {
+  box-shadow: 0 0 0 3px var(--surface);
+  outline: 3px solid var(--brand);
+}
+
+[data-theme="premium"] ::selection {
+  background: var(--brand);
+  color: var(--premium-ink);
+}
+
+/* A hairline that reads as metal rather than as a border. */
+@utility gold-rule {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--premium-gold) 18%,
+    var(--premium-gold) 82%,
+    transparent
+  );
 }
 
 ::selection {

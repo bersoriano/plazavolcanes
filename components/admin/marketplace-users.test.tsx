@@ -3,13 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MarketplaceUsers } from "@/components/admin/marketplace-users";
 
-const { setShopPublishingApproval, setUserShopLimit } = vi.hoisted(() => ({
+const { setShopPublishingApproval, setShopPremium, setUserShopLimit } = vi.hoisted(() => ({
   setShopPublishingApproval: vi.fn(),
+  setShopPremium: vi.fn(),
   setUserShopLimit: vi.fn(),
 }));
 
 vi.mock("@/lib/actions/admin-publication", () => ({
   setShopPublishingApproval,
+  setShopPremium,
   setUserShopLimit,
 }));
 
@@ -18,6 +20,7 @@ afterEach(cleanup);
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(setShopPublishingApproval).mockResolvedValue({ status: "idle", message: "" });
+  vi.mocked(setShopPremium).mockResolvedValue({ status: "idle", message: "" });
   vi.mocked(setUserShopLimit).mockResolvedValue({ status: "idle", message: "" });
 });
 
@@ -48,6 +51,7 @@ describe("MarketplaceUsers", () => {
                 slug: "taller-volcan",
                 createdAt: "2026-08-02T00:00:00.000Z",
                 isPublishingApproved: true,
+                isPremium: false,
                 products: [
                   {
                     id: 11,
@@ -79,6 +83,7 @@ describe("MarketplaceUsers", () => {
                 slug: "bodega-volcan",
                 createdAt: "2026-08-07T00:00:00.000Z",
                 isPublishingApproved: false,
+                isPremium: false,
                 products: [],
               },
             ],
@@ -175,6 +180,7 @@ describe("MarketplaceUsers", () => {
                 slug: "taller-volcan",
                 createdAt: "2026-08-02T00:00:00.000Z",
                 isPublishingApproved: false,
+                isPremium: false,
                 products: [],
               },
             ],
@@ -217,6 +223,7 @@ describe("MarketplaceUsers", () => {
                 slug: "taller-volcan",
                 createdAt: "2026-08-02T00:00:00.000Z",
                 isPublishingApproved: true,
+                isPremium: false,
                 products: [],
               },
             ],
@@ -254,6 +261,7 @@ describe("MarketplaceUsers", () => {
                 slug: "taller-volcan",
                 createdAt: "2026-08-02T00:00:00.000Z",
                 isPublishingApproved: true,
+                isPremium: false,
                 products: [],
               },
             ],
@@ -292,6 +300,7 @@ describe("MarketplaceUsers", () => {
                 slug: "taller-volcan",
                 createdAt: "2026-08-02T00:00:00.000Z",
                 isPublishingApproved: false,
+                isPremium: false,
                 products: [],
               },
             ],
@@ -327,6 +336,7 @@ describe("MarketplaceUsers", () => {
                 slug: "taller-volcan",
                 createdAt: "2026-08-02T00:00:00.000Z",
                 isPublishingApproved: false,
+                isPremium: false,
                 products: [
                   {
                     id: 11,
@@ -387,6 +397,7 @@ describe("MarketplaceUsers", () => {
             slug: "taller-volcan",
             createdAt: "2026-08-02T00:00:00.000Z",
             isPublishingApproved: true,
+            isPremium: false,
             products: [{
               id: 11,
               name: "Taza de barro",
@@ -404,6 +415,72 @@ describe("MarketplaceUsers", () => {
     );
 
     expect(screen.getByText(label)).toBeInTheDocument();
+  });
+
+  it("offers administration a switch for the Premium distinction", () => {
+    render(
+      <MarketplaceUsers
+        users={[
+          {
+            id: "persona-1",
+            email: "lucia@tallervolcan.mx",
+            displayName: "Lucía Martínez",
+            createdAt: "2026-08-01T00:00:00.000Z",
+            shopLimit: 3,
+            shops: [
+              {
+                id: 1,
+                name: "Taller Volcán",
+                slug: "taller-volcan",
+                createdAt: "2026-08-02T00:00:00.000Z",
+                isPublishingApproved: true,
+                isPremium: false,
+                products: [],
+              },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    const premiumSwitch = screen.getByRole("switch", { name: "Distinción Premium" });
+    expect(premiumSwitch).toHaveAttribute("aria-checked", "false");
+
+    fireEvent.click(premiumSwitch);
+
+    return waitFor(() => expect(setShopPremium).toHaveBeenCalled());
+  });
+
+  it("shows a granted distinction as already on", () => {
+    render(
+      <MarketplaceUsers
+        users={[
+          {
+            id: "persona-1",
+            email: "lucia@tallervolcan.mx",
+            displayName: "Lucía Martínez",
+            createdAt: "2026-08-01T00:00:00.000Z",
+            shopLimit: 3,
+            shops: [
+              {
+                id: 1,
+                name: "Taller Volcán",
+                slug: "taller-volcan",
+                createdAt: "2026-08-02T00:00:00.000Z",
+                isPublishingApproved: true,
+                isPremium: true,
+                products: [],
+              },
+            ],
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole("switch", { name: "Distinción Premium" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
   });
 
   it("shows an empty state when no people are registered", () => {

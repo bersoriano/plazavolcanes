@@ -25,7 +25,7 @@ export function ShopPanel({
       <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Vendedor</p>
 
       <div className="mt-4 flex items-center gap-4">
-        <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-[#eee8e1]">
+        <span className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-2xl bg-photo-backdrop">
           {shop.imageUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img alt={shop.name} className="size-full object-cover" src={shop.imageUrl} />

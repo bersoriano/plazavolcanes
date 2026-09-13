@@ -14,7 +14,7 @@ const ORDER_LABEL = "text-xs font-semibold uppercase tracking-[0.14em] text-bran
  */
 function ProductThumbnail({ product }: { product: ConversationProduct }) {
   return (
-    <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-[#eee8e1] sm:size-14">
+    <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-photo-backdrop sm:size-14">
       {product.image_url ? (
         /* eslint-disable-next-line @next/next/no-img-element */
         <img alt={product.name} className="size-full object-cover" src={product.image_url} />

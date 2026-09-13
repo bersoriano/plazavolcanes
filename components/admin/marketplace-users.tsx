@@ -6,13 +6,13 @@ import { useState } from "react";
 
 import { EmptyState } from "@/components/ui/empty-state";
 import {
+  setShopPremium,
   setShopPublishingApproval,
   setUserShopLimit,
 } from "@/lib/actions/admin-publication";
 import { formatDate } from "@/lib/format";
 import type {
   AdminMarketplaceProductState,
-  AdminMarketplaceShop,
   AdminMarketplaceUser,
 } from "@/lib/queries/admin";
 import { useFormAction } from "@/lib/use-form-action";
@@ -40,44 +40,55 @@ function AdminProductStateBadge({ state }: { state: AdminMarketplaceProductState
   );
 }
 
-function ShopPublishingApproval({ shop }: { shop: AdminMarketplaceShop }) {
-  const [state, formAction, pending] = useFormAction(setShopPublishingApproval);
+function ShopFlagSwitch({
+  action,
+  shopId,
+  value,
+  onHeading,
+  offHeading,
+  description,
+  switchName,
+  onTrackClassName,
+  onKnobClassName,
+}: {
+  action: Parameters<typeof useFormAction>[0];
+  shopId: number;
+  value: boolean;
+  onHeading: string;
+  offHeading: string;
+  description: string;
+  switchName: string;
+  onTrackClassName: string;
+  onKnobClassName: string;
+}) {
+  const [state, formAction, pending] = useFormAction(action);
   const appliedValue = state.status === "success" ? state.values?.enabled : undefined;
-  const isApproved =
-    appliedValue === "true"
-      ? true
-      : appliedValue === "false"
-        ? false
-        : shop.isPublishingApproved;
+  const isOn = appliedValue === "true" ? true : appliedValue === "false" ? false : value;
 
   return (
     <form action={formAction} className="mt-4 rounded-2xl border border-line bg-surface p-4">
-      <input name="shop_id" type="hidden" value={shop.id} />
+      <input name="shop_id" type="hidden" value={shopId} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold">
-            {isApproved ? "Publicaciones habilitadas" : "Publicaciones pendientes"}
-          </p>
-          <p className="mt-1 text-sm text-muted">
-            Deshabilitar la tienda oculta sus productos sin cambiar las decisiones del vendedor.
-          </p>
+          <p className="text-sm font-semibold">{isOn ? onHeading : offHeading}</p>
+          <p className="mt-1 text-sm text-muted">{description}</p>
         </div>
         <button
-          aria-checked={isApproved}
+          aria-checked={isOn}
           className={`tap-halo relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition ${
-            isApproved ? "bg-success" : "bg-line"
+            isOn ? onTrackClassName : "bg-line"
           }`}
           disabled={pending}
           name="enabled"
           role="switch"
           type="submit"
-          value={String(!isApproved)}
+          value={String(!isOn)}
         >
-          <span className="sr-only">Publicaciones habilitadas</span>
+          <span className="sr-only">{switchName}</span>
           <span
             aria-hidden="true"
-            className={`size-6 rounded-full bg-white shadow transition-transform ${
-              isApproved ? "translate-x-7" : "translate-x-1"
+            className={`size-6 rounded-full shadow transition-transform ${
+              isOn ? `translate-x-7 ${onKnobClassName}` : "translate-x-1 bg-white"
             }`}
           />
         </button>
@@ -181,9 +192,29 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
                       <p className="mt-1 text-sm text-muted">Creada: {formatDate(shop.createdAt)}</p>
                     </div>
                   </div>
-                  <ShopPublishingApproval
-                    key={`${shop.id}:${shop.isPublishingApproved}`}
-                    shop={shop}
+                  <ShopFlagSwitch
+                    action={setShopPublishingApproval}
+                    description="Deshabilitar la tienda oculta sus productos sin cambiar las decisiones del vendedor."
+                    key={`approval:${shop.id}:${shop.isPublishingApproved}`}
+                    offHeading="Publicaciones pendientes"
+                    onHeading="Publicaciones habilitadas"
+                    onKnobClassName="bg-white"
+                    onTrackClassName="bg-success"
+                    shopId={shop.id}
+                    switchName="Publicaciones habilitadas"
+                    value={shop.isPublishingApproved}
+                  />
+                  <ShopFlagSwitch
+                    action={setShopPremium}
+                    description="La tienda y sus productos se muestran con el tema Premium. No cambia sus métricas de confianza."
+                    key={`premium:${shop.id}:${shop.isPremium}`}
+                    offHeading="Sin distinción Premium"
+                    onHeading="Distinción Premium otorgada"
+                    onKnobClassName="bg-premium-gold"
+                    onTrackClassName="bg-premium-ink"
+                    shopId={shop.id}
+                    switchName="Distinción Premium"
+                    value={shop.isPremium}
                   />
                   {shop.products.length ? (
                     <ul className="mt-4 divide-y divide-line">

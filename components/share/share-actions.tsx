@@ -67,7 +67,7 @@ export function ShareActions({ label, title }: ShareActionsProps) {
       </Button>
       <a
         aria-label="Compartir por WhatsApp"
-        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line bg-white px-5 py-2.5 text-sm font-semibold text-brand transition-colors hover:border-brand"
+        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line bg-surface-raised px-5 py-2.5 text-sm font-semibold text-brand transition-colors hover:border-brand"
         href={whatsappMessage ? `https://wa.me/?text=${whatsappMessage}` : "https://wa.me/"}
         rel="noopener noreferrer"
         target="_blank"

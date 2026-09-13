@@ -66,6 +66,9 @@ describe("ProductGallery", () => {
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveAttribute("aria-modal", "true");
     expect(screen.getByTestId("lightbox-image")).toHaveAttribute("src", IMAGES[1]);
+    // The scrim is ink, which turns cream inside a premium page: the counter
+    // takes the page's own ground so it stays the scrim's opposite.
+    expect(screen.getByText(`2 / ${IMAGES.length}`)).toHaveClass("text-background/80");
 
     fireEvent.click(screen.getByRole("button", { name: "Cerrar" }));
 
