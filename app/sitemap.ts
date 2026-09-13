@@ -9,7 +9,7 @@ import { buildSiteUrl } from "@/lib/site-url";
 // the cookie-bound Supabase client, so this route is built per request rather
 // than revalidated on a timer.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const { shops, products } = await getSitemapCatalog();
+  const { shops, products, categoryPaths } = await getSitemapCatalog();
   const now = new Date();
 
   return [
@@ -24,6 +24,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: now,
       changeFrequency: "weekly" as const,
       priority: 0.5,
+    })),
+    // Only categories with something published: an empty one is marked noindex.
+    ...categoryPaths.map((path) => ({
+      url: buildSiteUrl(path),
+      lastModified: now,
+      changeFrequency: "daily" as const,
+      priority: 0.6,
     })),
     ...shops.map((shop) => ({
       url: buildSiteUrl(`/tiendas/${shop.slug}`),
