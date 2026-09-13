@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process";
+
 import {
   expect,
   test,
@@ -40,6 +42,24 @@ async function registerSeller(page: Page) {
   await expect(page).toHaveURL(/\/panel/);
 }
 
+/** New shops cannot publish until administration approves them. */
+function approveShopForPublication(slug: string) {
+  execFileSync(
+    "npx",
+    [
+      "supabase",
+      "db",
+      "query",
+      "--local",
+      `do $$ begin
+        update public.shops set is_publishing_approved = true where slug = '${slug}';
+        if not found then raise exception 'Could not approve local e2e shop.'; end if;
+      end $$;`,
+    ],
+    { stdio: "pipe" },
+  );
+}
+
 async function createPublishedListing(browser: Browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -55,8 +75,10 @@ async function createPublishedListing(browser: Browser) {
     await page.getByLabel("Estado principal").selectOption("MX-JAL");
     await page.getByRole("button", { name: "Crear tienda" }).click();
     await expect(page).toHaveURL(/\/panel\/tiendas\/\d+/);
+    const publicShopHref = await page.getByRole("link", { name: "Ver tienda pública" }).getAttribute("href");
+    approveShopForPublication(publicShopHref?.split("/").pop() ?? "");
 
-    await page.getByLabel("Agregar producto", { exact: true }).click();
+    await page.getByRole("link", { name: "Agregar producto", exact: true }).first().click();
     await expect(page).toHaveURL(/\/productos\/nuevo/);
     await page.getByLabel("Categoría", { exact: true }).selectOption({ index: 1 });
     await page.getByLabel("Subcategoría").selectOption({ index: 1 });
@@ -71,8 +93,11 @@ async function createPublishedListing(browser: Browser) {
       mimeType: "image/png",
       name: `portada-${runId}.png`,
     });
-    await page.getByRole("button", { name: "Publicar producto" }).click();
+    // A new product is saved as a draft, then published from its edit page.
+    await page.getByRole("button", { name: "Guardar producto" }).click();
     await expect(page).toHaveURL(/\/panel\/productos\/\d+\/editar\?creado=1/);
+    await page.getByRole("button", { name: "Publicar producto" }).click();
+    await expect(page.getByRole("status")).toHaveText("Producto publicado.");
 
     sellerStorageState = await context.storageState();
   } finally {
