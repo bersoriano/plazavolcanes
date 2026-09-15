@@ -8,6 +8,12 @@ import { Button } from "@/components/ui/button";
 type ShareActionsProps = {
   label: string;
   title: string;
+  /**
+   * The address to share. Pages that are themselves the thing being shared
+   * leave it out and share where the visitor is; the seller panel shares the
+   * public shop, which is not the page the seller has open.
+   */
+  url?: string;
 };
 
 function subscribeToLocation() {
@@ -22,12 +28,13 @@ function getServerLocationSnapshot() {
   return "";
 }
 
-export function ShareActions({ label, title }: ShareActionsProps) {
-  const pageUrl = useSyncExternalStore(
+export function ShareActions({ label, title, url }: ShareActionsProps) {
+  const locationUrl = useSyncExternalStore(
     subscribeToLocation,
     getLocationSnapshot,
     getServerLocationSnapshot,
   );
+  const pageUrl = url ?? locationUrl;
   const [status, setStatus] = useState<"copied" | "error" | null>(null);
   const shareText = `Descubre ${title} en Plaza Volcanes.`;
 
@@ -42,19 +49,19 @@ export function ShareActions({ label, title }: ShareActionsProps) {
   }
 
   async function share() {
-    const url = pageUrl || window.location.href;
+    const shareUrl = pageUrl || window.location.href;
     setStatus(null);
 
     if (navigator.share) {
       try {
-        await navigator.share({ title, text: shareText, url });
+        await navigator.share({ title, text: shareText, url: shareUrl });
         return;
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") return;
       }
     }
 
-    await copyLink(url);
+    await copyLink(shareUrl);
   }
 
   const whatsappMessage = pageUrl ? encodeURIComponent(`${shareText}\n${pageUrl}`) : "";
