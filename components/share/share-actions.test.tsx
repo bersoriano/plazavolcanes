@@ -62,6 +62,31 @@ describe("ShareActions", () => {
     });
   });
 
+  it("shares a given address instead of the page it sits on", async () => {
+    // The seller panel offers to share the public shop, so the link has to be
+    // the shop's, never the private panel the seller is looking at.
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    setNavigatorProperty("clipboard", { writeText });
+    window.history.replaceState({}, "", "/panel");
+    render(
+      <ShareActions
+        label="Compartir tienda"
+        title="Casa Niebla"
+        url="https://plazavolcanes.com/tiendas/casa-niebla"
+      />,
+    );
+
+    expect(screen.getByRole("link", { name: "Compartir por WhatsApp" })).toHaveAttribute(
+      "href",
+      "https://wa.me/?text=Descubre%20Casa%20Niebla%20en%20Plaza%20Volcanes.%0Ahttps%3A%2F%2Fplazavolcanes.com%2Ftiendas%2Fcasa-niebla",
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Compartir" }));
+
+    expect(await screen.findByText("Enlace copiado.")).toBeInTheDocument();
+    expect(writeText).toHaveBeenCalledWith("https://plazavolcanes.com/tiendas/casa-niebla");
+  });
+
   it("reports clipboard failures without claiming success", async () => {
     setNavigatorProperty("clipboard", {
       writeText: vi.fn().mockRejectedValue(new Error("blocked")),
