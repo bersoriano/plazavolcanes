@@ -84,7 +84,31 @@ describe("ProductForm", () => {
     );
 
     expect(screen.getByRole("button", { name: "Guardar borrador" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Publicar producto" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Publicar producto" })).toBeDisabled();
+    expect(screen.getByText("Agrega una imagen de portada antes de publicar.")).toBeInTheDocument();
+  });
+
+  it("marks an editing product ready to publish once it has a cover image", () => {
+    render(
+      <ProductForm shopId={1}
+        action={action}
+        categories={categories}
+        images={[{ id: 1, url: "https://example.test/cover.jpg", position: 0 }]}
+        product={{
+          name: "Taza volcánica",
+          description: "Taza hecha a mano con barro de alta temperatura.",
+          price_mxn: 349,
+          status: "draft",
+          condition: "new",
+          used_condition: null,
+          category_id: 11,
+          imageUrl: "https://example.test/cover.jpg",
+        }}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Publicar producto" })).toBeEnabled();
+    expect(screen.getByText("Portada lista para publicar.")).toBeInTheDocument();
   });
 
   it("reveals used subcondition only when Usado is selected", () => {
@@ -157,6 +181,7 @@ describe("ProductForm", () => {
       <ProductForm shopId={1}
         action={invalidCategoryAction}
         categories={categories}
+        images={[{ id: 1, url: "https://example.test/cover.jpg", position: 0 }]}
         product={{
           name: "Taza volcánica",
           description: "Taza hecha a mano con barro de alta temperatura.",

@@ -30,6 +30,11 @@ const listingLimitError: ActionState = {
   status: "error",
   message: "Alcanzaste el límite de publicaciones activas de tu tienda.",
 };
+const coverImageRequiredError: ActionState = {
+  status: "error",
+  message: "Agrega una imagen de portada antes de publicar.",
+  errors: { images: ["Agrega una imagen de portada antes de publicar."] },
+};
 
 /**
  * The browser uploads the pictures itself and submits only where they landed,
@@ -222,6 +227,17 @@ export async function updateProduct(
     return { status: "error", message, errors: { images: [message] } };
   }
 
+  // A newly selected image does not have a gallery row yet. Store and verify it
+  // before changing the status so an upload failure cannot leave a public row
+  // without its required cover.
+  let attachedBeforePublication = false;
+  if (parsed.data.status === "published" && existing.status !== "published" && !existing.image_path) {
+    if (!imageKeys.length) return coverImageRequiredError;
+    const stored = await attachProductImages(supabase, userId, productId, imageKeys);
+    if (stored.error) return { status: "error", message: stored.error };
+    attachedBeforePublication = true;
+  }
+
   // A published slug is already out in the world, so only drafts may regenerate one.
   const slug = existing.status === "published"
     ? existing.slug
@@ -249,7 +265,7 @@ export async function updateProduct(
     return { status: "error", message: "No pudimos guardar el producto." };
   }
 
-  if (imageKeys.length) {
+  if (imageKeys.length && !attachedBeforePublication) {
     const stored = await attachProductImages(supabase, userId, productId, imageKeys);
     if (stored.error) return { status: "error", message: stored.error };
   }
@@ -278,13 +294,14 @@ export async function setProductStatus(
   const context = await getAuthenticatedContext();
   if (!parsedStatus.success || !context) redirect("/ingresar");
   const { supabase, userId } = context;
-  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, status, slug, is_admin_enabled, expires_at").eq("id", productId).maybeSingle();
+  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, image_path, status, slug, is_admin_enabled, expires_at").eq("id", productId).maybeSingle();
   if (productError) throw new Error("No pudimos consultar el producto.");
   // Retiring a listing is one way: it stays out of the catalogue for good.
   if (!product || product.status === "deleted") redirect("/panel");
   const { data: shop, error: shopError } = await supabase.from("shops").select("slug, listing_limit, is_publishing_approved").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
   if (shopError) throw new Error("No pudimos consultar la tienda.");
   if (!shop) redirect("/panel");
+  if (parsedStatus.data === "published" && product.status !== "published" && !product.image_path) return coverImageRequiredError;
   if (parsedStatus.data === "published" && !(await isPublishableCategory(supabase, product.category_id))) {
     redirect(`/panel/productos/${productId}/editar?categoria=requerida=1`);
   }
@@ -342,17 +359,19 @@ export async function deleteProduct(productId: number) {
   const { data: shop } = await supabase.from("shops").select("slug").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
   if (!shop) redirect("/panel");
   const galleryKeys = await productImageKeys(supabase, productId);
-  // Dropping the gallery rows clears products.image_path through the cover trigger.
-  await supabase.from("product_images").delete().eq("product_id", productId);
+  // Retire the listing first: published galleries are intentionally protected
+  // from losing their final cover, while a retired product may release all media.
   const { error } = await supabase
     .from("products")
     .update({ status: "deleted", image_path: null, updated_at: new Date().toISOString() })
     .eq("id", productId);
-  if (!error) {
-    await deleteObjects(supabase, [...galleryKeys, product.image_path].filter(
-      (key): key is string => Boolean(key),
-    ));
-  }
+  if (error) throw new Error("No pudimos eliminar el producto.");
+
+  const { error: imageError } = await supabase.from("product_images").delete().eq("product_id", productId);
+  if (imageError) throw new Error("No pudimos eliminar las imágenes.");
+  await deleteObjects(supabase, [...galleryKeys, product.image_path].filter(
+    (key): key is string => Boolean(key),
+  ));
   revalidatePath("/");
   revalidatePath(`/productos/${product.slug}`);
   revalidatePath(`/panel/tiendas/${product.shop_id}`);
