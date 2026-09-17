@@ -12,13 +12,14 @@ export const metadata: Metadata = { title: "Crear cuenta" };
 
 const PURCHASE_NOTICE = "Ingresa o crea tu cuenta para continuar tu compra.";
 
-type SignUpSearchParams = Promise<{ continuar?: string | string[]; paso?: string | string[] }>;
+type SignUpSearchParams = Promise<{ continuar?: string | string[]; paso?: string | string[]; vender?: string | string[] }>;
 
 export default async function SignUpPage({ searchParams }: { searchParams: SignUpSearchParams }) {
-  const { continuar, paso } = await searchParams;
+  const { continuar, paso, vender } = await searchParams;
   const pendingPurchase = await readPurchaseIntent();
   const destination = safeContinuation(continuar) ?? undefined;
-  const step = resolveSignupStep(paso, Boolean(pendingPurchase || destination));
+  const sellerIntent = vender === "1";
+  const step = sellerIntent && !paso ? "formulario" : resolveSignupStep(paso, Boolean(pendingPurchase || destination));
 
   if (step === "inicio") return <SignupChoice continuar={destination} />;
   if (step !== "formulario") return <SignupFlow continuar={destination} flow={step} />;
@@ -35,7 +36,7 @@ export default async function SignUpPage({ searchParams }: { searchParams: SignU
       <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-brand">Tu lugar empieza aquí</p>
       <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink">Abre tu cuenta</h1>
       <p className="mb-8 mt-3 leading-7 text-muted">
-        Un correo, una contraseña y listo: compra en la plaza o abre tu primera tienda.
+        Crea tu cuenta con correo, contraseña, tu nombre y teléfono. Usamos tu teléfono para contactarte sobre pedidos y no es público.
       </p>
       {pendingPurchase ? (
         <p
@@ -45,7 +46,7 @@ export default async function SignUpPage({ searchParams }: { searchParams: SignU
           {PURCHASE_NOTICE}
         </p>
       ) : null}
-      <AuthForm continuar={destination} mode="signup" />
+      <AuthForm continuar={destination} intent={sellerIntent ? "vender" : undefined} mode="signup" />
     </>
   );
 }

@@ -39,13 +39,13 @@ describe("SellerProgram", () => {
     expect(program).toHaveTextContent(
       "Tú y la persona compradora acuerdan el pago y la entrega directamente. Plaza Volcanes no procesa ni retiene fondos.",
     );
-    expect(within(program).getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
+    expect(within(program).getByRole("link", { name: "Crear mi tienda gratis" })).toHaveAttribute(
       "href",
-      "/registro?paso=vender",
+      "/registro?vender=1",
     );
     expect(within(program).getByRole("link", { name: "Ya tengo cuenta" })).toHaveAttribute(
       "href",
-      "/ingresar",
+      "/ingresar?intent=vender",
     );
     expect(program).not.toHaveTextContent(
       /compra protegida|pago seguro|garantizamos|garantía|reembolso garantizado/i,

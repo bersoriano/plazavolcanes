@@ -44,15 +44,23 @@ export function SellerProgram() {
             Vende en Plaza Volcanes
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-white/80 sm:text-lg">
-            Publicar es gratis y sin comisiones. Abres tu tienda, subes tus productos y recibes
-            solicitudes de pedido de personas que ya están buscando lo que haces.
+            Las primeras 100 tiendas que se registren durante los primeros tres meses de Plaza Volcanes
+            pueden publicar productos gratis y no pagan comisión por cada artículo vendido. La publicación
+            y la comisión por artículo vendido seguirán siendo gratuitas.
           </p>
           <p className="mt-4 max-w-2xl rounded-2xl border border-white/20 bg-white/10 px-5 py-4 text-sm leading-6 text-white/90">
             Tú y la persona compradora acuerdan el pago y la entrega directamente. Plaza Volcanes
             no procesa ni retiene fondos.
           </p>
+          <div className="mt-7 flex flex-wrap items-center gap-4">
+            <Link className="inline-flex min-h-12 items-center gap-2 rounded-full bg-accent px-7 font-semibold text-brand-hover" href="/registro?vender=1">
+              Crear mi tienda gratis
+              <ArrowRight aria-hidden="true" className="size-4" />
+            </Link>
+            <a className="inline-flex min-h-12 items-center font-semibold text-white underline decoration-accent decoration-4 underline-offset-4" href="#como-funciona">Cómo funciona</a>
+          </div>
 
-          <ol className="mt-10 grid gap-5 sm:grid-cols-3">
+          <ol className="mt-10 grid gap-5 sm:grid-cols-3" id="como-funciona">
             {sellerSteps.map((step, index) => (
               <li
                 className="rounded-[1.5rem] border border-white/15 bg-white/5 p-6"
@@ -103,15 +111,8 @@ export function SellerProgram() {
 
           <div className="mt-9 flex flex-wrap items-center gap-4">
             <Link
-              className="inline-flex min-h-12 items-center gap-2 rounded-full bg-accent px-7 font-semibold text-brand-hover"
-              href="/registro?paso=vender"
-            >
-              Abrir mi tienda
-              <ArrowRight aria-hidden="true" className="size-4" />
-            </Link>
-            <Link
               className="inline-flex min-h-12 items-center rounded-full border border-white/30 px-6 font-semibold text-white hover:border-accent hover:text-accent"
-              href="/ingresar"
+              href="/ingresar?intent=vender"
             >
               Ya tengo cuenta
             </Link>

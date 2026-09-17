@@ -46,14 +46,14 @@ describe("HomeHero", () => {
   it("carries the eyebrow pill and both calls to action", () => {
     render(<HomeHero />);
 
-    expect(screen.getByText("Gratis para las primeras tiendas")).toBeInTheDocument();
+    expect(screen.getByText("Publicación gratis y sin comisión por artículo vendido")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Explorar productos" })).toHaveAttribute(
       "href",
       "#catalogo",
     );
-    expect(screen.getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Crear mi tienda gratis" })).toHaveAttribute(
       "href",
-      "/registro?paso=vender",
+      "/registro?vender=1",
     );
   });
 

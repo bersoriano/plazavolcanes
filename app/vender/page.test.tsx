@@ -21,13 +21,13 @@ describe("Seller page", () => {
     expect(screen.getByText("Crea tu tienda")).toBeInTheDocument();
     expect(screen.getByText("Recibe solicitudes")).toBeInTheDocument();
     expect(screen.getByText("Mejor valorada")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Crear mi tienda gratis" })).toHaveAttribute(
       "href",
-      "/registro?paso=vender",
+      "/registro?vender=1",
     );
     expect(screen.getByRole("link", { name: "Ya tengo cuenta" })).toHaveAttribute(
       "href",
-      "/ingresar",
+      "/ingresar?intent=vender",
     );
   });
 });

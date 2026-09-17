@@ -32,6 +32,12 @@ describe("GET /auth/confirm", () => {
     expect(response.headers.get("location")).toBe("https://plazavolcanes.com/panel");
   });
 
+  it("sends a confirmed seller to store creation", async () => {
+    const response = await GET(requestFor("?code=abc&intent=vender"));
+
+    expect(response.headers.get("location")).toBe("https://plazavolcanes.com/panel/tiendas/nueva");
+  });
+
   it("finishes a purchase that registration interrupted", async () => {
     resumePurchaseIntent.mockResolvedValue("/carrito/4");
 

@@ -37,6 +37,13 @@ describe("AuthForm", () => {
     expect(field).toHaveValue("/mensajes");
   });
 
+  it("carries seller intent through registration and sign-in", () => {
+    render(<AuthForm intent="vender" mode="signup" />);
+
+    expect(document.querySelector('input[name="intent"]')).toHaveValue("vender");
+    expect(screen.getByRole("link", { name: "Ingresa" })).toHaveAttribute("href", "/ingresar?intent=vender");
+  });
+
   it("keeps the continuation when sending someone to register instead", () => {
     render(<AuthForm continuar="/carrito/4" mode="signin" />);
 

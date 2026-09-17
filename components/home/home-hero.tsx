@@ -23,7 +23,7 @@ const MESSAGES: Message[] = [
   {
     kicker: "Bienvenido",
     headline: ["Crea tu tienda y sube ", "lo que quieras vender."],
-    deck: "Es gratis para los primeros usuarios de Plaza Volcanes. Abre tu tienda, publica tus productos y empieza a recibir pedidos.",
+    deck: "Las primeras 100 tiendas que se registren durante los primeros tres meses pueden publicar gratis y no pagan comisión por cada artículo vendido.",
   },
   {
     kicker: "Tu tienda, tu reputación",
@@ -128,7 +128,7 @@ export function HomeHero() {
         <div>
           <p className="mb-[30px] inline-flex items-center gap-2 rounded-full border border-[#c9b3dd] bg-[rgba(184,255,106,0.16)] py-[6px] pl-[9px] pr-[14px] text-[11px] font-semibold uppercase tracking-[0.1em] text-brand-hover">
             <span aria-hidden="true" className="size-[7px] shrink-0 rounded-full bg-accent" />
-            Gratis para las primeras tiendas
+            Publicación gratis y sin comisión por artículo vendido
           </p>
 
           {/* The message swaps in place: one kicker, one heading, one deck. It
@@ -153,9 +153,9 @@ export function HomeHero() {
             </CatalogJumpLink>
             <Link
               className="rounded-full border border-line px-[26px] py-[15px] font-semibold text-ink transition-colors hover:border-brand hover:text-brand"
-              href="/registro?paso=vender"
+              href="/registro?vender=1"
             >
-              Abrir mi tienda
+              Crear mi tienda gratis
             </Link>
           </div>
 

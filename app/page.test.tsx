@@ -234,9 +234,9 @@ describe("Home conversion sections", () => {
       "href",
       "#catalogo",
     );
-    expect(within(hero).getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
+    expect(within(hero).getByRole("link", { name: "Crear mi tienda gratis" })).toHaveAttribute(
       "href",
-      "/registro?paso=vender",
+      "/registro?vender=1",
     );
     expect(within(hero).queryByRole("search")).not.toBeInTheDocument();
     expect(within(hero).queryByRole("navigation")).not.toBeInTheDocument();
@@ -340,9 +340,9 @@ describe("Home conversion sections", () => {
     render(await Home({ searchParams: Promise.resolve({}) }));
 
     const pitch = screen.getByRole("region", { name: "Vende en Plaza Volcanes" });
-    expect(within(pitch).getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
+    expect(within(pitch).getByRole("link", { name: "Crear mi tienda gratis" })).toHaveAttribute(
       "href",
-      "/registro?paso=vender",
+      "/registro?vender=1",
     );
   });
 

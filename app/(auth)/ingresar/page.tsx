@@ -16,10 +16,10 @@ const NOTICES: Record<string, string> = {
 
 const PURCHASE_NOTICE = "Ingresa o crea tu cuenta para continuar tu compra.";
 
-type SignInSearchParams = Promise<{ error?: string | string[]; continuar?: string | string[] }>;
+type SignInSearchParams = Promise<{ error?: string | string[]; continuar?: string | string[]; intent?: string | string[] }>;
 
 export default async function SignInPage({ searchParams }: { searchParams: SignInSearchParams }) {
-  const { error, continuar } = await searchParams;
+  const { error, continuar, intent } = await searchParams;
   // A pending purchase is the reason most signed-out buyers arrive here, and it
   // outranks whatever a redirect put in the query string.
   const pendingPurchase = await readPurchaseIntent();
@@ -45,7 +45,7 @@ export default async function SignInPage({ searchParams }: { searchParams: SignI
           {notice}
         </p>
       ) : null}
-      <AuthForm continuar={destination} mode="signin" />
+      <AuthForm continuar={destination} intent={intent === "vender" ? "vender" : undefined} mode="signin" />
     </>
   );
 }
