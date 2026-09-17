@@ -140,7 +140,7 @@ function StoredImages({
   );
 }
 
-function ProductActions({ blocked, busy, status }: { blocked: boolean; busy: boolean; status?: "draft" | "published" }) {
+function ProductActions({ blocked, busy, canPublish, status }: { blocked: boolean; busy: boolean; canPublish: boolean; status?: "draft" | "published" }) {
   const { pending } = useFormStatus();
   const disabled = pending || busy || blocked;
   if (!status) {
@@ -158,7 +158,7 @@ function ProductActions({ blocked, busy, status }: { blocked: boolean; busy: boo
       <Button disabled={disabled} name="status" type="submit" value="draft" variant="secondary">
         {status === "published" ? "Despublicar" : "Guardar borrador"}
       </Button>
-      <Button disabled={disabled} name="status" type="submit" value="published">
+      <Button disabled={disabled || (status === "draft" && !canPublish)} name="status" type="submit" value="published">
         {pending ? "Guardando…" : busy ? "Subiendo imágenes…" : status === "published" ? "Guardar cambios" : "Publicar producto"}
       </Button>
     </div>
@@ -316,6 +316,11 @@ export function ProductForm({
         {images.length ? (
           <p className="text-xs text-muted">{`Quedan ${MAX_PRODUCT_IMAGES - images.length} espacios de ${MAX_PRODUCT_IMAGES}.`}</p>
         ) : null}
+        {product ? (
+          <p className={`text-xs font-medium ${images.length || uploadedKeys.length ? "text-success" : "text-sale"}`} role="status">
+            {images.length || uploadedKeys.length ? "Portada lista para publicar." : "Agrega una imagen de portada antes de publicar."}
+          </p>
+        ) : null}
         {imageError ? <p className="text-sm font-medium text-sale" role="alert">{imageError}</p> : null}
         {state.errors?.images?.[0] ? <p className="text-sm font-medium text-sale">{state.errors.images[0]}</p> : null}
       </div>
@@ -323,7 +328,7 @@ export function ProductForm({
       {uploadedKeys.map((key) => (
         <input key={key} name="image_keys" type="hidden" value={key} />
       ))}
-      <ProductActions blocked={Boolean(imageError)} busy={uploading} status={product?.status} />
+      <ProductActions blocked={Boolean(imageError)} busy={uploading} canPublish={Boolean(images.length || uploadedKeys.length)} status={product?.status} />
     </form>
   );
 }

@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(19);
+select plan(22);
 
 select has_table('public', 'product_images', 'product images table exists');
 
@@ -81,6 +81,28 @@ select results_eq(
   $$select image_path from public.products where name='Borrador con galería'$$,
   array['owner/products/b.jpg'::text],
   'removing the cover promotes the next image'
+);
+
+select throws_ok(
+  $$update public.products set status = 'published' where name = 'Borrador con galería'$$,
+  'P0001',
+  'Agrega una imagen de portada antes de publicar.',
+  'a draft without a gallery cover cannot be published'
+);
+
+select throws_ok(
+  $$delete from public.product_images where product_id = (select id from public.products where name='Con imagen previa')$$,
+  'P0001',
+  'Una publicación debe conservar una imagen de portada.',
+  'the final image of a published product cannot be deleted'
+);
+
+insert into public.product_images (product_id, storage_path, position)
+values ((select id from public.products where name='Con imagen previa'), 'owner/products/a.jpg', 1);
+
+select lives_ok(
+  $$delete from public.product_images where product_id = (select id from public.products where name='Con imagen previa') and position = 1$$,
+  'a published product can delete a non-final image'
 );
 
 set local role anon;

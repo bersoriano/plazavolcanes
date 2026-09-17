@@ -147,11 +147,49 @@ describe("createProduct", () => {
 });
 
 describe("updateProduct", () => {
+  it("refuses to publish a draft without a stored cover image", async () => {
+    mocks.productsSelect.mockImplementationOnce(() => query({
+      data: {
+        shop_id: 7,
+        image_path: null,
+        status: "draft",
+        slug: "taza-anterior",
+        is_admin_enabled: true,
+      },
+      error: null,
+    }));
+
+    const state = await updateProduct(22, idle, sellerForm());
+
+    expect(state).toEqual({
+      status: "error",
+      message: "Agrega una imagen de portada antes de publicar.",
+      errors: { images: ["Agrega una imagen de portada antes de publicar."] },
+    });
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("keeps a legacy published listing editable when it has no gallery cover", async () => {
+    mocks.productsSelect.mockImplementationOnce(() => query({
+      data: {
+        shop_id: 7,
+        image_path: null,
+        status: "published",
+        slug: "taza-anterior",
+        is_admin_enabled: true,
+      },
+      error: null,
+    }));
+
+    await expect(updateProduct(22, idle, sellerForm())).resolves.toMatchObject({ status: "success" });
+    expect(mocks.update).toHaveBeenCalled();
+  });
+
   it("keeps forged moderation fields out of the seller update and explains pending publication", async () => {
     const existing = query({
       data: {
         shop_id: 7,
-        image_path: null,
+        image_path: "products/seller-1/22/cover.jpg",
         status: "draft",
         slug: "taza-anterior",
         is_admin_enabled: true,
@@ -191,7 +229,7 @@ describe("updateProduct", () => {
     mocks.productsSelect.mockImplementationOnce(() => query({
       data: {
         shop_id: 7,
-        image_path: null,
+        image_path: "products/seller-1/22/cover.jpg",
         status: "draft",
         slug: "taza-anterior",
         is_admin_enabled: true,
@@ -217,6 +255,7 @@ describe("setProductStatus", () => {
         data: {
           shop_id: 7,
           category_id: 11,
+          image_path: "products/seller-1/22/cover.jpg",
           status: "draft",
           slug: "taza-volcanica",
           is_admin_enabled: isAdminEnabled,
@@ -237,6 +276,16 @@ describe("setProductStatus", () => {
       expect(state).toEqual({ status: "success", message });
     },
   );
+
+  it("keeps a legacy published listing renewable when it has no gallery cover", () => {
+    return withProduct({ image_path: null, status: "published", expires_at: "2020-01-01T00:00:00.000Z" }, async () => {
+      await setProductStatus(22, "published");
+
+      expect(mocks.update).toHaveBeenCalledWith(
+        expect.objectContaining({ status: "published", expires_at: null }),
+      );
+    });
+  });
 
   it("clears a lapsed window when a listing is brought back", () => {
     // A row keeps status "published" until the hourly sweep files it as
@@ -284,6 +333,7 @@ async function withProduct(
     data: {
       shop_id: 7,
       category_id: 11,
+      image_path: "products/seller-1/22/cover.jpg",
       slug: "taza-volcanica",
       is_admin_enabled: true,
       ...overrides,
