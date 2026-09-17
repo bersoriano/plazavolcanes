@@ -1,4 +1,16 @@
 import type { OrderStatus } from "@/lib/database.types";
+import {
+  compareDates,
+  deadlineUrgency,
+  formatDeadline,
+  PROMISE_SOON_HOURS,
+  REPLY_SOON_HOURS,
+  REPLY_WINDOW_HOURS,
+  replyDeadline,
+  sellerOrderStep,
+  URGENCY_LABELS,
+  type DeadlineUrgency,
+} from "@/lib/seller-action-queue";
 import { getSellerPublicationState } from "@/lib/seller-publication";
 
 /**
@@ -67,12 +79,21 @@ export type DashboardOrder = {
   shop_id: number;
   status: OrderStatus;
   created_at: string;
+  accepted_at: string | null;
   ship_by_at: string | null;
   payment_confirmation_required: boolean;
   payment_completed_at: string | null;
   fulfillment_method: "pickup" | "shipping";
+  /** The zone the ship-by promise was calculated in. */
+  handling_time_zone: string;
   item_names: string[];
 };
+
+/**
+ * An open seller_response_events row: a buyer wrote in an order thread and the
+ * seller has not written since. It starts at the first unanswered message.
+ */
+export type DashboardReplyClock = { conversation_id: number; clock_started_at: string };
 
 /** A section that could not be read is unknown, never zero. */
 export type Loaded<T> = { ok: true; value: T } | { ok: false };
@@ -84,6 +105,8 @@ export type SellerDashboardInput = {
   shops: DashboardShop[];
   products: Loaded<DashboardProduct[]>;
   conversations: Loaded<DashboardConversation[]>;
+  /** Open response clocks in the seller's own shops. */
+  replyClocks: Loaded<DashboardReplyClock[]>;
   /** Orders a seller can still act on: requested, accepted, shipped, delivered. */
   openOrders: Loaded<DashboardOrder[]>;
   /** Whether any order in any of the seller's shops ever reached "completed". */
@@ -233,37 +256,42 @@ export function isOpenOrderStatus(status: OrderStatus) {
   return OPEN_ORDER_STATUSES.includes(status);
 }
 
+type AttentionBase = {
+  id: string;
+  shop: Pick<DashboardShop, "id" | "name">;
+  title: string;
+  /** When the wait began: the request, the first unanswered message, or the acceptance. */
+  since: string;
+  href: string;
+  /** Only a deadline the database keeps; nothing is invented for the rest. */
+  dueAt: string | null;
+  urgency: DeadlineUrgency;
+};
+
 export type AttentionItem =
-  | {
-      kind: "purchase_request";
-      id: string;
-      shop: Pick<DashboardShop, "id" | "name">;
-      orderId: number;
-      title: string;
-      since: string;
-      href: string;
-    }
-  | {
+  | (AttentionBase & { kind: "purchase_request"; orderId: number })
+  | (AttentionBase & {
       kind: "buyer_waiting";
-      id: string;
-      shop: Pick<DashboardShop, "id" | "name">;
       conversationId: number;
-      title: string;
-      since: string;
-      href: string;
-    }
-  | {
+      /** An open response clock measures this wait, so its 24 hours apply. */
+      replyWindow: boolean;
+    })
+  | (AttentionBase & {
       kind: "fulfill_order";
-      id: string;
-      shop: Pick<DashboardShop, "id" | "name">;
       orderId: number;
-      title: string;
-      /** Payment still has to be confirmed before the order can move. */
-      step: "confirm_payment" | "hand_over";
-      since: string;
-      dueAt: string | null;
-      href: string;
-    };
+      /** Payment is confirmed before the order can be shipped or handed over. */
+      step: "confirm_payment" | "ship" | "hand_over";
+      fulfillmentMethod: "pickup" | "shipping";
+      timeZone: string;
+    });
+
+export type AttentionGroupId = "decide" | "reply" | "payment" | "fulfil";
+
+export type AttentionGroup = { id: AttentionGroupId; title: string; items: AttentionItem[] };
+
+const ATTENTION_GROUP_ORDER: readonly AttentionGroupId[] = ["decide", "reply", "payment", "fulfil"];
+
+const URGENCY_RANK: Record<DeadlineUrgency, number> = { overdue: 0, due_soon: 1, none: 2 };
 
 function orderTitle(order: DashboardOrder) {
   const [first, ...rest] = order.item_names;
@@ -292,35 +320,80 @@ export function buyerIsWaiting(
   return true;
 }
 
-export function buildAttention(input: Pick<SellerDashboardInput, "userId" | "shops" | "conversations" | "openOrders">): AttentionItem[] {
+export function attentionGroupId(item: AttentionItem): AttentionGroupId {
+  if (item.kind === "purchase_request") return "decide";
+  if (item.kind === "buyer_waiting") return "reply";
+  return item.step === "confirm_payment" ? "payment" : "fulfil";
+}
+
+/**
+ * Passed deadlines first, then close ones, each earliest first. Everything
+ * else keeps the order of its group (decisions, replies, payments, hand-overs)
+ * and, inside it, the earliest deadline and then the longest wait.
+ */
+function compareAttention(left: AttentionItem, right: AttentionItem) {
+  const groupRank = (item: AttentionItem) => ATTENTION_GROUP_ORDER.indexOf(attentionGroupId(item));
+  return (
+    URGENCY_RANK[left.urgency] - URGENCY_RANK[right.urgency] ||
+    (left.urgency === "none" ? groupRank(left) - groupRank(right) : 0) ||
+    compareDates(left.dueAt, right.dueAt) ||
+    compareDates(left.since, right.since)
+  );
+}
+
+export function buildAttention(
+  input: Pick<SellerDashboardInput, "userId" | "now" | "shops" | "conversations" | "openOrders" | "replyClocks">,
+): AttentionItem[] {
   const shopsById = new Map(input.shops.map((shop) => [shop.id, shop]));
-  const requests: AttentionItem[] = [];
-  const waiting: AttentionItem[] = [];
-  const fulfil: AttentionItem[] = [];
+  const items: AttentionItem[] = [];
 
   const openOrders = input.openOrders.ok ? input.openOrders.value : [];
   for (const order of openOrders) {
     const shop = shopsById.get(order.shop_id);
     if (!shop) continue;
-    const base = { shop: { id: shop.id, name: shop.name }, orderId: order.id, title: orderTitle(order), href: `/panel/pedidos/${order.id}` };
-    if (order.status === "requested") {
-      requests.push({ kind: "purchase_request", id: `order-${order.id}`, since: order.created_at, ...base });
-    } else if (order.status === "accepted") {
-      const step = order.payment_confirmation_required && !order.payment_completed_at ? "confirm_payment" : "hand_over";
-      fulfil.push({ kind: "fulfill_order", id: `order-${order.id}`, since: order.created_at, dueAt: order.ship_by_at, step, ...base });
-    }
+    const step = sellerOrderStep(order);
     // Shipped and delivered orders wait on the buyer, not the seller.
+    if (step.owner !== "seller") continue;
+    const base = {
+      id: `order-${order.id}`,
+      shop: { id: shop.id, name: shop.name },
+      orderId: order.id,
+      title: orderTitle(order),
+      href: `/panel/pedidos/${order.id}`,
+    };
+    const { kind } = step;
+    if (kind === "decide") {
+      items.push({ kind: "purchase_request", ...base, since: order.created_at, dueAt: null, urgency: "none" });
+      continue;
+    }
+    items.push({
+      kind: "fulfill_order",
+      ...base,
+      step: kind,
+      fulfillmentMethod: order.fulfillment_method,
+      timeZone: order.handling_time_zone,
+      since: order.accepted_at ?? order.created_at,
+      dueAt: step.dueAt,
+      urgency: deadlineUrgency(step.dueAt, input.now, PROMISE_SOON_HOURS),
+    });
   }
 
   if (input.conversations.ok) {
     // When orders could not be read, an order thread cannot be judged open, so
     // only enquiries are listed rather than guessing about the rest.
     const openOrderIds = new Set(openOrders.filter((order) => isOpenOrderStatus(order.status)).map((order) => order.id));
+    const clocks = new Map<number, string>(
+      input.replyClocks.ok ? input.replyClocks.value.map((clock) => [clock.conversation_id, clock.clock_started_at]) : [],
+    );
     for (const conversation of input.conversations.value) {
       const shop = shopsById.get(conversation.shop_id);
       if (!shop || !conversation.last_message) continue;
       if (!buyerIsWaiting(conversation, input.userId, openOrderIds)) continue;
-      waiting.push({
+      // The response rate only times order threads, so a question asked before
+      // buying never gets a deadline, whatever the clocks say.
+      const clockStartedAt = conversation.type === "order" ? clocks.get(conversation.id) : undefined;
+      const dueAt = clockStartedAt ? replyDeadline(clockStartedAt) : null;
+      items.push({
         kind: "buyer_waiting",
         id: `conversation-${conversation.id}`,
         shop: { id: shop.id, name: shop.name },
@@ -331,20 +404,35 @@ export function buildAttention(input: Pick<SellerDashboardInput, "userId" | "sho
             : conversation.product_name
               ? `Pregunta sobre ${conversation.product_name}`
               : "Pregunta sobre tu tienda",
-        since: conversation.last_message.created_at,
+        // The clock starts at the first unanswered message, which is how long
+        // the buyer has really waited; the newest message may be later.
+        since: clockStartedAt ?? conversation.last_message.created_at,
         href: `/mensajes/${conversation.id}`,
+        dueAt,
+        urgency: deadlineUrgency(dueAt, input.now, REPLY_SOON_HOURS),
+        replyWindow: dueAt !== null,
       });
     }
   }
 
-  const oldestFirst = (left: AttentionItem, right: AttentionItem) => left.since.localeCompare(right.since);
-  const byDeadline = (left: AttentionItem, right: AttentionItem) => {
-    const leftDue = left.kind === "fulfill_order" ? (left.dueAt ?? left.since) : left.since;
-    const rightDue = right.kind === "fulfill_order" ? (right.dueAt ?? right.since) : right.since;
-    return leftDue.localeCompare(rightDue);
-  };
+  return items.sort(compareAttention);
+}
 
-  return [...requests.sort(oldestFirst), ...waiting.sort(oldestFirst), ...fulfil.sort(byDeadline)];
+function attentionGroupTitle(id: AttentionGroupId, items: AttentionItem[]) {
+  if (id === "decide") return "Solicitudes por decidir";
+  if (id === "reply") return "Compradores esperando respuesta";
+  if (id === "payment") return "Pagos por confirmar";
+  const steps = new Set(items.map((item) => (item.kind === "fulfill_order" ? item.step : null)));
+  if (steps.has("ship") && steps.has("hand_over")) return "Pedidos por enviar o entregar";
+  return steps.has("ship") ? "Pedidos por enviar" : "Pedidos por entregar";
+}
+
+/** The queue by the action each item needs, keeping its order; empty groups are left out. */
+export function groupAttention(items: AttentionItem[]): AttentionGroup[] {
+  return ATTENTION_GROUP_ORDER.map((id) => {
+    const grouped = items.filter((item) => attentionGroupId(item) === id);
+    return { id, title: attentionGroupTitle(id, grouped), items: grouped };
+  }).filter((group) => group.items.length > 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -569,16 +657,28 @@ export function choosePrimaryAction(
     const shop = urgent.shop;
     const share = null;
     if (urgent.kind === "purchase_request") {
-      return { kind: "review_request", eyebrow: "Solicitud de compra", title: "Revisa la solicitud", detail: `${urgent.title} · ${urgent.shop.name}. Acepta o rechaza para que el comprador sepa qué sigue.`, shop, action: { label: "Revisar solicitud", href: urgent.href }, share };
+      return { kind: "review_request", eyebrow: "Solicitud de compra", title: "Revisa la solicitud", detail: `${urgent.title} · ${urgent.shop.name}. Acepta o rechaza; el comprador verá tu decisión en su compra.`, shop, action: { label: "Revisar solicitud", href: urgent.href }, share };
     }
     if (urgent.kind === "buyer_waiting") {
-      return { kind: "respond", eyebrow: "Un comprador espera", title: "Responde al comprador", detail: `${urgent.title} · ${urgent.shop.name}.`, shop, action: { label: "Responder", href: urgent.href }, share };
+      const window =
+        urgent.urgency === "overdue"
+          ? ` Pasaron más de ${REPLY_WINDOW_HOURS} h sin respuesta.`
+          : urgent.urgency === "due_soon"
+            ? ` Su plazo de ${REPLY_WINDOW_HOURS} h para respuesta está por vencer.`
+            : "";
+      return { kind: "respond", eyebrow: "Un comprador espera", title: "Responde al comprador", detail: `${urgent.title} · ${urgent.shop.name}.${window}`, shop, action: { label: "Responder", href: urgent.href }, share };
     }
+    const promise =
+      urgent.urgency === "overdue"
+        ? " La fecha comprometida ya pasó."
+        : urgent.urgency === "due_soon"
+          ? " La fecha comprometida está por vencer."
+          : "";
     return {
       kind: "fulfill_order",
       eyebrow: "Pedido aceptado",
-      title: urgent.step === "confirm_payment" ? "Confirma el pago" : "Entrega el pedido",
-      detail: `${urgent.title} · ${urgent.shop.name}.`,
+      title: urgent.step === "confirm_payment" ? "Confirma el pago" : urgent.step === "ship" ? "Envía el pedido" : "Entrega el pedido",
+      detail: `${urgent.title} · ${urgent.shop.name}.${promise}`,
       shop,
       action: { label: "Ver pedido", href: urgent.href },
       share,
@@ -708,8 +808,13 @@ export function buildMetrics(input: Pick<SellerDashboardInput, "now" | "shops" |
 export type SellerDashboard = {
   primary: PrimaryAction;
   attention: AttentionItem[];
-  /** Sections that failed to load, so the page can say so instead of showing zero. */
-  unavailable: { attention: boolean; listings: boolean };
+  attentionGroups: AttentionGroup[];
+  /**
+   * Sections that failed to load, so the page can say so instead of showing
+   * zero. Without the response clocks threads are still listed, only without
+   * their reply deadline.
+   */
+  unavailable: { attention: boolean; deadlines: boolean; listings: boolean };
   mode: "first_sale" | "ongoing" | "unknown";
   checklist: FirstSaleChecklist;
   ongoing: OngoingTask[];
@@ -731,8 +836,10 @@ export function buildSellerDashboard(input: SellerDashboardInput): SellerDashboa
   return {
     primary: choosePrimaryAction(input, attention, focus, ongoing, { hasCompletedSale, listingsLoaded: input.products.ok }),
     attention,
+    attentionGroups: groupAttention(attention),
     unavailable: {
       attention: !input.conversations.ok || !input.openOrders.ok,
+      deadlines: !input.replyClocks.ok,
       listings: !input.products.ok,
     },
     mode: !input.hasCompletedSale.ok ? "unknown" : hasCompletedSale ? "ongoing" : "first_sale",
@@ -757,4 +864,56 @@ export function formatWaiting(since: string, now: Date) {
   if (hours < 24) return `hace ${hours} h`;
   const days = Math.floor(hours / 24);
   return days === 1 ? "hace 1 día" : `hace ${days} días`;
+}
+
+/** Rounded up: "within the next 4 h" stays true until the last minute. */
+function formatRemaining(dueAt: string, now: Date) {
+  const minutes = Math.max(1, Math.ceil((Date.parse(dueAt) - now.getTime()) / 60000));
+  if (minutes < 60) return `en los próximos ${minutes} min`;
+  const hours = Math.ceil(minutes / 60);
+  return hours === 1 ? "en la próxima hora" : `en las próximas ${hours} h`;
+}
+
+export type AttentionTiming = {
+  waiting: string;
+  /** Present only when the database keeps a deadline for the item. */
+  deadline: string | null;
+  urgencyLabel: string | null;
+};
+
+/**
+ * How long an item has waited and what it is due by, in words. A collected
+ * order is handed over, never shipped, and a promise reads in the time zone it
+ * was made in.
+ */
+export function attentionTiming(item: AttentionItem, now: Date): AttentionTiming {
+  const waited = formatWaiting(item.since, now);
+  if (item.kind === "purchase_request") {
+    return { waiting: `Recibida ${waited}`, deadline: null, urgencyLabel: null };
+  }
+  if (item.kind === "buyer_waiting") {
+    if (!item.replyWindow || !item.dueAt) return { waiting: `Escribió ${waited}`, deadline: null, urgencyLabel: null };
+    return {
+      waiting: `Sin respuesta desde ${waited}`,
+      deadline:
+        item.urgency === "overdue"
+          ? `Pasaron más de ${REPLY_WINDOW_HOURS} h sin respuesta`
+          : `Responde ${formatRemaining(item.dueAt, now)}`,
+      urgencyLabel: URGENCY_LABELS[item.urgency],
+    };
+  }
+  if (!item.dueAt) return { waiting: `Aceptado ${waited}`, deadline: null, urgencyLabel: null };
+  const pickup = item.fulfillmentMethod === "pickup";
+  const when = formatDeadline(item.dueAt, item.timeZone);
+  const verb = pickup ? "Entrega" : "Envía";
+  return {
+    waiting: `Aceptado ${waited}`,
+    deadline:
+      item.urgency === "overdue"
+        ? `La fecha para ${pickup ? "entregar" : "enviar"} ya pasó (${when})`
+        : item.step === "confirm_payment"
+          ? `Confirma el pago y ${verb.toLowerCase()} antes del ${when}`
+          : `${verb} antes del ${when}`,
+    urgencyLabel: URGENCY_LABELS[item.urgency],
+  };
 }

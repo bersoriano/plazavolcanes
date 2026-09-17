@@ -2,6 +2,7 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import MessageThreadPage from "@/app/mensajes/[id]/page";
+import { sendMessage } from "@/lib/actions/messages";
 import { fetchThread } from "@/lib/queries/messages.server";
 
 vi.mock("next/navigation", () => ({
@@ -42,6 +43,24 @@ describe("unified message thread", () => {
       "href",
       "/panel/pedidos/41",
     );
+  });
+
+  it("refreshes the seller's action queue after a reply", async () => {
+    // The page binds the action to its thread and the pages a reply refreshes.
+    const bind = vi.spyOn(sendMessage as unknown as { bind: (...args: unknown[]) => unknown }, "bind");
+
+    render(await MessageThreadPage({ params: Promise.resolve({ id: "7" }) }));
+
+    expect(bind).toHaveBeenCalledWith(null, 7, ["/mensajes/7", "/mensajes", "/panel"]);
+  });
+
+  it("leaves the seller queue alone when a buyer replies", async () => {
+    vi.mocked(fetchThread).mockResolvedValue({ ...thread, viewer_role: "buyer" });
+    const bind = vi.spyOn(sendMessage as unknown as { bind: (...args: unknown[]) => unknown }, "bind");
+
+    render(await MessageThreadPage({ params: Promise.resolve({ id: "7" }) }));
+
+    expect(bind).toHaveBeenCalledWith(null, 7, ["/mensajes/7", "/mensajes"]);
   });
 
   it("links buyers back to purchase details", async () => {

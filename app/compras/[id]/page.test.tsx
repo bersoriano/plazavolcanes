@@ -46,7 +46,7 @@ const order: OrderDetail = {
   dispute: null,
 };
 
-afterEach(() => { cleanup(); vi.clearAllMocks(); });
+afterEach(() => { vi.useRealTimers(); cleanup(); vi.clearAllMocks(); });
 
 // clearAllMocks drops recorded calls but keeps implementations, so a test that
 // makes the guard reject would otherwise turn every later test into a redirect.
@@ -160,5 +160,67 @@ describe("a disputed order", () => {
     render(await PurchaseDetailPage({ params: Promise.resolve({ id: "41" }) }));
 
     expect(screen.getByRole("heading", { name: "Disputa con respuesta de la tienda" })).toBeInTheDocument();
+  });
+});
+
+describe("what the buyer is waiting for", () => {
+  function precedes(first: Element, second: Element) {
+    return Boolean(first.compareDocumentPosition(second) & Node.DOCUMENT_POSITION_FOLLOWING);
+  }
+
+  it("leads with the buyer's waiting status and their own buttons", async () => {
+    vi.mocked(getOrderDetail).mockResolvedValue(order);
+
+    render(await PurchaseDetailPage({ params: Promise.resolve({ id: "41" }) }));
+
+    const status = screen.getByRole("region", { name: "La tienda está revisando tu solicitud" });
+    expect(within(status).getByText(/no tiene un plazo fijo/)).toBeInTheDocument();
+    expect(within(status).getByRole("button", { name: "Cancelar pedido" })).toBeInTheDocument();
+    expect(precedes(status, screen.getByRole("heading", { name: "Productos" }))).toBe(true);
+  });
+
+  it("gives the shop's promise in words and in its time zone, never as a raw timestamp", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-08-21T12:00:00Z"));
+    vi.mocked(getOrderDetail).mockResolvedValue({
+      ...order,
+      status: "accepted",
+      accepted_at: "2026-08-20T13:00:00Z",
+      payment_completed_at: "2026-08-20T15:00:00Z",
+      ship_by_at: "2026-08-24T13:00:00Z",
+    });
+
+    render(await PurchaseDetailPage({ params: Promise.resolve({ id: "41" }) }));
+
+    const status = screen.getByRole("region", { name: "La tienda prepara tu envío" });
+    const promise = within(status).getByText(/^La tienda se comprometió a enviarlo antes del 24 de agosto a las 7:00\sa\.\s?m\.$/);
+    expect(promise).toHaveAttribute("datetime", "2026-08-24T13:00:00Z");
+    expect(document.body.textContent).not.toContain("2026-08-24T13:00:00Z");
+  });
+
+  it("names a collected order's hand-over in its status and timeline", async () => {
+    vi.mocked(getOrderDetail).mockResolvedValue({
+      ...order,
+      fulfillment_method: "pickup",
+      status: "shipped",
+      payment_completed_at: "2026-08-20T15:00:00Z",
+      events: [{ id: 2, event_type: "shipped", previous_status: "accepted", next_status: "shipped", created_at: "2026-08-22T12:00:00Z" }],
+    });
+
+    render(await PurchaseDetailPage({ params: Promise.resolve({ id: "41" }) }));
+
+    const status = screen.getByRole("region", { name: "La tienda marcó tu pedido como entregado" });
+    expect(within(status).getByRole("button", { name: "Confirmar recepción" })).toBeInTheDocument();
+    const timeline = within(screen.getByText("Historial").closest("div") as HTMLElement);
+    expect(timeline.getByText("Entregado por la tienda")).toBeInTheDocument();
+    expect(screen.queryByText("Enviado")).not.toBeInTheDocument();
+  });
+
+  it("is honest that nothing is sent by email or notification", async () => {
+    vi.mocked(getOrderDetail).mockResolvedValue(order);
+
+    render(await PurchaseDetailPage({ params: Promise.resolve({ id: "41" }) }));
+
+    expect(screen.getByText(/Aún no enviamos avisos por correo ni notificaciones/)).toBeInTheDocument();
   });
 });

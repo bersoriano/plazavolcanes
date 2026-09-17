@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CircleUserRound, MessageCircle, PackageOpen, RotateCw } from "lucide-react";
 
-import { AttentionList } from "@/components/seller-dashboard/attention-list";
+import { ActionQueue } from "@/components/seller-dashboard/action-queue";
 import { FirstSaleChecklist } from "@/components/seller-dashboard/first-sale-checklist";
 import { OngoingTasks } from "@/components/seller-dashboard/ongoing-tasks";
 import { PrimaryActionCard } from "@/components/seller-dashboard/primary-action";
@@ -68,7 +68,9 @@ function Dashboard({ result }: { result: Extract<Awaited<ReturnType<typeof getSe
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
         <div className="space-y-6">
           <PrimaryActionCard primary={dashboard.primary} />
-          <AttentionList items={dashboard.attention} now={now} unavailable={dashboard.unavailable.attention} />
+          {hasShops ? (
+            <ActionQueue groups={dashboard.attentionGroups} now={now} total={dashboard.attention.length} unavailable={dashboard.unavailable} />
+          ) : null}
           {dashboard.mode === "ongoing" ? (
             dashboard.unavailable.listings ? null : <OngoingTasks tasks={dashboard.ongoing} />
           ) : (

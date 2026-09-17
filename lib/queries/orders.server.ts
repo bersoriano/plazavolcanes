@@ -1,14 +1,16 @@
 import "server-only";
 
-import type { OrderStatus } from "@/lib/database.types";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { mapOrderDetailRow, type OrderDetailRow } from "@/lib/queries/orders";
 
-import type { CartDetail, OrderDetail, OrderSummary } from "@/lib/queries/orders.types";
+import type { BuyerOrderRow, CartDetail, OrderDetail, SellerOrderQueue, SellerOrderRow } from "@/lib/queries/orders.types";
 import { MEDIA_VARIANTS, mediaUrls } from "@/lib/media/url";
 
-export type { CartDetail, OrderSummary, OrderDetail } from "@/lib/queries/orders.types";
+export type { BuyerOrderRow, CartDetail, OrderSummary, OrderDetail, SellerOrderQueue, SellerOrderRow } from "@/lib/queries/orders.types";
+
+const ORDER_PROGRESS_COLUMNS =
+  "fulfillment_method, payment_confirmation_required, payment_completed_at, ship_by_at, delivered_at, handling_time_zone";
 
 async function clientAndUser() {
   if (!isSupabaseConfigured()) return null;
@@ -70,18 +72,43 @@ export async function getCart(shopId: number): Promise<CartDetail | null> {
   };
 }
 
-async function getOrders(scope: "buyer" | "seller"): Promise<OrderSummary[]> {
+/** The buyer's own purchases, with what it takes to say what each is waiting for. */
+export async function getBuyerOrders(): Promise<BuyerOrderRow[]> {
   const context = await clientAndUser();
   if (!context) return [];
   const { supabase, userId } = context;
-  let query = supabase.from("orders").select("id, status, subtotal, currency_code, created_at, shops!inner(id, name, slug, owner_id)");
-  query = scope === "buyer" ? query.eq("buyer_id", userId) : query.eq("shops.owner_id", userId);
-  const { data } = await query.order("created_at", { ascending: false });
-  return ((data ?? []) as unknown as { id: number; status: OrderStatus; subtotal: number; currency_code: string; created_at: string; shops: OrderSummary["shop"] }[]).map((row) => ({ ...row, shop: row.shops }));
+  const { data } = await supabase
+    .from("orders")
+    .select(`id, status, subtotal, currency_code, created_at, ${ORDER_PROGRESS_COLUMNS}, shops!inner(id, name, slug)`)
+    .eq("buyer_id", userId)
+    .order("created_at", { ascending: false });
+  return ((data ?? []) as unknown as (Omit<BuyerOrderRow, "shop"> & { shops: BuyerOrderRow["shop"] })[]).map(({ shops, ...row }) => ({ ...row, shop: shops }));
 }
 
-export const getBuyerOrders = () => getOrders("buyer");
-export const getSellerOrders = () => getOrders("seller");
+type SellerOrderQueueRow = Omit<SellerOrderRow, "shop"> & { shops: SellerOrderRow["shop"] & { owner_id: string } };
+
+/**
+ * Every order placed in the seller's own shops, with what the orders page
+ * needs to say whose move it is. Row-level security also returns the orders
+ * this person placed as a buyer; the owner filter is what keeps them out.
+ * A failed read is reported, never shown as "no orders yet".
+ */
+export async function getSellerOrderQueue({ now = new Date() }: { now?: Date } = {}): Promise<SellerOrderQueue | null> {
+  const context = await clientAndUser();
+  if (!context) return null;
+  const { supabase, userId } = context;
+  const { data, error } = await supabase
+    .from("orders")
+    .select(`id, status, subtotal, currency_code, created_at, ${ORDER_PROGRESS_COLUMNS}, shops!inner(id, name, slug, owner_id)`)
+    .eq("shops.owner_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) return { status: "error" };
+
+  const orders = ((data ?? []) as unknown as SellerOrderQueueRow[])
+    .filter((row) => row.shops.owner_id === userId)
+    .map(({ shops, ...row }) => ({ ...row, shop: { id: shops.id, name: shops.name, slug: shops.slug } }));
+  return { status: "ready", now, orders };
+}
 
 export async function getOrderDetail(orderId: number): Promise<OrderDetail | null> {
   const context = await clientAndUser();

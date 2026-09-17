@@ -48,7 +48,9 @@ const eventLabels: Record<OrderEventType, string> = {
   admin_repair: "Corrección de administración",
 };
 
-export function formatOrderEvent(eventType: string): string {
+export function formatOrderEvent(eventType: string, fulfillmentMethod: "pickup" | "shipping" = "shipping"): string {
+  // The hand-over of a collected order is recorded as "shipped".
+  if (eventType === "shipped" && fulfillmentMethod === "pickup") return "Entregado por la tienda";
   return eventLabels[eventType as OrderEventType] ?? "Actualización del pedido";
 }
 

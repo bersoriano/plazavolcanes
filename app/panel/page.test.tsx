@@ -63,6 +63,7 @@ function ready(overrides: Partial<SellerDashboardInput> = {}) {
       products: { ok: true, value: [listing(1)] },
       conversations: { ok: true, value: [] },
       openOrders: { ok: true, value: [] },
+      replyClocks: { ok: true, value: [] },
       hasCompletedSale: { ok: true, value: false },
       hasAnsweredBuyer: { ok: true, value: false },
       metrics: { ok: true, value: { inquiries: [], purchaseRequests: [], completedOrders: [] } },
@@ -115,6 +116,21 @@ describe("PanelPage", () => {
     expect(attention.compareDocumentPosition(guide) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const next = screen.getByRole("region", { name: "Responde al comprador" });
     expect(within(next).getByRole("link", { name: "Responder" })).toHaveAttribute("href", "/mensajes/70");
+  });
+
+  it("keeps the queue on screen, saying nothing is pending, for a seller with a shop", async () => {
+    await renderPanel();
+
+    const attention = screen.getByRole("region", { name: "Requiere tu atención" });
+    expect(within(attention).getByText("Nada pendiente por ahora.")).toBeInTheDocument();
+  });
+
+  it("leaves the queue out for somebody who has no shop yet", async () => {
+    mocks.getSellerDashboard.mockResolvedValue(ready({ shops: [], products: { ok: true, value: [] } }));
+
+    await renderPanel();
+
+    expect(screen.queryByRole("region", { name: "Requiere tu atención" })).not.toBeInTheDocument();
   });
 
   it("swaps the guide for ongoing tasks once a sale is complete", async () => {

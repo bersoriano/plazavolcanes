@@ -90,12 +90,34 @@ describe("getSellerDashboard", () => {
     await getSellerDashboard();
 
     expect(calls).toContainEqual({ table: "shops", method: "eq", args: ["owner_id", "seller-1"] });
-    for (const table of ["products", "orders", "conversations"]) {
+    for (const table of ["products", "orders", "conversations", "seller_response_events"]) {
       const scoped = calls.filter((call) => call.table === table && call.method === "in" && call.args[0] === "shop_id");
       expect(scoped.length, table).toBeGreaterThan(0);
       for (const call of scoped) expect(call.args[1]).toEqual([7]);
     }
     expect(calls).toContainEqual({ table: "messages", method: "in", args: ["conversations.shop_id", [7]] });
+    // Only clocks still waiting on a reply matter to the queue.
+    expect(calls).toContainEqual({ table: "seller_response_events", method: "is", args: ["replied_at", null] });
+  });
+
+  it("reads when each open order was accepted and in which time zone its promise was made", async () => {
+    const { calls } = fakeSupabase({ tables: { shops: { data: [ownedShop] } }, rpc: { current_user_shop_limit: { data: 1 } } });
+
+    await getSellerDashboard();
+
+    const openOrders = calls.find((call) => call.table === "orders" && call.method === "select" && String(call.args[0]).includes("ship_by_at"));
+    expect(String(openOrders?.args[0])).toMatch(/accepted_at.*handling_time_zone|handling_time_zone.*accepted_at/);
+  });
+
+  it("keeps reply deadlines unknown, not absent, when response clocks cannot be read", async () => {
+    fakeSupabase({
+      tables: { shops: { data: [ownedShop] }, seller_response_events: { data: null, error: { message: "down" } } },
+      rpc: { current_user_shop_limit: { data: 1 } },
+    });
+
+    const result = await getSellerDashboard();
+
+    expect(result).toMatchObject({ status: "ready", dashboard: { unavailable: { attention: false, deadlines: true } } });
   });
 
   it("never selects buyer contact details or addresses", async () => {

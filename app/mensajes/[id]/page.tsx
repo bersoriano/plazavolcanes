@@ -17,7 +17,12 @@ export default async function MessageThreadPage({ params }: { params: Promise<{ 
   // as forbidden, so its existence is never disclosed.
   if (!thread) notFound();
 
-  const action = sendMessage.bind(null, thread.id, [`/mensajes/${thread.id}`, "/mensajes"]);
+  // A seller's reply takes the thread off the action queue on /panel.
+  const action = sendMessage.bind(null, thread.id, [
+    `/mensajes/${thread.id}`,
+    "/mensajes",
+    ...(thread.viewer_role === "seller" ? ["/panel"] : []),
+  ]);
 
   return (
     <section className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
