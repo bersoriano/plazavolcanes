@@ -12,6 +12,11 @@ const labels: Record<OrderStatus, string> = {
   canceled_by_admin: "Cancelado por administración",
 };
 
-export function formatOrderStatus(status: OrderStatus) {
+/**
+ * A collected order goes through "shipped" when the seller hands it over, so
+ * for pickup that status is named for what happened.
+ */
+export function formatOrderStatus(status: OrderStatus, fulfillmentMethod: "pickup" | "shipping" = "shipping") {
+  if (status === "shipped" && fulfillmentMethod === "pickup") return "Entregado por la tienda";
   return labels[status];
 }

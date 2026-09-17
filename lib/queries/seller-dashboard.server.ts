@@ -8,6 +8,7 @@ import {
   type DashboardConversation,
   type DashboardOrder,
   type DashboardProduct,
+  type DashboardReplyClock,
   type DashboardShop,
   type Loaded,
   type SellerDashboard,
@@ -83,6 +84,7 @@ export async function getSellerDashboard({
         products: empty,
         conversations: empty,
         openOrders: empty,
+        replyClocks: empty,
         hasCompletedSale: { ok: true, value: false },
         hasAnsweredBuyer: { ok: true, value: false },
         metrics: { ok: true, value: { inquiries: [], purchaseRequests: [], completedOrders: [] } },
@@ -102,6 +104,7 @@ export async function getSellerDashboard({
     windowCompletedResult,
     windowInquiriesResult,
     sellerMessagesResult,
+    replyClocksResult,
   ] = await Promise.all([
     supabase.from("products").select(PRODUCT_COLUMNS).in("shop_id", shopIds).neq("status", "deleted"),
     // The seller inbox query: it already joins through shop ownership and
@@ -109,7 +112,7 @@ export async function getSellerDashboard({
     supabase.rpc("list_conversations", { p_role: "seller" }),
     supabase
       .from("orders")
-      .select("id, shop_id, status, created_at, ship_by_at, payment_confirmation_required, payment_completed_at, fulfillment_method, order_items(product_name)")
+      .select("id, shop_id, status, created_at, accepted_at, ship_by_at, handling_time_zone, payment_confirmation_required, payment_completed_at, fulfillment_method, order_items(product_name)")
       .in("shop_id", shopIds)
       .in("status", OPEN_ORDER_STATUSES)
       .order("created_at", { ascending: true }),
@@ -134,9 +137,23 @@ export async function getSellerDashboard({
       .in("conversations.shop_id", shopIds)
       .order("id", { ascending: true })
       .limit(REPLY_SCAN_LIMIT),
+    // Open response clocks. A seller who also buys can read the clocks on the
+    // threads they opened as a buyer, so these are pinned to owned shops too.
+    supabase
+      .from("seller_response_events")
+      .select("shop_id, conversation_id, clock_started_at")
+      .in("shop_id", shopIds)
+      .is("replied_at", null),
   ]);
 
   const ownShop = new Set(shopIds);
+
+  const replyClocks = loaded<DashboardReplyClock[]>(
+    replyClocksResult.error,
+    (replyClocksResult.data ?? [])
+      .filter((clock) => ownShop.has(clock.shop_id))
+      .map((clock) => ({ conversation_id: clock.conversation_id, clock_started_at: clock.clock_started_at })),
+  );
 
   const openOrders = loaded(
     openOrdersResult.error,
@@ -183,6 +200,7 @@ export async function getSellerDashboard({
       products: loaded(productsResult.error, (productsResult.data ?? []) as DashboardProduct[]),
       conversations,
       openOrders,
+      replyClocks,
       hasCompletedSale: loaded(completedSaleResult.error, Boolean(completedSaleResult.data?.length)),
       hasAnsweredBuyer,
       metrics,

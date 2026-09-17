@@ -32,6 +32,12 @@ describe("formatOrderEvent", () => {
     }
   });
 
+  it("says a collected order was handed over, not shipped", () => {
+    expect(formatOrderEvent("shipped", "pickup")).toBe("Entregado por la tienda");
+    expect(formatOrderEvent("shipped", "shipping")).toBe("Enviado");
+    expect(formatOrderEvent("delivered", "pickup")).toBe("Recibido");
+  });
+
   it("never prints a raw column value it does not recognise", () => {
     // A later migration can widen the constraint without touching this file.
     // The fallback has to stay readable Spanish rather than leak the enum.

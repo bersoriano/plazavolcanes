@@ -43,10 +43,7 @@ export async function transitionOrder(
           : await supabase.rpc("confirm_order_satisfied", { p_order_id: orderId, p_idempotency_key: idempotencyKey });
 
   if (result.error) return { status: "error", message: result.error.message };
-  revalidatePath(`/compras/${orderId}`);
-  revalidatePath(`/panel/pedidos/${orderId}`);
-  revalidatePath("/compras");
-  revalidatePath("/panel/pedidos");
+  revalidateOrder(orderId);
   return { status: "success", message: "Estado actualizado." };
 }
 
@@ -57,11 +54,17 @@ async function authenticatedOrderClient() {
   return typeof data?.claims?.sub === "string" ? supabase : null;
 }
 
+/**
+ * Every page that shows where an order stands: both sides of the order, both
+ * lists, and the seller's action queue on /panel, so none of them keeps
+ * offering a step that was just taken. Only called after the database agreed.
+ */
 function revalidateOrder(orderId: number) {
   revalidatePath(`/compras/${orderId}`);
   revalidatePath(`/panel/pedidos/${orderId}`);
   revalidatePath("/compras");
   revalidatePath("/panel/pedidos");
+  revalidatePath("/panel");
 }
 
 export async function confirmOrderPayment(orderId: number, _previousState: ActionState, formData: FormData): Promise<ActionState> {

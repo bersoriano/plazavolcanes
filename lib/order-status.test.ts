@@ -16,4 +16,10 @@ describe("formatOrderStatus", () => {
   ] as const)("formats %s in Spanish", (status, label) => {
     expect(formatOrderStatus(status)).toBe(label);
   });
+
+  it("says a collected order was handed over, not shipped", () => {
+    expect(formatOrderStatus("shipped", "pickup")).toBe("Entregado por la tienda");
+    expect(formatOrderStatus("shipped", "shipping")).toBe("Enviado");
+    expect(formatOrderStatus("delivered", "pickup")).toBe("Recibido");
+  });
 });

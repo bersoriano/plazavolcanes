@@ -30,6 +30,25 @@ export type OrderSummary = {
   shop: { id: number; name: string; slug: string };
 };
 
+/**
+ * An order with what it takes to say whose move it is and by when, and
+ * nothing about the buyer: the order page shows who.
+ */
+export type OrderProgressRow = OrderSummary & {
+  fulfillment_method: "pickup" | "shipping";
+  payment_confirmation_required: boolean;
+  payment_completed_at: string | null;
+  ship_by_at: string | null;
+  delivered_at: string | null;
+  handling_time_zone: string;
+};
+
+export type SellerOrderRow = OrderProgressRow;
+
+export type BuyerOrderRow = OrderProgressRow;
+
+export type SellerOrderQueue = { status: "ready"; now: Date; orders: SellerOrderRow[] } | { status: "error" };
+
 export type OrderDetail = OrderSummary & {
   buyer_id: string;
   current_user_id: string;

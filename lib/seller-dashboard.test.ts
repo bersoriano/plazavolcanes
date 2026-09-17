@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  attentionTiming,
   buildSellerDashboard,
   buyerIsWaiting,
   describeGaps,
@@ -71,10 +72,12 @@ function order(overrides: Partial<DashboardOrder> = {}): DashboardOrder {
     shop_id: 1,
     status: "requested",
     created_at: hoursAgo(5),
+    accepted_at: null,
     ship_by_at: null,
     payment_confirmation_required: false,
     payment_completed_at: null,
     fulfillment_method: "pickup",
+    handling_time_zone: "America/Mexico_City",
     item_names: ["Taza Ceniza"],
     ...overrides,
   };
@@ -101,6 +104,7 @@ function input(overrides: Partial<SellerDashboardInput> = {}): SellerDashboardIn
     products: { ok: true, value: [] },
     conversations: { ok: true, value: [] },
     openOrders: { ok: true, value: [] },
+    replyClocks: { ok: true, value: [] },
     hasCompletedSale: { ok: true, value: false },
     hasAnsweredBuyer: { ok: true, value: false },
     metrics: { ok: true, value: { inquiries: [], purchaseRequests: [], completedOrders: [] } },
@@ -323,6 +327,172 @@ describe("seller dashboard state", () => {
         { shop: { name: "Cerámica Ceniza" }, counts: { inquiries: 0, purchaseRequests: 1 } },
       ],
     });
+  });
+});
+
+describe("action queue", () => {
+  const paid = { status: "accepted" as const, payment_completed_at: hoursAgo(1), accepted_at: hoursAgo(20) };
+
+  it("lists purchase decisions oldest first, never with a deadline", () => {
+    const dashboard = buildSellerDashboard(
+      input({ shops: [shop()], openOrders: { ok: true, value: [order({ id: 61, created_at: hoursAgo(2) }), order({ id: 62, created_at: hoursAgo(9) })] } }),
+    );
+
+    expect(dashboard.attention.map((item) => [item.id, item.dueAt, item.urgency])).toEqual([
+      ["order-62", null, "none"],
+      ["order-61", null, "none"],
+    ]);
+  });
+
+  it("puts an order past its promised date ahead of a new purchase request", () => {
+    const late = order({ id: 63, ...paid, ship_by_at: hoursAgo(2), fulfillment_method: "shipping" });
+    const dashboard = buildSellerDashboard(input({ shops: [shop()], openOrders: { ok: true, value: [order({ id: 64 }), late] } }));
+
+    expect(dashboard.attention.map((item) => [item.id, item.urgency])).toEqual([
+      ["order-63", "overdue"],
+      ["order-64", "none"],
+    ]);
+    expect(dashboard.primary).toMatchObject({ kind: "fulfill_order", title: "Envía el pedido", action: { href: "/panel/pedidos/63" } });
+    expect(dashboard.primary.detail).toContain("La fecha comprometida ya pasó.");
+  });
+
+  it("flags a promised date within a day as close, and leaves later ones in their group", () => {
+    const soon = order({ id: 65, ...paid, ship_by_at: daysFromNow(0.5) });
+    const later = order({ id: 66, ...paid, ship_by_at: daysFromNow(3) });
+    const dashboard = buildSellerDashboard(input({ shops: [shop()], openOrders: { ok: true, value: [later, order({ id: 67 }), soon] } }));
+
+    expect(dashboard.attention.map((item) => [item.id, item.urgency])).toEqual([
+      ["order-65", "due_soon"],
+      ["order-67", "none"],
+      ["order-66", "none"],
+    ]);
+  });
+
+  it("asks for shipping on a shipped order and a hand-over on a collected one, from the moment it was accepted", () => {
+    const dashboard = buildSellerDashboard(
+      input({
+        shops: [shop()],
+        openOrders: {
+          ok: true,
+          value: [order({ id: 68, ...paid, fulfillment_method: "shipping" }), order({ id: 69, ...paid, fulfillment_method: "pickup", accepted_at: hoursAgo(30) })],
+        },
+      }),
+    );
+
+    expect(dashboard.attention.map((item) => (item.kind === "fulfill_order" ? [item.step, item.since] : item.kind))).toEqual([
+      ["hand_over", hoursAgo(30)],
+      ["ship", hoursAgo(20)],
+    ]);
+  });
+
+  it("measures an order-thread wait from its open response clock, with the 24-hour window", () => {
+    const thread = conversation({ id: 72, type: "order", order_id: 50, product_name: null, last_message: { created_at: hoursAgo(1), sender_id: BUYER } });
+    const dashboard = buildSellerDashboard(
+      input({
+        shops: [shop()],
+        conversations: { ok: true, value: [thread] },
+        openOrders: { ok: true, value: [order({ status: "shipped" })] },
+        replyClocks: { ok: true, value: [{ conversation_id: 72, clock_started_at: hoursAgo(20) }] },
+      }),
+    );
+
+    expect(dashboard.attention).toEqual([
+      expect.objectContaining({ kind: "buyer_waiting", since: hoursAgo(20), dueAt: hoursAgo(-4), urgency: "due_soon", replyWindow: true }),
+    ]);
+  });
+
+  it("never invents a deadline for a question asked before buying", () => {
+    const dashboard = buildSellerDashboard(
+      input({
+        shops: [shop()],
+        conversations: { ok: true, value: [conversation({ last_message: { created_at: hoursAgo(30), sender_id: BUYER } })] },
+        replyClocks: { ok: true, value: [{ conversation_id: 70, clock_started_at: hoursAgo(30) }] },
+      }),
+    );
+
+    expect(dashboard.attention[0]).toMatchObject({ kind: "buyer_waiting", dueAt: null, urgency: "none", replyWindow: false });
+  });
+
+  it("keeps waiting threads, without deadlines, when response clocks cannot be read", () => {
+    const thread = conversation({ id: 72, type: "order", order_id: 50, product_name: null });
+    const dashboard = buildSellerDashboard(
+      input({
+        shops: [shop()],
+        conversations: { ok: true, value: [thread] },
+        openOrders: { ok: true, value: [order({ status: "shipped" })] },
+        replyClocks: { ok: false },
+      }),
+    );
+
+    expect(dashboard.unavailable).toMatchObject({ attention: false, deadlines: true });
+    expect(dashboard.attention[0]).toMatchObject({ kind: "buyer_waiting", dueAt: null, replyWindow: false });
+  });
+
+  it("groups the queue by action, with counts, skipping empty groups", () => {
+    const dashboard = buildSellerDashboard(
+      input({
+        shops: [shop()],
+        conversations: { ok: true, value: [conversation()] },
+        openOrders: {
+          ok: true,
+          value: [order({ id: 81 }), order({ id: 82 }), order({ id: 83, status: "accepted", payment_confirmation_required: true, accepted_at: hoursAgo(4) })],
+        },
+      }),
+    );
+
+    expect(dashboard.attentionGroups.map((group) => [group.id, group.title, group.items.length])).toEqual([
+      ["decide", "Solicitudes por decidir", 2],
+      ["reply", "Compradores esperando respuesta", 1],
+      ["payment", "Pagos por confirmar", 1],
+    ]);
+  });
+});
+
+describe("attentionTiming", () => {
+  function only(overrides: Partial<SellerDashboardInput>) {
+    return buildSellerDashboard(input({ shops: [shop()], ...overrides })).attention[0];
+  }
+
+  it("says how long a request and a question have waited", () => {
+    expect(attentionTiming(only({ openOrders: { ok: true, value: [order()] } }), NOW)).toEqual({
+      waiting: "Recibida hace 5 h",
+      deadline: null,
+      urgencyLabel: null,
+    });
+    expect(attentionTiming(only({ conversations: { ok: true, value: [conversation()] } }), NOW)).toEqual({
+      waiting: "Escribió hace 3 h",
+      deadline: null,
+      urgencyLabel: null,
+    });
+  });
+
+  it("counts down an order thread's reply window and says when it ran out", () => {
+    const thread = conversation({ id: 72, type: "order", order_id: 50, product_name: null });
+    const shipped = { ok: true as const, value: [order({ status: "shipped" as const })] };
+
+    expect(
+      attentionTiming(only({ conversations: { ok: true, value: [thread] }, openOrders: shipped, replyClocks: { ok: true, value: [{ conversation_id: 72, clock_started_at: hoursAgo(20) }] } }), NOW),
+    ).toEqual({ waiting: "Sin respuesta desde hace 20 h", deadline: "Responde en las próximas 4 h", urgencyLabel: "Vence pronto" });
+    expect(
+      attentionTiming(only({ conversations: { ok: true, value: [thread] }, openOrders: shipped, replyClocks: { ok: true, value: [{ conversation_id: 72, clock_started_at: hoursAgo(30) }] } }), NOW),
+    ).toEqual({ waiting: "Sin respuesta desde hace 1 día", deadline: "Pasaron más de 24 h sin respuesta", urgencyLabel: "Plazo vencido" });
+  });
+
+  it("words the promised date by how the order is handed over", () => {
+    const shipping = attentionTiming(
+      only({ openOrders: { ok: true, value: [order({ status: "accepted", accepted_at: hoursAgo(26), payment_completed_at: hoursAgo(2), fulfillment_method: "shipping", ship_by_at: "2026-09-18T20:30:00.000Z" })] } }),
+      NOW,
+    );
+    const pickup = attentionTiming(
+      only({ openOrders: { ok: true, value: [order({ status: "accepted", accepted_at: hoursAgo(26), payment_completed_at: hoursAgo(2), ship_by_at: hoursAgo(1) })] } }),
+      NOW,
+    );
+
+    expect(shipping.waiting).toBe("Aceptado hace 1 día");
+    expect(shipping.deadline).toMatch(/^Envía antes del .*18 de sept?/);
+    expect(shipping.urgencyLabel).toBeNull();
+    expect(pickup.deadline).toMatch(/^La fecha para entregar ya pasó \(.*\)$/);
+    expect(pickup.urgencyLabel).toBe("Plazo vencido");
   });
 });
 
