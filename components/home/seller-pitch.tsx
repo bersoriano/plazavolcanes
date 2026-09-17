@@ -22,14 +22,15 @@ export function SellerPitch() {
             Vende en Plaza Volcanes
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-white/80">
-            Abre tu tienda, publica tus productos y recibe solicitudes sin comisiones.
+            Las primeras 100 tiendas que se registren durante los primeros tres meses pueden publicar
+            gratis y no pagan comisión por cada artículo vendido.
           </p>
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <Link
               className="inline-flex min-h-12 items-center gap-2 rounded-full bg-accent px-7 font-semibold text-brand-hover"
-              href="/registro?paso=vender"
+              href="/registro?vender=1"
             >
-              Abrir mi tienda
+              Crear mi tienda gratis
               <ArrowRight aria-hidden="true" className="size-4" />
             </Link>
             <Link

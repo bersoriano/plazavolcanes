@@ -21,23 +21,27 @@ function SubmitButton({ mode }: { mode: "signin" | "signup" }) {
 
 export function AuthForm({
   continuar,
+  intent,
   mode,
 }: {
   /** An internal path to resume once authentication succeeds. */
   continuar?: string;
+  intent?: "vender";
   mode: "signin" | "signup";
 }) {
   const action = mode === "signin" ? signIn : signUp;
   const [state, formAction] = useFormAction(action);
   const signingIn = mode === "signin";
   const alternative = signingIn ? "/registro" : "/ingresar";
-  const alternativeHref = continuar
-    ? `${alternative}?continuar=${encodeURIComponent(continuar)}`
-    : alternative;
+  const alternativeParams = new URLSearchParams();
+  if (continuar) alternativeParams.set("continuar", continuar);
+  if (intent) alternativeParams.set("intent", intent);
+  const alternativeHref = alternativeParams.size ? `${alternative}?${alternativeParams}` : alternative;
 
   return (
     <form action={formAction} className="space-y-5" noValidate>
       {continuar ? <input name="continuar" type="hidden" value={continuar} /> : null}
+      {intent ? <input name="intent" type="hidden" value={intent} /> : null}
       <Field
         autoComplete="email"
         defaultValue={state.values?.email}

@@ -14,11 +14,11 @@ describe("SellerPitch", () => {
     expect(within(pitch).getByRole("heading", { name: "Vende en Plaza Volcanes" }))
       .toBeInTheDocument();
     expect(pitch).toHaveTextContent(
-      "Abre tu tienda, publica tus productos y recibe solicitudes sin comisiones.",
+      "Las primeras 100 tiendas que se registren durante los primeros tres meses pueden publicar gratis y no pagan comisión por cada artículo vendido.",
     );
-    expect(within(pitch).getByRole("link", { name: "Abrir mi tienda" })).toHaveAttribute(
+    expect(within(pitch).getByRole("link", { name: "Crear mi tienda gratis" })).toHaveAttribute(
       "href",
-      "/registro?paso=vender",
+      "/registro?vender=1",
     );
     expect(within(pitch).getByRole("link", { name: "Conoce cómo funciona" })).toHaveAttribute(
       "href",

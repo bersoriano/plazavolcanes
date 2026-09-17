@@ -2,6 +2,7 @@ import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { resumePurchaseIntent } from "@/lib/purchase-intent.server";
+import { safeContinuation } from "@/lib/safe-continuation";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -20,7 +21,9 @@ export async function GET(request: Request) {
   // Someone may have been buying when registration sent them to their inbox, so
   // a confirmed account lands on its cart rather than on the panel.
   async function confirmed() {
-    const destination = (await resumePurchaseIntent(supabase)) ?? "/panel";
+    const destination = (await resumePurchaseIntent(supabase))
+      ?? safeContinuation(url.searchParams.get("continuar"))
+      ?? (url.searchParams.get("intent") === "vender" ? "/panel/tiendas/nueva" : "/panel");
     return NextResponse.redirect(new URL(destination, url));
   }
 

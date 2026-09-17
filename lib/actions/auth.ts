@@ -44,7 +44,18 @@ async function destinationAfterAuth(
   formData: FormData,
 ) {
   const resumed = await resumePurchaseIntent(supabase);
-  return resumed ?? safeContinuation(formData.get("continuar")) ?? "/panel";
+  if (resumed) return resumed;
+  const continuation = safeContinuation(formData.get("continuar"));
+  if (continuation) return continuation;
+  return formData.get("intent") === "vender" ? "/panel/tiendas/nueva" : "/panel";
+}
+
+function confirmationRedirect(formData: FormData) {
+  const params = new URLSearchParams();
+  const continuation = safeContinuation(formData.get("continuar"));
+  if (continuation) params.set("continuar", continuation);
+  if (formData.get("intent") === "vender") params.set("intent", "vender");
+  return buildSiteUrl(`/auth/confirm${params.size ? `?${params}` : ""}`);
 }
 
 export async function signIn(
@@ -112,7 +123,7 @@ export async function signUp(
       // which works whether or not email confirmation leaves the new account
       // with a session.
       data: { phone, display_name: displayName },
-      emailRedirectTo: buildSiteUrl("/auth/confirm"),
+      emailRedirectTo: confirmationRedirect(formData),
     },
   });
 

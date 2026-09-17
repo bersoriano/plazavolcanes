@@ -153,6 +153,12 @@ describe("signIn destinations", () => {
     expect(redirect).toHaveBeenCalledWith("/mensajes");
   });
 
+  it("sends seller intent to store creation after sign-in", async () => {
+    await signIn(idle, formOf({ ...credentials, intent: "vender" }));
+
+    expect(redirect).toHaveBeenCalledWith("/panel/tiendas/nueva");
+  });
+
   it("ignores a continuation pointing at another site", async () => {
     await signIn(idle, formOf({ ...credentials, continuar: "https://evil.example/steal" }));
 

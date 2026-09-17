@@ -8,7 +8,7 @@ vi.mock("@/lib/purchase-intent.server", () => ({ readPurchaseIntent }));
 
 const { default: SignUpPage } = await import("@/app/(auth)/registro/page");
 
-type Params = { continuar?: string; paso?: string };
+type Params = { continuar?: string; paso?: string; vender?: string };
 
 async function renderPage(params: Params = {}) {
   render(await SignUpPage({ searchParams: Promise.resolve(params) }));
@@ -26,6 +26,14 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("Registration onboarding", () => {
+  it("opens the seller form directly when the seller entry carries intent", async () => {
+    await renderPage({ vender: "1" });
+
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Abre tu cuenta");
+    expect(screen.queryByRole("heading", { name: "Así se vende" })).not.toBeInTheDocument();
+    expect(document.querySelector('input[name="intent"]')).toHaveValue("vender");
+  });
+
   it("starts by asking what brings somebody to the plaza", async () => {
     await renderPage();
 

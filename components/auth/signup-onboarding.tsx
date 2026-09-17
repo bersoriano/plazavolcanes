@@ -38,7 +38,7 @@ const flows = {
   vender: {
     eyebrow: "Para quien vende",
     title: "Así se vende",
-    intro: "Publicar es gratis y sin comisiones. Con tu cuenta abres tu tienda en minutos.",
+    intro: "Las primeras 100 tiendas que se registren durante los primeros tres meses pueden publicar gratis y no pagan comisión por cada artículo vendido.",
     steps: sellerSteps,
     note: "Tú y la persona compradora acuerdan el pago y la entrega directamente. Plaza Volcanes no procesa ni retiene fondos.",
     other: { step: "comprar", label: "Ver cómo se compra" },
