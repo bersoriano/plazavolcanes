@@ -159,6 +159,7 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
                   name: shop.name,
                   slug: shop.slug,
                   imageUrl: shop.imageUrl,
+                  isPremium: shop.is_premium === true,
                   trustTier: shop.trust_tier,
                   trustMetrics: shop.trust_metrics,
                   trustProfile: shop.trust_profile

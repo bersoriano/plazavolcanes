@@ -19,7 +19,7 @@ import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { MEDIA_VARIANTS, mediaUrls } from "@/lib/media/url";
-import type { PublicTrustMetrics } from "@/lib/public-trust";
+import type { TrustMetricsResult } from "@/lib/public-trust";
 
 export type CatalogProduct = Pick<
   Product,
@@ -331,33 +331,45 @@ export async function getCatalogStateCounts(
   }
 }
 
-async function getPublicTrustMetrics(shopId: number): Promise<PublicTrustMetrics | null> {
+/**
+ * A shop's measured history, and which kind of nothing it is when there is none.
+ *
+ * A shop the evaluator has not reached yet has no history to report; a read
+ * that failed has a history we could not fetch. Collapsing both into `null`
+ * made a broken query look like a brand new shop, so they stay apart.
+ */
+async function getPublicTrustMetrics(shopId: number): Promise<TrustMetricsResult> {
   const supabase = await createServerSupabaseClient();
 
   try {
     const { data, error } = await supabase.rpc("shop_public_trust_metrics", {
       p_shop_id: shopId,
     });
+    if (error) return { status: "unavailable" };
+
     const row = data?.[0];
-    if (error || !row) return null;
+    if (!row) return { status: "pending" };
 
     return {
-      averageReplyTimeMinutes: row.average_reply_time_minutes,
-      responseRate: row.response_rate,
-      descriptionAccuracy: row.description_accuracy,
-      onTimeShippingRate: row.on_time_shipping_rate,
-      orderCompletionRate: row.order_completion_rate,
-      disputeRate: row.dispute_rate,
-      totalOrders: row.total_orders,
-      averageRating: row.average_rating,
-      reviewCount: row.review_count,
-      lastActiveDaysAgo: row.last_active_days_ago,
-      sellerActiveDaysAgo: row.seller_active_days_ago,
-      evaluatedAt: row.evaluated_at,
+      status: "ready",
+      metrics: {
+        averageReplyTimeMinutes: row.average_reply_time_minutes,
+        responseRate: row.response_rate,
+        descriptionAccuracy: row.description_accuracy,
+        onTimeShippingRate: row.on_time_shipping_rate,
+        orderCompletionRate: row.order_completion_rate,
+        disputeRate: row.dispute_rate,
+        totalOrders: row.total_orders,
+        averageRating: row.average_rating,
+        reviewCount: row.review_count,
+        lastActiveDaysAgo: row.last_active_days_ago,
+        sellerActiveDaysAgo: row.seller_active_days_ago,
+        evaluatedAt: row.evaluated_at,
+      },
     };
   } catch {
-    // The panel explains what is tracked even when the values cannot be read.
-    return null;
+    // The page still explains what is tracked; it just says so plainly.
+    return { status: "unavailable" };
   }
 }
 
@@ -436,11 +448,16 @@ export const getPublicProduct = cache(async function getPublicProduct(
   if (!data) return null;
 
   const row = data as unknown as ProductQueryRow;
-  const { data: gallery } = await supabase
-    .from("product_images")
-    .select("storage_path, position")
-    .eq("product_id", row.id)
-    .order("position");
+  // The seller summary on a product page states the same standing the
+  // storefront does, so it reads the same history the storefront reads.
+  const [{ data: gallery }, shopTrustMetrics] = await Promise.all([
+    supabase
+      .from("product_images")
+      .select("storage_path, position")
+      .eq("product_id", row.id)
+      .order("position"),
+    getPublicTrustMetrics(row.shops.id),
+  ]);
   const imageUrls = mediaUrls(
     [row.image_path, ...(gallery ?? []).map((image) => image.storage_path)],
     MEDIA_VARIANTS.detail,
@@ -458,5 +475,6 @@ export const getPublicProduct = cache(async function getPublicProduct(
     // needs stay here rather than widening the type every catalog card uses.
     shopId: row.shops.id,
     shopOwnerId: row.shops.owner_id,
+    shopTrustMetrics,
   };
 });

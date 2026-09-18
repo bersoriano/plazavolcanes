@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink, PackageOpen } from "lucide-react";
 
 import { PremiumBadge } from "@/components/shops/premium-badge";
+import { PREMIUM_SUMMARY } from "@/lib/seller-standing";
 
 type WorkspaceView = "catalogo" | "ajustes";
 
@@ -52,12 +53,12 @@ export function ShopWorkspaceHeader({
       <p className="mt-4 text-sm font-semibold uppercase tracking-[0.16em] text-brand">Tu tienda</p>
       <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
         <h1 className="font-display text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">{shopName}</h1>
-        {isPremium ? <PremiumBadge showDetails={false} /> : null}
+        {isPremium ? <PremiumBadge /> : null}
       </div>
       {isPremium ? (
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
-          Plaza Volcanes distinguió tu tienda. Tu tienda pública y tus productos se
-          muestran con el tema Premium.
+          {PREMIUM_SUMMARY} Tu tienda pública, tus productos y tu ficha en el catálogo se
+          muestran destacados. Tu historial de ventas se mide aparte, abajo.
         </p>
       ) : null}
 

@@ -30,6 +30,7 @@ const shop = {
   country_code: "MX",
   administrative_area_codes: [],
   trust_tier: "standard" as const,
+  trust_metrics: { status: "pending" as const },
   trust_profile: null,
   products: [],
 };
@@ -115,7 +116,7 @@ test("shows a distinguished shop in its own premium room", async () => {
   const { container } = await renderPage();
 
   expect(container.querySelector('[data-theme="premium"]')).not.toBeNull();
-  expect(screen.getByRole("group", { name: "Tienda Premium" })).toBeInTheDocument();
+  expect(screen.getByTestId("premium-badge")).toBeInTheDocument();
 });
 
 test("leaves an ordinary shop in the ordinary theme", async () => {
@@ -124,20 +125,78 @@ test("leaves an ordinary shop in the ordinary theme", async () => {
   const { container } = await renderPage();
 
   expect(container.querySelector('[data-theme="premium"]')).toBeNull();
-  expect(screen.queryByRole("group", { name: "Tienda Premium" })).toBeNull();
+  expect(screen.queryByTestId("premium-badge")).toBeNull();
 });
 
-test("keeps the measured trust badge beside the granted distinction", async () => {
+test("keeps the granted distinction apart from the earned history", async () => {
   getPublicShop.mockResolvedValue({ ...shop, is_premium: true });
 
   await renderPage();
 
-  expect(screen.getByText("Nivel Estándar")).toBeInTheDocument();
+  // Premium says who granted it, without waiting for a hover.
+  expect(screen.getByTestId("premium-note")).toHaveTextContent(
+    "Distinción otorgada por Plaza Volcanes.",
+  );
+  // And the history is stated separately, as its own fact.
+  expect(screen.getByTestId("selling-history")).toHaveTextContent(
+    "Historial de ventas: está construyendo su historial",
+  );
+});
 
-  // The trust tooltip sits on gold in the premium theme (bg-brand-hover
-  // becomes light gold there): it needs the token that flips with the
-  // theme, not a hardcoded white, or its text fails contrast. Selected by
-  // id, not role: the premium badge's own tooltip also has role="tooltip"
-  // on this page.
-  expect(document.getElementById("trust-tier-tooltip")).toHaveClass("text-on-brand");
+test("shows no starting-tier rank competing with the distinction", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, is_premium: true });
+
+  await renderPage();
+
+  expect(screen.queryByText(/Nivel Estándar/)).toBeNull();
+  expect(screen.queryByTestId("reputation-badge")).toBeNull();
+});
+
+test("shows an earned tier, because that one a buyer can use", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, is_premium: true, trust_tier: "top_rated" });
+
+  await renderPage();
+
+  expect(screen.getByTestId("reputation-badge")).toHaveTextContent("Mejor valorada");
+  expect(screen.getByTestId("premium-badge")).toBeInTheDocument();
+});
+
+test("tells a failed metrics read apart from a shop with no history", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, trust_metrics: { status: "unavailable" } });
+
+  await renderPage();
+
+  expect(screen.getByTestId("selling-history")).toHaveTextContent("no disponible por ahora");
+  expect(screen.getByTestId("selling-history")).toHaveTextContent(/Vuelve a cargar/);
+  // Nothing is shown as measured when nothing could be read.
+  expect(screen.queryByRole("list", { name: "Marcadores de confianza" })).toBeNull();
+});
+
+test("never shows a zero response rate the plaza never measured", async () => {
+  getPublicShop.mockResolvedValue({
+    ...shop,
+    trust_metrics: {
+      status: "ready",
+      metrics: {
+        averageReplyTimeMinutes: null,
+        responseRate: null,
+        descriptionAccuracy: null,
+        onTimeShippingRate: null,
+        orderCompletionRate: null,
+        disputeRate: null,
+        totalOrders: 0,
+        averageRating: null,
+        reviewCount: 0,
+        lastActiveDaysAgo: null,
+        sellerActiveDaysAgo: null,
+        evaluatedAt: "2026-09-01T00:00:00.000Z",
+      },
+    },
+  });
+
+  await renderPage();
+
+  const badge = screen.getByTestId("trust-badge-response_rate");
+  expect(badge).toHaveTextContent("Sin historial de respuesta");
+  expect(badge.textContent).not.toMatch(/0\s*%/);
 });

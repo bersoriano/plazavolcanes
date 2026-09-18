@@ -110,7 +110,7 @@ beforeEach(() => {
     time_zone: "America/Mexico_City",
     trust_evaluated_at: null,
     trust_tier: "standard",
-    trust_metrics: null,
+    trust_metrics: { status: "pending" as const },
     trust_profile: null,
     updated_at: "2026-08-01T12:00:00Z",
     products: [],
@@ -227,18 +227,21 @@ describe("cart purchase request", () => {
       trust_evaluated_at: "2026-08-27T12:00:00Z",
       trust_tier: "reliable",
       trust_metrics: {
-        averageReplyTimeMinutes: 45,
-        responseRate: 98,
-        descriptionAccuracy: 97,
-        onTimeShippingRate: 96,
-        orderCompletionRate: 99,
-        disputeRate: 0,
-        totalOrders: 32,
-        averageRating: 4.8,
-        reviewCount: 20,
-        lastActiveDaysAgo: 1,
-        sellerActiveDaysAgo: 1,
-        evaluatedAt: "2026-08-27T12:00:00Z",
+        status: "ready",
+        metrics: {
+          averageReplyTimeMinutes: 45,
+          responseRate: 98,
+          descriptionAccuracy: 97,
+          onTimeShippingRate: 96,
+          orderCompletionRate: 99,
+          disputeRate: 0,
+          totalOrders: 32,
+          averageRating: 4.8,
+          reviewCount: 20,
+          lastActiveDaysAgo: 1,
+          sellerActiveDaysAgo: 1,
+          evaluatedAt: "2026-08-27T12:00:00Z",
+        },
       },
       trust_profile: { joined_on: "2025-01-15", verification_level: "basic" },
       updated_at: "2026-08-01T12:00:00Z",
@@ -253,11 +256,9 @@ describe("cart purchase request", () => {
       "src",
       "/casa-niebla.jpg",
     );
-    expect(screen.getByText("Nivel Confiable")).toBeInTheDocument();
-    expect(screen.getByTestId("trust-badge-membership")).toHaveAttribute(
-      "data-state",
-      "measured",
+    expect(screen.getByTestId("reputation-badge")).toHaveTextContent("Confiable");
+    expect(screen.getByTestId("selling-history")).toHaveTextContent(
+      "32 pedidos completados · 4.8 de 5 en 20 reseñas",
     );
-    expect(screen.getByTestId("trust-badge-response_rate")).toHaveTextContent("98%");
   });
 });

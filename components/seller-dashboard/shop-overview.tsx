@@ -71,11 +71,11 @@ export function ShopOverview({
                   <span className="min-w-0 flex-1">
                     <span className="flex flex-wrap items-center gap-2">
                       <span className="truncate font-display text-lg font-semibold group-hover:text-brand">{shop.name}</span>
-                      {shop.is_premium ? <PremiumBadge showDetails={false} /> : null}
+                      {shop.is_premium ? <PremiumBadge /> : null}
                     </span>
                     <span className="mt-0.5 block text-sm text-muted">
                       {listingsLoaded ? `${entry.publishedQuotaCount} de ${shop.listing_limit} publicaciones` : "Publicaciones sin cargar"}
-                      {" · "}Nivel {getTrustTierMarker(shop.trust_tier).label}
+                      {" · "}Nivel {getTrustTierMarker(shop.trust_tier).label} (límite de publicaciones)
                     </span>
                     {entry.approval !== "approved" ? (
                       <span className="mt-1 block text-xs font-semibold text-sale">

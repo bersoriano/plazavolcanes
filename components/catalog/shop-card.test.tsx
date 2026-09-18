@@ -101,7 +101,9 @@ describe("PublicShopCard", () => {
     );
 
     expect(screen.getByText("Oaxaca, México")).toBeInTheDocument();
-    expect(screen.getByText("Nivel Estándar")).toBeInTheDocument();
+    // The starting tier is an operational level, not a public rank.
+    expect(screen.queryByText(/Nivel Estándar/)).toBeNull();
+    expect(screen.queryByTestId("reputation-badge")).toBeNull();
     expect(screen.getByRole("link", { name: /Taller Volcán/ }).querySelector("button")).toBeNull();
     expect(screen.queryByText(/verificad|calificaci|reseñas|pedidos|respuesta|envíos|recogida|garantía|protección/i)).not.toBeInTheDocument();
   });

@@ -70,13 +70,15 @@ describe("shop workspace header", () => {
       shopSlug: "casa-premium",
     });
 
-    expect(screen.getByRole("group", { name: "Tienda Premium" })).toBeInTheDocument();
-    expect(screen.getByText(/Plaza Volcanes distinguió tu tienda/)).toBeInTheDocument();
+    expect(screen.getByTestId("premium-badge")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Tu tienda pública, tus productos y tu ficha en el catálogo/),
+    ).toBeInTheDocument();
   });
 
   it("says nothing about the distinction to an ordinary seller", () => {
     renderHeader();
 
-    expect(screen.queryByRole("group", { name: "Tienda Premium" })).toBeNull();
+    expect(screen.queryByTestId("premium-badge")).toBeNull();
   });
 });

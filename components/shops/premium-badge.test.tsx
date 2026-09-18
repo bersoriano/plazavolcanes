@@ -9,44 +9,52 @@ describe("PremiumBadge", () => {
   it("names the distinction for sighted and assistive readers alike", () => {
     render(<PremiumBadge />);
 
-    expect(screen.getByText("Premium")).toBeInTheDocument();
-    expect(screen.getByRole("group", { name: "Tienda Premium" })).toBeInTheDocument();
+    expect(screen.getByTestId("premium-badge")).toHaveTextContent("Premium");
+    expect(screen.getByTestId("premium-badge")).toHaveTextContent(/Tienda Premium/);
   });
 
-  it("says who grants the distinction, so it is not read as a measured metric", () => {
+  it("carries who grants it, so the badge alone is never read as a measurement", () => {
     render(<PremiumBadge />);
 
-    expect(screen.getByRole("tooltip")).toHaveTextContent(
-      /Plaza Volcanes distingue a esta tienda/,
+    expect(screen.getByTestId("premium-badge")).toHaveTextContent(
+      /Distinción otorgada por Plaza Volcanes/,
     );
   });
 
-  it("frames its explanation in theme tokens, not literal colours", () => {
+  it("hangs no meaning on a hover tooltip", () => {
     render(<PremiumBadge />);
 
-    const tooltip = screen.getByRole("tooltip");
-    expect(tooltip).toHaveClass("text-premium-cream", "border", "border-premium-gold/40");
-    expect(tooltip.className).not.toMatch(/\[#/);
+    expect(screen.queryByRole("tooltip")).toBeNull();
+    expect(screen.getByTestId("premium-badge")).not.toHaveAttribute("title");
+  });
+
+  it("promises nothing the platform cannot evidence", () => {
+    render(<PremiumBadge />);
+
+    expect(screen.getByTestId("premium-badge").textContent).not.toMatch(
+      /verificad|garantiz|protegid|asegurad/i,
+    );
+  });
+
+  it("frames itself in theme tokens, not literal colours", () => {
+    render(<PremiumBadge />);
+
+    expect(screen.getByTestId("premium-badge")).toHaveClass(
+      "bg-premium-ink",
+      "text-premium-gold",
+    );
+    expect(screen.getByTestId("premium-badge").className).not.toMatch(/\[#/);
   });
 
   it("brings no outer margin, so it centres on whatever row it joins", () => {
-    render(<PremiumBadge showDetails={false} />);
+    render(<PremiumBadge />);
 
-    expect(screen.getByRole("group", { name: "Tienda Premium" }).className).not.toMatch(
-      /(^|\s)m[tyb]?-/,
-    );
+    expect(screen.getByTestId("premium-badge").className).not.toMatch(/(^|\s)m[tyb]?-/);
   });
 
   it("takes the spacing its caller asks for", () => {
     render(<PremiumBadge className="mt-4" />);
 
-    expect(screen.getByRole("group", { name: "Tienda Premium" })).toHaveClass("mt-4");
-  });
-
-  it("drops the explanation where there is no room for it", () => {
-    render(<PremiumBadge showDetails={false} />);
-
-    expect(screen.getByText("Premium")).toBeInTheDocument();
-    expect(screen.queryByRole("tooltip")).toBeNull();
+    expect(screen.getByTestId("premium-badge")).toHaveClass("mt-4");
   });
 });

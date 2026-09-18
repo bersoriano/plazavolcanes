@@ -86,6 +86,7 @@ describe("public sharing controls", () => {
       },
       shopId: 1,
       shopOwnerId: "11111111-1111-4111-8111-111111111111",
+      shopTrustMetrics: { status: "pending" as const },
     });
 
     render(
@@ -157,6 +158,7 @@ describe("public sharing controls", () => {
       },
       shopId: 1,
       shopOwnerId: "11111111-1111-4111-8111-111111111111",
+      shopTrustMetrics: { status: "pending" as const },
     });
 
     render(
@@ -204,7 +206,7 @@ describe("public sharing controls", () => {
       listing_limit: 15,
       time_zone: "America/Mexico_City",
       trust_evaluated_at: null,
-      trust_metrics: null,
+      trust_metrics: { status: "pending" as const },
       trust_tier: "standard",
       country_code: "MX",
       administrative_area_codes: ["MX-JAL"],
@@ -223,15 +225,23 @@ describe("public sharing controls", () => {
     expect(screen.getByRole("button", { name: "Compartir" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Compartir por WhatsApp" })).toBeInTheDocument();
     expect(screen.getByText("Miembro desde febrero de 2024")).toBeInTheDocument();
+    // Antiquity explains itself; it no longer doubles as a second, differently
+    // worded new-seller verdict.
     expect(screen.getByTestId("trust-badge-membership")).toHaveAttribute(
       "title",
-      expect.stringContaining("Vendedor establecido"),
+      expect.stringContaining("La antigüedad muestra"),
     );
-    expect(screen.getByText("Nivel Estándar")).toBeInTheDocument();
-    // A shop with no evaluation still shows every signal, greyed out.
+    // The starting tier is operational, not a public rank, so it never appears
+    // beside the distinction a buyer is reading.
+    expect(screen.queryByText(/Nivel Estándar/)).toBeNull();
+    // A shop with no evaluation says so once, rather than filling a grid with
+    // blanks — the signals stay one disclosure away.
+    expect(screen.getByTestId("selling-history")).toHaveTextContent(
+      "está construyendo su historial",
+    );
     expect(screen.getByTestId("trust-badge-response_rate")).toHaveAttribute(
       "data-state",
-      "unmeasured",
+      "empty",
     );
   });
 });
@@ -263,6 +273,7 @@ describe("product slug routing", () => {
       },
       shopId: 1,
       shopOwnerId: "11111111-1111-4111-8111-111111111111",
+      shopTrustMetrics: { status: "pending" as const },
     });
 
     render(

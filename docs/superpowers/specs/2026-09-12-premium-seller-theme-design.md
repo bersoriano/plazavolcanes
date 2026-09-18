@@ -33,6 +33,14 @@ This project excludes:
 - Buyer-facing label is `Premium`. Accessible name and tooltip use `Tienda Premium`.
 - The premium theme is scoped to the shop's own surfaces. Site chrome stays in the ordinary theme so the marketplace remains one place.
 
+### Amended 2026-09-18, audit finding F5
+
+- **Assignment.** Premium is granted by an administrator and by nobody else. There is no automatic grant on shop creation and no seller-facing application flow. A new shop is therefore not Premium until an administrator makes it so.
+- **Term.** A grant lasts until an administrator withdraws it. It does not expire, it is not renewed, and it costs nothing. `PREMIUM_DETAILS` in `lib/seller-standing.ts` states this to buyers and sellers in those words.
+- **Benefits.** The distinguished presentation is the whole of it. There is no ranking boost, no priority placement, no search weighting, no dedicated support, no fee waiver and no buyer assurance, and the copy promises none of them. The invitation on the plaza's shop row (`PREMIUM_INVITATION`) points at the seal on the cards; it never reorders the row.
+- **Public tier.** The computed tier `standard` is no longer shown to buyers — beside the Premium badge it read as a competing rank. It keeps every operational rule, including the 15-listing limit, and the seller still sees it in their own panel. `reliable` and `top_rated` are earned, so they stay public, as measured reputation rather than as membership.
+- **Separation.** Premium and transaction reputation are presented as two independent facts, never merged into one standing. A shop may be Premium and have no selling history at all; the two statements sit next to each other and neither qualifies the other.
+
 ## Canonical Evidence
 
 ### `public.shops` addition

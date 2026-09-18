@@ -8,6 +8,7 @@ import { ProductCard } from "@/components/catalog/product-card";
 import { ProductGrid } from "@/components/catalog/product-grid";
 import { SearchBar } from "@/components/catalog/search-bar";
 import { PublicShopCard } from "@/components/catalog/shop-card";
+import { PREMIUM_INVITATION } from "@/lib/seller-standing";
 import { BuyerSteps } from "@/components/home/buyer-steps";
 import { HomeHero } from "@/components/home/home-hero";
 import { SellerPitch } from "@/components/home/seller-pitch";
@@ -159,6 +160,10 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
     </section>
   );
 
+  // The invitation only appears when a distinguished shop is actually in the
+  // row, so it always points at a seal the shopper can see. It never reorders
+  // the row: the distinction is a mark, not a ranking.
+  const hasPremiumShop = shops.some((shop) => shop.is_premium === true);
   const shopsSection = shops.length ? (
     <section className="mx-auto max-w-[1440px] px-5 pb-16 sm:px-8 lg:px-12" id="tiendas">
       <div className="mb-6">
@@ -166,6 +171,11 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
         <h2 className="mt-2 font-display text-3xl font-semibold tracking-[-0.03em]">
           {area ? `Tiendas de ${area.label}` : "Tiendas de la plaza"}
         </h2>
+        {hasPremiumShop ? (
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted" data-testid="premium-invitation">
+            {PREMIUM_INVITATION}
+          </p>
+        ) : null}
       </div>
       <div className="flex gap-5 overflow-x-auto pb-3">
         {shops.map((shop) => <PublicShopCard key={shop.id} shop={shop} />)}

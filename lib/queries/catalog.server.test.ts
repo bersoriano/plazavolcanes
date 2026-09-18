@@ -415,13 +415,82 @@ describe("getPublicShop", () => {
     expect(result).toEqual(expect.objectContaining({
       seller_display_name: "Elena Volcán",
       trust_profile: { joined_on: "2025-01-15", verification_level: "basic" },
-      trust_metrics: expect.objectContaining({ responseRate: 98, totalOrders: 32 }),
+      trust_metrics: {
+        status: "ready",
+        metrics: expect.objectContaining({ responseRate: 98, totalOrders: 32 }),
+      },
     }));
     expect(result?.products).toEqual([]);
     expect(productsQuery.eq).toHaveBeenCalledWith("is_admin_enabled", true);
     expect(productsQuery.eq).toHaveBeenCalledWith("shops.is_publishing_approved", true);
     expect(productsQuery.not).toHaveBeenCalledWith("expires_at", "is", null);
     expect(productsQuery.gt).toHaveBeenCalledWith("expires_at", expect.any(String));
+  });
+
+  // A shop nobody has evaluated and a read that failed are different facts,
+  // and a page that cannot tell them apart shows a broken query as a brand
+  // new shop.
+  function shopClientFor(metricsRpc: ReturnType<typeof vi.fn>) {
+    const shopQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          id: 4,
+          owner_id: "seller-1",
+          name: "Casa Niebla",
+          slug: "casa-niebla",
+          image_path: null,
+          trust_tier: "standard",
+        },
+        error: null,
+      }),
+    };
+    const productsQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(),
+      gt: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: [], error: null }),
+    };
+    const profileQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+    };
+
+    vi.mocked(createServerSupabaseClient)
+      .mockResolvedValueOnce({
+        from: vi.fn((table: string) =>
+          table === "shops" ? shopQuery : table === "products" ? productsQuery : profileQuery,
+        ),
+        rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+      } as never)
+      .mockResolvedValueOnce({ rpc: metricsRpc } as never);
+  }
+
+  it("reports a shop with no evaluation as pending, not as a failure", async () => {
+    shopClientFor(vi.fn().mockResolvedValue({ data: [], error: null }));
+
+    const result = await getPublicShop("casa-niebla");
+
+    expect(result?.trust_metrics).toEqual({ status: "pending" });
+  });
+
+  it("reports a failed metrics read as unavailable, not as an empty history", async () => {
+    shopClientFor(vi.fn().mockResolvedValue({ data: null, error: { message: "boom" } }));
+
+    const result = await getPublicShop("casa-niebla");
+
+    expect(result?.trust_metrics).toEqual({ status: "unavailable" });
+  });
+
+  it("reports a thrown metrics read as unavailable too", async () => {
+    shopClientFor(vi.fn().mockRejectedValue(new Error("network")));
+
+    const result = await getPublicShop("casa-niebla");
+
+    expect(result?.trust_metrics).toEqual({ status: "unavailable" });
   });
 });
 

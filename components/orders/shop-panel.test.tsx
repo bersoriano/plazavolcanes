@@ -9,20 +9,24 @@ const shop = {
   name: "Casa Niebla",
   slug: "casa-niebla",
   imageUrl: "/casa-niebla.jpg",
+  isPremium: false,
   trustTier: "reliable" as const,
   trustMetrics: {
-    averageReplyTimeMinutes: 45,
-    responseRate: 98,
-    descriptionAccuracy: 97,
-    onTimeShippingRate: 96,
-    orderCompletionRate: 99,
-    disputeRate: 0,
-    totalOrders: 32,
-    averageRating: 4.8,
-    reviewCount: 20,
-    lastActiveDaysAgo: 1,
-    sellerActiveDaysAgo: 1,
-    evaluatedAt: "2026-08-27T12:00:00Z",
+    status: "ready" as const,
+    metrics: {
+      averageReplyTimeMinutes: 45,
+      responseRate: 98,
+      descriptionAccuracy: 97,
+      onTimeShippingRate: 96,
+      orderCompletionRate: 99,
+      disputeRate: 0,
+      totalOrders: 32,
+      averageRating: 4.8,
+      reviewCount: 20,
+      lastActiveDaysAgo: 1,
+      sellerActiveDaysAgo: 1,
+      evaluatedAt: "2026-08-27T12:00:00Z",
+    },
   },
   trustProfile: { joinedOn: "2025-01-15" },
   sellerDisplayName: "Elena Volcán",
@@ -37,7 +41,7 @@ describe("ShopPanel", () => {
     expect(screen.getByRole("link", { name: "Ver la tienda" })).toHaveAttribute("href", "/tiendas/casa-niebla");
   });
 
-  it("shows the seller, stored location, image, tier and positive trust evidence", () => {
+  it("shows the seller, stored location, image and the history they earned", () => {
     render(<ShopPanel shop={shop} />);
 
     expect(screen.getByText("Elena Volcán")).toBeInTheDocument();
@@ -46,17 +50,38 @@ describe("ShopPanel", () => {
       "src",
       "/casa-niebla.jpg",
     );
-    expect(screen.getByText("Nivel Confiable")).toBeInTheDocument();
-    expect(screen.getByTestId("trust-badge-membership")).toHaveAttribute(
-      "data-state",
-      "measured",
+    expect(screen.getByTestId("reputation-badge")).toHaveTextContent("Confiable");
+    expect(screen.getByTestId("selling-history")).toHaveTextContent(
+      "32 pedidos completados · 4.8 de 5 en 20 reseñas",
     );
-    expect(screen.getByTestId("trust-badge-response_rate")).toHaveTextContent("98%");
   });
 
-  it("renders the trust vocabulary even before metrics accumulate", () => {
-    render(<ShopPanel shop={{ ...shop, trustMetrics: null, trustProfile: null }} />);
+  it("states the same standing here as on the storefront for a premium shop", () => {
+    render(<ShopPanel shop={{ ...shop, isPremium: true }} />);
 
-    expect(screen.getByLabelText("Marcadores de confianza")).toBeInTheDocument();
+    expect(screen.getByTestId("premium-badge")).toHaveTextContent("Premium");
+    expect(screen.getByTestId("premium-note")).toHaveTextContent(
+      "Distinción otorgada por Plaza Volcanes.",
+    );
+  });
+
+  it("shows no earned tier for a shop still in the starting tier", () => {
+    render(<ShopPanel shop={{ ...shop, trustTier: "standard" }} />);
+
+    expect(screen.queryByTestId("reputation-badge")).toBeNull();
+    expect(screen.queryByText(/Estándar/)).toBeNull();
+  });
+
+  it("says a shop is building its history rather than showing empty metrics", () => {
+    render(
+      <ShopPanel
+        shop={{ ...shop, trustMetrics: { status: "pending" }, trustProfile: null }}
+      />,
+    );
+
+    expect(screen.getByTestId("selling-history")).toHaveTextContent(
+      "está construyendo su historial",
+    );
+    expect(screen.queryByLabelText("Marcadores de confianza")).toBeNull();
   });
 });
