@@ -25,21 +25,28 @@ export type TrustDashboard = {
   summary: string;
 };
 
+/**
+ * The operational tier, in the seller's own words.
+ *
+ * This level is what sets a shop's publication limit. It is measured, it is
+ * not the Premium distinction, and outside the seller's panel only an earned
+ * tier is ever shown — see `publicReputationTier` in `lib/seller-standing`.
+ */
 const markers = {
   standard: {
     label: "Estándar",
     listingLimit: 15,
-    tooltip: "Nivel inicial mientras la tienda reúne evidencia suficiente de servicio, cumplimiento y satisfacción.",
+    tooltip: "Nivel inicial de operación: hasta 15 publicaciones mientras la tienda reúne evidencia de servicio, cumplimiento y satisfacción. No se muestra a quienes compran.",
   },
   reliable: {
     label: "Confiable",
     listingLimit: 40,
-    tooltip: "Esta tienda cumple requisitos consistentes de respuesta, envíos, pedidos completados y baja tasa de disputas.",
+    tooltip: "Esta tienda cumple requisitos consistentes de respuesta, envíos, pedidos completados y baja tasa de disputas. Sube el límite a 40 publicaciones.",
   },
   top_rated: {
     label: "Mejor valorada",
     listingLimit: 100,
-    tooltip: "Esta tienda mantiene los estándares más altos de servicio, cumplimiento, actividad y satisfacción en Plaza Volcanes.",
+    tooltip: "Esta tienda mantiene los estándares más altos de servicio, cumplimiento, actividad y satisfacción en Plaza Volcanes. Sube el límite a 100 publicaciones.",
   },
 } satisfies Record<TrustTier, { label: string; listingLimit: number; tooltip: string }>;
 

@@ -2,11 +2,12 @@ import { describe, expect, it } from "vitest";
 
 import {
   PUBLIC_TRUST_MARKERS,
-  formatDisputeRate,
   formatLastActive,
   formatRating,
   formatReplyTime,
   formatTrustPercentage,
+  readTrustSignals,
+  type PublicTrustMetrics,
 } from "@/lib/public-trust";
 
 describe("formatTrustPercentage", () => {
@@ -78,14 +79,14 @@ describe("PUBLIC_TRUST_MARKERS", () => {
   });
 });
 
-describe("PUBLIC_TRUST_MARKERS measured state", () => {
-  const zeroed = {
+describe("readTrustSignals", () => {
+  const emptyShop = {
     averageReplyTimeMinutes: null,
     responseRate: null,
     descriptionAccuracy: null,
     onTimeShippingRate: null,
     orderCompletionRate: null,
-    disputeRate: 0,
+    disputeRate: null,
     totalOrders: 0,
     averageRating: null,
     reviewCount: 0,
@@ -94,77 +95,93 @@ describe("PUBLIC_TRUST_MARKERS measured state", () => {
     evaluatedAt: "2026-08-20T00:00:00.000Z",
   };
 
-  function marker(key: string) {
-    return PUBLIC_TRUST_MARKERS.find((entry) => entry.key === key)!;
+  function signal(key: string, metrics: PublicTrustMetrics | null = emptyShop) {
+    return readTrustSignals(metrics).find((entry) => entry.key === key)!;
   }
 
-  it("marks the seller active only while their presence is current", () => {
-    expect(marker("last_active").measured({ ...zeroed, sellerActiveDaysAgo: 2 })).toBe(true);
-    expect(marker("last_active").value({ ...zeroed, sellerActiveDaysAgo: 2 })).toBe(
-      "Activo recientemente",
+  it("never states a zero response rate the plaza never measured", () => {
+    const empty = signal("response_rate");
+
+    expect(empty.state).toBe("empty");
+    expect(empty.value).toBe("Sin historial de respuesta");
+    expect(empty.value).not.toMatch(/%/);
+  });
+
+  it("keeps a real zero response rate, because the denominator was real", () => {
+    const measured = signal("response_rate", { ...emptyShop, responseRate: 0 });
+
+    expect(measured.state).toBe("zero");
+    expect(measured.value).toBe("0%");
+  });
+
+  it("names the window a rate was measured over", () => {
+    expect(signal("response_rate", { ...emptyShop, responseRate: 80 }).context).toBe(
+      "Últimos 90 días",
     );
-    expect(marker("last_active").measured({ ...zeroed, sellerActiveDaysAgo: 9 })).toBe(false);
-    expect(marker("last_active").value({ ...zeroed, sellerActiveDaysAgo: 9 })).toBe("Hace 9 días");
+  });
+
+  it("keeps genuinely poor results visible", () => {
+    const poor = { ...emptyShop, onTimeShippingRate: 0, orderCompletionRate: 12, disputeRate: 40 };
+
+    expect(signal("on_time_shipping", poor).value).toBe("0%");
+    expect(signal("order_completion", poor).value).toBe("12%");
+    expect(signal("dispute_rate", poor).value).toBe("40%");
+    expect(signal("dispute_rate", poor).state).toBe("measured");
+  });
+
+  it("does not call a shop with no eligible order dispute-free", () => {
+    const empty = signal("dispute_rate");
+
+    expect(empty.state).toBe("empty");
+    expect(empty.value).toBe("Sin pedidos evaluados");
+  });
+
+  it("keeps a clean record once there were orders to measure", () => {
+    const clean = signal("dispute_rate", { ...emptyShop, disputeRate: 0 });
+
+    expect(clean.state).toBe("measured");
+    expect(clean.value).toBe("Sin disputas");
+  });
+
+  it("says there are no reviews rather than showing a zero rating", () => {
+    expect(signal("rating").value).toBe("Aún sin reseñas");
+    expect(signal("rating").state).toBe("empty");
+    expect(signal("review_count").value).toBe("Aún sin reseñas");
+    expect(signal("review_count").state).toBe("empty");
+  });
+
+  it("carries the sample size beside a rating", () => {
+    const rated = signal("rating", { ...emptyShop, averageRating: 4.82, reviewCount: 12 });
+
+    expect(rated.value).toBe("4.8");
+    expect(rated.context).toBe("12 reseñas");
+  });
+
+  it("says a shop has no sales rather than printing a bare zero", () => {
+    expect(signal("total_orders").value).toBe("Sin ventas registradas");
+    expect(signal("total_orders").state).toBe("empty");
+  });
+
+  it("marks the seller active only while their presence is current", () => {
+    expect(signal("last_active", { ...emptyShop, sellerActiveDaysAgo: 2 })).toMatchObject({
+      state: "measured",
+      value: "Activo recientemente",
+    });
+    expect(signal("last_active", { ...emptyShop, sellerActiveDaysAgo: 9 })).toMatchObject({
+      state: "empty",
+      value: "Hace 9 días",
+    });
   });
 
   it("reads the seller's own presence, not the shop's order activity", () => {
-    const busyShopAbsentSeller = { ...zeroed, lastActiveDaysAgo: 1, sellerActiveDaysAgo: 30 };
+    const busyShopAbsentSeller = { ...emptyShop, lastActiveDaysAgo: 1, sellerActiveDaysAgo: 30 };
 
-    expect(marker("last_active").measured(busyShopAbsentSeller)).toBe(false);
+    expect(signal("last_active", busyShopAbsentSeller).state).toBe("empty");
   });
 
-  it("treats a shop with no orders or reviews as unmeasured on those signals", () => {
-    expect(marker("total_orders").measured(zeroed)).toBe(false);
-    expect(marker("review_count").measured(zeroed)).toBe(false);
-  });
-
-  it("still shows the real zero rather than hiding it", () => {
-    expect(marker("total_orders").value(zeroed)).toBe("0");
-    expect(marker("review_count").value(zeroed)).toBe("0");
-  });
-
-  it("keeps a zero dispute rate as a genuine measurement", () => {
-    expect(marker("dispute_rate").measured(zeroed)).toBe(true);
-    expect(marker("dispute_rate").value(zeroed)).toBe("Sin disputas");
-  });
-
-  it("counts a signal as measured once it carries a value", () => {
-    const busy = { ...zeroed, totalOrders: 34, reviewCount: 12, responseRate: 98 };
-
-    expect(marker("total_orders").measured(busy)).toBe(true);
-    expect(marker("review_count").measured(busy)).toBe(true);
-    expect(marker("response_rate").measured(busy)).toBe(true);
-  });
-
-  it("reports nothing measured without an evaluation, except a clean dispute record", () => {
-    for (const entry of PUBLIC_TRUST_MARKERS) {
-      expect(entry.measured(null)).toBe(entry.key === "dispute_rate");
+  it("reports nothing measured at all without an evaluation", () => {
+    for (const entry of readTrustSignals(null)) {
+      expect(entry.state).toBe("empty");
     }
-  });
-
-  it("treats a shop with no disputes as earning the badge, evaluated or not", () => {
-    expect(marker("dispute_rate").measured(null)).toBe(true);
-    expect(marker("dispute_rate").value(null)).toBe("Sin disputas");
-    expect(marker("dispute_rate").measured({ ...zeroed, disputeRate: null })).toBe(true);
-    expect(marker("dispute_rate").value({ ...zeroed, disputeRate: null })).toBe("Sin disputas");
-  });
-
-  it("still reports a real dispute rate when there is one", () => {
-    const disputed = { ...zeroed, disputeRate: 12 };
-
-    expect(marker("dispute_rate").measured(disputed)).toBe(true);
-    expect(marker("dispute_rate").value(disputed)).toBe("12%");
-  });
-});
-
-describe("formatDisputeRate", () => {
-  it("states a clean record rather than a rate", () => {
-    expect(formatDisputeRate(null)).toBe("Sin disputas");
-    expect(formatDisputeRate(0)).toBe("Sin disputas");
-  });
-
-  it("reports the rate once disputes exist", () => {
-    expect(formatDisputeRate(12)).toBe("12%");
-    expect(formatDisputeRate(2.55)).toBe("2.6%");
   });
 });

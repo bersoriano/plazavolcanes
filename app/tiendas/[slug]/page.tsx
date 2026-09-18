@@ -7,10 +7,8 @@ import { ProductCard } from "@/components/catalog/product-card";
 import { ProductGrid } from "@/components/catalog/product-grid";
 import { ShareActions } from "@/components/share/share-actions";
 import { StartConversationButton } from "@/components/messages/start-conversation-button";
-import { PremiumBadge } from "@/components/shops/premium-badge";
 import { PremiumScope } from "@/components/shops/premium-scope";
-import { TrustTierBadge } from "@/components/shops/trust-tier-badge";
-import { TrustBadges } from "@/components/shops/trust-badges";
+import { SellerBadges, SellerStanding } from "@/components/shops/seller-standing";
 import { EmptyState } from "@/components/ui/empty-state";
 import { openConversation } from "@/lib/actions/start-conversation";
 import { getPublicShop } from "@/lib/queries/catalog.server";
@@ -70,7 +68,7 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">
               Tienda independiente
             </p>
-            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2">
+            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-3">
               <h1
                 className={`font-display text-4xl font-semibold sm:text-5xl ${
                   isPremium ? "tracking-[-0.02em]" : "tracking-[-0.04em]"
@@ -78,9 +76,7 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
               >
                 {shop.name}
               </h1>
-              <TrustTierBadge tier={shop.trust_tier} />
-              {/* Same top margin as the tier badge beside it, so the two sit level. */}
-              {isPremium ? <PremiumBadge className="mt-4" /> : null}
+              <SellerBadges premium={isPremium} tier={shop.trust_tier} />
             </div>
             <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-brand">
               <MapPin aria-hidden="true" className="size-4" />
@@ -109,16 +105,14 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
               </section>
             ) : null}
 
-            <TrustBadges
+            <SellerStanding
+              joinedOn={shop.trust_profile?.joined_on ?? null}
               metrics={shop.trust_metrics}
+              premium={isPremium}
               profile={
                 shop.trust_profile ? { joinedOn: shop.trust_profile.joined_on } : null
               }
             />
-            <p className="mt-3 text-xs text-muted">
-              Estas son todas las señales que Plaza Volcanes mide para cada tienda. Nadie puede editar
-              sus propias métricas.
-            </p>
 
             <div className="mt-6 flex flex-wrap items-center gap-3">
               <StartConversationButton

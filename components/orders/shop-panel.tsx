@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { Store } from "lucide-react";
 
-import type { PublicTrustMetrics } from "@/lib/public-trust";
-import { TrustBadges } from "@/components/shops/trust-badges";
-import { TrustTierBadge } from "@/components/shops/trust-tier-badge";
+import type { TrustMetricsResult } from "@/lib/public-trust";
+import {
+  PremiumNote,
+  SellerBadges,
+  SellingHistoryNote,
+} from "@/components/shops/seller-standing";
 
 /** Who the buyer is asking, and what the plaza knows about them. */
 export function ShopPanel({
@@ -13,8 +16,9 @@ export function ShopPanel({
     name: string;
     slug: string;
     imageUrl: string | null;
+    isPremium: boolean;
     trustTier: "standard" | "reliable" | "top_rated";
-    trustMetrics: PublicTrustMetrics | null;
+    trustMetrics: TrustMetricsResult;
     trustProfile: { joinedOn: string } | null;
     sellerDisplayName: string;
     location: string;
@@ -40,13 +44,13 @@ export function ShopPanel({
         </div>
       </div>
 
-      <div className="mt-4">
-        <TrustTierBadge tier={shop.trustTier} />
-      </div>
-
-      <div className="mt-4">
-        <TrustBadges metrics={shop.trustMetrics} profile={shop.trustProfile} />
-      </div>
+      <SellerBadges className="mt-4" premium={shop.isPremium} tier={shop.trustTier} />
+      {shop.isPremium ? <PremiumNote /> : null}
+      <SellingHistoryNote
+        className="mt-4"
+        joinedOn={shop.trustProfile?.joinedOn ?? null}
+        metrics={shop.trustMetrics}
+      />
 
       <Link className="mt-5 inline-flex text-sm font-semibold text-brand" href={`/tiendas/${shop.slug}`}>
         Ver la tienda

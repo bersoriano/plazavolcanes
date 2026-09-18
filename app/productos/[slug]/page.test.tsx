@@ -43,6 +43,7 @@ const product = {
   shop: { name: "Casa Niebla", slug: "casa-niebla" },
   shopId: 4,
   shopOwnerId: "seller-1",
+  shopTrustMetrics: { status: "pending" as const },
 };
 
 function renderPage(
@@ -120,7 +121,30 @@ describe("Product page premium theming", () => {
     const { container } = render(await renderPage());
 
     expect(container.querySelector('[data-theme="premium"]')).not.toBeNull();
-    expect(screen.getByRole("group", { name: "Tienda Premium" })).toBeInTheDocument();
+    expect(screen.getByTestId("premium-badge")).toBeInTheDocument();
+    // The same words the storefront uses, so one shop never reads two ways.
+    expect(screen.getByTestId("premium-note")).toHaveTextContent(
+      "Distinción otorgada por Plaza Volcanes.",
+    );
+    expect(screen.getByTestId("selling-history")).toHaveTextContent(
+      "está construyendo su historial",
+    );
+  });
+
+  it("keeps the buying actions above the seller summary", async () => {
+    getPublicProduct.mockResolvedValue({
+      ...product,
+      shop: { ...product.shop, is_premium: true },
+    });
+
+    render(await renderPage());
+
+    const standing = screen.getByRole("region", { name: /La tienda que publica/ });
+    const buyAction = screen.getByRole("button", { name: /Solicitar compra/ });
+
+    expect(buyAction.compareDocumentPosition(standing)).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    );
   });
 
   it("leaves an ordinary shop's product in the ordinary theme", async () => {

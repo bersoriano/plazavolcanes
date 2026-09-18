@@ -8,8 +8,8 @@ import { JsonLd } from "@/components/seo/json-ld";
 import { ShareActions } from "@/components/share/share-actions";
 import { StartConversationButton } from "@/components/messages/start-conversation-button";
 import { AddToCartForm } from "@/components/orders/add-to-cart-form";
-import { PremiumBadge } from "@/components/shops/premium-badge";
 import { PremiumScope } from "@/components/shops/premium-scope";
+import { SellerBadges, PremiumNote, SellingHistoryNote } from "@/components/shops/seller-standing";
 import {
   DEFAULT_CATALOG_CURRENCY,
   DEFAULT_CATALOG_LOCALE,
@@ -155,7 +155,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
                 <Store aria-hidden="true" className="size-4" />
                 {product.shop.name}
               </Link>
-              {isPremium ? <PremiumBadge showDetails={false} /> : null}
+              <SellerBadges premium={isPremium} tier={product.shop.trust_tier} />
             </div>
             <h1 className="mt-5 font-display text-4xl font-semibold leading-tight tracking-[-0.04em] text-ink sm:text-5xl">{product.name}</h1>
             <p className="mt-3 inline-flex w-fit rounded-full border border-line bg-surface px-3 py-1.5 text-sm font-semibold text-brand">
@@ -190,9 +190,19 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
               />
               <ShareActions label="Compartir producto" title={product.name} />
             </div>
-            <p className="mt-8 rounded-2xl border border-line bg-surface p-4 text-sm leading-6 text-muted">
-              Producto publicado por una tienda independiente de Plaza Volcanes.
-            </p>
+            {/* The seller summary sits after the buying actions on purpose: it
+                is context for the decision, not the decision itself. */}
+            <section
+              aria-labelledby="product-seller-standing"
+              className="mt-8 rounded-2xl border border-line bg-surface p-4 text-sm leading-6 text-muted"
+            >
+              <h2 className="sr-only" id="product-seller-standing">
+                La tienda que publica este producto
+              </h2>
+              <p>Producto publicado por una tienda independiente de Plaza Volcanes.</p>
+              {isPremium ? <PremiumNote /> : null}
+              <SellingHistoryNote className="mt-3" metrics={product.shopTrustMetrics} />
+            </section>
           </div>
         </div>
       </section>

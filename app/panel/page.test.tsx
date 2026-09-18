@@ -186,7 +186,9 @@ describe("PanelPage", () => {
     expect(screen.getByRole("link", { name: "Tienda pública" })).toHaveAttribute("href", "/tiendas/casa-niebla");
     expect(screen.getByRole("link", { name: "Pedidos" })).toHaveAttribute("href", "/panel/pedidos");
     expect(screen.getByRole("link", { name: "Mi cuenta" })).toHaveAttribute("href", "/panel/cuenta");
-    expect(screen.getByText("1 de 10 publicaciones · Nivel Estándar")).toBeInTheDocument();
+    expect(
+      screen.getByText("1 de 10 publicaciones · Nivel Estándar (límite de publicaciones)"),
+    ).toBeInTheDocument();
   });
 
   it("passes only a well-formed shop id through to the dashboard", async () => {
