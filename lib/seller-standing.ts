@@ -23,12 +23,25 @@ export const PREMIUM_SUMMARY = "Distinción otorgada por Plaza Volcanes.";
  *
  * Only the presentation benefit is named, because it is the only benefit the
  * approved policy defines. Ranking, placement, support and fees are outside
- * the programme, so they are not promised here.
+ * the programme, so they are not promised here. The term is stated because
+ * it is now defined: administration grants it, and it lasts until
+ * administration withdraws it. No expiry, no renewal, no payment.
  */
 export const PREMIUM_DETAILS = [
   "Plaza Volcanes otorga esta distinción a la tienda y la presenta de forma destacada en su página, en sus productos y en el catálogo.",
+  "La otorga administración y se mantiene hasta que administración la retire. No vence, no se renueva y no tiene costo.",
   "No mide ventas, no revisa la identidad de quien vende y no responde por la entrega de un pedido. El historial de ventas se calcula aparte, con pedidos y reseñas reales, y nadie puede editarlo.",
 ];
+
+/**
+ * The invitation the plaza extends to a shopper.
+ *
+ * It points at the seal on the cards, not at the order of the row: nothing
+ * here ranks a distinguished shop above another, and the copy must not
+ * suggest it does.
+ */
+export const PREMIUM_INVITATION =
+  "Visita nuestras tiendas Premium destacadas: llevan el sello que otorga Plaza Volcanes.";
 
 export const REPUTATION_HEADING = "Historial de ventas";
 

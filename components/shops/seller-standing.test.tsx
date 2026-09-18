@@ -75,6 +75,17 @@ describe("PremiumNote", () => {
     expect(note.textContent).not.toMatch(/verificad|garantiz|protecc|asegur(a|ad)/i);
     expect(note).toHaveTextContent(/El historial de ventas se calcula aparte/);
   });
+
+  it("states the term: granted by administration, until administration withdraws it", () => {
+    render(<PremiumNote />);
+
+    const note = screen.getByTestId("premium-note");
+    expect(note).toHaveTextContent(
+      "La otorga administración y se mantiene hasta que administración la retire.",
+    );
+    // No expiry and no payment were introduced, because policy defines neither.
+    expect(note).toHaveTextContent("No vence, no se renueva y no tiene costo.");
+  });
 });
 
 describe("SellingHistoryNote", () => {

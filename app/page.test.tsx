@@ -274,6 +274,53 @@ describe("Home conversion sections", () => {
     ).toBeInTheDocument();
   });
 
+  it("invites shoppers to the distinguished shops only when one is in the row", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()], shops: [sampleShop()] }),
+    );
+
+    const { unmount } = render(await Home({ searchParams: Promise.resolve({}) }));
+
+    expect(screen.queryByTestId("premium-invitation")).toBeNull();
+    unmount();
+
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({
+        products: [sampleProduct()],
+        shops: [{ ...sampleShop(), is_premium: true }],
+      }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByTestId("premium-invitation")).toHaveTextContent(
+      "Visita nuestras tiendas Premium destacadas",
+    );
+  });
+
+  it("invites without reordering the row, because the mark is not a ranking", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({
+        products: [sampleProduct()],
+        shops: [
+          { ...sampleShop(), id: 3, name: "Taller Volcán", slug: "taller-volcan" },
+          { ...sampleShop(), id: 4, name: "Casa Premium", slug: "casa-premium", is_premium: true },
+        ],
+      }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const links = screen
+      .getAllByRole("link")
+      .filter((link) => link.getAttribute("href")?.startsWith("/tiendas/"));
+
+    expect(links.map((link) => link.getAttribute("href"))).toEqual([
+      "/tiendas/taller-volcan",
+      "/tiendas/casa-premium",
+    ]);
+  });
+
   it("prioritizes buyer discovery before trust details and the seller pitch", async () => {
     const { getCatalogStateCounts } = await import("@/lib/queries/catalog.server");
     vi.mocked(getCatalogStateCounts).mockResolvedValue([{ code: "MX-OAX", count: 1 }]);
