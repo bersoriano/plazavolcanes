@@ -342,12 +342,12 @@ export function ProductForm({
       <Field defaultValue={state.values?.name ?? product?.name} error={state.errors?.name?.[0]} label="Nombre del producto" maxLength={120} name="name" placeholder="Taza de barro" required />
       <div className="space-y-2">
         <label className="block text-sm font-semibold text-ink" htmlFor="description">Descripción</label>
-        <textarea aria-describedby={state.errors?.description ? "description-error" : undefined} aria-invalid={Boolean(state.errors?.description)} className="min-h-40 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none" defaultValue={state.values?.description ?? product?.description ?? undefined} id="description" maxLength={3000} name="description" placeholder="Materiales, proceso, medidas y cualquier detalle importante." required />
+        <textarea aria-describedby={state.errors?.description ? "description-error" : undefined} aria-invalid={Boolean(state.errors?.description)} className="min-h-40 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none" defaultValue={state.values?.description ?? product?.description ?? undefined} id="description" maxLength={3000} name="description" placeholder="Materiales, proceso, medidas y cualquier detalle importante." />
         {state.errors?.description?.[0] ? <p className="text-sm font-medium text-sale" id="description-error">{state.errors.description[0]}</p> : null}
       </div>
-      <Field defaultValue={state.values?.price_mxn ?? product?.price_mxn ?? undefined} error={state.errors?.price_mxn?.[0]} inputMode="decimal" label="Precio en MXN" min="0" name="price_mxn" placeholder="349.00" required step="0.01" type="number" />
-      <Field defaultValue={state.values?.handling_days ?? product?.handling_days ?? 3} error={state.errors?.handling_days?.[0]} inputMode="numeric" label="Tiempo de preparación (días hábiles)" max="30" min="1" name="handling_days" required type="number" />
-      <Field defaultValue={state.values?.units_available ?? product?.units_available ?? 1} error={state.errors?.units_available?.[0]} inputMode="numeric" label="Unidades disponibles" max="10" min="1" name="units_available" required type="number" />
+      <Field defaultValue={state.values?.price_mxn ?? product?.price_mxn ?? undefined} error={state.errors?.price_mxn?.[0]} inputMode="decimal" label="Precio en MXN" min="0" name="price_mxn" placeholder="349.00" step="0.01" type="number" />
+      <Field defaultValue={state.values?.handling_days ?? (product ? (product.handling_days ?? undefined) : 3)} error={state.errors?.handling_days?.[0]} inputMode="numeric" label="Tiempo de preparación (días hábiles)" max="30" min="1" name="handling_days" type="number" />
+      <Field defaultValue={state.values?.units_available ?? (product ? (product.units_available ?? undefined) : 1)} error={state.errors?.units_available?.[0]} inputMode="numeric" label="Unidades disponibles" max="10" min="1" name="units_available" type="number" />
 
       <fieldset className="space-y-3" id="condition">
         <legend className="text-sm font-semibold text-ink">Condición</legend>
@@ -364,8 +364,8 @@ export function ProductForm({
       {condition === "used" ? (
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-ink" htmlFor="used-condition">Estado del producto usado</label>
-          <select aria-describedby={state.errors?.used_condition ? "used-condition-error" : undefined} aria-invalid={Boolean(state.errors?.used_condition)} className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none" defaultValue={state.values?.used_condition ?? product?.used_condition ?? ""} id="used-condition" key={`used-condition-${state.values?.used_condition ?? ""}`} name="used_condition" required>
-            <option disabled value="">Selecciona una opción</option>
+          <select aria-describedby={state.errors?.used_condition ? "used-condition-error" : undefined} aria-invalid={Boolean(state.errors?.used_condition)} className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none" defaultValue={state.values?.used_condition ?? product?.used_condition ?? ""} id="used-condition" key={`used-condition-${state.values?.used_condition ?? ""}`} name="used_condition">
+            <option value="">Sin decidir</option>
             {USED_CONDITION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
           {state.errors?.used_condition?.[0] ? <p className="text-sm font-medium text-sale" id="used-condition-error">{state.errors.used_condition[0]}</p> : null}
