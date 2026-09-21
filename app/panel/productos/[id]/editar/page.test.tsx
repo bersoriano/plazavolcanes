@@ -107,7 +107,7 @@ describe("EditProductPage", () => {
   });
 
   it.each([
-    [{ status: "draft" }, "Desactivado por ti"],
+    [{ status: "draft" }, "Borrador privado"],
     [{ isPublishingApproved: false }, "Esperando aprobación de administración"],
     [{ isPublishingApproved: false, publishingReviewedAt: "2026-08-29T00:00:00.000Z" }, "Tienda deshabilitada por administración"],
     [{ isPublishingApproved: true, isAdminEnabled: false }, "Deshabilitado por administración"],

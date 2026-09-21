@@ -48,7 +48,7 @@ describe("ProductRow", () => {
   });
 
   it.each([
-    ["seller-disabled", product({ status: "draft", expires_at: null }), "Desactivado por ti"],
+    ["seller-disabled", product({ status: "draft", expires_at: null }), "Borrador privado"],
     ["approval-pending", product({ is_publishing_approved: false, publishing_reviewed_at: null, expires_at: null }), "Esperando aprobación de administración"],
     ["shop-admin-disabled", product({ is_publishing_approved: false, publishing_reviewed_at: "2026-08-29T00:00:00.000Z", expires_at: null }), "Tienda deshabilitada por administración"],
     ["product-admin-disabled", product({ is_admin_enabled: false, expires_at: null }), "Deshabilitado por administración"],

@@ -6,6 +6,7 @@ const mocks = vi.hoisted(() => ({
   getClaims: vi.fn(),
   from: vi.fn(),
   productsSelect: vi.fn(),
+  productImagesSelect: vi.fn(),
   insert: vi.fn(),
   update: vi.fn(),
   shop: vi.fn(),
@@ -79,7 +80,7 @@ beforeEach(() => {
     update: mocks.update,
   };
   const productImages = {
-    select: vi.fn(() => query({ count: 0, error: null })),
+    select: mocks.productImagesSelect,
   };
   const shops = {
     select: vi.fn(() => ({
@@ -103,6 +104,7 @@ beforeEach(() => {
   mocks.productsSelect.mockImplementation((_columns: string, options?: { count?: string; head?: boolean }) => (
     options?.head ? listingCount : slugCheck
   ));
+  mocks.productImagesSelect.mockImplementation(() => query({ count: 1, error: null }));
   shops.select.mockImplementation(() => ({
     eq: vi.fn(() => ({
       eq: vi.fn(() => ({ maybeSingle: mocks.shop })),
@@ -147,7 +149,8 @@ describe("createProduct", () => {
 });
 
 describe("updateProduct", () => {
-  it("refuses to publish a draft without a stored cover image", async () => {
+  it("never publishes a new listing without a usable uploaded cover", async () => {
+    mocks.productImagesSelect.mockImplementationOnce(() => query({ count: 0, error: null }));
     mocks.productsSelect.mockImplementationOnce(() => query({
       data: {
         shop_id: 7,
@@ -163,8 +166,8 @@ describe("updateProduct", () => {
 
     expect(state).toEqual({
       status: "error",
-      message: "Agrega una imagen de portada antes de publicar.",
-      errors: { images: ["Agrega una imagen de portada antes de publicar."] },
+      message: "Agrega al menos una foto del producto antes de publicar.",
+      errors: { images: ["Agrega al menos una foto del producto antes de publicar."] },
     });
     expect(mocks.update).not.toHaveBeenCalled();
   });
@@ -239,7 +242,33 @@ describe("updateProduct", () => {
 
     const state = await updateProduct(22, idle, sellerForm());
 
-    expect(state).toEqual({ status: "success", message: "Producto publicado." });
+    expect(state).toEqual({
+      status: "success",
+      message: "Tu producto ya está publicado.",
+      values: { public_url: "http://localhost:3000/productos/taza-volcanica" },
+    });
+  });
+
+  it("returns the next practical requirement after a draft is saved", async () => {
+    mocks.productImagesSelect.mockImplementationOnce(() => query({ count: 0, error: null }));
+    mocks.productsSelect.mockImplementationOnce(() => query({
+      data: {
+        shop_id: 7,
+        image_path: null,
+        status: "draft",
+        slug: "taza-anterior",
+        is_admin_enabled: true,
+      },
+      error: null,
+    }));
+
+    const state = await updateProduct(22, idle, sellerForm({ status: "draft" }));
+
+    expect(state).toEqual({
+      status: "success",
+      message: "Borrador guardado",
+      values: { next_requirement: "Agrega al menos una foto del producto." },
+    });
   });
 });
 

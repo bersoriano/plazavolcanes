@@ -17,22 +17,40 @@ export type SellerListingFlags = {
   publishing_reviewed_at: string | null;
 };
 
+/**
+ * Which switch is holding the listing back, so callers branch on the state
+ * rather than on the words shown to the seller. The label is seller-facing copy
+ * and may be reworded; `kind` is the contract everything else reads.
+ */
+export type SellerPublicationKind =
+  | "draft"
+  | "expired"
+  | "awaiting_approval"
+  | "shop_disabled"
+  | "admin_disabled"
+  | "published";
+
 export type SellerPublicationState = {
+  kind: SellerPublicationKind;
   label: string;
   isPublic: boolean;
 };
 
 export function getSellerPublicationState(product: SellerListingFlags): SellerPublicationState {
-  if (product.status === "draft") return { label: "Desactivado por ti", isPublic: false };
-  if (product.status === "expired") return { label: "Vencido", isPublic: false };
+  // "Borrador privado" rather than a switch the seller flipped: a draft is not
+  // a listing turned off, it is one nobody else can see yet.
+  if (product.status === "draft") return { kind: "draft", label: "Borrador privado", isPublic: false };
+  if (product.status === "expired") return { kind: "expired", label: "Vencido", isPublic: false };
   if (!product.is_publishing_approved) {
     return product.publishing_reviewed_at
-      ? { label: "Tienda deshabilitada por administración", isPublic: false }
-      : { label: "Esperando aprobación de administración", isPublic: false };
+      ? { kind: "shop_disabled", label: "Tienda deshabilitada por administración", isPublic: false }
+      : { kind: "awaiting_approval", label: "Esperando aprobación de administración", isPublic: false };
   }
-  if (!product.is_admin_enabled) return { label: "Deshabilitado por administración", isPublic: false };
+  if (!product.is_admin_enabled) {
+    return { kind: "admin_disabled", label: "Deshabilitado por administración", isPublic: false };
+  }
   if (!product.expires_at || new Date(product.expires_at).getTime() <= Date.now()) {
-    return { label: "Vencido", isPublic: false };
+    return { kind: "expired", label: "Vencido", isPublic: false };
   }
-  return { label: "Publicado", isPublic: true };
+  return { kind: "published", label: "Publicado", isPublic: true };
 }

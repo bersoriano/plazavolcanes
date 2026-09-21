@@ -41,10 +41,10 @@ export function getCatalogBucket(
   listing: CatalogListing,
   shop: ShopPublishingFlags,
 ): CatalogBucket {
-  const { label } = getSellerPublicationState({ ...listing, ...shop });
-  if (label === "Publicado") return "publicados";
-  if (label === "Desactivado por ti") return "borradores";
-  if (label === "Vencido") return "vencidos";
+  const { kind } = getSellerPublicationState({ ...listing, ...shop });
+  if (kind === "published") return "publicados";
+  if (kind === "draft") return "borradores";
+  if (kind === "expired") return "vencidos";
   return "bloqueados";
 }
 

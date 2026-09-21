@@ -117,11 +117,11 @@ async function undersizedTapTargets(page: Page): Promise<Undersized[]> {
   }, MINIMUM_TAP);
 }
 
-async function expectNoDocumentOverflow(page: Page) {
+async function expectNoDocumentOverflow(page: Page, route?: string) {
   const width = page.viewportSize()?.width;
 
   await expect
-    .poll(() => page.evaluate(() => document.documentElement.scrollWidth))
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth), { message: `horizontal overflow on ${route ?? page.url()}` })
     .toBe(width);
 }
 
@@ -239,7 +239,7 @@ test.describe("mobile polish", () => {
       try {
         for (const route of [...signedInRoutes, shopRoute, newProductRoute, editProductRoute]) {
           await page.goto(route);
-          await expectNoDocumentOverflow(page);
+          await expectNoDocumentOverflow(page, route);
           expect(await undersizedTapTargets(page), `${route} at ${width}px`).toEqual([]);
         }
       } finally {

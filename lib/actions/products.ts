@@ -15,6 +15,8 @@ import {
 import { deleteObjects } from "@/lib/media/store";
 import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import { productCreationSchema, productSchema, productStatusSchema } from "@/lib/validation/product";
+import { missingForPublication } from "@/lib/listing-readiness";
+import { buildSiteUrl } from "@/lib/site-url";
 import { uniqueProductSlug } from "@/lib/slug";
 
 const authError: ActionState = {
@@ -35,6 +37,16 @@ const coverImageRequiredError: ActionState = {
   message: "Agrega una imagen de portada antes de publicar.",
   errors: { images: ["Agrega una imagen de portada antes de publicar."] },
 };
+
+function missingPublicationError(input: Parameters<typeof missingForPublication>[0]): ActionState | null {
+  const missing = missingForPublication(input);
+  if (!missing.length) return null;
+  const first = missing[0]!;
+  const message = first.field === "images"
+    ? "Agrega al menos una foto del producto antes de publicar."
+    : "Completa los requisitos antes de publicar.";
+  return { status: "error", message, errors: { [first.field]: [message] } };
+}
 
 /**
  * The browser uploads the pictures itself and submits only where they landed,
@@ -226,6 +238,15 @@ export async function updateProduct(
     const message = `Puedes subir hasta ${MAX_PRODUCT_IMAGES} imágenes.`;
     return { status: "error", message, errors: { images: [message] } };
   }
+  // Only a listing on its way out the door is measured against the checklist.
+  // One already published predates it and may have been filed before any of
+  // these fields existed; PR #29 made the same allowance for a missing gallery
+  // cover, and holding an old listing hostage to a new rule would lock its
+  // seller out of editing it at all.
+  if (parsed.data.status === "published" && existing.status !== "published") {
+    const readiness = missingPublicationError({ ...parsed.data, imageCount: alreadyStored + imageKeys.length });
+    if (readiness) return readiness;
+  }
 
   // A newly selected image does not have a gallery row yet. Store and verify it
   // before changing the status so an upload failure cannot leave a public row
@@ -279,11 +300,19 @@ export async function updateProduct(
     return {
       status: "success",
       message: shop.is_publishing_approved && existing.is_admin_enabled
-        ? "Producto publicado."
+        ? "Tu producto ya está publicado."
         : "Producto guardado. Está pendiente de aprobación de administración.",
+      ...(shop.is_publishing_approved && existing.is_admin_enabled
+        ? { values: { public_url: buildSiteUrl(`/productos/${slug}`) } }
+        : {}),
     };
   }
-  return { status: "success", message: "Borrador guardado." };
+  const nextRequirement = missingForPublication({ ...parsed.data, imageCount: alreadyStored + imageKeys.length })[0];
+  return {
+    status: "success",
+    message: "Borrador guardado",
+    ...(nextRequirement ? { values: { next_requirement: nextRequirement.label } } : {}),
+  };
 }
 
 export async function setProductStatus(
