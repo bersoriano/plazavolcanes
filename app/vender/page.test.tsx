@@ -17,15 +17,20 @@ describe("Seller page", () => {
   it("renders the complete seller program", () => {
     render(<SellerPage />);
 
-    expect(screen.getByRole("heading", { name: "Vende en Plaza Volcanes" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        level: 1,
+        name: "Abre tu tienda gratis y quédate con cada peso.",
+      }),
+    ).toBeInTheDocument();
     expect(screen.getByText("Crea tu tienda")).toBeInTheDocument();
-    expect(screen.getByText("Recibe solicitudes")).toBeInTheDocument();
-    expect(screen.getByText("Mejor valorada")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Crear mi tienda gratis" })).toHaveAttribute(
-      "href",
-      "/registro?vender=1",
-    );
-    expect(screen.getByRole("link", { name: "Ya tengo cuenta" })).toHaveAttribute(
+    expect(screen.getByText("Trae tu reputación")).toBeInTheDocument();
+    expect(screen.getByText("Publica y recibe pedidos")).toBeInTheDocument();
+
+    for (const cta of screen.getAllByRole("link", { name: "Crear mi tienda gratis" })) {
+      expect(cta).toHaveAttribute("href", "/registro?vender=1");
+    }
+    expect(screen.getByRole("link", { name: "¿Ya tienes cuenta? Ingresa" })).toHaveAttribute(
       "href",
       "/ingresar?intent=vender",
     );
