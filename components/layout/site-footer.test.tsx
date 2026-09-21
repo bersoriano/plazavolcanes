@@ -38,7 +38,7 @@ describe("SiteFooter", () => {
     const nav = screen.getByRole("navigation", { name: "Navegación" });
 
     expect(within(nav).getByRole("link", { name: "Explorar" })).toHaveAttribute("href", "/");
-    expect(within(nav).getByRole("link", { name: "Crear tienda" })).toHaveAttribute("href", "/registro?paso=vender");
+    expect(within(nav).getByRole("link", { name: "Vender" })).toHaveAttribute("href", "/vender?desde=footer");
     expect(within(nav).getByRole("link", { name: "Ingresar" })).toHaveAttribute("href", "/ingresar");
   });
 

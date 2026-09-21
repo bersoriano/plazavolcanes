@@ -16,7 +16,7 @@ export function SiteFooter() {
         <div className="relative flex flex-col gap-8 sm:flex-row sm:gap-16">
           <nav aria-label="Navegación" className="flex flex-col gap-1 text-sm font-medium text-white/80">
             <Link className="inline-flex min-h-11 items-center hover:text-accent" href="/">Explorar</Link>
-            <Link className="inline-flex min-h-11 items-center hover:text-accent" href="/registro?paso=vender">Crear tienda</Link>
+            <Link className="inline-flex min-h-11 items-center hover:text-accent" href="/vender?desde=footer">Vender</Link>
             <Link className="inline-flex min-h-11 items-center hover:text-accent" href="/ingresar">Ingresar</Link>
           </nav>
           {/*

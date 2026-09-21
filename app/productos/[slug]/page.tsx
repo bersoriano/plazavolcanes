@@ -25,6 +25,7 @@ import { normalizeCatalogFilters } from "@/lib/queries/catalog";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getPublicProduct } from "@/lib/queries/catalog.server";
+import { viewerOwnsAnyShop } from "@/lib/queries/seller-standing.server";
 import { buildProductJsonLd, buildProductMetadata } from "@/lib/seo/product-metadata";
 
 // Where a purchase that could not be finished sends the buyer back to.
@@ -103,6 +104,11 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     const { data } = await supabase.auth.getClaims();
     viewerId = typeof data?.claims?.sub === "string" ? data.claims.sub : null;
   }
+
+  // Somebody looking at a listing is the likeliest person to have one of their
+  // own in a drawer. Shown to visitors and to shoppers, never to a seller, who
+  // has the panel for this.
+  const invitesSelling = !(await viewerOwnsAnyShop());
 
   return (
     <PremiumScope className="pb-4" premium={isPremium}>
@@ -193,6 +199,17 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
             <p className="mt-8 rounded-2xl border border-line bg-surface p-4 text-sm leading-6 text-muted">
               Producto publicado por una tienda independiente de Plaza Volcanes.
             </p>
+            {invitesSelling ? (
+              <p className="mt-4 text-sm text-muted">
+                ¿Tienes uno igual?{" "}
+                <Link
+                  className="font-semibold text-brand underline decoration-accent decoration-2 underline-offset-4"
+                  href="/vender?desde=producto"
+                >
+                  Véndelo en la plaza
+                </Link>
+              </p>
+            ) : null}
           </div>
         </div>
       </section>

@@ -106,10 +106,20 @@ describe("SiteHeader", () => {
     );
   });
 
-  it("keeps the signed-out publish link at least 44px high", async () => {
+  it("sends a signed-out visitor to the seller landing, not straight to signup", async () => {
     await renderHeader(false);
 
-    expect(screen.getByRole("link", { name: "Publica tu tienda" })).toHaveClass(
+    expect(screen.getByRole("link", { name: "Vender" })).toHaveAttribute(
+      "href",
+      "/vender?desde=header",
+    );
+  });
+
+  it("keeps the signed-out selling link at least 44px high", async () => {
+    await renderHeader(false);
+
+    // Hidden below sm on purpose: the quick access bar owns that width.
+    expect(screen.getByRole("link", { name: "Vender" })).toHaveClass(
       "hidden",
       "min-h-11",
       "items-center",

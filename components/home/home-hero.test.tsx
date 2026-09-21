@@ -51,9 +51,11 @@ describe("HomeHero", () => {
       "href",
       "#catalogo",
     );
-    expect(screen.getByRole("link", { name: "Crear mi tienda gratis" })).toHaveAttribute(
+    // Curious intent: the landing explains the offer before signup asks for
+    // an account.
+    expect(screen.getByRole("link", { name: "Quiero vender" })).toHaveAttribute(
       "href",
-      "/registro?vender=1",
+      "/vender?desde=hero",
     );
   });
 

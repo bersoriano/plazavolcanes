@@ -11,6 +11,7 @@ describe("Seller page", () => {
       title: "Vender",
       description:
         "Abre tu tienda en Plaza Volcanes, publica tus productos y acuerda pago y entrega directamente con cada persona compradora.",
+      alternates: { canonical: "/vender" },
     });
   });
 

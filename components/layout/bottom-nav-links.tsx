@@ -23,9 +23,14 @@ export type BottomNavItem = {
 /**
  * Marks the destination the reader is already at. `/` would otherwise prefix
  * every route, so the home entry only matches itself.
+ *
+ * Compared on the path alone: an entry may carry a query string to say where
+ * the visit came from, and `usePathname` never returns one, so matching the
+ * whole href would quietly stop marking that entry as current.
  */
 function isCurrent(pathname: string, href: string) {
-  return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
+  const path = href.split(/[?#]/)[0];
+  return path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
 }
 
 export function BottomNavLinks({ items }: { items: BottomNavItem[] }) {

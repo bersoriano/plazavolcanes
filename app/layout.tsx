@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Fraunces, Instrument_Sans } from "next/font/google";
 
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { LaunchBar } from "@/components/layout/launch-bar";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteHeader } from "@/components/layout/site-header";
 import { getSiteUrl } from "@/lib/site-url";
@@ -60,6 +61,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     >
       <body className="antialiased">
         <div className="flex min-h-screen flex-col">
+          <LaunchBar />
           <SiteHeader />
           <main className="flex-1 pb-[calc(4.5rem+1px+env(safe-area-inset-bottom))] md:pb-0">
             {children}
