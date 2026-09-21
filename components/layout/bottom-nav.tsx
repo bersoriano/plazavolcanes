@@ -22,7 +22,7 @@ export async function BottomNav() {
       ]
     : [
         { href: "/", icon: "explore", label: "Explorar" },
-        { href: "/vender", icon: "sell", label: "Vender" },
+        { href: "/vender?desde=nav", icon: "sell", label: "Vender" },
         { href: "/ingresar", icon: "account", label: "Ingresar" },
       ];
 

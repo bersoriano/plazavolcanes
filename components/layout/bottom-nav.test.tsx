@@ -46,7 +46,10 @@ describe("BottomNav", () => {
 
     const bar = screen.getByRole("navigation", { name: "Navegación rápida" });
 
-    expect(within(bar).getByRole("link", { name: "Vender" })).toHaveAttribute("href", "/vender");
+    expect(within(bar).getByRole("link", { name: "Vender" })).toHaveAttribute(
+      "href",
+      "/vender?desde=nav",
+    );
     expect(within(bar).getByRole("link", { name: "Ingresar" })).toHaveAttribute("href", "/ingresar");
     expect(within(bar).queryByRole("link", { name: "Compras" })).not.toBeInTheDocument();
   });
