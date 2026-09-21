@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useState, useTransition } from "react";
 import { useFormStatus } from "react-dom";
 import { ImagePlus, X } from "lucide-react";
+import Link from "next/link";
 import { unstable_rethrow } from "next/navigation";
 
 import { CategoryFields } from "@/components/products/category-fields";
+import { ShareActions } from "@/components/share/share-actions";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { requestProductImageUploads, sweepMyOrphanedImages } from "@/lib/actions/media";
@@ -13,6 +15,11 @@ import { inspectImage } from "@/lib/media/signature";
 import { uploadWithTickets } from "@/lib/media/upload-client";
 import { rejectionMessage } from "@/lib/media/validation";
 import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
+import {
+  listingQualityTips,
+  missingForPublication,
+  type ListingReadinessInput,
+} from "@/lib/listing-readiness";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
 import { useFormDraft } from "@/lib/form-draft";
@@ -28,14 +35,14 @@ type ProductFormProps = {
   categories: CategoryTree[];
   product?: {
     name: string;
-    description: string;
-    price_mxn: number;
+    description: string | null;
+    price_mxn: number | null;
     status: "draft" | "published";
-    condition: ProductCondition;
+    condition: ProductCondition | null;
     used_condition: UsedCondition | null;
     category_id: number | null;
-    handling_days?: number;
-    units_available?: number;
+    handling_days?: number | null;
+    units_available?: number | null;
     imageUrl: string | null;
   };
   images?: ProductImage[];
@@ -140,7 +147,16 @@ function StoredImages({
   );
 }
 
-function ProductActions({ blocked, busy, canPublish, status }: { blocked: boolean; busy: boolean; canPublish: boolean; status?: "draft" | "published" }) {
+/**
+ * The publish button stays live even when the listing is not ready yet.
+ *
+ * PR #29 disabled it until a cover image existed, because nothing on the page
+ * could say what was missing. The checklist above says exactly that now, and a
+ * dead button explains nothing — so the seller may always press it, and the
+ * server action refuses with the first unmet requirement. One rule, stated
+ * once, enforced where it counts.
+ */
+function ProductActions({ blocked, busy, status }: { blocked: boolean; busy: boolean; status?: "draft" | "published" }) {
   const { pending } = useFormStatus();
   const disabled = pending || busy || blocked;
   if (!status) {
@@ -158,11 +174,52 @@ function ProductActions({ blocked, busy, canPublish, status }: { blocked: boolea
       <Button disabled={disabled} name="status" type="submit" value="draft" variant="secondary">
         {status === "published" ? "Despublicar" : "Guardar borrador"}
       </Button>
-      <Button disabled={disabled || (status === "draft" && !canPublish)} name="status" type="submit" value="published">
+      <Button disabled={disabled} name="status" type="submit" value="published">
         {pending ? "Guardando…" : busy ? "Subiendo imágenes…" : status === "published" ? "Guardar cambios" : "Publicar producto"}
       </Button>
     </div>
   );
+}
+
+function PublicationChecklist({
+  imageCount, name, description, price_mxn, condition, used_condition, category_id, handling_days, units_available,
+}: Parameters<typeof missingForPublication>[0]) {
+  const input = { imageCount, name, description, price_mxn, condition, used_condition, category_id, handling_days, units_available };
+  const missing = missingForPublication(input);
+  const tips = listingQualityTips(input);
+  return <aside aria-labelledby="publication-readiness" className="rounded-2xl border border-line bg-background p-4">
+    <h2 className="font-display text-xl font-semibold" id="publication-readiness">Antes de publicar</h2>
+    <p className="mt-1 text-sm text-muted">Completa estos requisitos; se revisan otra vez al guardar.</p>
+    <ul className="mt-3 space-y-2 text-sm">{missing.map((item) => <li key={item.field}><a className="font-medium text-brand underline underline-offset-2" href={`#${item.target}`}>{item.label}</a></li>)}</ul>
+    <h3 className="mt-4 text-sm font-semibold">Sugerencias para vender mejor</h3>
+    {tips.length ? <ul className="mt-2 space-y-2 text-sm text-muted">{tips.map((item) => <li key={item.field}><a className="underline underline-offset-2" href={`#${item.target}`}>{item.label}</a></li>)}</ul> : <p className="mt-2 text-sm text-muted">Tu publicación ya tiene una buena base.</p>}
+  </aside>;
+}
+
+function numberOrNull(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || value.trim() === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function formReadiness(form: HTMLFormElement | null, imageCount: number): ListingReadinessInput {
+  if (!form) {
+    return { imageCount, name: null, description: null, price_mxn: null, condition: null, used_condition: null, category_id: null, handling_days: null, units_available: null };
+  }
+  const values = new FormData(form);
+  const condition = values.get("condition");
+  const usedCondition = values.get("used_condition");
+  return {
+    imageCount,
+    name: values.get("name") as string | null,
+    description: values.get("description") as string | null,
+    price_mxn: numberOrNull(values.get("price_mxn")),
+    condition: condition === "new" || condition === "used" ? condition : null,
+    used_condition: ["mint", "good", "fair", "bad", "scrap"].includes(String(usedCondition)) ? usedCondition as UsedCondition : null,
+    category_id: numberOrNull(values.get("category_id")),
+    handling_days: numberOrNull(values.get("handling_days")),
+    units_available: numberOrNull(values.get("units_available")),
+  };
 }
 
 export function ProductForm({
@@ -185,6 +242,19 @@ export function ProductForm({
   // Scoped per form, so a draft never leaks between products or shops.
   const draftKey = `producto:${product ? `editar:${product.name}` : "nuevo"}`;
   const { clear: clearDraft, formRef, save: saveDraft } = useFormDraft(draftKey, onRestored);
+  const [readiness, setReadiness] = useState<ListingReadinessInput>(() => ({
+    imageCount: images.length,
+    name: product?.name ?? null,
+    description: product?.description ?? null,
+    price_mxn: product?.price_mxn ?? null,
+    condition: product?.condition ?? "new",
+    used_condition: product?.used_condition ?? null,
+    category_id: product?.category_id ?? null,
+    handling_days: product?.handling_days ?? 3,
+    units_available: product?.units_available ?? 1,
+  }));
+  const publicUrl = state.status === "success" ? state.values?.public_url : undefined;
+  const nextRequirement = state.status === "success" ? state.values?.next_requirement : undefined;
 
   useEffect(() => {
     if (state.status === "success") clearDraft();
@@ -236,6 +306,10 @@ export function ProductForm({
       }
 
       setUploadedKeys((current) => [...current, ...sent.keys]);
+      setReadiness((current) => ({
+        ...current,
+        imageCount: images.length + uploadedKeys.length + sent.keys.length,
+      }));
       setPreview(URL.createObjectURL(chosen[0]!));
       // The chosen files have served their purpose; keeping them on the input
       // would send the bytes with the form after all.
@@ -248,7 +322,10 @@ export function ProductForm({
   }
 
   return (
-    <form action={formAction} className="space-y-6" noValidate onInput={saveDraft} ref={formRef}>
+    <form action={formAction} className="space-y-6" noValidate onInput={() => {
+      saveDraft();
+      setReadiness(formReadiness(formRef.current, images.length + uploadedKeys.length));
+    }} ref={formRef}>
       {recovered ? (
         <p className="rounded-2xl bg-accent/45 px-4 py-3 text-sm font-medium text-brand-hover" role="status">
           Recuperamos lo que habías escrito. Vuelve a elegir tus imágenes.
@@ -256,6 +333,7 @@ export function ProductForm({
       ) : null}
       <input name="currency_code" type="hidden" value="MXN" />
       <input name="content_locale" type="hidden" value="es-MX" />
+      <PublicationChecklist {...readiness} />
       <CategoryFields
         categories={categories}
         error={state.errors?.category_id?.[0]}
@@ -264,14 +342,14 @@ export function ProductForm({
       <Field defaultValue={state.values?.name ?? product?.name} error={state.errors?.name?.[0]} label="Nombre del producto" maxLength={120} name="name" placeholder="Taza de barro" required />
       <div className="space-y-2">
         <label className="block text-sm font-semibold text-ink" htmlFor="description">Descripción</label>
-        <textarea aria-describedby={state.errors?.description ? "description-error" : undefined} aria-invalid={Boolean(state.errors?.description)} className="min-h-40 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none" defaultValue={state.values?.description ?? product?.description} id="description" maxLength={3000} name="description" placeholder="Materiales, proceso, medidas y cualquier detalle importante." required />
+        <textarea aria-describedby={state.errors?.description ? "description-error" : undefined} aria-invalid={Boolean(state.errors?.description)} className="min-h-40 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none" defaultValue={state.values?.description ?? product?.description ?? undefined} id="description" maxLength={3000} name="description" placeholder="Materiales, proceso, medidas y cualquier detalle importante." required />
         {state.errors?.description?.[0] ? <p className="text-sm font-medium text-sale" id="description-error">{state.errors.description[0]}</p> : null}
       </div>
-      <Field defaultValue={state.values?.price_mxn ?? product?.price_mxn} error={state.errors?.price_mxn?.[0]} inputMode="decimal" label="Precio en MXN" min="0" name="price_mxn" placeholder="349.00" required step="0.01" type="number" />
+      <Field defaultValue={state.values?.price_mxn ?? product?.price_mxn ?? undefined} error={state.errors?.price_mxn?.[0]} inputMode="decimal" label="Precio en MXN" min="0" name="price_mxn" placeholder="349.00" required step="0.01" type="number" />
       <Field defaultValue={state.values?.handling_days ?? product?.handling_days ?? 3} error={state.errors?.handling_days?.[0]} inputMode="numeric" label="Tiempo de preparación (días hábiles)" max="30" min="1" name="handling_days" required type="number" />
       <Field defaultValue={state.values?.units_available ?? product?.units_available ?? 1} error={state.errors?.units_available?.[0]} inputMode="numeric" label="Unidades disponibles" max="10" min="1" name="units_available" required type="number" />
 
-      <fieldset className="space-y-3">
+      <fieldset className="space-y-3" id="condition">
         <legend className="text-sm font-semibold text-ink">Condición</legend>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {(["new", "used"] as const).map((value) => (
@@ -325,10 +403,19 @@ export function ProductForm({
         {state.errors?.images?.[0] ? <p className="text-sm font-medium text-sale">{state.errors.images[0]}</p> : null}
       </div>
       {state.message ? <p className={`rounded-2xl px-4 py-3 text-sm font-medium ${state.status === "success" ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"}`} role="status">{state.message}</p> : null}
+      {publicUrl ? (
+        <section aria-labelledby="publication-success" className="rounded-2xl border border-success/30 bg-success/10 p-4">
+          <h2 className="font-display text-xl font-semibold" id="publication-success">Tu publicación está lista</h2>
+          <Link className="mt-3 inline-flex min-h-11 items-center font-semibold text-brand underline underline-offset-4" href={publicUrl}>Ver publicación</Link>
+          <div className="mt-3"><ShareActions label="Compartir producto" title={product?.name ?? "tu producto"} url={publicUrl} /></div>
+          <Link className="mt-4 inline-flex min-h-11 items-center font-semibold text-brand underline underline-offset-4" href={`/panel/tiendas/${shopId}/productos/nuevo`}>Agregar otro producto</Link>
+        </section>
+      ) : null}
+      {nextRequirement ? <p className="text-sm font-medium text-muted">Siguiente paso: {nextRequirement}</p> : null}
       {uploadedKeys.map((key) => (
         <input key={key} name="image_keys" type="hidden" value={key} />
       ))}
-      <ProductActions blocked={Boolean(imageError)} busy={uploading} canPublish={Boolean(images.length || uploadedKeys.length)} status={product?.status} />
+      <ProductActions blocked={Boolean(imageError)} busy={uploading} status={product?.status} />
     </form>
   );
 }

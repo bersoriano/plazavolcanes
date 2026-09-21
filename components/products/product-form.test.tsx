@@ -84,7 +84,9 @@ describe("ProductForm", () => {
     );
 
     expect(screen.getByRole("button", { name: "Guardar borrador" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Publicar producto" })).toBeDisabled();
+    // Live even though the listing is not ready: the checklist names what is
+    // missing and the server action refuses. See ProductActions.
+    expect(screen.getByRole("button", { name: "Publicar producto" })).toBeEnabled();
     expect(screen.getByText("Agrega una imagen de portada antes de publicar.")).toBeInTheDocument();
   });
 
@@ -109,6 +111,135 @@ describe("ProductForm", () => {
 
     expect(screen.getByRole("button", { name: "Publicar producto" })).toBeEnabled();
     expect(screen.getByText("Portada lista para publicar.")).toBeInTheDocument();
+  });
+
+  it("shows linked required and suggested publication guidance before publishing", () => {
+    render(<ProductForm shopId={1} action={action} categories={categories} />);
+
+    expect(screen.getByRole("heading", { name: "Antes de publicar" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Agrega al menos una foto/i })).toHaveAttribute("href", "#product-images");
+    expect(screen.getByText("Sugerencias para vender mejor")).toBeInTheDocument();
+  });
+
+  it("updates the checklist as the seller fills in a practical requirement", () => {
+    render(<ProductForm shopId={1} action={action} categories={categories} />);
+
+    expect(screen.getByRole("link", { name: "Escribe el nombre del producto." })).toBeInTheDocument();
+
+    fireEvent.input(screen.getByLabelText("Nombre del producto"), {
+      target: { value: "Taza volcánica" },
+    });
+
+    expect(screen.queryByRole("link", { name: "Escribe el nombre del producto." })).not.toBeInTheDocument();
+  });
+
+  it("shows a publish success with the verified public URL and sharing actions", async () => {
+    const publish = async (): Promise<ActionState> => ({
+      status: "success",
+      message: "Tu producto ya está publicado.",
+      values: { public_url: "https://plazavolcanes.com/productos/taza-volcanica" },
+    });
+    render(
+      <ProductForm
+        action={publish}
+        categories={categories}
+        product={{
+          name: "Taza volcánica",
+          description: "Taza hecha a mano con barro de alta temperatura.",
+          price_mxn: 349,
+          status: "draft",
+          condition: "new",
+          used_condition: null,
+          category_id: 11,
+          handling_days: 3,
+          units_available: 1,
+          imageUrl: null,
+        }}
+        shopId={1}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Publicar producto" }));
+
+    expect(await screen.findByText("Tu producto ya está publicado.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Ver publicación" })).toHaveAttribute(
+      "href",
+      "https://plazavolcanes.com/productos/taza-volcanica",
+    );
+    expect(screen.getByRole("group", { name: "Compartir producto" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Compartir por WhatsApp" })).toHaveAttribute(
+      "href",
+      expect.stringContaining(encodeURIComponent("https://plazavolcanes.com/productos/taza-volcanica")),
+    );
+    expect(screen.getByRole("link", { name: "Agregar otro producto" })).toHaveAttribute(
+      "href",
+      "/panel/tiendas/1/productos/nuevo",
+    );
+  });
+
+  it("keeps the draft usable and explains the next requirement after saving", async () => {
+    const saveDraft = async (): Promise<ActionState> => ({
+      status: "success",
+      message: "Borrador guardado",
+      values: { next_requirement: "Agrega al menos una foto del producto." },
+    });
+    render(
+      <ProductForm
+        action={saveDraft}
+        categories={categories}
+        product={{
+          name: "Taza volcánica",
+          description: "Taza hecha a mano con barro de alta temperatura.",
+          price_mxn: 349,
+          status: "draft",
+          condition: "new",
+          used_condition: null,
+          category_id: 11,
+          handling_days: 3,
+          units_available: 1,
+          imageUrl: null,
+        }}
+        shopId={1}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Guardar borrador" }));
+
+    expect(await screen.findByText("Borrador guardado")).toBeInTheDocument();
+    expect(screen.getByText("Siguiente paso: Agrega al menos una foto del producto.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Publicar producto" })).toBeEnabled();
+  });
+
+  it("keeps the publication form recoverable when publishing fails", async () => {
+    const failPublication = async (): Promise<ActionState> => ({
+      status: "error",
+      message: "No pudimos guardar el producto. Intenta de nuevo.",
+    });
+    render(
+      <ProductForm
+        action={failPublication}
+        categories={categories}
+        product={{
+          name: "Taza volcánica",
+          description: "Taza hecha a mano con barro de alta temperatura.",
+          price_mxn: 349,
+          status: "draft",
+          condition: "new",
+          used_condition: null,
+          category_id: 11,
+          handling_days: 3,
+          units_available: 1,
+          imageUrl: null,
+        }}
+        shopId={1}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Publicar producto" }));
+
+    expect(await screen.findByText("No pudimos guardar el producto. Intenta de nuevo.")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Publicar producto" })).toBeEnabled();
+    expect(screen.getByLabelText("Nombre del producto")).toHaveValue("Taza volcánica");
   });
 
   it("reveals used subcondition only when Usado is selected", () => {

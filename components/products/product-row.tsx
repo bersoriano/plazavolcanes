@@ -59,7 +59,7 @@ export function ProductRow({ product }: ProductRowProps) {
   // to an hour after a listing lapses the column still says published while
   // the badge already says "Vencido", and offering "Despublicar" there asks
   // the seller to switch off something that has already stopped selling.
-  const hasLapsed = publicationState.label === "Vencido";
+  const hasLapsed = publicationState.kind === "expired";
   const nextStatus = product.status === "published" && !hasLapsed ? "draft" : "published";
   const toggleLabel = hasLapsed
     ? "Reactivar"

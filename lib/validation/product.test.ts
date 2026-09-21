@@ -1,208 +1,122 @@
 import { describe, expect, it } from "vitest";
 
-import { productCreationSchema, productSchema, productStatusSchema } from "@/lib/validation/product";
+import { productDraftSchema, productStatusSchema } from "@/lib/validation/product";
 
-describe("productCreationSchema", () => {
-  it("keeps seller-entered product details while ignoring a forged publication status", () => {
-    const result = productCreationSchema.safeParse({
-      name: "Taza de barro",
-      description: "Hecha a mano en un taller local de la región.",
-      price_mxn: "349.00",
-      status: "published",
-      is_admin_enabled: "false",
-      condition: "new",
-      used_condition: "",
-      category_id: "",
-      currency_code: "MXN",
-      content_locale: "es-MX",
-    });
+const blankForm = {
+  name: "Taza de barro",
+  description: "",
+  price_mxn: "",
+  condition: "",
+  used_condition: "",
+  category_id: "",
+  handling_days: "",
+  units_available: "",
+  currency_code: "MXN",
+  content_locale: "es-MX",
+} as const;
+
+describe("productDraftSchema", () => {
+  it("keeps a half-written draft as the seller left it, inventing nothing", () => {
+    const result = productDraftSchema.safeParse(blankForm);
 
     expect(result.success).toBe(true);
-    if (result.success) expect(result.data).not.toHaveProperty("status");
-  });
-});
-
-describe("productSchema", () => {
-  it.each([1, 30])("accepts handling promise of %i business days", (handlingDays) => {
-    const result = productSchema.safeParse({
-      name: "Taza volcánica",
-      description: "Taza hecha a mano con barro de alta temperatura.",
-      price_mxn: "349.00",
-      status: "draft",
-      condition: "new",
-      used_condition: "",
-      category_id: "",
-      handling_days: String(handlingDays),
-      currency_code: "MXN",
-      content_locale: "es-MX",
-    });
-    expect(result.success && result.data.handling_days).toBe(handlingDays);
+    if (result.success) {
+      expect(result.data).toEqual({
+        name: "Taza de barro",
+        description: null,
+        price_mxn: null,
+        condition: null,
+        used_condition: null,
+        category_id: null,
+        handling_days: null,
+        units_available: null,
+        currency_code: "MXN",
+        content_locale: "es-MX",
+      });
+    }
   });
 
-  it.each([0, 31])("rejects handling promise of %i business days", (handlingDays) => {
-    const result = productSchema.safeParse({
-      name: "Taza volcánica",
-      description: "Taza hecha a mano con barro de alta temperatura.",
-      price_mxn: "349.00",
-      status: "draft",
-      condition: "new",
-      used_condition: "",
-      category_id: "",
-      handling_days: String(handlingDays),
-      currency_code: "MXN",
-      content_locale: "es-MX",
-    });
+  it("still needs a name, because a draft nobody can tell apart is not usable", () => {
+    const result = productDraftSchema.safeParse({ ...blankForm, name: "Ta" });
+
     expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.name).toEqual([
+        "El nombre debe tener entre 3 y 120 caracteres.",
+      ]);
+    }
   });
-  const completeProduct = {
-    name: "Taza de barro",
-    description: "Hecha a mano en un taller local de la región.",
-    price_mxn: "349.00",
-    status: "draft",
-    category_id: "",
-    currency_code: "MXN",
-    content_locale: "es-MX",
-  } as const;
 
-  it("accepts a complete product and converts price to number", () => {
-    const result = productSchema.safeParse({
-      name: "Taza de barro",
-      description: "Hecha a mano en un taller local de la región.",
-      price_mxn: "349.00",
-      status: "draft",
+  it("refuses to store something that is not a price, draft or not", () => {
+    expect(productDraftSchema.safeParse({ ...blankForm, price_mxn: "349.999" }).success).toBe(false);
+    expect(productDraftSchema.safeParse({ ...blankForm, price_mxn: "barato" }).success).toBe(false);
+  });
+
+  it("accepts a used product whose subcondition is still undecided", () => {
+    const result = productDraftSchema.safeParse({ ...blankForm, condition: "used" });
+
+    expect(result.success && result.data.condition).toBe("used");
+    expect(result.success && result.data.used_condition).toBeNull();
+  });
+
+  it("refuses a used subcondition on a product the seller called new", () => {
+    const result = productDraftSchema.safeParse({
+      ...blankForm,
       condition: "new",
-      used_condition: "",
-      category_id: "",
-      currency_code: "MXN",
-      content_locale: "es-MX",
+      used_condition: "good",
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.used_condition).toEqual([
+        "Un producto nuevo no puede tener estado de uso.",
+      ]);
+    }
+  });
+
+  it("keeps out-of-range promises out of the row", () => {
+    expect(productDraftSchema.safeParse({ ...blankForm, handling_days: "31" }).success).toBe(false);
+    expect(productDraftSchema.safeParse({ ...blankForm, units_available: "11" }).success).toBe(false);
+    expect(productDraftSchema.safeParse({ ...blankForm, units_available: "2.5" }).success).toBe(false);
+  });
+
+  it("carries complete values through untouched", () => {
+    const result = productDraftSchema.safeParse({
+      ...blankForm,
+      description: "Taza hecha a mano con barro de alta temperatura.",
+      price_mxn: "349.00",
+      condition: "used",
+      used_condition: "good",
+      category_id: "11",
+      handling_days: "5",
+      units_available: "2",
     });
 
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data).toMatchObject({
         price_mxn: 349,
-        category_id: null,
-        currency_code: "MXN",
-        content_locale: "es-MX",
-      });
-    }
-  });
-
-  it("rejects short copy, negative price, and unknown status", () => {
-    expect(
-      productSchema.safeParse({
-        name: "X",
-        description: "corta",
-        price_mxn: "-1",
-        status: "public",
-      }).success,
-    ).toBe(false);
-  });
-
-  it("rejects more than two decimal places", () => {
-    expect(
-      productSchema.safeParse({
-        name: "Taza de barro",
-        description: "Hecha a mano en un taller local de la región.",
-        price_mxn: "349.999",
-        status: "published",
-        condition: "new",
-        used_condition: "",
-        category_id: "22",
-        currency_code: "MXN",
-        content_locale: "es-MX",
-      }).success,
-    ).toBe(false);
-  });
-
-  it("accepts a new product without a used subcondition", () => {
-    const result = productSchema.safeParse({
-      ...completeProduct,
-      condition: "new",
-      used_condition: "",
-    });
-
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.condition).toBe("new");
-      expect(result.data.used_condition).toBeNull();
-    }
-  });
-
-  it("rejects a used product without a used subcondition", () => {
-    expect(
-      productSchema.safeParse({
-        ...completeProduct,
         condition: "used",
-        used_condition: "",
-      }).success,
-    ).toBe(false);
-  });
-
-  it.each(["mint", "good", "fair", "bad", "scrap"] as const)(
-    "accepts used condition %s",
-    (usedCondition) => {
-      const result = productSchema.safeParse({
-        ...completeProduct,
-        condition: "used",
-        used_condition: usedCondition,
-      });
-
-      expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.condition).toBe("used");
-        expect(result.data.used_condition).toBe(usedCondition);
-      }
-    },
-  );
-
-  it("rejects a used subcondition when product is new", () => {
-    expect(
-      productSchema.safeParse({
-        ...completeProduct,
-        condition: "new",
         used_condition: "good",
-      }).success,
-    ).toBe(false);
-  });
-
-  it("accepts a draft without a category", () => {
-    const result = productSchema.safeParse({
-      ...completeProduct,
-      condition: "new",
-      used_condition: "",
-    });
-
-    expect(result.success).toBe(true);
-    if (result.success) expect(result.data.category_id).toBeNull();
-  });
-
-  it("rejects publication without a category using seller-facing copy", () => {
-    const result = productSchema.safeParse({
-      ...completeProduct,
-      status: "published",
-      condition: "new",
-      used_condition: "",
-    });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.flatten().fieldErrors.category_id).toEqual([
-        "Selecciona una subcategoría válida antes de publicar.",
-      ]);
+        category_id: 11,
+        handling_days: 5,
+        units_available: 2,
+      });
     }
   });
 
   it("rejects unsupported currency and content locale values", () => {
     expect(
-      productSchema.safeParse({
-        ...completeProduct,
-        condition: "new",
-        used_condition: "",
-        currency_code: "USD",
-        content_locale: "en-US",
-      }).success,
+      productDraftSchema.safeParse({ ...blankForm, currency_code: "USD", content_locale: "en-US" })
+        .success,
     ).toBe(false);
+  });
+
+  it("ignores a forged publication status", () => {
+    const result = productDraftSchema.safeParse({ ...blankForm, status: "published" });
+
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data).not.toHaveProperty("status");
   });
 });
 
@@ -211,58 +125,5 @@ describe("productStatusSchema", () => {
     expect(productStatusSchema.safeParse("draft").success).toBe(true);
     expect(productStatusSchema.safeParse("published").success).toBe(true);
     expect(productStatusSchema.safeParse("archived").success).toBe(false);
-  });
-});
-
-describe("productSchema units available", () => {
-  const base = {
-    name: "Taza volcánica",
-    description: "Taza hecha a mano con barro de alta temperatura.",
-    price_mxn: "349.00",
-    status: "draft",
-    condition: "new",
-    used_condition: "",
-    category_id: "",
-    handling_days: "3",
-    currency_code: "MXN",
-    content_locale: "es-MX",
-  };
-
-  it.each([1, 10])("accepts %i units", (units) => {
-    const result = productSchema.safeParse({ ...base, units_available: String(units) });
-
-    expect(result.success && result.data.units_available).toBe(units);
-  });
-
-  it("defaults to a single unit when the field is absent", () => {
-    const result = productSchema.safeParse(base);
-
-    expect(result.success && result.data.units_available).toBe(1);
-  });
-
-  it("rejects zero units", () => {
-    const result = productSchema.safeParse({ ...base, units_available: "0" });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.flatten().fieldErrors.units_available?.[0]).toBe(
-        "Publica al menos 1 unidad.",
-      );
-    }
-  });
-
-  it("rejects more than ten units", () => {
-    const result = productSchema.safeParse({ ...base, units_available: "11" });
-
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.flatten().fieldErrors.units_available?.[0]).toBe(
-        "El máximo es 10 unidades.",
-      );
-    }
-  });
-
-  it("rejects a fractional unit count", () => {
-    expect(productSchema.safeParse({ ...base, units_available: "2.5" }).success).toBe(false);
   });
 });
