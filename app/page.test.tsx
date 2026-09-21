@@ -234,9 +234,9 @@ describe("Home conversion sections", () => {
       "href",
       "#catalogo",
     );
-    expect(within(hero).getByRole("link", { name: "Crear mi tienda gratis" })).toHaveAttribute(
+    expect(within(hero).getByRole("link", { name: "Quiero vender" })).toHaveAttribute(
       "href",
-      "/registro?vender=1",
+      "/vender?desde=hero",
     );
     expect(within(hero).queryByRole("search")).not.toBeInTheDocument();
     expect(within(hero).queryByRole("navigation")).not.toBeInTheDocument();
@@ -369,6 +369,35 @@ describe("Home conversion sections", () => {
     expect(
       screen.getByRole("heading", { name: "Aún no hay productos publicados" }),
     ).toBeInTheDocument();
+  });
+
+  it("offers an empty plaza the seller landing rather than a signup form", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult());
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    expect(screen.getByRole("link", { name: "Quiero vender" })).toHaveAttribute(
+      "href",
+      "/vender?desde=hero",
+    );
+    // The empty product grid offers the same landing: somebody who came to
+    // browse has not read the offer either.
+    expect(screen.getByRole("link", { name: "Crear una tienda" })).toHaveAttribute(
+      "href",
+      "/vender?desde=vacio",
+    );
+  });
+
+  it("offers the landing from the cold start block behind the fallback hero", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ invalidCategorySelection: true }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({ categoria: "no-existe" }) }));
+
+    expect(
+      screen.getAllByRole("link", { name: "Quiero vender" }).map((link) => link.getAttribute("href")),
+    ).toContain("/vender?desde=vacio");
   });
 
   it("hides the marketing sections while a catalog search is active", async () => {

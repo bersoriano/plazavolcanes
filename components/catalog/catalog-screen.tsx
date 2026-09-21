@@ -139,7 +139,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
         ) : (
           <EmptyState
             action={
-              <Link className="inline-flex min-h-11 items-center gap-2 font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href={hasFilters ? resetHref : "/registro?paso=vender"}>
+              <Link className="inline-flex min-h-11 items-center gap-2 font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href={hasFilters ? resetHref : "/vender?desde=vacio"}>
                 {hasFilters ? "Limpiar filtros" : "Crear una tienda"}
                 <ArrowRight aria-hidden="true" className="size-4" />
               </Link>
@@ -260,9 +260,9 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
                 <div className="mt-8 flex flex-wrap justify-center gap-4">
                   <Link
                     className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-transform hover:-translate-y-0.5"
-                    href="/registro?paso=vender"
+                    href="/vender?desde=vacio"
                   >
-                    Crear mi tienda
+                    Quiero vender
                     <ArrowRight aria-hidden="true" className="size-4" />
                   </Link>
                   <Link
