@@ -351,7 +351,51 @@ describe("ProductForm units available", () => {
     expect(units).toHaveValue(1);
     expect(units).toHaveAttribute("min", "1");
     expect(units).toHaveAttribute("max", "10");
-    expect(units).toBeRequired();
+    // Suggested, not demanded: a draft may be saved before the seller has
+    // counted what they have. The checklist and the server gate publication.
+    expect(units).not.toBeRequired();
+  });
+
+  it("lets an unfinished draft leave every field but the name empty", () => {
+    render(<ProductForm shopId={1} action={action} categories={categories} />);
+
+    expect(screen.getByLabelText("Nombre del producto")).toBeRequired();
+    for (const label of [
+      "Descripción",
+      "Precio en MXN",
+      "Tiempo de preparación (días hábiles)",
+      "Unidades disponibles",
+    ]) {
+      expect(screen.getByLabelText(label)).not.toBeRequired();
+    }
+  });
+
+  it("keeps a cleared value cleared when the draft is reopened", () => {
+    render(
+      <ProductForm
+        shopId={1}
+        action={action}
+        categories={categories}
+        product={{
+          name: "Taza volcánica",
+          description: null,
+          price_mxn: null,
+          status: "draft",
+          condition: null,
+          used_condition: null,
+          category_id: null,
+          handling_days: null,
+          units_available: null,
+          imageUrl: null,
+        }}
+      />,
+    );
+
+    // The suggestion belongs to a brand new listing, not to a field the seller
+    // deliberately emptied.
+    expect(screen.getByLabelText("Tiempo de preparación (días hábiles)")).toHaveValue(null);
+    expect(screen.getByLabelText("Unidades disponibles")).toHaveValue(null);
+    expect(screen.getByLabelText("Precio en MXN")).toHaveValue(null);
   });
 
   it("keeps the stated units while editing", () => {

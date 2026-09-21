@@ -275,22 +275,22 @@ export type Database = {
       products: {
         Row: {
           category_id: number | null;
-          condition: "new" | "used";
+          condition: "new" | "used" | null;
           content_locale: "es-MX" | "en-US";
           created_at: string;
           currency_code: string;
-          description: string;
-          handling_days: number;
+          description: string | null;
+          handling_days: number | null;
           id: number;
           image_path: string | null;
           is_admin_enabled: boolean;
           name: string;
-          price_mxn: number;
+          price_mxn: number | null;
           search_document: unknown;
           shop_id: number;
           slug: string;
           status: "draft" | "published" | "expired" | "deleted";
-          units_available: number;
+          units_available: number | null;
           expires_at: string | null;
           updated_at: string;
           used_condition: "mint" | "good" | "fair" | "bad" | "scrap" | null;

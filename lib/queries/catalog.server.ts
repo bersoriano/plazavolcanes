@@ -21,18 +21,22 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { MEDIA_VARIANTS, mediaUrls } from "@/lib/media/url";
 import type { PublicTrustMetrics } from "@/lib/public-trust";
 
+/**
+ * A listing as the public catalogue sees it.
+ *
+ * Every query below filters `status = 'published'`, and publication is gated
+ * on `missingForPublication`, so the columns a draft may leave null are always
+ * present by the time a listing reaches here. They are narrowed back to
+ * non-null at this boundary rather than checked again in each component.
+ */
 export type CatalogProduct = Pick<
   Product,
-  | "id"
-  | "slug"
-  | "name"
-  | "units_available"
-  | "description"
-  | "price_mxn"
-  | "condition"
-  | "used_condition"
-  | "created_at"
+  "id" | "slug" | "name" | "used_condition" | "created_at"
 > & {
+  description: NonNullable<Product["description"]>;
+  price_mxn: NonNullable<Product["price_mxn"]>;
+  condition: NonNullable<Product["condition"]>;
+  units_available: NonNullable<Product["units_available"]>;
   category_id?: Product["category_id"];
   currency_code?: Product["currency_code"];
   imageUrl: string | null;
