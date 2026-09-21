@@ -20,6 +20,11 @@ vi.mock("@/components/messages/start-conversation-button", () => ({
 }));
 vi.mock("next/navigation", () => ({ notFound: vi.fn(), redirect: vi.fn() }));
 
+const viewer = { ownsShop: false };
+vi.mock("@/lib/queries/seller-standing.server", () => ({
+  viewerOwnsAnyShop: vi.fn(async () => viewer.ownsShop),
+}));
+
 let conversationButtonProps: Record<string, unknown> = {};
 
 const { default: ProductPage, generateMetadata } = await import("@/app/productos/[slug]/page");
@@ -57,6 +62,7 @@ function renderPage(
 
 beforeEach(() => {
   vi.clearAllMocks();
+  viewer.ownsShop = false;
   getPublicProduct.mockResolvedValue(product);
 });
 
@@ -201,5 +207,25 @@ describe("Product page search metadata", () => {
       "Cocina",
       "Taza de barro",
     ]);
+  });
+
+  it("invites a shopper without a shop to sell one of their own", async () => {
+    render(await renderPage());
+
+    const invitation = screen.getByRole("link", { name: "Véndelo en la plaza" });
+
+    expect(invitation).toHaveAttribute("href", "/vender?desde=producto");
+    // A quiet line, not a third button competing with asking and buying.
+    expect(invitation.tagName).toBe("A");
+    expect(invitation.parentElement).toHaveTextContent("¿Tienes uno igual? Véndelo en la plaza");
+  });
+
+  it("says nothing about selling to somebody who already runs a shop", async () => {
+    viewer.ownsShop = true;
+
+    render(await renderPage());
+
+    expect(screen.queryByRole("link", { name: "Véndelo en la plaza" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/¿Tienes uno igual\?/)).not.toBeInTheDocument();
   });
 });
