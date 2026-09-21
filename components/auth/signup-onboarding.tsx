@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, ArrowRight, ShoppingBag, Store, type LucideIcon } from "lucide-react";
 
 import { buyerSteps } from "@/components/home/buyer-steps";
-import { sellerSteps } from "@/components/sellers/seller-program";
+import { sellerSteps } from "@/components/sellers/seller-onboarding-steps";
 import { signupStepHref } from "@/lib/signup-onboarding";
 
 const textLink =
