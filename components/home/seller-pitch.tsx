@@ -1,7 +1,15 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
+import { FOUNDERS_CAP, REPUTATION_IMPORT_AVAILABLE } from "@/lib/launch";
+
+/** The same three promises /vender leads with, in the same order. */
+const PROMISES = [
+  "Sin retenciones ni comisiones",
+  REPUTATION_IMPORT_AVAILABLE ? "Transfiere tu reputación" : "Transfiere tu reputación (pronto)",
+  "Tu catálogo en un solo lugar",
+];
 
 export function SellerPitch() {
   return (
@@ -22,9 +30,22 @@ export function SellerPitch() {
             Vende en Plaza Volcanes
           </h2>
           <p className="mt-4 max-w-2xl text-base leading-7 text-white/80">
-            Las primeras 100 tiendas que se registren durante los primeros tres meses pueden publicar
-            gratis y no pagan comisión por cada artículo vendido.
+            Las primeras {FOUNDERS_CAP} tiendas que se registren durante los primeros tres meses
+            pueden publicar gratis y no pagan comisión por cada artículo vendido.
           </p>
+          <ul className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-3">
+            {PROMISES.map((promise) => (
+              <li className="flex items-center gap-2.5 text-sm font-semibold text-white/90" key={promise}>
+                <span
+                  aria-hidden="true"
+                  className="grid size-[22px] shrink-0 place-items-center rounded-full bg-accent text-brand-hover"
+                >
+                  <Check className="size-3.5" strokeWidth={3} />
+                </span>
+                {promise}
+              </li>
+            ))}
+          </ul>
           <div className="mt-6 flex flex-wrap items-center gap-4">
             <Link
               className="inline-flex min-h-12 items-center gap-2 rounded-full bg-accent px-7 font-semibold text-brand-hover"
@@ -35,7 +56,7 @@ export function SellerPitch() {
             </Link>
             <Link
               className="inline-flex min-h-12 items-center rounded-full border border-white/30 px-6 font-semibold text-white hover:border-accent hover:text-accent"
-              href="/vender"
+              href="/vender?desde=pitch"
             >
               Conoce cómo funciona
             </Link>

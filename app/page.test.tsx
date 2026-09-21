@@ -274,7 +274,7 @@ describe("Home conversion sections", () => {
     ).toBeInTheDocument();
   });
 
-  it("prioritizes buyer discovery before trust details and the seller pitch", async () => {
+  it("orders the home page from the products outward", async () => {
     const { getCatalogStateCounts } = await import("@/lib/queries/catalog.server");
     vi.mocked(getCatalogStateCounts).mockResolvedValue([{ code: "MX-OAX", count: 1 }]);
     vi.mocked(getHomeCatalog).mockResolvedValue(
@@ -285,11 +285,11 @@ describe("Home conversion sections", () => {
 
     const orderedSections = [
       screen.getByRole("region", { name: "Descubrimientos de la plaza" }),
+      screen.getByRole("region", { name: "Vende en Plaza Volcanes" }),
       screen.getByRole("heading", { name: "Tiendas de la plaza" }).closest("section"),
       screen.getByRole("region", { name: "Explora por estado" }),
       screen.getByRole("region", { name: "Cómo comprar en la plaza" }),
       screen.getByRole("region", { name: "Antes de acordar una compra" }),
-      screen.getByRole("region", { name: "Vende en Plaza Volcanes" }),
     ];
 
     for (const [index, section] of orderedSections.entries()) {
@@ -324,15 +324,21 @@ describe("Home conversion sections", () => {
     render(await Home({ searchParams: Promise.resolve({}) }));
 
     const pitch = screen.getByRole("region", { name: "Vende en Plaza Volcanes" });
-    expect(within(pitch).queryByRole("list")).not.toBeInTheDocument();
+
+    expect(
+      within(pitch)
+        .getAllByRole("listitem")
+        .map((promise) => promise.textContent),
+    ).toEqual([
+      "Sin retenciones ni comisiones",
+      "Transfiere tu reputación",
+      "Tu catálogo en un solo lugar",
+    ]);
+    // The publication ladder belongs on /vender, not in the home summary.
     expect(pitch).not.toHaveTextContent(/Estándar|Confiable|Mejor valorada/);
-    expect(within(pitch).getByRole("link", { name: "Conoce cómo funciona" })).toHaveAttribute(
-      "href",
-      "/vender",
-    );
   });
 
-  it("sends the seller call to action to registration", async () => {
+  it("sends the seller call to action to registration and the curious to the landing", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()] }),
     );
@@ -344,7 +350,12 @@ describe("Home conversion sections", () => {
       "href",
       "/registro?vender=1",
     );
+    expect(within(pitch).getByRole("link", { name: "Conoce cómo funciona" })).toHaveAttribute(
+      "href",
+      "/vender?desde=pitch",
+    );
   });
+
 
   it("moves the seller pitch above the catalog while no product has been published", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult());

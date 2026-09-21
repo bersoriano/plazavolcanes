@@ -327,11 +327,14 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
       ) : (
         <>
           {catalogSection}
+          {/* Straight after the products: somebody who has just scrolled a wall
+              of other people's listings is the likeliest to picture their own
+              among them, and the pitch used to wait until the page had ended. */}
+          <SellerPitch />
           {shopsSection}
           {explorerSection}
           <BuyerSteps catalogHref="#catalogo" />
           <TrustStrip />
-          <SellerPitch />
         </>
       )}
     </>
