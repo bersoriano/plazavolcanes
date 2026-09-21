@@ -30,6 +30,13 @@ function product(overrides: Partial<Parameters<typeof ProductRow>[0]["product"]>
 }
 
 describe("ProductRow", () => {
+  it("says a draft has no price rather than pricing it at zero", () => {
+    render(<ProductRow product={product({ price_mxn: null, status: "draft", expires_at: null })} />);
+
+    expect(screen.getByText("Sin precio")).toBeInTheDocument();
+    expect(screen.queryByText(/\$0/)).not.toBeInTheDocument();
+  });
+
   it("shows the effective seller publication state", () => {
     // "Vence el" only appears more than 7 days before expiry, so the fixture's
     // absolute date needs a fixed today: 1 September is 19 days out.
