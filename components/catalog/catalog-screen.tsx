@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowRight, MapPin, SearchX, Sparkles, Store } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
+import { CatalogSearchPanel } from "@/components/catalog/catalog-search-panel";
 import { CategoryNavigation } from "@/components/catalog/category-navigation";
 import { ProductCard } from "@/components/catalog/product-card";
 import { ProductGrid } from "@/components/catalog/product-grid";
@@ -183,32 +184,13 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
           {/* The catalogue is newest first, so its first product is the newest listing. */}
           <HomeHero featured={products[0] ?? null} locale={filters.locale} />
           {/* The search and the categories are the plaza's index: they follow
-              the pitch instead of crowding it. */}
-          <section className="border-b border-line bg-surface px-5 py-8 sm:px-8 lg:px-12">
-            <div className="mx-auto max-w-[1240px]">
-              <div className="mx-auto max-w-2xl">
-                <SearchBar
-                  categorySlug={activeCategorySlug}
-                  defaultValue={filters.query}
-                  subcategorySlug={activeSubcategorySlug}
-                  stateSlug={stateSlug}
-                  locale={filters.locale}
-                  countryCode={filters.countryCode}
-                />
-              </div>
-              <div className="mt-8">
-                <CategoryNavigation
-                  activeCategorySlug={activeCategorySlug}
-                  activeSubcategorySlug={activeSubcategorySlug}
-                  query={filters.query}
-                  stateSlug={stateSlug}
-                  locale={filters.locale}
-                  countryCode={filters.countryCode}
-                  tree={categories}
-                />
-              </div>
-            </div>
-          </section>
+              the pitch instead of crowding it, in a card that overlaps it. The
+              home view has no query, category or state to carry. */}
+          <CatalogSearchPanel
+            countryCode={filters.countryCode}
+            locale={filters.locale}
+            tree={categories}
+          />
         </>
       ) : (
         <section className="relative overflow-hidden border-b border-line bg-surface">

@@ -279,6 +279,37 @@ describe("Home conversion sections", () => {
     expect(screen.queryByTestId("hero-featured-listing")).not.toBeInTheDocument();
   });
 
+  it("puts the search and the categories in a panel only on the bare home page", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const panel = screen.getByRole("region", { name: "Buscar en la plaza" });
+    expect(within(panel).getByRole("search")).toBeInTheDocument();
+    expect(
+      within(panel).getByRole("navigation", { name: "Categorías de productos" }),
+    ).toBeInTheDocument();
+    const hero = screen.getByRole("region", { name: HOME_HERO_NAME });
+    expect(hero.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(
+      panel.compareDocumentPosition(screen.getByRole("region", { name: /Descubrimientos de la plaza/ })) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("keeps the search inside the adaptive hero when a search is active", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({ q: "taza" }) }));
+
+    expect(screen.queryByRole("region", { name: "Buscar en la plaza" })).not.toBeInTheDocument();
+    expect(screen.getByRole("search")).toBeInTheDocument();
+  });
+
   it("keeps the single adaptive hero on a search", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()] }),
