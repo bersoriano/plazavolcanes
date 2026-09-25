@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LayoutGrid } from "lucide-react";
 
 import { CategoryIcon } from "@/components/catalog/category-icon";
 import {
@@ -16,7 +17,23 @@ type CategoryNavigationProps = {
   stateSlug?: string;
   locale?: CatalogLocale;
   countryCode?: string;
+  /** `panel` is the home search card: pill chips on white, a wider fade. */
+  variant?: "default" | "panel";
 };
+
+/** Root chip classes per variant: [base, active, idle]. */
+const ROOT_CHIP = {
+  default: [
+    "relative flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold transition-colors",
+    "border border-brand bg-surface text-brand",
+    "border border-line bg-surface text-muted hover:border-brand hover:text-brand",
+  ],
+  panel: [
+    "relative flex h-11 shrink-0 items-center gap-[7px] rounded-full px-4 text-sm transition-colors sm:gap-2 sm:px-[18px]",
+    "border border-accent bg-accent font-bold text-brand-hover",
+    "border border-line bg-surface font-semibold text-brand hover:border-brand",
+  ],
+} as const;
 
 export function CategoryNavigation({
   tree,
@@ -26,28 +43,39 @@ export function CategoryNavigation({
   stateSlug,
   locale,
   countryCode,
+  variant = "default",
 }: CategoryNavigationProps) {
   const activeCategory = tree.find((category) => category.slug === activeCategorySlug);
   const scrollGuidanceId = "category-scroll-guidance";
+  const panel = variant === "panel";
+  const [chipBase, chipActive, chipIdle] = ROOT_CHIP[variant];
+  // The default look underlines the active chip in accent; the panel fills it.
+  const activeRule = panel ? null : (
+    <span aria-hidden="true" className="absolute inset-x-5 -bottom-0.5 h-1 rounded-full bg-accent" />
+  );
 
   return (
     <nav aria-label="Categorías de productos">
       <span className="sr-only" id={scrollGuidanceId}>Desliza para ver más categorías</span>
-      <div className="relative">
-        <div aria-describedby={scrollGuidanceId} className="flex gap-2 overflow-x-auto p-2 pr-10 [scrollbar-width:thin]">
+      {/* On a phone the panel row runs to the card's edges, so the chips
+          scroll out under the fade instead of stopping at the padding. */}
+      <div className={panel ? "relative -mx-4 sm:mx-0" : "relative"}>
+        <div
+          aria-describedby={scrollGuidanceId}
+          className={
+            panel
+              ? "flex gap-2 overflow-x-auto px-4 py-1 pr-16 [scrollbar-width:thin] sm:gap-2.5 sm:px-1 sm:pr-24"
+              : "flex gap-2 overflow-x-auto p-2 pr-10 [scrollbar-width:thin]"
+          }
+        >
           <Link
             aria-current={!activeCategory ? "page" : undefined}
-            className={`relative flex min-h-11 min-w-[5.5rem] shrink-0 items-center justify-center rounded-2xl px-4 text-sm font-semibold transition-colors ${
-              !activeCategory
-                ? "border border-brand bg-surface text-brand"
-                : "border border-line bg-surface text-muted hover:border-brand hover:text-brand"
-            }`}
+            className={`${chipBase} ${panel ? "" : "min-w-[5.5rem]"} ${!activeCategory ? chipActive : chipIdle}`}
             href={buildCatalogHref({ query, stateSlug, locale, countryCode })}
           >
+            {panel ? <LayoutGrid aria-hidden="true" className="size-[18px] shrink-0" strokeWidth={1.8} /> : null}
             Todos
-            {!activeCategory ? (
-              <span aria-hidden="true" className="absolute inset-x-5 -bottom-0.5 h-1 rounded-full bg-accent" />
-            ) : null}
+            {!activeCategory ? activeRule : null}
           </Link>
           {tree.map((category) => {
             const isActive = category.slug === activeCategory?.slug;
@@ -58,24 +86,25 @@ export function CategoryNavigation({
             return (
               <Link
                 aria-current={isActive ? "page" : undefined}
-                className={`relative flex min-h-11 min-w-[8rem] shrink-0 items-center justify-center gap-2 rounded-2xl px-4 text-sm font-semibold transition-colors ${
-                  isActive
-                    ? "border border-brand bg-surface text-brand"
-                    : "border border-line bg-surface text-muted hover:border-brand hover:text-brand"
-                }`}
+                className={`${chipBase} ${panel ? "" : "min-w-[8rem]"} ${isActive ? chipActive : chipIdle}`}
                 href={buildCatalogHref({ query, categorySlug: category.slug, stateSlug, locale, countryCode })}
                 key={category.id}
               >
-                {iconName ? <CategoryIcon aria-hidden="true" className="size-5 shrink-0" name={iconName} /> : null}
+                {iconName ? <CategoryIcon aria-hidden="true" className={panel ? "size-[18px] shrink-0" : "size-5 shrink-0"} name={iconName} /> : null}
                 <span className="whitespace-nowrap">{category.name}</span>
-                {isActive ? (
-                  <span aria-hidden="true" className="absolute inset-x-5 -bottom-0.5 h-1 rounded-full bg-accent" />
-                ) : null}
+                {isActive ? activeRule : null}
               </Link>
             );
           })}
         </div>
-        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent" />
+        <span
+          aria-hidden="true"
+          className={
+            panel
+              ? "pointer-events-none absolute inset-y-0 right-0 w-[72px] bg-linear-to-l from-surface from-15% to-surface/0 sm:w-[120px] sm:from-20%"
+              : "pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent"
+          }
+        />
       </div>
 
       {activeCategory?.children.length ? (

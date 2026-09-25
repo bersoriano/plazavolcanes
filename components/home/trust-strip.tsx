@@ -39,31 +39,42 @@ const signals = [
 export function TrustStrip() {
   return (
     <section
-      aria-label="Antes de acordar una compra"
-      className="border-b border-line bg-background"
+      aria-labelledby="confianza-heading"
+      className="px-5 pb-16 pt-14 sm:px-8 lg:pb-[104px] lg:pt-24"
     >
-      <div className="mx-auto grid max-w-[1440px] gap-x-8 gap-y-7 px-5 py-9 sm:grid-cols-2 sm:px-8 lg:grid-cols-4 lg:px-12">
-        {signals.map((signal) => (
-          <div className="flex gap-3.5" key={signal.title}>
-            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-brand-hover">
-              <signal.icon aria-hidden="true" className="size-5" />
-            </span>
-            <div>
-              <p className="font-display text-base font-semibold tracking-[-0.01em] text-ink">
-                {signal.title}
-              </p>
-              <p className="mt-1 text-sm leading-6 text-muted">{signal.description}</p>
-              {signal.href ? (
-                <Link
-                  className="mt-2 inline-flex min-h-11 items-center text-sm font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
-                  href={signal.href}
-                >
-                  {signal.linkLabel}
-                </Link>
-              ) : null}
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-7 lg:gap-10">
+        <h2
+          className="text-[12px] font-bold uppercase tracking-[0.18em] text-brand lg:text-[13px]"
+          id="confianza-heading"
+        >
+          Antes de acordar una compra
+        </h2>
+        <div className="flex flex-col gap-7 sm:grid sm:grid-cols-2 sm:gap-x-6 lg:grid-cols-4">
+          {signals.map((signal) => (
+            <div
+              className="flex gap-4 border-t-2 border-brand pt-5 lg:flex-col lg:gap-3.5 lg:pt-6"
+              key={signal.title}
+            >
+              <span className="grid size-11 shrink-0 place-items-center rounded-[0.8125rem] bg-accent text-brand-hover lg:size-12 lg:rounded-[0.875rem]">
+                <signal.icon aria-hidden="true" className="size-[22px]" strokeWidth={1.8} />
+              </span>
+              <div className="flex flex-col gap-1.5 lg:gap-3.5">
+                <h3 className="font-display text-[19px] font-semibold leading-[1.2] text-ink lg:text-[21px] lg:tracking-[-0.015em]">
+                  {signal.title}
+                </h3>
+                <p className="text-[15px] leading-[1.6] text-muted">{signal.description}</p>
+                {signal.href ? (
+                  <Link
+                    className="inline-flex min-h-11 items-center self-start text-[15px] font-bold text-brand underline decoration-accent decoration-[3px] underline-offset-[5px]"
+                    href={signal.href}
+                  >
+                    {signal.linkLabel}
+                  </Link>
+                ) : null}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </section>
   );

@@ -43,4 +43,12 @@ describe("TrustStrip", () => {
       screen.getByRole("link", { name: /quejas y aclaraciones/i }),
     ).toHaveAttribute("href", "/quejas-y-aclaraciones");
   });
+
+  it("names the section with a visible eyebrow heading", () => {
+    render(<TrustStrip />);
+
+    const heading = screen.getByRole("heading", { level: 2, name: "Antes de acordar una compra" });
+    expect(heading).not.toHaveClass("sr-only");
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(4);
+  });
 });

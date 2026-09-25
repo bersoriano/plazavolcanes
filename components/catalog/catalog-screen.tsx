@@ -3,11 +3,12 @@ import Image from "next/image";
 import { ArrowRight, MapPin, SearchX, Sparkles, Store } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
+import { CatalogSearchPanel } from "@/components/catalog/catalog-search-panel";
 import { CategoryNavigation } from "@/components/catalog/category-navigation";
 import { ProductCard } from "@/components/catalog/product-card";
 import { ProductGrid } from "@/components/catalog/product-grid";
 import { SearchBar } from "@/components/catalog/search-bar";
-import { PublicShopCard } from "@/components/catalog/shop-card";
+import { PublicShopCard, ShopInviteCard } from "@/components/catalog/shop-card";
 import { BuyerSteps } from "@/components/home/buyer-steps";
 import { HomeHero } from "@/components/home/home-hero";
 import { SellerPitch } from "@/components/home/seller-pitch";
@@ -71,7 +72,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   // The state scopes the page rather than filtering within it, so it never counts here.
   const hasFilters = Boolean(filters.query || activeCategorySlug);
   const coldStart = !hasFilters && products.length === 0;
-  // The rotating hero owns the home pitch; every scoped or filtered view keeps
+  // The buyer hero owns the home pitch; every scoped or filtered view keeps
   // the single hero whose copy adapts to the place or the query.
   const homeHero =
     !area && !hasFilters && !invalidCategorySelection && !filters.invalidAreaSelection;
@@ -89,86 +90,114 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   const catalogSection = (
     <section
       aria-labelledby="catalogo-heading"
-      className="mx-auto max-w-[1440px] scroll-mt-[76px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12"
+      className="scroll-mt-[76px] px-5 py-16 sm:px-8 lg:py-[104px]"
       id="catalogo"
       tabIndex={-1}
     >
-      <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand">
-            {hasFilters ? "Resultados" : "Recién publicados"}
-          </p>
-          <h2
-            className="font-display text-3xl font-semibold tracking-[-0.03em] text-ink sm:text-4xl"
-            id="catalogo-heading"
-          >
-            {heading}
-          </h2>
-        </div>
-        <nav aria-label="Vistas del catálogo" className="flex flex-wrap gap-2">
-          {hasFilters ? (
-            <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href={resetHref}>
-              Limpiar filtros
-            </Link>
-          ) : (
-            <span className="inline-flex min-h-11 items-center rounded-full bg-accent px-4 py-2 text-sm font-semibold text-brand-hover">
-              Todos
-            </span>
-          )}
-          <span className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-muted">
-            Más recientes
-          </span>
-          <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-muted" href="#tiendas">
-            Tiendas
-          </Link>
-        </nav>
-      </div>
-      <ProductGrid>
-        {products.length ? (
-          products.map((product, index) => (
-            <ProductCard
-              catalogHref={catalogHref}
-              categoryName={categoryNameById.get(product.category_id ?? -1)}
-              eventId={searchEventId}
-              key={product.id}
-              position={index + 1}
-              product={product}
-              locale={filters.locale}
-            />
-          ))
-        ) : (
-          <EmptyState
-            action={
-              <Link className="inline-flex min-h-11 items-center gap-2 font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href={hasFilters ? resetHref : "/vender?desde=vacio"}>
-                {hasFilters ? "Limpiar filtros" : "Crear una tienda"}
-                <ArrowRight aria-hidden="true" className="size-4" />
+      <div className="mx-auto max-w-[1200px]">
+        <div className="mb-6 flex flex-col gap-3.5 lg:mb-12 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+          <div className="flex flex-col gap-3.5 lg:gap-4">
+            <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-brand lg:text-[13px]">
+              {hasFilters ? "Resultados" : "Recién publicados"}
+            </p>
+            <h2
+              className={`text-balance font-display font-medium leading-[1.02] tracking-[-0.03em] text-ink ${
+                homeHero ? "text-[38px] lg:text-[60px]" : "text-[32px] lg:text-[48px]"
+              }`}
+              id="catalogo-heading"
+            >
+              {homeHero ? (
+                <>
+                  Descubrimientos <em className="italic text-brand">de la plaza.</em>
+                </>
+              ) : (
+                heading
+              )}
+            </h2>
+          </div>
+          <nav aria-label="Vistas del catálogo" className="mt-1 flex flex-wrap gap-2 lg:mt-0">
+            {hasFilters ? (
+              <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-brand lg:px-[18px]" href={resetHref}>
+                Limpiar filtros
               </Link>
-            }
-            description={
-              hasFilters
-                ? "Prueba con otros filtros o explora todos los productos."
-                : area
-                  ? `Todavía nadie publica en ${area.label}. Tu tienda puede ser la primera.`
-                  : "Abre la primera tienda de la plaza y comparte lo que haces."
-            }
-            icon={hasFilters ? <SearchX aria-hidden="true" className="size-7" /> : <Store aria-hidden="true" className="size-7" />}
-            title={hasFilters ? "No encontramos productos" : "Aún no hay productos publicados"}
-          />
-        )}
-      </ProductGrid>
+            ) : (
+              <span className="inline-flex min-h-11 items-center rounded-full bg-accent px-4 text-sm font-bold text-brand-hover lg:px-[18px]">
+                Todos
+              </span>
+            )}
+            <span className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-muted lg:px-[18px]">
+              Más recientes
+            </span>
+            <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-brand lg:px-[18px]" href="#tiendas">
+              Tiendas
+            </Link>
+          </nav>
+        </div>
+        <ProductGrid>
+          {products.length ? (
+            products.map((product, index) => (
+              <ProductCard
+                catalogHref={catalogHref}
+                categoryName={categoryNameById.get(product.category_id ?? -1)}
+                eventId={searchEventId}
+                key={product.id}
+                position={index + 1}
+                product={product}
+                locale={filters.locale}
+              />
+            ))
+          ) : (
+            <EmptyState
+              action={
+                <Link className="inline-flex min-h-11 items-center gap-2 font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href={hasFilters ? resetHref : "/vender?desde=vacio"}>
+                  {hasFilters ? "Limpiar filtros" : "Crear una tienda"}
+                  <ArrowRight aria-hidden="true" className="size-4" />
+                </Link>
+              }
+              description={
+                hasFilters
+                  ? "Prueba con otros filtros o explora todos los productos."
+                  : area
+                    ? `Todavía nadie publica en ${area.label}. Tu tienda puede ser la primera.`
+                    : "Abre la primera tienda de la plaza y comparte lo que haces."
+              }
+              icon={hasFilters ? <SearchX aria-hidden="true" className="size-7" /> : <Store aria-hidden="true" className="size-7" />}
+              title={hasFilters ? "No encontramos productos" : "Aún no hay productos publicados"}
+            />
+          )}
+        </ProductGrid>
+      </div>
     </section>
   );
 
   const shopsSection = shops.length ? (
-    <section className="mx-auto max-w-[1440px] px-5 pb-16 sm:px-8 lg:px-12" id="tiendas">
-      <div className="mb-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Conoce a quienes venden</p>
-        <h2 className="mt-2 font-display text-3xl font-semibold tracking-[-0.03em]">
-          {area ? `Tiendas de ${area.label}` : "Tiendas de la plaza"}
-        </h2>
-      </div>
-      <div className="flex gap-5 overflow-x-auto pb-3">
-        {shops.map((shop) => <PublicShopCard key={shop.id} shop={shop} />)}
+    <section aria-labelledby="tiendas-heading" className="pb-16 lg:px-8 lg:pb-[104px]" id="tiendas">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-6 lg:gap-10">
+        <div className="flex flex-col gap-3.5 px-5 sm:px-8 lg:gap-4 lg:px-0">
+          <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-brand lg:text-[13px]">
+            Conoce a quienes venden
+          </p>
+          <h2
+            className="text-balance font-display text-[36px] font-medium leading-[1.04] tracking-[-0.03em] text-ink lg:text-[48px]"
+            id="tiendas-heading"
+          >
+            {area ? (
+              `Tiendas de ${area.label}`
+            ) : (
+              <>
+                Tiendas <em className="italic text-brand">de la plaza.</em>
+              </>
+            )}
+          </h2>
+        </div>
+        {/* A scroller on a phone, a three-column grid at lg: the scroller
+            dissolves into the grid, so the invite card becomes its last cell. */}
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3">
+          <div className="flex snap-x gap-3.5 overflow-x-auto scroll-px-5 px-5 pb-1 sm:scroll-px-8 sm:px-8 lg:contents">
+            {shops.map((shop) => <PublicShopCard key={shop.id} shop={shop} />)}
+          </div>
+          {hasFilters ? null : <ShopInviteCard />}
+        </div>
       </div>
     </section>
   ) : null;
@@ -180,34 +209,16 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
     <>
       {homeHero ? (
         <>
-          <HomeHero />
+          {/* The catalogue is newest first, so its first product is the newest listing. */}
+          <HomeHero featured={products[0] ?? null} locale={filters.locale} />
           {/* The search and the categories are the plaza's index: they follow
-              the pitch instead of crowding it. */}
-          <section className="border-b border-line bg-surface px-5 py-8 sm:px-8 lg:px-12">
-            <div className="mx-auto max-w-[1240px]">
-              <div className="mx-auto max-w-2xl">
-                <SearchBar
-                  categorySlug={activeCategorySlug}
-                  defaultValue={filters.query}
-                  subcategorySlug={activeSubcategorySlug}
-                  stateSlug={stateSlug}
-                  locale={filters.locale}
-                  countryCode={filters.countryCode}
-                />
-              </div>
-              <div className="mt-8">
-                <CategoryNavigation
-                  activeCategorySlug={activeCategorySlug}
-                  activeSubcategorySlug={activeSubcategorySlug}
-                  query={filters.query}
-                  stateSlug={stateSlug}
-                  locale={filters.locale}
-                  countryCode={filters.countryCode}
-                  tree={categories}
-                />
-              </div>
-            </div>
-          </section>
+              the pitch instead of crowding it, in a card that overlaps it. The
+              home view has no query, category or state to carry. */}
+          <CatalogSearchPanel
+            countryCode={filters.countryCode}
+            locale={filters.locale}
+            tree={categories}
+          />
         </>
       ) : (
         <section className="relative overflow-hidden border-b border-line bg-surface">

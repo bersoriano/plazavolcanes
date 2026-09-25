@@ -191,3 +191,43 @@ describe("CategoryNavigation overflow guidance", () => {
     expect(screen.getByLabelText("Subcategorías de Electrónica")).toHaveClass("p-2", "pr-10");
   });
 });
+
+describe("Search panel variant", () => {
+  it("keeps the search, the state and the submit button in one form", () => {
+    render(<SearchBar stateSlug="jalisco" variant="panel" />);
+
+    const form = screen.getByRole("search");
+    expect(within(form).getByRole("searchbox", { name: "Buscar productos" })).toHaveAttribute("name", "q");
+    expect(within(form).getByRole("combobox", { name: "Estado" })).toHaveValue("jalisco");
+    expect(within(form).getByRole("combobox", { name: "Estado" })).toHaveClass("min-h-11");
+    expect(within(form).getByRole("button", { name: "Buscar" })).toHaveAttribute("type", "submit");
+  });
+
+  it("keeps the hidden fields a search needs to carry", () => {
+    render(<SearchBar categorySlug="electronica" countryCode="US" locale="en-US" variant="panel" />);
+
+    expect(screen.getByDisplayValue("electronica")).toHaveAttribute("name", "categoria");
+    expect(screen.getByDisplayValue("en-US")).toHaveAttribute("name", "locale");
+    expect(screen.getByDisplayValue("US")).toHaveAttribute("name", "countryCode");
+  });
+
+  it("fills the active chip and keeps every chip 44px high", () => {
+    render(<CategoryNavigation tree={tree} variant="panel" />);
+
+    const navigation = screen.getByRole("navigation", { name: "Categorías de productos" });
+    const todos = within(navigation).getByRole("link", { name: "Todos" });
+    expect(todos).toHaveAttribute("aria-current", "page");
+    expect(todos).toHaveClass("bg-accent", "text-brand-hover");
+    for (const chip of within(navigation).getAllByRole("link")) {
+      expect(chip).toHaveClass("h-11", "rounded-full");
+    }
+  });
+
+  it("keeps the edge fade decorative", () => {
+    const { container } = render(<CategoryNavigation tree={tree} variant="panel" />);
+
+    const fades = container.querySelectorAll('[aria-hidden="true"].pointer-events-none');
+    expect(fades).toHaveLength(1);
+    expect(fades[0]).toHaveClass("from-surface");
+  });
+});

@@ -16,7 +16,7 @@ describe("StateExplorer", () => {
       />,
     );
 
-    const region = screen.getByRole("region", { name: "Explora por estado" });
+    const region = screen.getByRole("region", { name: "Explora por estado." });
     const jalisco = within(region).getByRole("link", { name: /Jalisco/ });
 
     expect(jalisco).toHaveAttribute("href", "/estado/jalisco");
@@ -36,7 +36,15 @@ describe("StateExplorer", () => {
   it("skips codes that are not supported states", () => {
     render(<StateExplorer counts={[{ code: "US-CA", count: 5 }, { code: "MX-JAL", count: 1 }]} />);
 
-    const region = screen.getByRole("region", { name: "Explora por estado" });
+    const region = screen.getByRole("region", { name: "Explora por estado." });
     expect(within(region).getAllByRole("link")).toHaveLength(1);
+  });
+
+  it("labels each count as products, singular for one", () => {
+    render(<StateExplorer counts={[{ code: "MX-JAL", count: 4 }, { code: "MX-OAX", count: 1 }]} />);
+
+    expect(screen.getByRole("link", { name: /Jalisco/ })).toHaveTextContent("4 productos");
+    expect(screen.getByRole("link", { name: /Oaxaca/ })).toHaveTextContent("1 producto");
+    expect(screen.getByRole("link", { name: /Oaxaca/ })).not.toHaveTextContent("1 productos");
   });
 });

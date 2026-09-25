@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ImageIcon, Sparkles } from "lucide-react";
+import { ImageIcon, MapPin, Sparkles } from "lucide-react";
 
 import { CatalogImage } from "@/components/catalog/catalog-image";
 import {
@@ -66,17 +66,21 @@ export function ProductCard({
   }
 
   return (
-    <Link className="group block" href={`/productos/${product.slug}${catalogQuery}`} onClick={recordSelection}>
+    <Link className="group flex min-w-0 flex-col gap-3 sm:gap-4" href={`/productos/${product.slug}${catalogQuery}`} onClick={recordSelection}>
+      {/* 4:5 so the portrait photos sellers upload stand whole instead of
+          losing their top and bottom. */}
       <div
-        className={`relative aspect-[4/3] overflow-hidden rounded-[1.4rem] bg-photo-backdrop ${
+        className={`relative aspect-[4/5] overflow-hidden rounded-[1.125rem] bg-photo-backdrop sm:rounded-[1.5rem] ${
           isPremium ? "ring-1 ring-premium-gold ring-offset-2 ring-offset-background" : ""
         }`}
       >
-        <span className="absolute left-3 top-3 z-10 rounded-full bg-surface/95 px-3 py-1.5 text-xs font-semibold text-brand shadow-sm">
+        <span className="absolute left-2 top-2 z-10 max-w-[calc(100%-1rem)] truncate rounded-full bg-surface/95 px-[9px] py-[5px] text-[11px] font-bold text-brand shadow-sm sm:left-3 sm:top-3 sm:px-3 sm:py-1.5 sm:text-xs">
           {formatProductCondition(product.condition, product.used_condition)}
         </span>
         {isPremium ? (
-          <span className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-premium-ink px-2.5 py-1.5 text-xs font-bold text-premium-gold shadow-sm">
+          // Bottom-left on a phone, where top-right would collide with the
+          // condition pill on a narrow card.
+          <span className="absolute bottom-2 left-2 z-10 inline-flex items-center gap-1 rounded-full bg-premium-ink px-[9px] py-[5px] text-[11px] font-bold text-premium-gold shadow-sm sm:bottom-auto sm:left-auto sm:right-3 sm:top-3 sm:px-2.5 sm:py-1.5 sm:text-xs">
             <Sparkles aria-hidden="true" className="size-3" />
             Premium
           </span>
@@ -88,15 +92,20 @@ export function ProductCard({
           src={product.imageUrl}
         />
       </div>
-      <div className="px-1 pt-4">
-        <p className="text-sm font-medium text-muted">
-          <span className={isPremium ? "font-semibold text-premium-text" : undefined}>{product.shop.name}</span>
-          <span aria-hidden="true"> · </span>
-          <span>{formatShopLocation(product.shop.country_code, product.shop.administrative_area_codes)}</span>
-          {categoryName ? <><span aria-hidden="true"> · </span><span>{categoryName}</span></> : null}
+      <div className="flex flex-col gap-1 px-0.5 sm:gap-1.5 sm:px-1">
+        <p className="truncate text-[12px] text-muted sm:text-[13px]">
+          <span className={`font-bold ${isPremium ? "text-premium-text" : "text-ink"}`}>{product.shop.name}</span>
+          {categoryName ? <span className="hidden sm:inline"><span aria-hidden="true"> · </span>{categoryName}</span> : null}
         </p>
-        <h3 className="mt-1 line-clamp-1 font-display text-lg font-semibold tracking-[-0.02em] text-ink">{product.name}</h3>
-        <p className="mt-1.5 font-semibold text-ink">{formatCurrency(product.price_mxn, currencyCode, locale)} <span className="text-xs font-medium text-muted">{currencyCode}</span></p>
+        <h3 className="line-clamp-2 font-display text-[16px] font-semibold leading-[1.2] tracking-[-0.015em] text-ink sm:text-[20px] sm:tracking-[-0.02em]">{product.name}</h3>
+        <p className="flex items-baseline gap-1 sm:gap-1.5">
+          <span className="font-display text-[18px] font-bold tracking-[-0.02em] text-ink tabular-nums sm:text-[22px]">{formatCurrency(product.price_mxn, currencyCode, locale)}</span>
+          <span className="text-[11px] font-semibold text-muted sm:text-xs">{currencyCode}</span>
+        </p>
+        <p className="flex items-start gap-1.5 text-[12px] leading-[1.4] text-muted sm:text-[13px] sm:leading-[1.45]">
+          <MapPin aria-hidden="true" className="mt-0.5 hidden size-3.5 shrink-0 sm:block" />
+          {formatShopLocation(product.shop.country_code, product.shop.administrative_area_codes)}
+        </p>
       </div>
     </Link>
   );
