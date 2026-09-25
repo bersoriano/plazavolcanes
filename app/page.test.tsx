@@ -207,15 +207,17 @@ function sampleShop() {
   };
 }
 
+const HOME_HERO_NAME = "Encuentra productos únicos cerca de ti.";
+
 describe("Home conversion sections", () => {
-  it("opens the home hero on the first rotating message", async () => {
+  it("opens the home hero on its one buyer message", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()] }),
     );
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const hero = screen.getByRole("region", { name: "Novedades de Plaza Volcanes" });
+    const hero = screen.getByRole("region", { name: HOME_HERO_NAME });
     expect(within(hero).getByRole("heading", { level: 1 })).toHaveTextContent(
       "Encuentra productos únicos cerca de ti.",
     );
@@ -229,7 +231,7 @@ describe("Home conversion sections", () => {
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const hero = screen.getByRole("region", { name: "Novedades de Plaza Volcanes" });
+    const hero = screen.getByRole("region", { name: HOME_HERO_NAME });
     expect(within(hero).getByRole("link", { name: "Explorar productos" })).toHaveAttribute(
       "href",
       "#catalogo",
@@ -251,10 +253,30 @@ describe("Home conversion sections", () => {
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const hero = screen.getByRole("region", { name: "Novedades de Plaza Volcanes" });
+    const hero = screen.getByRole("region", { name: HOME_HERO_NAME });
     expect(within(hero).getByRole("heading", { level: 1 })).toHaveTextContent(
       "Encuentra productos únicos cerca de ti.",
     );
+  });
+
+  it("floats the newest product of the catalogue inside the hero", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct(), { ...sampleProduct(), id: 8, name: "Jarra de barro" }] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const card = screen.getByTestId("hero-featured-listing");
+    expect(card).toHaveTextContent("Taza de barro negro");
+    expect(card).not.toHaveTextContent("Jarra de barro");
+  });
+
+  it("leaves the hero's listing card out while nothing is published", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult());
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    expect(screen.queryByTestId("hero-featured-listing")).not.toBeInTheDocument();
   });
 
   it("keeps the single adaptive hero on a search", async () => {
@@ -265,7 +287,7 @@ describe("Home conversion sections", () => {
     render(await Home({ searchParams: Promise.resolve({ q: "taza" }) }));
 
     expect(
-      screen.queryByRole("region", { name: "Novedades de Plaza Volcanes" }),
+      screen.queryByRole("region", { name: HOME_HERO_NAME }),
     ).not.toBeInTheDocument();
     expect(
       screen.getByRole("heading", {

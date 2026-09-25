@@ -1,36 +1,35 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 
-import { HomeHero } from "@/components/home/home-hero";
+import { HomeHero, type HomeHeroListing } from "@/components/home/home-hero";
 
-afterEach(() => {
-  cleanup();
-  vi.useRealTimers();
-  // @ts-expect-error jsdom ships no matchMedia; the tests add one when they need it.
-  delete window.matchMedia;
-});
+afterEach(cleanup);
 
-/** jsdom has no matchMedia, so a test that cares about motion brings its own. */
-function stubMotionPreference(reduced: boolean) {
-  window.matchMedia = vi.fn().mockReturnValue({
-    matches: reduced,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-  }) as unknown as typeof window.matchMedia;
-}
-
-function currentHeading() {
-  return screen.getByRole("heading", { level: 1 }).textContent;
-}
+const listing: HomeHeroListing = {
+  name: "Micrófono Rode",
+  imageUrl: "https://example.supabase.co/storage/v1/object/public/rode.webp",
+  price_mxn: 1999,
+  currency_code: "MXN",
+};
 
 describe("HomeHero", () => {
-  it("opens on the first message with its kicker, headline and deck", () => {
+  it("carries the one buyer message with its kicker, headline and deck", () => {
     render(<HomeHero />);
 
     expect(screen.getByText("Hecho cerca. Encontrado aquí.")).toBeInTheDocument();
-    expect(currentHeading()).toBe("Encuentra productos únicos cerca de ti.");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+      "Encuentra productos únicos cerca de ti.",
+    );
     expect(
       screen.getByText(/Explora artículos nuevos y usados, revisa quién vende/),
+    ).toBeInTheDocument();
+  });
+
+  it("names its region after the headline", () => {
+    render(<HomeHero />);
+
+    expect(
+      screen.getByRole("region", { name: "Encuentra productos únicos cerca de ti." }),
     ).toBeInTheDocument();
   });
 
@@ -43,10 +42,20 @@ describe("HomeHero", () => {
     expect(emphasis).toHaveClass("italic", "text-brand");
   });
 
-  it("carries the eyebrow pill and both calls to action", () => {
+  it("drops the carousel and the seller pill", () => {
     render(<HomeHero />);
 
-    expect(screen.getByText("Publicación gratis y sin comisión por artículo vendido")).toBeInTheDocument();
+    expect(screen.queryByRole("button")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Crea tu tienda y sube/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Construye tu reputación/)).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Publicación gratis y sin comisión por artículo vendido"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers the catalogue and the seller landing", () => {
+    render(<HomeHero />);
+
     expect(screen.getByRole("link", { name: "Explorar productos" })).toHaveAttribute(
       "href",
       "#catalogo",
@@ -59,108 +68,55 @@ describe("HomeHero", () => {
     );
   });
 
-  it("rotates to the next message every seven seconds and wraps around", () => {
-    vi.useFakeTimers();
+  it("lists the three things a visitor can count on", () => {
     render(<HomeHero />);
 
-    act(() => void vi.advanceTimersByTime(7_000));
-    expect(currentHeading()).toBe("Crea tu tienda y sube lo que quieras vender.");
-
-    act(() => void vi.advanceTimersByTime(7_000));
-    expect(currentHeading()).toBe("Construye tu reputación y vende a todo México.");
-
-    act(() => void vi.advanceTimersByTime(7_000));
-    expect(currentHeading()).toBe("Encuentra productos únicos cerca de ti.");
+    const items = within(screen.getByRole("list")).getAllByRole("listitem");
+    expect(items.map((item) => item.textContent)).toEqual([
+      "Sin cuenta para mirar",
+      "Pago directo con cada tienda",
+      "Todo queda por escrito",
+    ]);
   });
 
-  it("holds still short of the interval", () => {
-    vi.useFakeTimers();
+  it("hides the collage from assistive tech, summarises it and keeps controls out of it", () => {
+    render(<HomeHero featured={listing} />);
+
+    const collage = screen.getByTestId("hero-collage");
+    expect(collage).toHaveAttribute("aria-hidden", "true");
+    expect(collage.querySelectorAll("a, button, input, select, [tabindex]")).toHaveLength(0);
+    expect(screen.getByText(/^Ilustración: una compradora/)).toHaveClass("sr-only");
+  });
+
+  it("preloads the large photo and stands the cut-out whole in its frame", () => {
     render(<HomeHero />);
 
-    act(() => void vi.advanceTimersByTime(6_999));
-
-    expect(currentHeading()).toBe("Encuentra productos únicos cerca de ti.");
-  });
-
-  it("never rotates for a reader who asked for less motion", () => {
-    stubMotionPreference(true);
-    vi.useFakeTimers();
-    render(<HomeHero />);
-
-    act(() => void vi.advanceTimersByTime(60_000));
-
-    expect(currentHeading()).toBe("Encuentra productos únicos cerca de ti.");
-  });
-
-  it("still rotates when no motion preference is expressed", () => {
-    stubMotionPreference(false);
-    vi.useFakeTimers();
-    render(<HomeHero />);
-
-    act(() => void vi.advanceTimersByTime(7_000));
-
-    expect(currentHeading()).toBe("Crea tu tienda y sube lo que quieras vender.");
-  });
-
-  it("jumps to a message from its dot and marks that dot current", () => {
-    render(<HomeHero />);
-
-    const third = screen.getByRole("button", { name: "Ver mensaje 3" });
-    fireEvent.click(third);
-
-    expect(currentHeading()).toBe("Construye tu reputación y vende a todo México.");
-    expect(third).toHaveAttribute("aria-current", "true");
-    expect(screen.getByRole("button", { name: "Ver mensaje 1" })).not.toHaveAttribute(
-      "aria-current",
-    );
-  });
-
-  it("widens the active dot and keeps a 44px hit area on every one", () => {
-    render(<HomeHero />);
-
-    const dots = [1, 2, 3].map((position) =>
-      screen.getByRole("button", { name: `Ver mensaje ${position}` }),
-    );
-
-    dots.forEach((dot) => expect(dot).toHaveClass("tap-halo", "h-[9px]"));
-    expect(dots[0]).toHaveClass("w-[30px]", "bg-brand");
-    expect(dots[1]).toHaveClass("w-[9px]", "bg-line");
-  });
-
-  it("frames the three collage photographs and hides them from assistive tech", () => {
-    const { container } = render(<HomeHero />);
-
-    const collage = container.querySelector('[aria-hidden="true"].grid');
-    expect(collage).not.toBeNull();
-    expect(collage!.children).toHaveLength(3);
-    expect(collage!.children[0]).toHaveClass("col-span-2", "aspect-[4/3]");
-    expect(collage!.children[1]).toHaveClass("aspect-square");
-    expect(collage!.children[2]).toHaveClass("aspect-square");
-
-    const photos = collage!.querySelectorAll("img");
-    expect([...photos].map((photo) => photo.getAttribute("alt"))).toEqual(["", "", ""]);
+    const photos = [...screen.getByTestId("hero-collage").querySelectorAll("img")];
+    expect(photos.map((photo) => photo.getAttribute("alt"))).toEqual(["", "", ""]);
     expect(photos[0].src).toContain("herogirl.jpg");
+    expect(photos[0]).toHaveClass("object-contain");
     expect(photos[1].src).toContain("new-items.jpg");
     expect(photos[2].src).toContain("used-items.jpg");
+    // `preload` is what drops the lazy loading; the two small cards keep it.
+    expect(photos[0]).not.toHaveAttribute("loading");
+    expect(photos[1]).toHaveAttribute("loading", "lazy");
   });
 
-  it("stands the cut-out whole in its frame and fills the other two", () => {
-    const { container } = render(<HomeHero />);
+  it("floats the newest listing with its name and price", () => {
+    render(<HomeHero featured={listing} />);
 
-    const photos = container.querySelectorAll('[aria-hidden="true"].grid img');
-
-    expect(photos[0]).toHaveClass("object-contain");
-    expect(photos[1]).toHaveClass("object-cover");
-    expect(photos[2]).toHaveClass("object-cover");
+    const card = screen.getByTestId("hero-featured-listing");
+    expect(card).toHaveTextContent("Recién publicado");
+    expect(card).toHaveTextContent("Micrófono Rode");
+    expect(card).toHaveTextContent("$1,999.00");
+    expect(card).toHaveTextContent("MXN");
+    expect(card.querySelector("img")).toHaveAttribute("src", listing.imageUrl);
   });
 
-  it("collapses to one column without a media query", () => {
-    const { container } = render(<HomeHero />);
+  it("leaves the listing card out while the catalogue is empty", () => {
+    render(<HomeHero featured={null} />);
 
-    const grid = container.querySelector(
-      ".\\[grid-template-columns\\:repeat\\(auto-fit\\,minmax\\(min\\(100\\%\\,400px\\)\\,1fr\\)\\)\\]",
-    );
-
-    expect(grid).not.toBeNull();
+    expect(screen.queryByTestId("hero-featured-listing")).not.toBeInTheDocument();
+    expect(screen.queryByText("Recién publicado")).not.toBeInTheDocument();
   });
 });

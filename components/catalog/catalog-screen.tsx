@@ -71,7 +71,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   // The state scopes the page rather than filtering within it, so it never counts here.
   const hasFilters = Boolean(filters.query || activeCategorySlug);
   const coldStart = !hasFilters && products.length === 0;
-  // The rotating hero owns the home pitch; every scoped or filtered view keeps
+  // The buyer hero owns the home pitch; every scoped or filtered view keeps
   // the single hero whose copy adapts to the place or the query.
   const homeHero =
     !area && !hasFilters && !invalidCategorySelection && !filters.invalidAreaSelection;
@@ -180,7 +180,8 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
     <>
       {homeHero ? (
         <>
-          <HomeHero />
+          {/* The catalogue is newest first, so its first product is the newest listing. */}
+          <HomeHero featured={products[0] ?? null} locale={filters.locale} />
           {/* The search and the categories are the plaza's index: they follow
               the pitch instead of crowding it. */}
           <section className="border-b border-line bg-surface px-5 py-8 sm:px-8 lg:px-12">
