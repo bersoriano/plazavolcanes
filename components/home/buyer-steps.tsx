@@ -26,47 +26,65 @@ export function BuyerSteps({ catalogHref }: { catalogHref: string }) {
   return (
     <section
       aria-labelledby="comprar-heading"
-      className="mx-auto max-w-[1440px] px-5 pb-16 sm:px-8 sm:pb-20 lg:px-12"
+      className="border-y border-line bg-surface px-5 py-16 sm:px-8 lg:py-28"
     >
-      <div className="rounded-[2rem] border border-line bg-surface px-6 py-10 sm:px-10 sm:py-12">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">
-          Para quien compra
-        </p>
-        <h2
-          className="mt-3 max-w-2xl font-display text-3xl font-semibold tracking-[-0.03em] text-ink sm:text-4xl"
-          id="comprar-heading"
-        >
-          Cómo comprar en la plaza
-        </h2>
-        <p className="mt-4 max-w-2xl text-base leading-7 text-muted">
-          No necesitas cuenta para mirar. La pides cuando quieras enviar tu primera solicitud de
-          pedido.
-        </p>
-        <ol className="mt-9 grid gap-5 sm:grid-cols-3">
-          {buyerSteps.map((step, index) => (
-            <li className="rounded-[1.5rem] border border-line bg-background p-6" key={step.title}>
-              <div className="flex items-center gap-3">
-                <span className="grid size-10 place-items-center rounded-xl bg-brand text-accent">
-                  <step.icon aria-hidden="true" className="size-5" />
-                </span>
-                <span className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">
-                  Paso {index + 1}
-                </span>
-              </div>
-              <p className="mt-4 font-display text-xl font-semibold tracking-[-0.02em] text-ink">
-                {step.title}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-muted">{step.description}</p>
-            </li>
-          ))}
-        </ol>
+      {/* The /vender steps pattern: on a phone the header, the steps and the
+          button stack; at lg the button sits beside the header. */}
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-7 lg:grid lg:grid-cols-[1fr_auto] lg:items-end lg:gap-x-10 lg:gap-y-14">
+        <div className="flex max-w-[760px] flex-col gap-3.5 lg:gap-4">
+          <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-brand lg:text-[13px]">
+            Para quien compra
+          </p>
+          <h2
+            className="text-balance font-display text-[38px] font-medium leading-[1.02] tracking-[-0.03em] text-ink lg:text-[60px]"
+            id="comprar-heading"
+          >
+            Cómo comprar <em className="italic text-brand">en la plaza.</em>
+          </h2>
+          <p className="text-[16px] leading-[1.6] text-muted lg:text-[18px]">
+            No necesitas cuenta para mirar. La pides cuando quieras enviar tu primera solicitud de
+            pedido.
+          </p>
+        </div>
+
         <Link
-          className="mt-9 inline-flex min-h-12 items-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-transform hover:-translate-y-0.5"
+          className="order-3 flex h-14 shrink-0 items-center justify-center gap-2.5 rounded-full bg-brand text-[17px] font-bold text-white transition-colors hover:bg-brand-hover lg:order-none lg:px-7"
           href={catalogHref}
         >
           Ver productos
-          <ArrowRight aria-hidden="true" className="size-4" />
+          <ArrowRight aria-hidden="true" className="size-5" strokeWidth={2.2} />
         </Link>
+
+        <div className="relative order-2 lg:order-none lg:col-span-2">
+          <div
+            aria-hidden="true"
+            className="absolute bottom-24 left-[25px] top-[52px] border-l-2 border-dashed border-line lg:hidden"
+          />
+          <ol className="relative flex flex-col gap-7 lg:grid lg:grid-cols-3 lg:gap-6">
+            {buyerSteps.map((step, index) => (
+              <li
+                className="relative grid content-start grid-cols-[52px_minmax(0,1fr)] items-start gap-x-[18px] gap-y-1.5 [grid-template-areas:'tile_paso''tile_title''tile_body'] lg:grid-cols-[56px_minmax(0,1fr)] lg:gap-x-4 lg:gap-y-[18px] lg:rounded-[1.75rem] lg:border lg:border-line/60 lg:bg-background lg:p-8 lg:[grid-template-areas:'tile_paso''title_title''body_body']"
+                key={step.title}
+              >
+                <span
+                  aria-hidden="true"
+                  className="grid size-[52px] shrink-0 place-items-center self-start rounded-2xl bg-brand text-accent [grid-area:tile] lg:size-14 lg:self-center"
+                >
+                  <step.icon className="size-6 lg:size-[26px]" strokeWidth={1.8} />
+                </span>
+                <span className="self-center text-[12px] font-bold tracking-[0.16em] text-brand [grid-area:paso] lg:text-[14px]">
+                  PASO {index + 1}
+                </span>
+                <h3 className="font-display text-[23px] font-semibold leading-[1.15] tracking-[-0.015em] text-ink [grid-area:title] lg:text-[28px] lg:leading-[1.1] lg:tracking-[-0.02em]">
+                  {step.title}
+                </h3>
+                <p className="text-[15px] leading-[1.6] text-muted [grid-area:body] lg:text-[16px]">
+                  {step.description}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </div>
       </div>
     </section>
   );

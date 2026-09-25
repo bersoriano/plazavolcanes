@@ -340,8 +340,8 @@ describe("Home conversion sections", () => {
       screen.getByRole("region", { name: "Descubrimientos de la plaza." }),
       screen.getByRole("region", { name: "Vende en Plaza Volcanes." }),
       screen.getByRole("heading", { name: "Tiendas de la plaza." }).closest("section"),
-      screen.getByRole("region", { name: "Explora por estado" }),
-      screen.getByRole("region", { name: "Cómo comprar en la plaza" }),
+      screen.getByRole("region", { name: "Explora por estado." }),
+      screen.getByRole("region", { name: "Cómo comprar en la plaza." }),
       screen.getByRole("region", { name: "Antes de acordar una compra" }),
     ];
 
@@ -389,7 +389,7 @@ describe("Home conversion sections", () => {
       screen.getByRole("region", { name: "Antes de acordar una compra" }),
     ).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Vende en Plaza Volcanes." })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Cómo comprar en la plaza" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Cómo comprar en la plaza." })).toBeInTheDocument();
   });
 
   it("keeps seller education compact on home and links to its dedicated page", async () => {
@@ -499,7 +499,7 @@ describe("Home conversion sections", () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Vende en Plaza Volcanes." })).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("region", { name: "Cómo comprar en la plaza" }),
+      screen.queryByRole("region", { name: "Cómo comprar en la plaza." }),
     ).not.toBeInTheDocument();
   });
 });
@@ -556,7 +556,7 @@ describe("Home state parameter", () => {
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByRole("region", { name: "Explora por estado" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Explora por estado." })).toBeInTheDocument();
   });
 });
 
