@@ -1,0 +1,273 @@
+<!doctype html>
+<!--
+  REFERENCE MOCKUP for /vender (desktop, 1440px wide). Not production code.
+  Built in Claude Design; exported 2026-09-21 for Claude Code.
+  - Read docs/design/vender-landing/README.md first: token mapping, components, data, open questions.
+  - Inline hex values map 1:1 to the tokens in app/globals.css (bg-brand, text-accent, ...).
+  - data-component="..." marks the React component each section becomes.
+  - data-bind="..." marks live values (sample numbers shown here; real ones come from the database).
+  - The receipt, reputation card and catalog table are illustrations, not working UI.
+-->
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vende en Plaza Volcanes · Escritorio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&amp;family=Instrument+Sans:wght@400..700&amp;display=swap">
+<style>
+body{margin:0;background:#fbf8f4;color:#19171b;font-family:'Instrument Sans','Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#32174d}a:hover{color:#241035}
+</style>
+</head>
+<body>
+<div data-page="vender" style="width: 1440px; display: flex; flex-direction: column; background: #fbf8f4; color: #19171b; font-family: 'Instrument Sans', 'Helvetica Neue', Arial, sans-serif;">
+
+<!-- Global <SiteHeader /> from app/layout.tsx renders above this page. Do not rebuild it. -->
+
+<section data-component="SellerHero" aria-labelledby="vender-heading" style="position: relative; overflow: hidden; padding: 88px 120px 120px; background: #32174d; color: #ffffff; flex-shrink: 0;">
+<div aria-hidden="true" style="position: absolute; right: -180px; top: -260px; width: 820px; height: 820px; border-radius: 50%; background: radial-gradient(closest-side, rgba(184, 255, 106, 0.2), rgba(184, 255, 106, 0)); pointer-events: none;"></div>
+<svg aria-hidden="true" viewBox="0 0 640 170" fill="none" style="position: absolute; left: -40px; bottom: -60px; width: 1520px; height: 404px; color: #b8ff6a; opacity: 0.09; pointer-events: none;"><path d="M8 152c76-2 107-16 148-46 34-25 56-35 83-14 17 14 27 10 44-9l57-65 70 78c16 18 29 17 47 3 24-19 42-14 73 12 32 27 60 38 102 40" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"></path><path d="m303 61 37-43 38 43-20-8-18 14-17-13-20 7Z" fill="currentColor"></path></svg>
+<svg aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0.16; mix-blend-mode: overlay; pointer-events: none;"><filter id="grainDesk"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch"></feTurbulence><feColorMatrix type="saturate" values="0"></feColorMatrix></filter><rect width="100%" height="100%" filter="url(#grainDesk)"></rect></svg>
+
+<div style="position: relative; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: center;">
+<div style="grid-column: span 7; display: flex; flex-direction: column; align-items: flex-start; gap: 28px;">
+<div style="display: flex; align-items: center; gap: 10px; padding: 8px 16px 8px 12px; border-radius: 999px; border: 1px solid rgba(184, 255, 106, 0.45); background: rgba(184, 255, 106, 0.08); color: #b8ff6a; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;"><span style="width: 8px; height: 8px; border-radius: 50%; background: #b8ff6a; box-shadow: 0 0 0 4px rgba(184, 255, 106, 0.2);"></span>Lanzamiento · Quedan <span data-bind="spotsLeft">98</span> de 100 lugares</div>
+<h1 id="vender-heading" style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 84px; line-height: 0.98; font-weight: 500; letter-spacing: -0.035em; color: #ffffff; text-wrap: balance;">Abre tu tienda gratis y quédate con <em style="font-style: italic; color: #b8ff6a;">cada peso.</em></h1>
+<p style="margin: 0; max-width: 580px; font-size: 20px; line-height: 1.55; color: rgba(255, 255, 255, 0.8); text-wrap: pretty;">Publica tu catálogo, trae la reputación que ya ganaste en otras plataformas y cobra directo a tus clientes. Sin retenciones ni comisiones.</p>
+<div style="display: flex; align-items: center; gap: 28px; margin-top: 4px;">
+<a href="/registro?vender=1" style="display: flex; align-items: center; gap: 10px; height: 60px; padding: 0 30px; border-radius: 999px; background: #b8ff6a; color: #241035; font-size: 18px; font-weight: 700; text-decoration: none; box-shadow: 0 12px 32px -12px rgba(184, 255, 106, 0.65);">Crear mi tienda gratis<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+<a href="#como-empezar" style="color: #ffffff; font-size: 17px; font-weight: 600; text-decoration: underline; text-decoration-color: rgba(184, 255, 106, 0.7); text-decoration-thickness: 2px; text-underline-offset: 6px;">Ver cómo funciona</a>
+</div>
+<ul style="list-style: none; margin: 16px 0 0; padding: 28px 0 0; display: flex; flex-wrap: wrap; gap: 14px 24px; border-top: 1px solid rgba(255, 255, 255, 0.14); align-self: stretch;">
+<li style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, 0.92);"><span style="display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #b8ff6a; color: #241035;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>Sin retenciones ni comisiones</li>
+<li style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, 0.92);"><span style="display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #b8ff6a; color: #241035;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>Transfiere tu reputación</li>
+<li style="display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, 0.92);"><span style="display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: #b8ff6a; color: #241035;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>Tu catálogo en un solo lugar</li>
+</ul>
+</div>
+
+<div style="grid-column: span 5; position: relative; height: 650px;">
+<div style="position: absolute; left: 0; top: 164px; width: 424px; box-sizing: border-box; padding: 28px; border-radius: 24px; background: #ffffff; color: #19171b; transform: rotate(-2deg); box-shadow: 0 48px 90px -36px rgba(0, 0, 0, 0.6), 0 2px 0 rgba(255, 255, 255, 0.4) inset; display: flex; flex-direction: column; gap: 18px;">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+<div style="display: flex; align-items: center; gap: 12px;">
+<span style="display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: #e4ffc4; color: #19734c;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 15px; font-weight: 700;">Pedido confirmado</span><span style="font-size: 13px; color: #6d6871;">Tu tienda · Pago directo</span></div>
+</div>
+</div>
+<div style="display: flex; align-items: center; gap: 14px; padding: 16px 0; border-top: 1px solid #efe9e2; border-bottom: 1px solid #efe9e2;">
+<span style="display: grid; place-items: center; width: 60px; height: 60px; border-radius: 14px; background: #eee8e1; color: #9a929f; flex-shrink: 0;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="10" r="1.8"></circle><path d="M21 16l-5-5-9 9"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 3px;"><span style="font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 18px; font-weight: 700;">Micrófono Rode</span><span style="font-size: 13px; color: #6d6871;">Usado · Buen estado</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 12px; font-size: 15px;">
+<div style="display: flex; justify-content: space-between;"><span style="color: #6d6871;">Precio de venta</span><span style="font-weight: 600;">$1,999.00</span></div>
+<div style="display: flex; justify-content: space-between;"><span style="color: #6d6871;">Comisión Plaza Volcanes</span><span style="font-weight: 700; color: #19734c;">$0.00</span></div>
+<div style="display: flex; justify-content: space-between;"><span style="color: #6d6871;">Retención</span><span style="font-weight: 700; color: #19734c;">$0.00</span></div>
+</div>
+<div style="display: flex; align-items: flex-end; justify-content: space-between; padding-top: 16px; border-top: 1.5px dashed #ded8d2;">
+<span style="font-size: 15px; font-weight: 700;">Tú recibes</span>
+<span style="display: flex; align-items: baseline; gap: 6px;"><span style="font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 40px; line-height: 1; font-weight: 700; letter-spacing: -0.03em; color: #32174d;">$1,999.00</span><span style="font-size: 13px; font-weight: 600; color: #6d6871;">MXN</span></span>
+</div>
+<div style="display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 12px; background: #b8ff6a; color: #241035; font-size: 14px; font-weight: 700;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"></path><path d="M9 12l2 2 4-4"></path></svg>El 100% de tu venta, directo de tu cliente</div>
+</div>
+
+<div style="position: absolute; right: -28px; top: 0; width: 272px; box-sizing: border-box; padding: 20px; border-radius: 20px; background: #b8ff6a; color: #241035; transform: rotate(4deg); box-shadow: 0 30px 60px -28px rgba(0, 0, 0, 0.55); display: flex; flex-direction: column; gap: 12px;">
+<span style="font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;">Reputación importada</span>
+<div style="display: flex; gap: 3px; color: #32174d;" aria-label="Cinco estrellas">
+<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2 6.4 20.2l1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"></path></svg><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2 6.4 20.2l1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"></path></svg><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2 6.4 20.2l1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"></path></svg><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2 6.4 20.2l1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"></path></svg><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2 6.4 20.2l1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"></path></svg>
+</div>
+<span style="font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 21px; line-height: 1.1; font-weight: 700; letter-spacing: -0.02em;">Tu historial viaja contigo</span>
+<div style="display: flex; flex-direction: column; gap: 6px;">
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.6); font-size: 14px; font-weight: 600;">Mercado Libre<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div>
+<div style="display: flex; align-items: center; justify-content: space-between; padding: 9px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.6); font-size: 14px; font-weight: 600;">Facebook Marketplace<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="beneficios" data-component="SellerBenefits" style="padding: 128px 120px 120px; flex-shrink: 0;">
+<div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: end; margin-bottom: 56px;">
+<div style="grid-column: span 7; display: flex; flex-direction: column; gap: 18px;">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #32174d;">Por qué vender aquí</span>
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 60px; line-height: 1.02; font-weight: 500; letter-spacing: -0.03em; text-wrap: balance;">Hecho para quien vende <em style="font-style: italic; color: #32174d;">por su cuenta.</em></h2>
+</div>
+<p style="grid-column: span 5; margin: 0; font-size: 18px; line-height: 1.6; color: #6d6871; text-wrap: pretty;">Plaza Volcanes es una plaza para tiendas independientes de México. Tú pones los productos y el trato con tus clientes; nosotros, la vitrina.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px;">
+
+<div style="grid-column: span 5; position: relative; overflow: hidden; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; min-height: 580px; box-sizing: border-box; padding: 40px; border-radius: 32px; background: #32174d; color: #ffffff;">
+<svg aria-hidden="true" viewBox="0 0 640 170" fill="none" style="position: absolute; right: -120px; top: 40px; width: 560px; height: 149px; color: #b8ff6a; opacity: 0.12; pointer-events: none;"><path d="M8 152c76-2 107-16 148-46 34-25 56-35 83-14 17 14 27 10 44-9l57-65 70 78c16 18 29 17 47 3 24-19 42-14 73 12 32 27 60 38 102 40" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"></path></svg>
+<div style="position: relative; display: flex; align-items: center; justify-content: space-between;">
+<span style="font-size: 14px; font-weight: 700; letter-spacing: 0.12em; color: rgba(255, 255, 255, 0.6);">01</span>
+<span style="padding: 6px 12px; border-radius: 999px; border: 1px solid rgba(184, 255, 106, 0.5); color: #b8ff6a; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;">Lanzamiento</span>
+</div>
+<div style="position: relative; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 220px; line-height: 0.82; font-weight: 700; letter-spacing: -0.06em; color: #b8ff6a;">0%</div>
+<div style="position: relative; display: flex; flex-direction: column; gap: 14px;">
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 34px; line-height: 1.08; font-weight: 600; letter-spacing: -0.02em;">Sin retenciones ni comisiones</h3>
+<p style="margin: 0; font-size: 17px; line-height: 1.6; color: rgba(255, 255, 255, 0.8); text-wrap: pretty;">Tu cliente te paga directo a ti, con el método que acuerden. Plaza Volcanes no procesa, no retiene y no descuenta nada de tu venta.</p>
+<div style="display: flex; align-items: flex-start; gap: 10px; margin-top: 6px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.14); font-size: 14px; line-height: 1.5; color: rgba(255, 255, 255, 0.72);"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink: 0; margin-top: 1px;"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg>Para las primeras 100 tiendas que se registren durante los primeros tres meses.</div>
+</div>
+</div>
+
+<div style="grid-column: span 7; display: flex; flex-direction: column; gap: 28px; box-sizing: border-box; padding: 40px; border-radius: 32px; background: #ffffff; border: 1px solid #ded8d2;">
+<div style="display: flex; flex-direction: column; gap: 14px;">
+<span style="font-size: 14px; font-weight: 700; letter-spacing: 0.12em; color: #6d6871;">02</span>
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 34px; line-height: 1.08; font-weight: 600; letter-spacing: -0.02em; text-wrap: balance;">Transfiere tu reputación de otras plataformas</h3>
+<p style="margin: 0; font-size: 17px; line-height: 1.6; color: #6d6871; text-wrap: pretty;">¿Ya tienes ventas y buenas calificaciones en otro lado? Tráelas a tu tienda para que tus nuevos clientes vean desde el primer día que eres de confianza.</p>
+</div>
+<div style="position: relative; width: 608px; height: 300px; border-radius: 24px; background: #fbf8f4; flex-shrink: 0;">
+<svg aria-hidden="true" width="608" height="300" viewBox="0 0 608 300" fill="none" style="position: absolute; left: 0; top: 0;"><g stroke="#32174d" stroke-opacity="0.3" stroke-width="1.5" stroke-dasharray="4 5"><path d="M234 44C300 44 296 150 364 150"></path><path d="M234 96C300 96 300 150 364 150"></path><path d="M234 148C300 148 300 150 364 150"></path><path d="M234 200C300 200 300 150 364 150"></path><path d="M234 252C300 252 296 150 364 150"></path></g></svg>
+<div style="position: absolute; left: 24px; top: 24px; display: flex; flex-direction: column; gap: 12px; width: 210px;">
+<div style="display: flex; align-items: center; justify-content: space-between; height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; background: #ffffff; border: 1px solid #ded8d2; font-size: 14px; font-weight: 600;">Mercado Libre<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#19734c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div>
+<div style="display: flex; align-items: center; justify-content: space-between; height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; background: #ffffff; border: 1px solid #ded8d2; font-size: 14px; font-weight: 600;">Facebook Marketplace<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#19734c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div>
+<div style="display: flex; align-items: center; justify-content: space-between; height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; background: #ffffff; border: 1px solid #ded8d2; font-size: 14px; font-weight: 600;">Amazon<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#19734c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div>
+<div style="display: flex; align-items: center; justify-content: space-between; height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; background: #ffffff; border: 1px solid #ded8d2; font-size: 14px; font-weight: 600;">Etsy<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#19734c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div>
+<div style="display: flex; align-items: center; justify-content: space-between; height: 40px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; background: #ffffff; border: 1px solid #ded8d2; font-size: 14px; font-weight: 600;">Instagram<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#19734c" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div>
+</div>
+<div style="position: absolute; left: 364px; top: 95px; width: 220px; box-sizing: border-box; padding: 18px; border-radius: 20px; background: #ffffff; border: 1px solid #ded8d2; box-shadow: 0 24px 44px -24px rgba(50, 23, 77, 0.4); display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; align-items: center; gap: 12px;">
+<span style="display: grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: #32174d; color: #b8ff6a; flex-shrink: 0;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v10h16V10"></path><path d="M3 9.5L4.8 4h14.4L21 9.5c0 1.7-1.3 3-3 3s-3-1.3-3-3c0 1.7-1.3 3-3 3s-3-1.3-3-3c0 1.7-1.3 3-3 3s-3-1.3-3-3z"></path><path d="M10 20v-5h4v5"></path></svg></span>
+<div style="display: flex; flex-direction: column; gap: 2px;"><span style="font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 18px; font-weight: 700;">Tu tienda</span><span style="font-size: 13px; color: #6d6871;">Ciudad de México</span></div>
+</div>
+<div style="display: flex; align-items: center; gap: 8px;"><span style="display: flex; gap: 2px; color: #32174d;" aria-label="Cinco estrellas"><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2 6.4 20.2l1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"></path></svg><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2 6.4 20.2l1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"></path></svg><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2 6.4 20.2l1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"></path></svg><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2 6.4 20.2l1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"></path></svg><svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.8 5.8 6.3.9-4.6 4.4 1.1 6.3L12 17.2 6.4 20.2l1.1-6.3L2.9 9.5l6.3-.9z" fill="currentColor"></path></svg></span><span style="font-size: 12px; font-weight: 600; color: #6d6871;">Reputación importada</span></div>
+</div>
+</div>
+</div>
+
+<div style="grid-column: span 12; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; align-items: center; box-sizing: border-box; padding: 48px; border-radius: 32px; background: #b8ff6a; color: #241035;">
+<div style="grid-column: span 5; display: flex; flex-direction: column; gap: 16px;">
+<span style="font-size: 14px; font-weight: 700; letter-spacing: 0.12em; color: rgba(36, 16, 53, 0.62);">03</span>
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 42px; line-height: 1.04; font-weight: 600; letter-spacing: -0.025em; text-wrap: balance;">Maneja tu catálogo de productos aquí</h3>
+<p style="margin: 0; font-size: 17px; line-height: 1.6; color: #3a2a4a; text-wrap: pretty;">Sube, edita y organiza todos tus productos desde un solo lugar. Tu tienda pública se actualiza con cada cambio.</p>
+<ul style="list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 12px;">
+<li style="display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: 600;"><span style="display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #32174d; color: #b8ff6a; flex-shrink: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>Fotos, precio y categoría de cada artículo</li>
+<li style="display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: 600;"><span style="display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #32174d; color: #b8ff6a; flex-shrink: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>Nuevo o usado, con su estado</li>
+<li style="display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: 600;"><span style="display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #32174d; color: #b8ff6a; flex-shrink: 0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>Guarda borradores y publica cuando quieras</li>
+</ul>
+</div>
+
+<div style="grid-column: span 7; border-radius: 20px; background: #ffffff; color: #19171b; overflow: hidden; border: 1px solid rgba(36, 16, 53, 0.1); box-shadow: 0 32px 64px -32px rgba(36, 16, 53, 0.5);">
+<div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 18px 22px; border-bottom: 1px solid #efe9e2;">
+<div style="display: flex; align-items: baseline; gap: 10px;"><span style="font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 19px; font-weight: 700;">Mi catálogo</span><span style="font-size: 13px; color: #6d6871;">4 productos</span></div>
+<div style="display: flex; align-items: center; gap: 10px;">
+<div style="display: flex; align-items: center; gap: 8px; width: 170px; height: 38px; box-sizing: border-box; padding: 0 14px; border-radius: 999px; background: #fbf8f4; border: 1px solid #ded8d2; color: #6d6871; font-size: 13px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>Buscar</div>
+<button type="button" style="display: flex; align-items: center; gap: 6px; height: 38px; padding: 0 16px; border: 0; border-radius: 999px; background: #32174d; color: #ffffff; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Agregar producto</button>
+</div>
+</div>
+<div style="display: flex; gap: 8px; padding: 14px 22px;">
+<span style="display: flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 999px; background: #32174d; color: #ffffff; font-size: 13px; font-weight: 600;">Todos</span>
+<span style="display: flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 999px; background: #f3eee7; color: #32174d; font-size: 13px; font-weight: 600;">Publicados</span>
+<span style="display: flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 999px; background: #f3eee7; color: #32174d; font-size: 13px; font-weight: 600;">Borradores</span>
+</div>
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px 96px 56px; gap: 12px; padding: 10px 22px; background: #fbf8f4; border-top: 1px solid #efe9e2; font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #6d6871;"><span>Producto</span><span>Estado</span><span>Precio</span><span>Visible</span></div>
+
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px 96px 56px; gap: 12px; align-items: center; padding: 12px 22px; border-top: 1px solid #f1ece6;">
+<div style="display: flex; align-items: center; gap: 12px; min-width: 0;"><span style="display: grid; place-items: center; width: 42px; height: 42px; border-radius: 10px; background: #eee8e1; color: #9a929f; flex-shrink: 0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="10" r="1.8"></circle><path d="M21 16l-5-5-9 9"></path></svg></span><div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Micrófono Rode</span><span style="font-size: 12px; color: #6d6871;">Audio y video</span></div></div>
+<span style="justify-self: start; padding: 4px 10px; border-radius: 999px; background: #fbf8f4; border: 1px solid #ded8d2; font-size: 12px; font-weight: 600; white-space: nowrap;">Usado · Buen estado</span>
+<span style="font-size: 14px; font-weight: 700;">$1,999.00</span>
+<button type="button" aria-pressed="true" aria-label="Visible en tu tienda" style="position: relative; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 999px; background: #19734c; cursor: pointer;"><span style="position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border-radius: 50%; background: #ffffff;"></span></button>
+</div>
+
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px 96px 56px; gap: 12px; align-items: center; padding: 12px 22px; border-top: 1px solid #f1ece6;">
+<div style="display: flex; align-items: center; gap: 12px; min-width: 0;"><span style="display: grid; place-items: center; width: 42px; height: 42px; border-radius: 10px; background: #eee8e1; color: #9a929f; flex-shrink: 0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="10" r="1.8"></circle><path d="M21 16l-5-5-9 9"></path></svg></span><div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Reloj Citizen Eco Drive</span><span style="font-size: 12px; color: #6d6871;">Joyería y relojes</span></div></div>
+<span style="justify-self: start; padding: 4px 10px; border-radius: 999px; background: #fbf8f4; border: 1px solid #ded8d2; font-size: 12px; font-weight: 600; white-space: nowrap;">Usado · Buen estado</span>
+<span style="font-size: 14px; font-weight: 700;">$1,899.00</span>
+<button type="button" aria-pressed="true" aria-label="Visible en tu tienda" style="position: relative; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 999px; background: #19734c; cursor: pointer;"><span style="position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border-radius: 50%; background: #ffffff;"></span></button>
+</div>
+
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px 96px 56px; gap: 12px; align-items: center; padding: 12px 22px; border-top: 1px solid #f1ece6;">
+<div style="display: flex; align-items: center; gap: 12px; min-width: 0;"><span style="display: grid; place-items: center; width: 42px; height: 42px; border-radius: 10px; background: #eee8e1; color: #9a929f; flex-shrink: 0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="10" r="1.8"></circle><path d="M21 16l-5-5-9 9"></path></svg></span><div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Apple iPhone 13 Pro (128 GB)</span><span style="font-size: 12px; color: #6d6871;">Celulares y accesorios</span></div></div>
+<span style="justify-self: start; padding: 4px 10px; border-radius: 999px; background: #fbf8f4; border: 1px solid #ded8d2; font-size: 12px; font-weight: 600; white-space: nowrap;">Usado · Buen estado</span>
+<span style="font-size: 14px; font-weight: 700;">$8,499.00</span>
+<button type="button" aria-pressed="true" aria-label="Visible en tu tienda" style="position: relative; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 999px; background: #19734c; cursor: pointer;"><span style="position: absolute; top: 3px; right: 3px; width: 18px; height: 18px; border-radius: 50%; background: #ffffff;"></span></button>
+</div>
+
+<div style="display: grid; grid-template-columns: minmax(0, 1fr) 150px 96px 56px; gap: 12px; align-items: center; padding: 12px 22px 16px; border-top: 1px solid #f1ece6;">
+<div style="display: flex; align-items: center; gap: 12px; min-width: 0;"><span style="display: grid; place-items: center; width: 42px; height: 42px; border-radius: 10px; background: #eee8e1; color: #9a929f; flex-shrink: 0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"></rect><circle cx="9" cy="10" r="1.8"></circle><path d="M21 16l-5-5-9 9"></path></svg></span><div style="display: flex; flex-direction: column; gap: 2px; min-width: 0;"><span style="font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Motorola Razr Foldable 5G</span><span style="font-size: 12px; color: #6d6871;">Celulares y accesorios</span></div></div>
+<span style="justify-self: start; padding: 4px 10px; border-radius: 999px; background: #fbf8f4; border: 1px solid #ded8d2; font-size: 12px; font-weight: 600; white-space: nowrap;">Borrador</span>
+<span style="font-size: 14px; font-weight: 700; color: #6d6871;">$4,999.00</span>
+<button type="button" aria-pressed="false" aria-label="Visible en tu tienda" style="position: relative; width: 42px; height: 24px; padding: 0; border: 0; border-radius: 999px; background: #cfc8c1; cursor: pointer;"><span style="position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #ffffff;"></span></button>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<section id="como-empezar" data-component="SellerSteps" style="padding: 120px; background: #ffffff; border-top: 1px solid #ded8d2; border-bottom: 1px solid #ded8d2; flex-shrink: 0;">
+<div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; margin-bottom: 64px;">
+<div style="display: flex; flex-direction: column; gap: 18px;">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #32174d;">Cómo empezar</span>
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 60px; line-height: 1.02; font-weight: 500; letter-spacing: -0.03em;">Tu tienda lista en <em style="font-style: italic; color: #32174d;">tres pasos.</em></h2>
+</div>
+<a href="/registro?vender=1" style="display: flex; align-items: center; gap: 10px; height: 56px; padding: 0 28px; border-radius: 999px; background: #32174d; color: #ffffff; font-size: 17px; font-weight: 700; text-decoration: none; flex-shrink: 0;">Crear mi tienda gratis<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+</div>
+<ol style="list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px;">
+<li style="display: flex; flex-direction: column; gap: 18px; padding: 32px; border-radius: 28px; background: #fbf8f4; border: 1px solid #ede7e0;">
+<div style="display: flex; align-items: center; gap: 16px;"><span style="display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: #32174d; color: #b8ff6a;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10v10h16V10"></path><path d="M3 9.5L4.8 4h14.4L21 9.5c0 1.7-1.3 3-3 3s-3-1.3-3-3c0 1.7-1.3 3-3 3s-3-1.3-3-3c0 1.7-1.3 3-3 3s-3-1.3-3-3z"></path><path d="M10 20v-5h4v5"></path></svg></span><span style="font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: #32174d;">PASO 1</span></div>
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 28px; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em;">Crea tu tienda</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #6d6871;">Regístrate gratis, ponle nombre a tu tienda y elige la zona donde entregas.</p>
+</li>
+<li style="display: flex; flex-direction: column; gap: 18px; padding: 32px; border-radius: 28px; background: #fbf8f4; border: 1px solid #ede7e0;">
+<div style="display: flex; align-items: center; gap: 16px;"><span style="display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: #32174d; color: #b8ff6a;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"></path><path d="M9 12l2 2 4-4"></path></svg></span><span style="font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: #32174d;">PASO 2</span></div>
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 28px; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em;">Trae tu reputación</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #6d6871;">Vincula tus perfiles de Mercado Libre, Facebook Marketplace, Amazon, Etsy o Instagram para mostrar tu historial.</p>
+</li>
+<li style="display: flex; flex-direction: column; gap: 18px; padding: 32px; border-radius: 28px; background: #fbf8f4; border: 1px solid #ede7e0;">
+<div style="display: flex; align-items: center; gap: 16px;"><span style="display: grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: #32174d; color: #b8ff6a;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5v8l9 5 9-5z"></path><path d="M3 8l9 5 9-5M12 13v8"></path></svg></span><span style="font-size: 14px; font-weight: 700; letter-spacing: 0.16em; color: #32174d;">PASO 3</span></div>
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 28px; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em;">Publica y recibe pedidos</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #6d6871;">Sube tus productos, recibe solicitudes de pedido y acuerda pago y entrega directo con cada cliente.</p>
+</li>
+</ol>
+</section>
+
+<section id="preguntas" data-component="SellerFaq" style="display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; padding: 120px; flex-shrink: 0;">
+<div style="grid-column: span 4; display: flex; flex-direction: column; align-items: flex-start; gap: 18px;">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #32174d;">Preguntas de quien vende</span>
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 48px; line-height: 1.04; font-weight: 500; letter-spacing: -0.03em;">Lo que te estás <em style="font-style: italic; color: #32174d;">preguntando.</em></h2>
+<p style="margin: 0; font-size: 16px; line-height: 1.6; color: #6d6871;">¿Tienes otra duda? Revisa los <a href="/terminos-vendedores" style="color: #32174d; font-weight: 600; text-decoration: underline; text-decoration-color: #b8ff6a; text-decoration-thickness: 3px; text-underline-offset: 4px;">Términos para vendedores</a>.</p>
+</div>
+<div style="grid-column: 6 / span 7; display: flex; flex-direction: column;">
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 28px 0; border-top: 1px solid #ded8d2;">
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 23px; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em;">¿De verdad no cobran comisión?</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.65; color: #6d6871;">Sí. Las primeras 100 tiendas que se registren durante los primeros tres meses pueden publicar gratis y no pagan comisión por cada artículo vendido.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 28px 0; border-top: 1px solid #ded8d2;">
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 23px; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em;">¿Cómo recibo mi dinero?</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.65; color: #6d6871;">Directo de tu cliente. Acuerdan juntos el método de pago y Plaza Volcanes no procesa ni retiene ese dinero, así que no hay retenciones.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 28px 0; border-top: 1px solid #ded8d2;">
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 23px; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em;">¿Qué pasa si hay un problema con un pedido?</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.65; color: #6d6871;">Mensajes, acuerdos, envío y entrega quedan registrados en el pedido. Si un cliente abre una aclaración, puedes responder y administración registra una resolución.</p>
+</div>
+<div style="display: flex; flex-direction: column; gap: 10px; padding: 28px 0; border-top: 1px solid #ded8d2; border-bottom: 1px solid #ded8d2;">
+<h3 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 23px; line-height: 1.2; font-weight: 600; letter-spacing: -0.015em;">¿Qué pasa cuando termine la promoción?</h3>
+<p style="margin: 0; font-size: 16px; line-height: 1.65; color: #6d6871;"><span style="padding: 2px 6px; border-radius: 6px; background: #e4ffc4; color: #32174d;">[Explica aquí qué condiciones aplican a las tiendas fundadoras después del lanzamiento.]</span></p>
+</div>
+</div>
+</section>
+
+<section data-component="FoundersCta" style="padding: 0 120px 120px; flex-shrink: 0;">
+<div style="position: relative; overflow: hidden; display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 24px; align-items: center; padding: 72px 80px; border-radius: 36px; background: #32174d; color: #ffffff;">
+<div aria-hidden="true" style="position: absolute; left: -200px; bottom: -380px; width: 720px; height: 720px; border-radius: 50%; background: radial-gradient(closest-side, rgba(184, 255, 106, 0.18), rgba(184, 255, 106, 0)); pointer-events: none;"></div>
+<svg aria-hidden="true" viewBox="0 0 640 170" fill="none" style="position: absolute; right: -80px; bottom: -40px; width: 900px; height: 239px; color: #b8ff6a; opacity: 0.1; pointer-events: none;"><path d="M8 152c76-2 107-16 148-46 34-25 56-35 83-14 17 14 27 10 44-9l57-65 70 78c16 18 29 17 47 3 24-19 42-14 73 12 32 27 60 38 102 40" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"></path><path d="m303 61 37-43 38 43-20-8-18 14-17-13-20 7Z" fill="currentColor"></path></svg>
+<div style="position: relative; grid-column: span 7; display: flex; flex-direction: column; gap: 20px;">
+<span style="font-size: 13px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #b8ff6a;">Tiendas fundadoras</span>
+<h2 style="margin: 0; font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 64px; line-height: 1; font-weight: 500; letter-spacing: -0.035em; text-wrap: balance;">Sé una de las primeras <em style="font-style: italic; color: #b8ff6a;">100 tiendas.</em></h2>
+<p style="margin: 0; max-width: 520px; font-size: 18px; line-height: 1.6; color: rgba(255, 255, 255, 0.8);">Publica gratis y no pagues comisión por cada artículo vendido. Los lugares se asignan por orden de registro.</p>
+</div>
+<div style="position: relative; grid-column: 9 / span 4; display: flex; flex-direction: column; gap: 16px; padding: 28px; border-radius: 24px; background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14);">
+<div style="display: flex; align-items: baseline; justify-content: space-between;"><span style="font-size: 14px; font-weight: 600; color: rgba(255, 255, 255, 0.78);">Lugares ocupados</span><span style="font-family: 'Bricolage Grotesque', 'Avenir Next', 'Segoe UI', sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.02em;"><span data-bind="spotsTaken">2</span><span style="font-size: 18px; color: rgba(255, 255, 255, 0.6);">/100</span></span></div>
+<div style="height: 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.14); overflow: hidden;"><div style="width: 2%; height: 100%; border-radius: 999px; background: #b8ff6a;"></div></div>
+<span style="font-size: 14px; line-height: 1.5; color: rgba(255, 255, 255, 0.78);">Quedan <span data-bind="spotsLeft">98</span> lugares para tiendas fundadoras.</span>
+<a href="/registro?vender=1" style="display: flex; align-items: center; justify-content: center; gap: 10px; height: 60px; margin-top: 4px; border-radius: 999px; background: #b8ff6a; color: #241035; font-size: 18px; font-weight: 700; text-decoration: none;">Crear mi tienda gratis<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></a>
+<a href="/ingresar?intent=vender" style="position: relative; align-self: center; display: flex; align-items: center; min-height: 44px; color: rgba(255, 255, 255, 0.85); font-size: 15px; font-weight: 600; text-decoration: underline; text-decoration-color: rgba(184, 255, 106, 0.7); text-decoration-thickness: 2px; text-underline-offset: 4px;">¿Ya tienes cuenta? Ingresa</a>
+</div>
+</div>
+</section>
+
+<!-- Global <SiteFooter /> (and <BottomNav /> on phones) render below this page. Do not rebuild them. -->
+</div>
+</body>
+</html>
