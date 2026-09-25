@@ -343,6 +343,7 @@ describe("Home conversion sections", () => {
       screen.getByRole("region", { name: "Explora por estado." }),
       screen.getByRole("region", { name: "Cómo comprar en la plaza." }),
       screen.getByRole("region", { name: "Antes de acordar una compra" }),
+      screen.getByRole("region", { name: "Plaza Volcanes es una plataforma 100% Mexicana." }),
     ];
 
     for (const [index, section] of orderedSections.entries()) {
@@ -376,6 +377,16 @@ describe("Home conversion sections", () => {
     render(await Home({ searchParams: Promise.resolve({ q: "taza" }) }));
 
     expect(screen.queryByText("Tu tienda podría estar aquí")).not.toBeInTheDocument();
+  });
+
+  it("closes the cold start home with the same statement", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult());
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    expect(
+      screen.getByRole("region", { name: "Plaza Volcanes es una plataforma 100% Mexicana." }),
+    ).toBeInTheDocument();
   });
 
   it("shows the buyer trust strip, the seller pitch and the buying steps when products exist", async () => {
@@ -498,6 +509,9 @@ describe("Home conversion sections", () => {
       screen.queryByRole("region", { name: "Antes de acordar una compra" }),
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Vende en Plaza Volcanes." })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Plaza Volcanes es una plataforma 100% Mexicana." }),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("region", { name: "Cómo comprar en la plaza." }),
     ).not.toBeInTheDocument();

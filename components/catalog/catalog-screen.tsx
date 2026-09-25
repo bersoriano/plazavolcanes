@@ -11,6 +11,7 @@ import { SearchBar } from "@/components/catalog/search-bar";
 import { PublicShopCard, ShopInviteCard } from "@/components/catalog/shop-card";
 import { BuyerSteps } from "@/components/home/buyer-steps";
 import { HomeHero } from "@/components/home/home-hero";
+import { MadeInMexico } from "@/components/home/made-in-mexico";
 import { SellerPitch } from "@/components/home/seller-pitch";
 import { StateExplorer } from "@/components/home/state-explorer";
 import { TrustStrip } from "@/components/home/trust-strip";
@@ -334,6 +335,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
           {explorerSection}
           <TrustStrip />
           <BuyerSteps catalogHref="#catalogo" />
+          <MadeInMexico />
         </>
       ) : (
         <>
@@ -346,6 +348,8 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
           {explorerSection}
           <BuyerSteps catalogHref="#catalogo" />
           <TrustStrip />
+          {/* The closing statement, straight above the footer. */}
+          <MadeInMexico />
         </>
       )}
     </>
