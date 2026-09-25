@@ -90,73 +90,83 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   const catalogSection = (
     <section
       aria-labelledby="catalogo-heading"
-      className="mx-auto max-w-[1440px] scroll-mt-[76px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12"
+      className="scroll-mt-[76px] px-5 py-16 sm:px-8 lg:py-[104px]"
       id="catalogo"
       tabIndex={-1}
     >
-      <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="mb-2 text-sm font-semibold uppercase tracking-[0.18em] text-brand">
-            {hasFilters ? "Resultados" : "Recién publicados"}
-          </p>
-          <h2
-            className="font-display text-3xl font-semibold tracking-[-0.03em] text-ink sm:text-4xl"
-            id="catalogo-heading"
-          >
-            {heading}
-          </h2>
-        </div>
-        <nav aria-label="Vistas del catálogo" className="flex flex-wrap gap-2">
-          {hasFilters ? (
-            <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href={resetHref}>
-              Limpiar filtros
-            </Link>
-          ) : (
-            <span className="inline-flex min-h-11 items-center rounded-full bg-accent px-4 py-2 text-sm font-semibold text-brand-hover">
-              Todos
-            </span>
-          )}
-          <span className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-muted">
-            Más recientes
-          </span>
-          <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-medium text-muted" href="#tiendas">
-            Tiendas
-          </Link>
-        </nav>
-      </div>
-      <ProductGrid>
-        {products.length ? (
-          products.map((product, index) => (
-            <ProductCard
-              catalogHref={catalogHref}
-              categoryName={categoryNameById.get(product.category_id ?? -1)}
-              eventId={searchEventId}
-              key={product.id}
-              position={index + 1}
-              product={product}
-              locale={filters.locale}
-            />
-          ))
-        ) : (
-          <EmptyState
-            action={
-              <Link className="inline-flex min-h-11 items-center gap-2 font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href={hasFilters ? resetHref : "/vender?desde=vacio"}>
-                {hasFilters ? "Limpiar filtros" : "Crear una tienda"}
-                <ArrowRight aria-hidden="true" className="size-4" />
+      <div className="mx-auto max-w-[1200px]">
+        <div className="mb-6 flex flex-col gap-3.5 lg:mb-12 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+          <div className="flex flex-col gap-3.5 lg:gap-4">
+            <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-brand lg:text-[13px]">
+              {hasFilters ? "Resultados" : "Recién publicados"}
+            </p>
+            <h2
+              className={`text-balance font-display font-medium leading-[1.02] tracking-[-0.03em] text-ink ${
+                homeHero ? "text-[38px] lg:text-[60px]" : "text-[32px] lg:text-[48px]"
+              }`}
+              id="catalogo-heading"
+            >
+              {homeHero ? (
+                <>
+                  Descubrimientos <em className="italic text-brand">de la plaza.</em>
+                </>
+              ) : (
+                heading
+              )}
+            </h2>
+          </div>
+          <nav aria-label="Vistas del catálogo" className="mt-1 flex flex-wrap gap-2 lg:mt-0">
+            {hasFilters ? (
+              <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-brand lg:px-[18px]" href={resetHref}>
+                Limpiar filtros
               </Link>
-            }
-            description={
-              hasFilters
-                ? "Prueba con otros filtros o explora todos los productos."
-                : area
-                  ? `Todavía nadie publica en ${area.label}. Tu tienda puede ser la primera.`
-                  : "Abre la primera tienda de la plaza y comparte lo que haces."
-            }
-            icon={hasFilters ? <SearchX aria-hidden="true" className="size-7" /> : <Store aria-hidden="true" className="size-7" />}
-            title={hasFilters ? "No encontramos productos" : "Aún no hay productos publicados"}
-          />
-        )}
-      </ProductGrid>
+            ) : (
+              <span className="inline-flex min-h-11 items-center rounded-full bg-accent px-4 text-sm font-bold text-brand-hover lg:px-[18px]">
+                Todos
+              </span>
+            )}
+            <span className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-muted lg:px-[18px]">
+              Más recientes
+            </span>
+            <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-brand lg:px-[18px]" href="#tiendas">
+              Tiendas
+            </Link>
+          </nav>
+        </div>
+        <ProductGrid>
+          {products.length ? (
+            products.map((product, index) => (
+              <ProductCard
+                catalogHref={catalogHref}
+                categoryName={categoryNameById.get(product.category_id ?? -1)}
+                eventId={searchEventId}
+                key={product.id}
+                position={index + 1}
+                product={product}
+                locale={filters.locale}
+              />
+            ))
+          ) : (
+            <EmptyState
+              action={
+                <Link className="inline-flex min-h-11 items-center gap-2 font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href={hasFilters ? resetHref : "/vender?desde=vacio"}>
+                  {hasFilters ? "Limpiar filtros" : "Crear una tienda"}
+                  <ArrowRight aria-hidden="true" className="size-4" />
+                </Link>
+              }
+              description={
+                hasFilters
+                  ? "Prueba con otros filtros o explora todos los productos."
+                  : area
+                    ? `Todavía nadie publica en ${area.label}. Tu tienda puede ser la primera.`
+                    : "Abre la primera tienda de la plaza y comparte lo que haces."
+              }
+              icon={hasFilters ? <SearchX aria-hidden="true" className="size-7" /> : <Store aria-hidden="true" className="size-7" />}
+              title={hasFilters ? "No encontramos productos" : "Aún no hay productos publicados"}
+            />
+          )}
+        </ProductGrid>
+      </div>
     </section>
   );
 

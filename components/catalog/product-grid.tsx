@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
 
 export function ProductGrid({ children }: { children: ReactNode }) {
-  return <div className="grid grid-cols-1 gap-x-5 gap-y-9 sm:grid-cols-2 lg:grid-cols-4">{children}</div>;
+  return <div className="grid grid-cols-2 gap-x-3.5 gap-y-7 md:grid-cols-3 md:gap-6 lg:grid-cols-4">{children}</div>;
 }

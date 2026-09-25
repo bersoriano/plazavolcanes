@@ -294,7 +294,7 @@ describe("Home conversion sections", () => {
     const hero = screen.getByRole("region", { name: HOME_HERO_NAME });
     expect(hero.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(
-      panel.compareDocumentPosition(screen.getByRole("region", { name: /Descubrimientos de la plaza/ })) &
+      panel.compareDocumentPosition(screen.getByRole("region", { name: "Descubrimientos de la plaza." })) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
   });
@@ -337,7 +337,7 @@ describe("Home conversion sections", () => {
     render(await Home({ searchParams: Promise.resolve({}) }));
 
     const orderedSections = [
-      screen.getByRole("region", { name: "Descubrimientos de la plaza" }),
+      screen.getByRole("region", { name: "Descubrimientos de la plaza." }),
       screen.getByRole("region", { name: "Vende en Plaza Volcanes" }),
       screen.getByRole("heading", { name: "Tiendas de la plaza" }).closest("section"),
       screen.getByRole("region", { name: "Explora por estado" }),
@@ -416,7 +416,7 @@ describe("Home conversion sections", () => {
     render(await Home({ searchParams: Promise.resolve({}) }));
 
     const pitch = screen.getByRole("region", { name: "Vende en Plaza Volcanes" });
-    const catalog = screen.getByRole("region", { name: "Descubrimientos de la plaza" });
+    const catalog = screen.getByRole("region", { name: "Descubrimientos de la plaza." });
     const relation = pitch.compareDocumentPosition(catalog);
 
     expect(relation & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -428,7 +428,7 @@ describe("Home conversion sections", () => {
     render(await Home({ searchParams: Promise.resolve({}) }));
 
     expect(
-      screen.getByRole("heading", { name: "Descubrimientos de la plaza" }),
+      screen.getByRole("heading", { name: "Descubrimientos de la plaza." }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Aún no hay productos publicados" }),

@@ -100,7 +100,7 @@ describe("ProductCard", () => {
     expect(screen.queryByText("MXN")).not.toBeInTheDocument();
   });
 
-  it("orders the seller, stored location, category, product name, and price", () => {
+  it("orders the seller, category, product name, price and stored location", () => {
     render(
       <ProductCard
         categoryName="Cerámica"
@@ -125,10 +125,30 @@ describe("ProductCard", () => {
     );
 
     const cardText = screen.getByRole("link", { name: /Taza de barro negro/ }).textContent ?? "";
-    expect(cardText.indexOf("Taller Volcán")).toBeLessThan(cardText.indexOf("Oaxaca, México"));
-    expect(cardText.indexOf("Oaxaca, México")).toBeLessThan(cardText.indexOf("Cerámica"));
+    expect(cardText.indexOf("Taller Volcán")).toBeLessThan(cardText.indexOf("Cerámica"));
     expect(cardText.indexOf("Cerámica")).toBeLessThan(cardText.indexOf("Taza de barro negro"));
     expect(cardText.indexOf("Taza de barro negro")).toBeLessThan(cardText.indexOf("$480.00"));
+    expect(cardText.indexOf("$480.00")).toBeLessThan(cardText.indexOf("Oaxaca, México"));
+  });
+
+  it("frames the photo at 4:5 and gives the name two lines", () => {
+    const { container } = render(
+      <ProductCard
+        product={{
+          id: 9,
+          slug: "taza-de-barro-negro",
+          imageUrl: null,
+          name: "Taza de barro negro",
+          price_mxn: 480,
+          condition: "new",
+          used_condition: null,
+          shop: { name: "Taller Volcán", country_code: "MX", administrative_area_codes: ["MX-OAX"], trust_tier: "standard" },
+        }}
+      />,
+    );
+
+    expect(container.querySelector(".aspect-\\[4\\/5\\]")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Taza de barro negro" })).toHaveClass("line-clamp-2");
   });
 
   it("carries catalog filters to the product URL", () => {
@@ -276,6 +296,9 @@ describe("ProductCard", () => {
 
     expect(screen.getByText("Premium")).toBeInTheDocument();
     expect(container.querySelector(".ring-premium-gold")).toBeInTheDocument();
+    expect(screen.getByText("Casa Premium")).toHaveClass("text-premium-text");
+    // Bottom-left on a phone, top-right from sm up.
+    expect(screen.getByText("Premium")).toHaveClass("bottom-2", "left-2", "sm:right-3", "sm:top-3");
   });
 
   it("leaves an ordinary listing unmarked", () => {
