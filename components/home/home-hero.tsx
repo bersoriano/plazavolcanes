@@ -13,7 +13,7 @@ import {
 import { formatCurrency } from "@/lib/format";
 
 /** Three things the product actually does for someone who has not signed up. */
-const CHECKLIST = ["Sin cuenta para mirar", "Pago directo con cada tienda", "Todo queda por escrito"];
+const CHECKLIST = ["No necesitas crear una cuenta para ver los productos.", "Págale directamente a cada tienda", "Todo queda por escrito"];
 
 /** The collage's own summary, for anyone who never sees the picture. */
 const COLLAGE_SUMMARY =
@@ -57,7 +57,7 @@ export function HomeHero({ featured, locale = DEFAULT_CATALOG_LOCALE }: HomeHero
         <div className="flex flex-col items-start gap-5 lg:col-span-7 lg:gap-[26px]">
           <p className="flex items-center gap-2 rounded-full border border-brand/22 bg-accent/22 py-1.5 pl-2.5 pr-3.5 text-[11px] font-bold uppercase tracking-[0.12em] text-brand-hover lg:gap-2.5 lg:py-[7px] lg:pl-3 lg:pr-4 lg:text-[12px]">
             <span aria-hidden="true" className="size-[7px] shrink-0 rounded-full bg-brand lg:size-2" />
-            Hecho cerca. Encontrado aquí.
+            PUBLICA Y ADMINISTRA TUS VENTAS AQUÍ
           </p>
 
           <h1

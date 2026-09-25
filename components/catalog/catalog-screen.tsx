@@ -11,6 +11,8 @@ import { SearchBar } from "@/components/catalog/search-bar";
 import { PublicShopCard, ShopInviteCard } from "@/components/catalog/shop-card";
 import { BuyerSteps } from "@/components/home/buyer-steps";
 import { HomeHero } from "@/components/home/home-hero";
+import { MadeInMexico } from "@/components/home/made-in-mexico";
+import { NoFeesStatement } from "@/components/home/no-fees-statement";
 import { SellerPitch } from "@/components/home/seller-pitch";
 import { StateExplorer } from "@/components/home/state-explorer";
 import { TrustStrip } from "@/components/home/trust-strip";
@@ -240,7 +242,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
                   ? `Tiendas de ${area.label}`
                   : coldStart
                     ? "Publicar es gratis y sin comisiones."
-                    : "Hecho cerca. Encontrado aquí."}
+                    : "PUBLICA Y ADMINISTRA TUS VENTAS AQUÍ"}
               </div>
               <h1 className="font-display text-4xl font-semibold leading-[0.98] tracking-[-0.045em] text-brand sm:text-6xl lg:text-7xl">
                 {area
@@ -329,14 +331,18 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
       ) : coldStart ? (
         <>
           <SellerPitch />
+          <NoFeesStatement />
           {catalogSection}
           {shopsSection}
           {explorerSection}
           <TrustStrip />
           <BuyerSteps catalogHref="#catalogo" />
+          <MadeInMexico />
         </>
       ) : (
         <>
+          {/* Clears the search panel that overlaps the hero above it. */}
+          <NoFeesStatement className="mt-12 lg:mt-16" />
           {catalogSection}
           {/* Straight after the products: somebody who has just scrolled a wall
               of other people's listings is the likeliest to picture their own
@@ -346,6 +352,8 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
           {explorerSection}
           <BuyerSteps catalogHref="#catalogo" />
           <TrustStrip />
+          {/* The closing statement, straight above the footer. */}
+          <MadeInMexico />
         </>
       )}
     </>

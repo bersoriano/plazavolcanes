@@ -30,11 +30,11 @@ Attributes in the reference markup: `data-component="…"` names the component e
 
 The biggest change.
 
-- **One message, no carousel.** Drop `MESSAGES`, the rotation `useEffect`, the reduced-motion hook and the dot buttons. The kept message is the buyer one: kicker "Hecho cerca. Encontrado aquí.", headline "Encuentra productos únicos *cerca de ti.*", deck "Explora artículos nuevos y usados, revisa quién vende y acuerda pago y entrega directamente con cada tienda." Without rotation the component no longer needs `"use client"`, except for the pieces noted below.
+- **One message, no carousel.** Drop `MESSAGES`, the rotation `useEffect`, the reduced-motion hook and the dot buttons. The kept message is the buyer one: kicker "PUBLICA Y ADMINISTRA TUS VENTAS AQUÍ", headline "Encuentra productos únicos *cerca de ti.*", deck "Explora artículos nuevos y usados, revisa quién vende y acuerda pago y entrega directamente con cada tienda." Without rotation the component no longer needs `"use client"`, except for the pieces noted below.
 - **The seller pill is gone.** The launch bar above the header already carries the promotion.
 - **Layout at lg:** a 12-column grid, copy on 7, collage on 5. Below lg it stacks, with the collage after the checklist.
 - **Copy column:** the kicker becomes a pill (lime tint, purple dot); `h1` at 80px desktop / 46px phone, weight 500, `leading-[0.98]`, `tracking-[-0.035em]`, with the closing phrase in italic `text-brand`; the deck; then the two buttons — "Explorar productos" (`bg-brand`, 60px, arrow) and "Quiero vender" (white, `border-line`, → `/vender?desde=hero`). On phones the buttons are full width and stacked.
-- **A three-item checklist** above a hairline: "Sin cuenta para mirar", "Pago directo con cada tienda", "Todo queda por escrito". All three are things the product actually does.
+- **A three-item checklist** above a hairline: "No necesitas crear una cuenta para ver los productos.", "Págale directamente a cada tienda", "Todo queda por escrito". All three are things the product actually does.
 - **Collage (decorative, `aria-hidden`):** the buyer photo in a white card, the two catalogue photos as rotated cards (5° and −6°), a lime pill "Tiendas independientes de México", and a floating card for the newest listing (photo, "Recién publicado", name, price). Exact offsets are in the HTML. Keep `next/image` with `priority` on the large photo.
 - **The floating listing card should use real data:** pass the first product of the home catalogue into the hero and hide the card when the catalogue is empty. See §6.
 
