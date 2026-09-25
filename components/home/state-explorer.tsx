@@ -25,7 +25,7 @@ export function StateExplorer({ counts }: { counts: CatalogStateCount[] }) {
       <div className="mx-auto flex max-w-[1200px] flex-col gap-4 rounded-[1.625rem] border border-line bg-surface px-5 py-7 lg:grid lg:grid-cols-12 lg:items-center lg:gap-x-6 lg:rounded-[2rem] lg:px-14 lg:py-[52px]">
         <div className="flex flex-col gap-4 lg:col-span-5">
           <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-brand lg:text-[13px]">
-            NO SABES QUE COMPRAR?
+            ¿NO SABES QUÉ COMPRAR?
           </p>
           <h2
             className="font-display text-[34px] font-medium leading-[1.04] tracking-[-0.03em] text-ink lg:text-[44px]"

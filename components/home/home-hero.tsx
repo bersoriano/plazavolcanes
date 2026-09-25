@@ -13,7 +13,7 @@ import {
 import { formatCurrency } from "@/lib/format";
 
 /** Three things the product actually does for someone who has not signed up. */
-const CHECKLIST = ["No necesitas crear una cuenta para ver los productos.", "Pagale directamente a cada tienda", "Todo queda por escrito"];
+const CHECKLIST = ["No necesitas crear una cuenta para ver los productos.", "Págale directamente a cada tienda", "Todo queda por escrito"];
 
 /** The collage's own summary, for anyone who never sees the picture. */
 const COLLAGE_SUMMARY =

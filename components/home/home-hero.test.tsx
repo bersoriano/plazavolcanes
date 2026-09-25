@@ -74,7 +74,7 @@ describe("HomeHero", () => {
     const items = within(screen.getByRole("list")).getAllByRole("listitem");
     expect(items.map((item) => item.textContent)).toEqual([
       "No necesitas crear una cuenta para ver los productos.",
-      "Pagale directamente a cada tienda",
+      "Págale directamente a cada tienda",
       "Todo queda por escrito",
     ]);
   });
