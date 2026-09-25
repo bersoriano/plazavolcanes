@@ -338,7 +338,7 @@ describe("Home conversion sections", () => {
 
     const orderedSections = [
       screen.getByRole("region", { name: "Descubrimientos de la plaza." }),
-      screen.getByRole("region", { name: "Vende en Plaza Volcanes" }),
+      screen.getByRole("region", { name: "Vende en Plaza Volcanes." }),
       screen.getByRole("heading", { name: "Tiendas de la plaza" }).closest("section"),
       screen.getByRole("region", { name: "Explora por estado" }),
       screen.getByRole("region", { name: "Cómo comprar en la plaza" }),
@@ -365,7 +365,7 @@ describe("Home conversion sections", () => {
     expect(
       screen.getByRole("region", { name: "Antes de acordar una compra" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Vende en Plaza Volcanes" })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Vende en Plaza Volcanes." })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Cómo comprar en la plaza" })).toBeInTheDocument();
   });
 
@@ -376,7 +376,7 @@ describe("Home conversion sections", () => {
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const pitch = screen.getByRole("region", { name: "Vende en Plaza Volcanes" });
+    const pitch = screen.getByRole("region", { name: "Vende en Plaza Volcanes." });
 
     expect(
       within(pitch)
@@ -398,7 +398,7 @@ describe("Home conversion sections", () => {
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const pitch = screen.getByRole("region", { name: "Vende en Plaza Volcanes" });
+    const pitch = screen.getByRole("region", { name: "Vende en Plaza Volcanes." });
     expect(within(pitch).getByRole("link", { name: "Crear mi tienda gratis" })).toHaveAttribute(
       "href",
       "/registro?vender=1",
@@ -415,7 +415,7 @@ describe("Home conversion sections", () => {
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const pitch = screen.getByRole("region", { name: "Vende en Plaza Volcanes" });
+    const pitch = screen.getByRole("region", { name: "Vende en Plaza Volcanes." });
     const catalog = screen.getByRole("region", { name: "Descubrimientos de la plaza." });
     const relation = pitch.compareDocumentPosition(catalog);
 
@@ -474,7 +474,7 @@ describe("Home conversion sections", () => {
     expect(
       screen.queryByRole("region", { name: "Antes de acordar una compra" }),
     ).not.toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Vende en Plaza Volcanes" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Vende en Plaza Volcanes." })).not.toBeInTheDocument();
     expect(
       screen.queryByRole("region", { name: "Cómo comprar en la plaza" }),
     ).not.toBeInTheDocument();
