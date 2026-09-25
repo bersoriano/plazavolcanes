@@ -13,7 +13,7 @@ describe("BuyerSteps", () => {
     expect(within(region).getByRole("heading", { level: 2 }).querySelector("em")).toHaveTextContent(
       "en la plaza.",
     );
-    expect(region).toHaveTextContent("No necesitas cuenta para mirar.");
+    expect(region).toHaveTextContent("No necesitas cuenta para explorar productos.");
   });
 
   it("lists the three steps in order", () => {

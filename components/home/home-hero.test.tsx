@@ -16,7 +16,7 @@ describe("HomeHero", () => {
   it("carries the one buyer message with its kicker, headline and deck", () => {
     render(<HomeHero />);
 
-    expect(screen.getByText("Hecho cerca. Encontrado aquí.")).toBeInTheDocument();
+    expect(screen.getByText("PUBLICA Y ADMINISTRA TUS VENTAS AQUÍ")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
       "Encuentra productos únicos cerca de ti.",
     );
@@ -73,8 +73,8 @@ describe("HomeHero", () => {
 
     const items = within(screen.getByRole("list")).getAllByRole("listitem");
     expect(items.map((item) => item.textContent)).toEqual([
-      "Sin cuenta para mirar",
-      "Pago directo con cada tienda",
+      "No necesitas crear una cuenta para ver los productos.",
+      "Pagale directamente a cada tienda",
       "Todo queda por escrito",
     ]);
   });

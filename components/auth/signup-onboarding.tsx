@@ -28,9 +28,9 @@ const choices = [
 
 const flows = {
   comprar: {
-    eyebrow: "Para quien compra",
+    eyebrow: "Compra con confianza",
     title: "Así se compra",
-    intro: "No necesitas cuenta para mirar. La pides cuando quieras enviar tu primera solicitud de pedido.",
+    intro: "No necesitas cuenta para explorar productos. La pides cuando quieras enviar tu primera solicitud de pedido.",
     steps: buyerSteps,
     note: "El pago y la entrega los acuerdas directamente con la tienda. Plaza Volcanes no procesa ni retiene fondos.",
     other: { step: "vender", label: "Ver cómo se vende" },

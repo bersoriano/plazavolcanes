@@ -33,7 +33,7 @@ export function BuyerSteps({ catalogHref }: { catalogHref: string }) {
       <div className="mx-auto flex max-w-[1200px] flex-col gap-7 lg:grid lg:grid-cols-[1fr_auto] lg:items-end lg:gap-x-10 lg:gap-y-14">
         <div className="flex max-w-[760px] flex-col gap-3.5 lg:gap-4">
           <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-brand lg:text-[13px]">
-            Para quien compra
+            Compra con confianza
           </p>
           <h2
             className="text-balance font-display text-[38px] font-medium leading-[1.02] tracking-[-0.03em] text-ink lg:text-[60px]"
@@ -42,7 +42,7 @@ export function BuyerSteps({ catalogHref }: { catalogHref: string }) {
             Cómo comprar <em className="italic text-brand">en la plaza.</em>
           </h2>
           <p className="text-[16px] leading-[1.6] text-muted lg:text-[18px]">
-            No necesitas cuenta para mirar. La pides cuando quieras enviar tu primera solicitud de
+            No necesitas cuenta para explorar productos. La pides cuando quieras enviar tu primera solicitud de
             pedido.
           </p>
         </div>
