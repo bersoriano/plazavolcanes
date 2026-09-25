@@ -61,7 +61,7 @@ export function HomeHero({ featured, locale = DEFAULT_CATALOG_LOCALE }: HomeHero
           </p>
 
           <h1
-            className="text-balance font-display text-[46px] font-medium leading-[1] tracking-[-0.035em] text-ink lg:text-[80px] lg:leading-[0.98]"
+            className="text-balance font-display text-[46px] font-medium leading-[1] tracking-[-0.035em] text-ink lg:text-wrap lg:text-[80px] lg:leading-[0.98]"
             id="inicio-heading"
           >
             Encuentra productos únicos <em className="italic text-brand">cerca de ti.</em>
