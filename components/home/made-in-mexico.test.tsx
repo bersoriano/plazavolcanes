@@ -10,9 +10,9 @@ describe("MadeInMexico", () => {
     render(<MadeInMexico />);
 
     const heading = screen.getByRole("heading", { level: 2 });
-    expect(heading).toHaveTextContent("Plaza Volcanes es una plataforma 100% Mexicana.");
+    expect(heading).toHaveTextContent("Plaza Volcanes es una plataforma 100% Mexicana 🇲🇽.");
     expect(
-      screen.getByRole("region", { name: "Plaza Volcanes es una plataforma 100% Mexicana." }),
+      screen.getByRole("region", { name: "Plaza Volcanes es una plataforma 100% Mexicana 🇲🇽." }),
     ).toBeInTheDocument();
   });
 
@@ -20,7 +20,7 @@ describe("MadeInMexico", () => {
     render(<MadeInMexico />);
 
     const emphasis = screen.getByRole("heading", { level: 2 }).querySelector("em");
-    expect(emphasis).toHaveTextContent("100% Mexicana.");
+    expect(emphasis).toHaveTextContent("100% Mexicana 🇲🇽.");
     expect(emphasis).toHaveClass("italic", "text-brand");
   });
 

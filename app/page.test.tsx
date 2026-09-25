@@ -221,7 +221,7 @@ describe("Home conversion sections", () => {
     expect(within(hero).getByRole("heading", { level: 1 })).toHaveTextContent(
       "Encuentra productos únicos cerca de ti.",
     );
-    expect(within(hero).getByText("Hecho cerca. Encontrado aquí.")).toBeInTheDocument();
+    expect(within(hero).getByText("PUBLICA Y ADMINISTRA TUS VENTAS AQUÍ")).toBeInTheDocument();
   });
 
   it("carries the conversion links inside the hero and the search below it", async () => {
@@ -337,13 +337,14 @@ describe("Home conversion sections", () => {
     render(await Home({ searchParams: Promise.resolve({}) }));
 
     const orderedSections = [
+      screen.getByRole("region", { name: "Sin retenciones Ni Comisiones" }),
       screen.getByRole("region", { name: "Descubrimientos de la plaza." }),
       screen.getByRole("region", { name: "Vende en Plaza Volcanes." }),
       screen.getByRole("heading", { name: "Tiendas de la plaza." }).closest("section"),
       screen.getByRole("region", { name: "Explora por estado." }),
       screen.getByRole("region", { name: "Cómo comprar en la plaza." }),
       screen.getByRole("region", { name: "Antes de acordar una compra" }),
-      screen.getByRole("region", { name: "Plaza Volcanes es una plataforma 100% Mexicana." }),
+      screen.getByRole("region", { name: "Plaza Volcanes es una plataforma 100% Mexicana 🇲🇽." }),
     ];
 
     for (const [index, section] of orderedSections.entries()) {
@@ -379,13 +380,23 @@ describe("Home conversion sections", () => {
     expect(screen.queryByText("Tu tienda podría estar aquí")).not.toBeInTheDocument();
   });
 
+  it("states the no-fees promise just above the catalogue on the cold start home", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult());
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const statement = screen.getByRole("region", { name: "Sin retenciones Ni Comisiones" });
+    const catalog = screen.getByRole("region", { name: "Descubrimientos de la plaza." });
+    expect(statement.compareDocumentPosition(catalog) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   it("closes the cold start home with the same statement", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult());
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
     expect(
-      screen.getByRole("region", { name: "Plaza Volcanes es una plataforma 100% Mexicana." }),
+      screen.getByRole("region", { name: "Plaza Volcanes es una plataforma 100% Mexicana 🇲🇽." }),
     ).toBeInTheDocument();
   });
 
@@ -510,7 +521,10 @@ describe("Home conversion sections", () => {
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Vende en Plaza Volcanes." })).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("region", { name: "Plaza Volcanes es una plataforma 100% Mexicana." }),
+      screen.queryByRole("region", { name: "Sin retenciones Ni Comisiones" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Plaza Volcanes es una plataforma 100% Mexicana 🇲🇽." }),
     ).not.toBeInTheDocument();
     expect(
       screen.queryByRole("region", { name: "Cómo comprar en la plaza." }),
