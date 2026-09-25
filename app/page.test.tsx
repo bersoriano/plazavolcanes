@@ -339,7 +339,7 @@ describe("Home conversion sections", () => {
     const orderedSections = [
       screen.getByRole("region", { name: "Descubrimientos de la plaza." }),
       screen.getByRole("region", { name: "Vende en Plaza Volcanes." }),
-      screen.getByRole("heading", { name: "Tiendas de la plaza" }).closest("section"),
+      screen.getByRole("heading", { name: "Tiendas de la plaza." }).closest("section"),
       screen.getByRole("region", { name: "Explora por estado" }),
       screen.getByRole("region", { name: "Cómo comprar en la plaza" }),
       screen.getByRole("region", { name: "Antes de acordar una compra" }),
@@ -353,6 +353,29 @@ describe("Home conversion sections", () => {
           .toBeTruthy();
       }
     }
+  });
+
+  it("ends the shops row with an open seat for a new store", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()], shops: [sampleShop()] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const shops = screen.getByRole("region", { name: "Tiendas de la plaza." });
+    const links = within(shops).getAllByRole("link");
+    expect(links.at(-1)).toHaveAccessibleName(/Tu tienda podría estar aquí/);
+    expect(links.at(-1)).toHaveAttribute("href", "/vender?desde=tiendas");
+  });
+
+  it("leaves the open seat out of a search", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()], shops: [sampleShop()] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({ q: "taza" }) }));
+
+    expect(screen.queryByText("Tu tienda podría estar aquí")).not.toBeInTheDocument();
   });
 
   it("shows the buyer trust strip, the seller pitch and the buying steps when products exist", async () => {

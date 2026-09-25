@@ -8,7 +8,7 @@ import { CategoryNavigation } from "@/components/catalog/category-navigation";
 import { ProductCard } from "@/components/catalog/product-card";
 import { ProductGrid } from "@/components/catalog/product-grid";
 import { SearchBar } from "@/components/catalog/search-bar";
-import { PublicShopCard } from "@/components/catalog/shop-card";
+import { PublicShopCard, ShopInviteCard } from "@/components/catalog/shop-card";
 import { BuyerSteps } from "@/components/home/buyer-steps";
 import { HomeHero } from "@/components/home/home-hero";
 import { SellerPitch } from "@/components/home/seller-pitch";
@@ -171,15 +171,33 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   );
 
   const shopsSection = shops.length ? (
-    <section className="mx-auto max-w-[1440px] px-5 pb-16 sm:px-8 lg:px-12" id="tiendas">
-      <div className="mb-6">
-        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Conoce a quienes venden</p>
-        <h2 className="mt-2 font-display text-3xl font-semibold tracking-[-0.03em]">
-          {area ? `Tiendas de ${area.label}` : "Tiendas de la plaza"}
-        </h2>
-      </div>
-      <div className="flex gap-5 overflow-x-auto pb-3">
-        {shops.map((shop) => <PublicShopCard key={shop.id} shop={shop} />)}
+    <section aria-labelledby="tiendas-heading" className="pb-16 lg:px-8 lg:pb-[104px]" id="tiendas">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-6 lg:gap-10">
+        <div className="flex flex-col gap-3.5 px-5 sm:px-8 lg:gap-4 lg:px-0">
+          <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-brand lg:text-[13px]">
+            Conoce a quienes venden
+          </p>
+          <h2
+            className="text-balance font-display text-[36px] font-medium leading-[1.04] tracking-[-0.03em] text-ink lg:text-[48px]"
+            id="tiendas-heading"
+          >
+            {area ? (
+              `Tiendas de ${area.label}`
+            ) : (
+              <>
+                Tiendas <em className="italic text-brand">de la plaza.</em>
+              </>
+            )}
+          </h2>
+        </div>
+        {/* A scroller on a phone, a three-column grid at lg: the scroller
+            dissolves into the grid, so the invite card becomes its last cell. */}
+        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3">
+          <div className="flex snap-x gap-3.5 overflow-x-auto scroll-px-5 px-5 pb-1 sm:scroll-px-8 sm:px-8 lg:contents">
+            {shops.map((shop) => <PublicShopCard key={shop.id} shop={shop} />)}
+          </div>
+          {hasFilters ? null : <ShopInviteCard />}
+        </div>
       </div>
     </section>
   ) : null;

@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { PublicShopCard } from "@/components/catalog/shop-card";
+import { PublicShopCard, ShopInviteCard } from "@/components/catalog/shop-card";
 
 afterEach(cleanup);
 
@@ -174,5 +174,15 @@ describe("PublicShopCard", () => {
     expect(screen.queryByText("Premium")).toBeNull();
     expect(screen.getByRole("link", { name: /Casa Niebla/ })).toHaveClass("border-line");
     expect(screen.getByRole("heading", { name: "Casa Niebla" })).not.toHaveClass("text-premium-text");
+  });
+});
+
+describe("ShopInviteCard", () => {
+  it("sends a would-be seller to the landing from the shops row", () => {
+    render(<ShopInviteCard />);
+
+    const invite = screen.getByRole("link", { name: /Tu tienda podría estar aquí/ });
+    expect(invite).toHaveAttribute("href", "/vender?desde=tiendas");
+    expect(invite).toHaveTextContent("Quiero vender");
   });
 });
