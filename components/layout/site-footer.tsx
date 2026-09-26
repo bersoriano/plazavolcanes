@@ -4,44 +4,75 @@ import { ChevronDown } from "lucide-react";
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { LEGAL_ROUTES } from "@/lib/legal/document-types";
 
+const LINK = "inline-flex min-h-11 items-center whitespace-nowrap text-white transition-colors hover:text-accent";
+const LABEL = "text-[11px] font-bold uppercase tracking-[0.14em] text-accent lg:text-[12px]";
+
+/**
+ * The site's footer: the brand, the plaza's own links and the legal shelf,
+ * then a giant lime wordmark cropped by the bottom edge. The wordmark is
+ * decoration; the brand is already named at the top.
+ */
 export function SiteFooter() {
   return (
-    <footer className="overflow-hidden bg-brand text-white" data-site-footer>
-      <div className="relative mx-auto flex max-w-[1440px] flex-col gap-10 px-5 py-12 sm:px-8 lg:flex-row lg:justify-between lg:px-12">
-        <VolcanoMark className="absolute -bottom-20 left-1/2 w-[720px] -translate-x-1/2 text-white/5" />
-        <div className="relative">
-          <p className="font-display text-2xl font-semibold">Plaza Volcanes</p>
-          <p className="mt-2 max-w-sm text-sm leading-6 text-white/70">Un punto de encuentro para tiendas independientes y personas curiosas.</p>
-        </div>
-        <div className="relative flex flex-col gap-8 sm:flex-row sm:gap-16">
-          <nav aria-label="Navegación" className="flex flex-col gap-1 text-sm font-medium text-white/80">
-            <Link className="inline-flex min-h-11 items-center hover:text-accent" href="/">Explorar</Link>
-            <Link className="inline-flex min-h-11 items-center hover:text-accent" href="/vender?desde=footer">Vender</Link>
-            <Link className="inline-flex min-h-11 items-center hover:text-accent" href="/ingresar">Ingresar</Link>
-          </nav>
-          {/*
-            Eight legal links at 44px apiece stand taller than the content of a
-            short page on a phone, so they fold away there. `disclosure-mobile`
-            reopens the panel from `lg` up, where the height costs nothing.
-          */}
-          <details aria-label="Información legal" className="disclosure-mobile" name="footer-shelf">
-            <summary
-              className="tap flex cursor-pointer list-none items-center gap-2 text-sm font-semibold text-white/80 hover:text-accent lg:cursor-default lg:font-medium [&::-webkit-details-marker]:hidden"
-            >
-              Información legal
-              <ChevronDown aria-hidden="true" className="size-4 transition-transform lg:hidden [details[open]_&]:rotate-180" />
-            </summary>
-            <nav aria-label="Información legal" className="flex flex-col gap-1 text-sm font-medium text-white/80">
-              {LEGAL_ROUTES.map((route) => (
-                <Link className="inline-flex min-h-11 items-center hover:text-accent" href={route.path} key={route.path}>
-                  {route.navLabel}
-                </Link>
-              ))}
+    <footer className="relative overflow-hidden bg-brand text-white" data-site-footer data-surface="dark">
+      <div className="relative mx-auto flex max-w-[1440px] flex-col gap-8 px-5 pb-[190px] pt-14 sm:px-8 lg:gap-12 lg:px-12 lg:pb-60 lg:pt-20 xl:px-20">
+        <div className="flex flex-col gap-8 lg:flex-row lg:justify-between">
+          <div className="flex flex-col gap-3.5 lg:max-w-[300px] lg:gap-[18px] xl:max-w-[380px]">
+            <p className="flex items-center gap-2.5 lg:gap-3">
+              <span className="relative grid size-9 place-items-center overflow-hidden rounded-[10px] bg-accent text-brand lg:size-[42px] lg:rounded-xl">
+                <VolcanoMark className="absolute left-1/2 top-1/2 w-12 -translate-x-1/2 -translate-y-1/2 lg:w-14" />
+              </span>
+              <span className="font-display text-[20px] font-bold lg:text-[22px]">Plaza Volcanes</span>
+            </p>
+            <p className="text-[15px] leading-[1.55] text-white/70 lg:text-[16px]">
+              Un punto de encuentro para tiendas independientes y personas curiosas.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-12 text-[15px] lg:flex lg:gap-12 xl:gap-24">
+            <nav aria-label="Navegación" className="flex flex-col gap-1">
+              {/* As tall as the legal shelf's 44px summary beside it. */}
+              <p className={`${LABEL} flex min-h-11 items-center`}>Plaza</p>
+              <Link className={LINK} href="/explorar">Explorar</Link>
+              <Link className={LINK} href="/vender?desde=footer">Vender</Link>
+              <Link className={LINK} href="/ingresar">Ingresar</Link>
             </nav>
-          </details>
+            {/*
+              Eight legal links at 44px apiece stand taller than the content of a
+              short page on a phone, so they fold away there. `disclosure-mobile`
+              reopens the panel from `lg` up, where the height costs nothing.
+            */}
+            <details aria-label="Información legal" className="disclosure-mobile" name="footer-shelf">
+              <summary
+                className={`tap flex cursor-pointer list-none items-center gap-2 lg:cursor-default [&::-webkit-details-marker]:hidden ${LABEL}`}
+              >
+                Información legal
+                <ChevronDown aria-hidden="true" className="size-4 transition-transform lg:hidden [details[open]_&]:rotate-180" />
+              </summary>
+              <nav aria-label="Información legal" className="grid gap-x-10 gap-y-1 lg:grid-flow-col lg:grid-rows-4 xl:gap-x-16">
+                {LEGAL_ROUTES.map((route) => (
+                  <Link className={LINK} href={route.path} key={route.path}>
+                    {route.navLabel}
+                  </Link>
+                ))}
+              </nav>
+            </details>
+          </div>
+        </div>
+
+        <div className="flex justify-between gap-4 border-t border-white/15 pt-[18px] text-[13px] text-white/60 lg:pt-[22px] lg:text-[14px]">
+          <p>© 2026 Plaza Volcanes</p>
+          <p>Hecho en México</p>
         </div>
       </div>
-      <div className="border-t border-white/10 px-5 py-5 text-center text-xs text-white/55">© 2026 Plaza Volcanes</div>
+
+      <p
+        aria-hidden="true"
+        className="pointer-events-none absolute -bottom-[18px] left-3.5 select-none font-display text-[104px] font-extrabold leading-[0.9] tracking-[-0.045em] text-accent lg:-bottom-[0.14em] lg:left-14 lg:whitespace-nowrap lg:text-[clamp(160px,16.5vw,238px)] lg:leading-none"
+      >
+        Plaza <br className="lg:hidden" />
+        <em className="italic">Volcanes</em>
+      </p>
     </footer>
   );
 }

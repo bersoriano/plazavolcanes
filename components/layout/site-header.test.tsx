@@ -115,15 +115,40 @@ describe("SiteHeader", () => {
     );
   });
 
-  it("keeps the signed-out selling link at least 44px high", async () => {
+  it("keeps the phone's selling pill at least 44px high and hands wider screens the full button", async () => {
     await renderHeader(false);
 
-    // Hidden below sm on purpose: the quick access bar owns that width.
-    expect(screen.getByRole("link", { name: "Vender" })).toHaveClass(
-      "hidden",
-      "min-h-11",
-      "items-center",
-      "sm:inline-flex",
-    );
+    expect(screen.getByRole("link", { name: "Vender" })).toHaveClass("inline-flex", "min-h-11", "sm:hidden");
+    const open = screen.getByRole("link", { name: "Abrir mi tienda" });
+    expect(open).toHaveAttribute("href", "/vender?desde=header");
+    expect(open).toHaveClass("hidden", "h-12", "sm:inline-flex");
+  });
+
+  it("links the home page's sections from any page for a signed-out visitor", async () => {
+    await renderHeader(false);
+
+    const sections = screen.getByRole("navigation", { name: "Secciones de la plaza" });
+    expect(within(sections).getAllByRole("link").map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
+      ["Explorar", "/#explorar"],
+      ["Tiendas", "/#tiendas"],
+      ["Cómo funciona", "/#pasos"],
+      ["Para vender", "/#vender"],
+    ]);
+  });
+
+  it("opens the same sections from a named menu button below xl", async () => {
+    await renderHeader(false);
+
+    const button = screen.getByRole("button", { name: "Abrir menú" });
+    expect(button).toHaveAttribute("popovertarget", "menu-principal");
+    expect(button).toHaveClass("tap", "xl:hidden");
+  });
+
+  it("leaves the signed-in header without the landing's section links or menu", async () => {
+    await renderHeader(true);
+
+    expect(screen.queryByRole("navigation", { name: "Secciones de la plaza" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Abrir menú" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Abrir mi tienda" })).not.toBeInTheDocument();
   });
 });

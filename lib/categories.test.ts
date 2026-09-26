@@ -69,8 +69,8 @@ describe("buildCatalogHref", () => {
     ).toBe("/?q=caf%C3%A9+molido&categoria=alimentos-y-bebidas&subcategoria=despensa");
   });
 
-  it("returns the catalog root when every filter is empty", () => {
-    expect(buildCatalogHref({ query: "  " })).toBe("/");
+  it("returns the whole catalogue, not the landing, when every filter is empty", () => {
+    expect(buildCatalogHref({ query: "  " })).toBe("/explorar");
   });
 
   it("preserves a nondefault locale and country alongside discovery filters", () => {
@@ -84,13 +84,14 @@ describe("buildCatalogHref", () => {
     ).toBe("/?q=iphone&categoria=electronica&locale=en-US&countryCode=US");
   });
 
-  it("keeps default locale and country behavior at the catalog root", () => {
+  it("keeps default locale and country behavior at the catalogue root", () => {
+    expect(buildCatalogHref({ locale: "en-US", countryCode: "US" })).toBe("/explorar?locale=en-US&countryCode=US");
     expect(
       buildCatalogHref({
         locale: DEFAULT_CATALOG_LOCALE,
         countryCode: DEFAULT_CATALOG_MARKET,
       }),
-    ).toBe("/");
+    ).toBe("/explorar");
   });
 });
 
@@ -125,6 +126,6 @@ describe("buildCatalogHref state paths", () => {
 
   it("returns the national catalog when no state is selected", () => {
     expect(buildCatalogHref({ query: "taza" })).toBe("/?q=taza");
-    expect(buildCatalogHref({})).toBe("/");
+    expect(buildCatalogHref({})).toBe("/explorar");
   });
 });

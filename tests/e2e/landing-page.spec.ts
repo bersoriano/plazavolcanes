@@ -254,7 +254,7 @@ test.describe("landing responsive and accessibility gate", () => {
         await page.goto("/");
 
         await expect(
-          page.getByRole("heading", { level: 1, name: "Encuentra productos únicos cerca de ti." }),
+          page.getByRole("heading", { level: 1, name: "Vende lo tuyo. Quédate con todo." }),
         ).toBeVisible();
         await expect(page.getByRole("link", { name: "Plaza Volcanes, inicio" })).toBeVisible();
         await expect(page.getByRole("button", { name: "Salir" })).toBeVisible();
@@ -277,7 +277,8 @@ test.describe("landing responsive and accessibility gate", () => {
         await expect(productCard).toBeVisible();
         await expect.poll(() => failedCatalogImageRequests).toBeGreaterThan(0);
 
-        const productCards = page.locator("#catalogo a.group.block");
+        // The buyer panel's compact cards: the landing shows the newest three.
+        const productCards = page.locator("#explorar a.group");
         const productCardCount = await productCards.count();
         expect(productCardCount).toBeGreaterThan(0);
         for (let index = 0; index < productCardCount; index += 1) {
@@ -286,10 +287,9 @@ test.describe("landing responsive and accessibility gate", () => {
           await expect(card.locator("svg.lucide-image")).toBeVisible();
         }
 
-        const catalog = page.locator("#catalogo");
+        const catalog = page.locator("#explorar");
         await page.getByRole("link", { name: "Explorar productos" }).click();
-        await expect(page).toHaveURL(/#catalogo$/);
-        await expect(catalog).toBeFocused();
+        await expect(page).toHaveURL(/#explorar$/);
         await expect
           .poll(() =>
             catalog.evaluate((element) => {
@@ -341,7 +341,7 @@ test.describe("landing responsive and accessibility gate", () => {
     });
   }
 
-  test("keeps the catalog destination below the sticky header on compact screens", async ({
+  test("keeps the buyer panel below the sticky header on compact screens", async ({
     browser,
   }) => {
     for (const width of [320, 390]) {
@@ -355,10 +355,10 @@ test.describe("landing responsive and accessibility gate", () => {
       try {
         await page.goto("/");
         await page.getByRole("link", { name: "Explorar productos" }).click();
-        await expect(page).toHaveURL(/#catalogo$/);
+        await expect(page).toHaveURL(/#explorar$/);
 
-        const destination = await page.locator("#catalogo").evaluate((catalog) => {
-          const heading = catalog.querySelector("#catalogo-heading");
+        const destination = await page.locator("#explorar").evaluate((catalog) => {
+          const heading = catalog.querySelector("#explorar-heading");
           const header = document.querySelector("header");
           return {
             headingClearsHeader: Boolean(
@@ -390,29 +390,35 @@ test.describe("landing responsive and accessibility gate", () => {
 
       const home = page.getByRole("link", { name: "Plaza Volcanes, inicio" });
       const search = page.getByRole("searchbox", { name: "Buscar productos" });
-      const focusOrder = [
+      // The header and the seller hero, in order. "Mi panel" and "Mensajes"
+      // are display:none at this width: the quick access bar holds them.
+      const headerAndHero = [
         home,
-        // "Mi panel" and "Mensajes" are display:none at this width now: the
-        // quick access bar holds them, so they leave the tab sequence here.
         page.getByRole("button", { name: "Salir" }),
+        page.getByRole("link", { name: "Abrir mi tienda gratis" }).first(),
         page.getByRole("link", { name: "Explorar productos" }),
-        page.getByRole("link", { name: "Abrir mi tienda" }).first(),
-        // The hero's message picker.
-        page.getByRole("button", { name: "Ver mensaje 1" }),
-        page.getByRole("button", { name: "Ver mensaje 2" }),
-        page.getByRole("button", { name: "Ver mensaje 3" }),
+        // Only the phone's copy of the steps CTA is displayed at 320px.
+        page.getByRole("link", { name: "Crear mi tienda gratis" }),
+      ];
+      for (const target of headerAndHero) {
+        await page.keyboard.press("Tab");
+        await expectFocusVisibleAndUnclipped(target);
+        if (target === home) await expectLightSurfaceFocusContrast(target);
+      }
+
+      // The shops row is as long as the plaza has shops; resume after it.
+      await page.getByRole("link", { name: /Tu tienda podría estar aquí/ }).focus();
+      const buyerPanel = [
         search,
         page.getByRole("combobox", { name: "Estado" }),
         page.getByRole("button", { name: "Buscar" }),
         page.getByRole("navigation", { name: "Categorías de productos" }).getByRole("link").first(),
       ];
-
-      for (const target of focusOrder) {
+      for (const target of buyerPanel) {
         await page.keyboard.press("Tab");
         await expectFocusVisibleAndUnclipped(target);
-
-        // The search field sits on the white search card, not on a dark hero.
-        if (target === home || target === search) await expectLightSurfaceFocusContrast(target);
+        // The search field sits on the white buyer panel.
+        if (target === search) await expectLightSurfaceFocusContrast(target);
       }
 
       const navigation = page.getByRole("navigation", { name: "Categorías de productos" });

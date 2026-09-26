@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { CatalogScreen } from "@/components/catalog/catalog-screen";
+import { HomeLanding } from "@/components/home/landing/home-landing";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildCatalogHref, listingCategoryIds, resolveCategorySelection } from "@/lib/categories";
 import { normalizeCatalogFilters } from "@/lib/queries/catalog";
@@ -53,7 +54,8 @@ function HomeStructuredData() {
 }
 
 export default async function Home({ searchParams }: { searchParams: HomeSearchParams }) {
-  const filters = normalizeCatalogFilters(await searchParams);
+  const rawParams = await searchParams;
+  const filters = normalizeCatalogFilters(rawParams);
 
   // A state is a place, not a query parameter: send it to its canonical path.
   if (filters.administrativeAreaSlug) {
@@ -69,12 +71,29 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
     );
   }
 
+  const bareHome = !filters.query && !filters.categorySlug && !filters.subcategorySlug && !filters.invalidCategorySelection;
+
+  // The buyer panel's search submitted with nothing in it: somebody asking to
+  // see everything, which is the catalogue, not the landing they came from.
+  if (bareHome && "q" in rawParams) {
+    redirect(buildCatalogHref({ locale: filters.locale, countryCode: filters.countryCode }));
+  }
+
   const [catalog, stateCounts] = await Promise.all([
     getHomeCatalog(filters),
     getCatalogStateCounts(filters.countryCode),
   ]);
 
-  const bareHome = !filters.query && !filters.categorySlug && !filters.subcategorySlug && !filters.invalidCategorySelection;
+  // The bare home is the seller-first landing; anything filtered, or an
+  // unknown state that fell back to all of México, keeps the catalogue.
+  if (bareHome && !filters.invalidAreaSelection) {
+    return (
+      <>
+        <HomeStructuredData />
+        <HomeLanding catalog={catalog} filters={filters} stateCounts={stateCounts} />
+      </>
+    );
+  }
 
   return (
     <>

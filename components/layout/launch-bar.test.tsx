@@ -57,7 +57,7 @@ describe("LaunchBar", () => {
   it("counts down the remaining spots once a count arrives", async () => {
     await renderBar({ spotsTaken: 2 });
 
-    expect(bar()).toHaveTextContent(`Quedan ${FOUNDERS_CAP - 2} lugares`);
+    expect(bar()).toHaveTextContent(`Quedan ${FOUNDERS_CAP - 2} lugares fundadores`);
   });
 
   it("stops asking once the cap is reached", async () => {

@@ -1,8 +1,8 @@
 import { ImageResponse } from "next/og";
 
 // The preview a shared link shows. Pages without an image of their own inherit
-// it, so it names the plaza rather than any one page.
-export const alt = "Plaza Volcanes: tiendas independientes de México";
+// it; since the home page became the seller landing, it carries that pitch.
+export const alt = "Plaza Volcanes: vende lo tuyo y quédate con todo";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -29,13 +29,28 @@ export default function OpengraphImage() {
           PLAZA VOLCANES
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", fontSize: 84, fontWeight: 700, lineHeight: 1.02, marginTop: 56 }}>
-          <span>Tiendas independientes</span>
-          <span style={{ color: ACCENT }}>de México</span>
+        <div style={{ display: "flex", flexDirection: "column", fontSize: 88, fontWeight: 700, lineHeight: 1.02, marginTop: 48 }}>
+          <span>Vende lo tuyo.</span>
+          <div style={{ alignItems: "center", display: "flex", gap: 24 }}>
+            <span style={{ color: ACCENT }}>Quédate con</span>
+            <span
+              style={{
+                background: ACCENT,
+                borderRadius: 26,
+                boxShadow: "0 8px 0 #1f0d31",
+                color: BRAND,
+                display: "flex",
+                padding: "0 22px 10px",
+                transform: "rotate(-2.5deg)",
+              }}
+            >
+              todo.
+            </span>
+          </div>
         </div>
 
-        <div style={{ color: "rgba(255,255,255,0.78)", display: "flex", fontSize: 32, marginTop: 28 }}>
-          Productos nuevos y usados, directo de cada tienda.
+        <div style={{ color: "rgba(255,255,255,0.78)", display: "flex", fontSize: 32, marginTop: 34 }}>
+          0% comisión para las primeras 100 tiendas.
         </div>
 
         {/* The brand's volcano line, the same paths as VolcanoMark. */}

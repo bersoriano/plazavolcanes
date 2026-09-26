@@ -24,11 +24,13 @@ function metadataFor(params: Parameters<typeof normalizeCatalogFilters>[0], list
 }
 
 describe("home metadata", () => {
-  it("names the plaza and what it offers on the bare home page", () => {
+  it("speaks to sellers on the bare home page, which is the landing", () => {
     const metadata = metadataFor({});
 
-    expect(metadata.title).toEqual({ absolute: "Plaza Volcanes: tiendas independientes de México" });
-    expect(metadata.description).toMatch(/tiendas independientes de todo México/);
+    expect(metadata.title).toEqual({ absolute: "Plaza Volcanes: abre tu tienda independiente en México" });
+    expect(metadata.description).toBe(
+      "Abre tu tienda en Plaza Volcanes, publica productos nuevos o usados y recibe el pago directo de cada cliente. 0% comisión para las primeras 100 tiendas.",
+    );
     expect(metadata.alternates?.canonical).toBe("/");
     expect(metadata.robots).toBeUndefined();
     expect(metadata.openGraph).toMatchObject({
@@ -36,7 +38,7 @@ describe("home metadata", () => {
       locale: "es_MX",
       siteName: "Plaza Volcanes",
       url: "/",
-      title: "Plaza Volcanes: tiendas independientes de México",
+      title: "Plaza Volcanes: abre tu tienda independiente en México",
     });
     expect(metadata.twitter).toMatchObject({ card: "summary_large_image" });
   });

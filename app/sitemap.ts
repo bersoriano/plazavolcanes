@@ -27,6 +27,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "daily",
       priority: 1,
     },
+    {
+      url: sitemapUrl("/explorar"),
+      lastModified: now,
+      changeFrequency: "daily",
+      priority: 0.9,
+    },
+    {
+      url: sitemapUrl("/como-comprar"),
+      lastModified: now,
+      changeFrequency: "monthly",
+      priority: 0.4,
+    },
     ...MEXICO_ADMINISTRATIVE_AREAS.map((area) => ({
       url: sitemapUrl(`/estado/${area.slug}`),
       lastModified: now,

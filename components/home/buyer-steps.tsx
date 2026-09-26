@@ -22,7 +22,10 @@ export const buyerSteps = [
   },
 ];
 
-export function BuyerSteps({ catalogHref }: { catalogHref: string }) {
+/** `headingLevel` 1 makes the guide the page itself, as on /como-comprar. */
+export function BuyerSteps({ catalogHref, headingLevel = 2 }: { catalogHref: string; headingLevel?: 1 | 2 }) {
+  const Heading = headingLevel === 1 ? "h1" : "h2";
+
   return (
     <section
       aria-labelledby="comprar-heading"
@@ -35,12 +38,12 @@ export function BuyerSteps({ catalogHref }: { catalogHref: string }) {
           <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-brand lg:text-[13px]">
             Compra con confianza
           </p>
-          <h2
+          <Heading
             className="text-balance font-display text-[38px] font-medium leading-[1.02] tracking-[-0.03em] text-ink lg:text-[60px]"
             id="comprar-heading"
           >
             Cómo comprar <em className="italic text-brand">en la plaza.</em>
-          </h2>
+          </Heading>
           <p className="text-[16px] leading-[1.6] text-muted lg:text-[18px]">
             No necesitas cuenta para explorar productos. La pides cuando quieras enviar tu primera solicitud de
             pedido.
