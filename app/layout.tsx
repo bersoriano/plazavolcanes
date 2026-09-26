@@ -9,10 +9,14 @@ import { getSiteUrl } from "@/lib/site-url";
 
 import "./globals.css";
 
+// The optical-size axis narrows and tightens the letterforms as the type
+// grows, which is how the landing's 76–250px display sizes were drawn; without
+// it every size renders with the 14px text cut.
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
   subsets: ["latin"],
   display: "swap",
+  axes: ["opsz"],
 });
 
 const instrument = Instrument_Sans({

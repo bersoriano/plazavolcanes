@@ -141,7 +141,7 @@ function PhotoTile({
 
 function Receipt() {
   return (
-    <div className="animate-rise-in absolute left-[8.571cqw] top-[38.857cqw] flex w-[82.857cqw] flex-col gap-[2.857cqw] rounded-[6.286cqw] bg-surface p-[5.143cqw] text-ink shadow-[0_24px_48px_-20px_rgb(50_23_77/0.5)] [animation-delay:120ms] sm:left-[23.333cqw] sm:top-[39.333cqw] sm:w-[61.667cqw] sm:gap-[2.333cqw] sm:rounded-[4.667cqw] sm:p-[4cqw] sm:shadow-[0_30px_60px_-24px_rgb(50_23_77/0.5)]">
+    <div className="animate-rise-in absolute left-[8.571cqw] top-[38.857cqw] flex w-[82.857cqw] flex-col leading-[1.2] gap-[2.857cqw] rounded-[6.286cqw] bg-surface p-[5.143cqw] text-ink shadow-[0_24px_48px_-20px_rgb(50_23_77/0.5)] [animation-delay:120ms] sm:left-[23.333cqw] sm:top-[39.333cqw] sm:w-[61.667cqw] sm:gap-[2.333cqw] sm:rounded-[4.667cqw] sm:p-[4cqw] sm:shadow-[0_30px_60px_-24px_rgb(50_23_77/0.5)]">
       <div className="flex items-center gap-[2.857cqw] sm:gap-[2cqw]">
         <span className="grid size-[9.143cqw] shrink-0 place-items-center rounded-full bg-accent text-brand sm:size-[6.667cqw]">
           <Check className="size-1/2" strokeWidth={2.6} />
