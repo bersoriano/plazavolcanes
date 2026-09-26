@@ -3,14 +3,12 @@ import Image from "next/image";
 import { ArrowRight, MapPin, SearchX, Sparkles, Store } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
-import { CatalogSearchPanel } from "@/components/catalog/catalog-search-panel";
 import { CategoryNavigation } from "@/components/catalog/category-navigation";
 import { ProductCard } from "@/components/catalog/product-card";
 import { ProductGrid } from "@/components/catalog/product-grid";
 import { SearchBar } from "@/components/catalog/search-bar";
 import { PublicShopCard, ShopInviteCard } from "@/components/catalog/shop-card";
 import { BuyerSteps } from "@/components/home/buyer-steps";
-import { HomeHero } from "@/components/home/home-hero";
 import { MadeInMexico } from "@/components/home/made-in-mexico";
 import { NoFeesStatement } from "@/components/home/no-fees-statement";
 import { SellerPitch } from "@/components/home/seller-pitch";
@@ -74,9 +72,9 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   // The state scopes the page rather than filtering within it, so it never counts here.
   const hasFilters = Boolean(filters.query || activeCategorySlug);
   const coldStart = !hasFilters && products.length === 0;
-  // The buyer hero owns the home pitch; every scoped or filtered view keeps
-  // the single hero whose copy adapts to the place or the query.
-  const homeHero =
+  // Only /explorar shows the whole plaza unfiltered; its heading keeps the
+  // larger size the home catalogue used to have.
+  const allProducts =
     !area && !hasFilters && !invalidCategorySelection && !filters.invalidAreaSelection;
   const placeSuffix = area ? ` en ${area.label}` : "";
   const heading = filters.query
@@ -104,11 +102,11 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
             </p>
             <h2
               className={`text-balance font-display font-medium leading-[1.02] tracking-[-0.03em] text-ink ${
-                homeHero ? "text-[38px] lg:text-[60px]" : "text-[32px] lg:text-[48px]"
+                allProducts ? "text-[38px] lg:text-[60px]" : "text-[32px] lg:text-[48px]"
               }`}
               id="catalogo-heading"
             >
-              {homeHero ? (
+              {allProducts ? (
                 <>
                   Descubrimientos <em className="italic text-brand">de la plaza.</em>
                 </>
@@ -209,119 +207,104 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
 
   return (
     <>
-      {homeHero ? (
-        <>
-          {/* The catalogue is newest first, so its first product is the newest listing. */}
-          <HomeHero featured={products[0] ?? null} locale={filters.locale} />
-          {/* The search and the categories are the plaza's index: they follow
-              the pitch instead of crowding it, in a card that overlaps it. The
-              home view has no query, category or state to carry. */}
-          <CatalogSearchPanel
-            countryCode={filters.countryCode}
-            locale={filters.locale}
-            tree={categories}
-          />
-        </>
-      ) : (
-        <section className="relative overflow-hidden border-b border-line bg-surface">
-          <Image
-            alt=""
-            aria-hidden="true"
-            className="object-cover object-center"
-            fill
-            preload
-            sizes="100vw"
-            src="/hero1.jpg"
-          />
-          <div aria-hidden="true" className="absolute inset-0 bg-surface/45" />
-          <div className="relative z-10 mx-auto max-w-[1440px] px-5 pb-8 pt-14 sm:px-8 sm:pb-10 sm:pt-20 lg:px-12">
-            <div className="relative mx-auto max-w-4xl text-center">
-              <div className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-brand-hover">
-                {area ? <MapPin aria-hidden="true" className="size-4" /> : <Sparkles aria-hidden="true" className="size-4" />}
-                {area
-                  ? `Tiendas de ${area.label}`
-                  : coldStart
-                    ? "Publicar es gratis y sin comisiones."
-                    : "PUBLICA Y ADMINISTRA TUS VENTAS AQUÍ"}
-              </div>
-              <h1 className="font-display text-4xl font-semibold leading-[0.98] tracking-[-0.045em] text-brand sm:text-6xl lg:text-7xl">
-                {area
-                  ? `Productos en ${area.label}`
-                  : coldStart
-                    ? "Abre la primera tienda de la plaza."
-                    : "Una plaza llena de cosas que no encuentras en cualquier lugar."}
-              </h1>
-              <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-muted sm:text-lg">
-                {area
-                  ? `Descubre lo que publican las tiendas que operan en ${area.label}.`
-                  : coldStart
-                    ? "Plaza Volcanes está lista para tus productos. Crea tu tienda, publica lo que haces y empieza a recibir pedidos."
-                    : "Explora productos de tiendas independientes y descubre quién está detrás de cada pieza."}
-              </p>
-              {area ? (
-                <div className="mt-7">
-                  <Link
-                    className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-5 text-sm font-semibold text-brand transition-colors hover:border-brand"
-                    href={buildCatalogHref({ locale: filters.locale, countryCode: filters.countryCode })}
-                  >
-                    Ver todo México
-                    <ArrowRight aria-hidden="true" className="size-4" />
-                  </Link>
-                </div>
-              ) : null}
-              {!area && coldStart ? (
-                <div className="mt-8 flex flex-wrap justify-center gap-4">
-                  <Link
-                    className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-transform hover:-translate-y-0.5"
-                    href="/vender?desde=vacio"
-                  >
-                    Quiero vender
-                    <ArrowRight aria-hidden="true" className="size-4" />
-                  </Link>
-                  <Link
-                    className="inline-flex min-h-12 items-center rounded-full border border-line bg-surface px-6 font-semibold text-brand transition-colors hover:border-brand"
-                    href="/ingresar"
-                  >
-                    Ya tengo cuenta
-                  </Link>
-                </div>
-              ) : null}
-              <div className="relative z-10 mx-auto mt-9 max-w-2xl">
-                <SearchBar
-                  categorySlug={activeCategorySlug}
-                  defaultValue={filters.query}
-                  subcategorySlug={activeSubcategorySlug}
-                  stateSlug={stateSlug}
-                  locale={filters.locale}
-                  countryCode={filters.countryCode}
-                />
-              </div>
-              <VolcanoMark className="pointer-events-none absolute -bottom-24 left-1/2 w-[760px] max-w-none -translate-x-1/2 text-brand/8" />
+      <section className="relative overflow-hidden border-b border-line bg-surface">
+        <Image
+          alt=""
+          aria-hidden="true"
+          className="object-cover object-center"
+          fill
+          preload
+          sizes="100vw"
+          src="/hero1.jpg"
+        />
+        <div aria-hidden="true" className="absolute inset-0 bg-surface/45" />
+        <div className="relative z-10 mx-auto max-w-[1440px] px-5 pb-8 pt-14 sm:px-8 sm:pb-10 sm:pt-20 lg:px-12">
+          <div className="relative mx-auto max-w-4xl text-center">
+            <div className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-brand-hover">
+              {area ? <MapPin aria-hidden="true" className="size-4" /> : <Sparkles aria-hidden="true" className="size-4" />}
+              {area
+                ? `Tiendas de ${area.label}`
+                : coldStart
+                  ? "Publicar es gratis y sin comisiones."
+                  : "PUBLICA Y ADMINISTRA TUS VENTAS AQUÍ"}
             </div>
-            <div className="relative z-10 mt-10">
-              <CategoryNavigation
-                activeCategorySlug={activeCategorySlug}
-                activeSubcategorySlug={activeSubcategorySlug}
-                query={filters.query}
+            <h1 className="font-display text-4xl font-semibold leading-[0.98] tracking-[-0.045em] text-brand sm:text-6xl lg:text-7xl">
+              {area
+                ? `Productos en ${area.label}`
+                : coldStart
+                  ? "Abre la primera tienda de la plaza."
+                  : "Una plaza llena de cosas que no encuentras en cualquier lugar."}
+            </h1>
+            <p className="mx-auto mt-6 max-w-2xl text-base leading-7 text-muted sm:text-lg">
+              {area
+                ? `Descubre lo que publican las tiendas que operan en ${area.label}.`
+                : coldStart
+                  ? "Plaza Volcanes está lista para tus productos. Crea tu tienda, publica lo que haces y empieza a recibir pedidos."
+                  : "Explora productos de tiendas independientes y descubre quién está detrás de cada pieza."}
+            </p>
+            {area ? (
+              <div className="mt-7">
+                <Link
+                  className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-5 text-sm font-semibold text-brand transition-colors hover:border-brand"
+                  href={buildCatalogHref({ locale: filters.locale, countryCode: filters.countryCode })}
+                >
+                  Ver todo México
+                  <ArrowRight aria-hidden="true" className="size-4" />
+                </Link>
+              </div>
+            ) : null}
+            {!area && coldStart ? (
+              <div className="mt-8 flex flex-wrap justify-center gap-4">
+                <Link
+                  className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-transform hover:-translate-y-0.5"
+                  href="/vender?desde=vacio"
+                >
+                  Quiero vender
+                  <ArrowRight aria-hidden="true" className="size-4" />
+                </Link>
+                <Link
+                  className="inline-flex min-h-12 items-center rounded-full border border-line bg-surface px-6 font-semibold text-brand transition-colors hover:border-brand"
+                  href="/ingresar"
+                >
+                  Ya tengo cuenta
+                </Link>
+              </div>
+            ) : null}
+            <div className="relative z-10 mx-auto mt-9 max-w-2xl">
+              <SearchBar
+                categorySlug={activeCategorySlug}
+                defaultValue={filters.query}
+                subcategorySlug={activeSubcategorySlug}
                 stateSlug={stateSlug}
                 locale={filters.locale}
                 countryCode={filters.countryCode}
-                tree={categories}
               />
             </div>
-            {invalidCategorySelection ? (
-              <p className="relative z-10 mt-3 rounded-2xl border border-line bg-background px-4 py-3 text-sm font-medium text-brand" role="status">
-                Categoría no disponible. Mostramos todos los productos.
-              </p>
-            ) : null}
-            {filters.invalidAreaSelection ? (
-              <p className="relative z-10 mt-3 rounded-2xl border border-line bg-background px-4 py-3 text-sm font-medium text-brand" role="status">
-                Estado no disponible. Mostramos todo México.
-              </p>
-            ) : null}
+            <VolcanoMark className="pointer-events-none absolute -bottom-24 left-1/2 w-[760px] max-w-none -translate-x-1/2 text-brand/8" />
           </div>
-        </section>
-      )}
+          <div className="relative z-10 mt-10">
+            <CategoryNavigation
+              activeCategorySlug={activeCategorySlug}
+              activeSubcategorySlug={activeSubcategorySlug}
+              query={filters.query}
+              stateSlug={stateSlug}
+              locale={filters.locale}
+              countryCode={filters.countryCode}
+              tree={categories}
+            />
+          </div>
+          {invalidCategorySelection ? (
+            <p className="relative z-10 mt-3 rounded-2xl border border-line bg-background px-4 py-3 text-sm font-medium text-brand" role="status">
+              Categoría no disponible. Mostramos todos los productos.
+            </p>
+          ) : null}
+          {filters.invalidAreaSelection ? (
+            <p className="relative z-10 mt-3 rounded-2xl border border-line bg-background px-4 py-3 text-sm font-medium text-brand" role="status">
+              Estado no disponible. Mostramos todo México.
+            </p>
+          ) : null}
+        </div>
+      </section>
 
       {hasFilters ? (
         <>
@@ -341,7 +324,6 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
         </>
       ) : (
         <>
-          {/* Clears the search panel that overlaps the hero above it. */}
           <NoFeesStatement className="mt-12 lg:mt-16" />
           {catalogSection}
           {/* Straight after the products: somebody who has just scrolled a wall

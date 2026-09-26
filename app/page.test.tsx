@@ -68,7 +68,7 @@ describe("Home category fallback", () => {
       "aria-current",
       "page",
     );
-    expect(within(navigation).getByRole("link", { name: "Todos" })).toHaveAttribute("href", "/");
+    expect(within(navigation).getByRole("link", { name: "Todos" })).toHaveAttribute("href", "/explorar");
     expect(screen.getByRole("heading", { name: "Descubrimientos de la plaza" })).toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Productos de Electrónica" })).not.toBeInTheDocument();
   });
@@ -97,7 +97,7 @@ describe("Home category fallback", () => {
     expect(screen.getByDisplayValue("en-US")).toHaveAttribute("name", "locale");
     expect(screen.getByDisplayValue("US")).toHaveAttribute("name", "countryCode");
     for (const link of screen.getAllByRole("link", { name: "Limpiar filtros" })) {
-      expect(link).toHaveAttribute("href", "/?locale=en-US&countryCode=US");
+      expect(link).toHaveAttribute("href", "/explorar?locale=en-US&countryCode=US");
     }
   });
 
@@ -342,6 +342,74 @@ describe("Home landing", () => {
     render(await Home({ searchParams: Promise.resolve({}) }));
 
     expect(screen.queryByText("RECIÉN PUBLICADO")).not.toBeInTheDocument();
+  });
+
+  it("keeps the plaza's search, state filter and categories in the buyer panel", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({
+        products: [sampleProduct()],
+        categories: [
+          { id: 1, parentId: null, slug: "hogar-y-jardin", name: "Hogar y jardín", sortOrder: 1, isActive: true, children: [] },
+        ],
+      }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const panel = screen.getByRole("region", { name: "Encuentra productos únicos cerca de ti." });
+    expect(panel).toHaveAttribute("id", "explorar");
+    const search = within(panel).getByRole("search");
+    expect(search).toHaveAttribute("action", "/");
+    expect(within(search).getByRole("searchbox", { name: "Buscar productos" })).toHaveAttribute("name", "q");
+    expect(within(search).getByRole("combobox", { name: "Estado" })).toHaveAttribute("name", "estado");
+    expect(within(search).getByRole("button", { name: "Buscar" })).toHaveAttribute("type", "submit");
+    const categories = within(panel).getByRole("navigation", { name: "Categorías de productos" });
+    expect(within(categories).getByRole("link", { name: "Hogar y jardín" })).toHaveAttribute(
+      "href",
+      "/?categoria=hogar-y-jardin",
+    );
+  });
+
+  it("shows the three newest products, then the way into the whole plaza and the guide", async () => {
+    const products = [1, 2, 3, 4].map((id) => ({ ...sampleProduct(), id, slug: `producto-${id}`, name: `Producto ${id}` }));
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products }));
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const panel = screen.getByRole("region", { name: "Encuentra productos únicos cerca de ti." });
+    expect(within(panel).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
+      "Producto 1",
+      "Producto 2",
+      "Producto 3",
+    ]);
+    expect(within(panel).getByRole("link", { name: /Ver toda la plaza/ })).toHaveAttribute("href", "/explorar");
+    expect(within(panel).getByRole("link", { name: "Cómo comprar en la plaza →" })).toHaveAttribute(
+      "href",
+      "/como-comprar",
+    );
+  });
+
+  it("moves the buyer guide and the state explorer off the landing", async () => {
+    const { getCatalogStateCounts } = await import("@/lib/queries/catalog.server");
+    vi.mocked(getCatalogStateCounts).mockResolvedValue([{ code: "MX-JAL", count: 3 }]);
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products: [sampleProduct()] }));
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    expect(screen.queryByRole("region", { name: "Explora por estado." })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Cómo comprar en la plaza." })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Antes de acordar una compra" })).not.toBeInTheDocument();
+  });
+
+  it("sends an empty search from the buyer panel to the whole catalogue", async () => {
+    redirect.mockImplementation(() => {
+      throw new Error("NEXT_REDIRECT");
+    });
+
+    await expect(Home({ searchParams: Promise.resolve({ q: "", estado: "" }) })).rejects.toThrow("NEXT_REDIRECT");
+    expect(redirect).toHaveBeenCalledWith("/explorar");
+    expect(getHomeCatalog).not.toHaveBeenCalled();
+    redirect.mockReset();
   });
 
   it("keeps the catalogue screen for a search", async () => {

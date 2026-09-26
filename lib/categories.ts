@@ -143,7 +143,10 @@ export function buildCatalogHref({
   }
 
   // The state is a place, so it owns the path; everything else refines it.
-  const basePath = stateSlug ? `/estado/${stateSlug}` : "/";
+  // A search or a category still lives on "/", but "/" with nothing to filter
+  // is the seller landing, so the whole unfiltered plaza is /explorar.
+  const filtered = searchParams.has("q") || searchParams.has("categoria");
+  const basePath = stateSlug ? `/estado/${stateSlug}` : filtered ? "/" : "/explorar";
   const queryString = searchParams.toString();
 
   if (!queryString) return basePath;

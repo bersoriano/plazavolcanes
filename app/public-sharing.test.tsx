@@ -171,7 +171,7 @@ describe("public sharing controls", () => {
     expect(screen.getByText("Handmade with high-temperature regional clay.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Volver a resultados" })).toHaveAttribute(
       "href",
-      "/?locale=en-US&countryCode=US",
+      "/explorar?locale=en-US&countryCode=US",
     );
     expect(screen.getByRole("link", { name: "Home and garden" })).toHaveAttribute(
       "href",

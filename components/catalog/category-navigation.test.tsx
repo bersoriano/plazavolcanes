@@ -211,13 +211,13 @@ describe("Search panel variant", () => {
     expect(screen.getByDisplayValue("US")).toHaveAttribute("name", "countryCode");
   });
 
-  it("fills the active chip and keeps every chip 44px high", () => {
+  it("fills the active chip in lime with a plum edge and keeps every chip 44px high", () => {
     render(<CategoryNavigation tree={tree} variant="panel" />);
 
     const navigation = screen.getByRole("navigation", { name: "Categorías de productos" });
     const todos = within(navigation).getByRole("link", { name: "Todos" });
     expect(todos).toHaveAttribute("aria-current", "page");
-    expect(todos).toHaveClass("bg-accent", "text-brand-hover");
+    expect(todos).toHaveClass("bg-accent", "border-brand", "text-brand");
     for (const chip of within(navigation).getAllByRole("link")) {
       expect(chip).toHaveClass("h-11", "rounded-full");
     }

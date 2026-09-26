@@ -1,3 +1,4 @@
+import { BuyerPanel } from "@/components/home/landing/buyer-panel";
 import { BenefitsBento } from "@/components/home/landing/benefits-bento";
 import { CrossingTapes } from "@/components/home/landing/crossing-tapes";
 import type { CollageProduct } from "@/components/home/landing/hero-collage";
@@ -21,7 +22,7 @@ type HomeLandingProps = {
  * first product is the newest listing, and the first two with a photo fill
  * the hero's tiles.
  */
-export function HomeLanding({ catalog, filters }: HomeLandingProps) {
+export function HomeLanding({ catalog, stateCounts, filters }: HomeLandingProps) {
   const { products, categories, shops } = catalog;
   const photographed = products.filter((product) => product.imageUrl);
   const tiles: [CollageProduct | null, CollageProduct | null] = [photographed[0] ?? null, photographed[1] ?? null];
@@ -33,6 +34,13 @@ export function HomeLanding({ catalog, filters }: HomeLandingProps) {
       <BenefitsBento />
       <SellerStepsShowcase />
       <LandingStores shops={shops} />
+      <BuyerPanel
+        categories={categories}
+        countryCode={filters.countryCode}
+        locale={filters.locale}
+        products={products}
+        stateCounts={stateCounts}
+      />
     </>
   );
 }

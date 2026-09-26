@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { LayoutGrid } from "lucide-react";
 
 import { CategoryIcon } from "@/components/catalog/category-icon";
 import {
@@ -17,7 +16,7 @@ type CategoryNavigationProps = {
   stateSlug?: string;
   locale?: CatalogLocale;
   countryCode?: string;
-  /** `panel` is the home search card: pill chips on white, a wider fade. */
+  /** `panel` is the home buyer panel: text-only pill chips on white, a wider fade. */
   variant?: "default" | "panel";
 };
 
@@ -29,9 +28,9 @@ const ROOT_CHIP = {
     "border border-line bg-surface text-muted hover:border-brand hover:text-brand",
   ],
   panel: [
-    "relative flex h-11 shrink-0 items-center gap-[7px] rounded-full px-4 text-sm transition-colors sm:gap-2 sm:px-[18px]",
-    "border border-accent bg-accent font-bold text-brand-hover",
-    "border border-line bg-surface font-semibold text-brand hover:border-brand",
+    "relative flex h-11 shrink-0 items-center rounded-full px-4 text-[14px] transition-colors sm:px-[18px] sm:text-[15px]",
+    "border-[1.5px] border-brand bg-accent font-bold text-brand",
+    "border border-line bg-surface font-semibold text-ink hover:border-brand",
   ],
 } as const;
 
@@ -73,7 +72,6 @@ export function CategoryNavigation({
             className={`${chipBase} ${panel ? "" : "min-w-[5.5rem]"} ${!activeCategory ? chipActive : chipIdle}`}
             href={buildCatalogHref({ query, stateSlug, locale, countryCode })}
           >
-            {panel ? <LayoutGrid aria-hidden="true" className="size-[18px] shrink-0" strokeWidth={1.8} /> : null}
             Todos
             {!activeCategory ? activeRule : null}
           </Link>
@@ -90,7 +88,7 @@ export function CategoryNavigation({
                 href={buildCatalogHref({ query, categorySlug: category.slug, stateSlug, locale, countryCode })}
                 key={category.id}
               >
-                {iconName ? <CategoryIcon aria-hidden="true" className={panel ? "size-[18px] shrink-0" : "size-5 shrink-0"} name={iconName} /> : null}
+                {iconName && !panel ? <CategoryIcon aria-hidden="true" className="size-5 shrink-0" name={iconName} /> : null}
                 <span className="whitespace-nowrap">{category.name}</span>
                 {isActive ? activeRule : null}
               </Link>

@@ -26,13 +26,15 @@ describe("sitemap", () => {
     const urls = entries.map((entry) => entry.url);
 
     expect(urls).toContain("https://plazavolcanes.com/");
+    expect(urls).toContain("https://plazavolcanes.com/explorar");
+    expect(urls).toContain("https://plazavolcanes.com/como-comprar");
     expect(urls).toContain("https://plazavolcanes.com/tiendas/casa-niebla");
     expect(urls).toContain("https://plazavolcanes.com/productos/taza-de-barro");
     expect(urls).toContain("https://plazavolcanes.com/estado/jalisco");
     expect(urls).toContain("https://plazavolcanes.com/?categoria=hogar-y-jardin");
     // Next writes <loc> verbatim, so a raw "&" would make the whole file invalid XML.
     expect(urls).toContain("https://plazavolcanes.com/?categoria=hogar-y-jardin&amp;subcategoria=cocina");
-    expect(urls).toHaveLength(5 + MEXICO_ADMINISTRATIVE_AREAS.length + LEGAL_ROUTES.length);
+    expect(urls).toHaveLength(7 + MEXICO_ADMINISTRATIVE_AREAS.length + LEGAL_ROUTES.length);
   });
 
   it("keeps signed-in areas out of the index", async () => {
