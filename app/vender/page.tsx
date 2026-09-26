@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 
 import { SellerProgram } from "@/components/sellers/seller-program";
 
+import "./vender.css";
+
 export const metadata: Metadata = {
   title: "Vender",
   description:
