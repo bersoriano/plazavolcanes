@@ -15,7 +15,9 @@ describe("SellerHero", () => {
       "38",
     );
     expect(
-      screen.getByText("Los lugares se asignan por orden de registro durante los primeros tres meses."),
+      screen.getByText(
+        "Publica 8 productos en tus primeros 7 días y gana tu lugar. Registrarte no aparta un lugar: se gana publicando.",
+      ),
     ).toBeInTheDocument();
   });
 
@@ -47,8 +49,8 @@ describe("SellerHero", () => {
     const { container } = render(<SellerHero promoActive={false} spotsTaken={100} />);
 
     expect(screen.getByText("Publica gratis · 0% comisión")).toBeInTheDocument();
-    expect(container.textContent).not.toMatch(/Primeras 100|fundadora|Premium · 1 año/i);
-    expect(screen.getByText("Sin retenciones ni comisiones")).toBeInTheDocument();
+    expect(container.textContent).not.toMatch(/Primeras 100|fundadora|12 meses/i);
+    expect(screen.getByText("25 productos gratis")).toBeInTheDocument();
   });
 
   it("keeps the collage out of the accessibility tree and states its facts instead", () => {

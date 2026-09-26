@@ -30,7 +30,7 @@ export function SellerBenefits() {
 
         <div className="grid gap-4 lg:grid-cols-2 lg:gap-5">
           <ReasonCard
-            eyebrow="01 · Sin retenciones ni comisiones"
+            eyebrow="01 · Pago directo"
             text="Con el método que acuerden. Plaza Volcanes no procesa, no retiene y no descuenta nada de tu venta."
             title={
               <>
@@ -43,10 +43,10 @@ export function SellerBenefits() {
           {REPUTATION_IMPORT_AVAILABLE ? (
             <ReasonCard
               eyebrow="02 · Reputación"
-              text="¿Ya tienes ventas y buenas calificaciones en otro lado? Tus nuevos clientes las verán desde el primer día."
+              text="¿Ya vendes en Mercado Libre o Facebook? Muestra tu perfil en tu tienda para que tus nuevos clientes vean dónde ya te conocen."
               title={
                 <>
-                  Trae la confianza que <Accent>ya ganaste.</Accent>
+                  Muestra la confianza que <Accent>ya ganaste.</Accent>
                 </>
               }
             >

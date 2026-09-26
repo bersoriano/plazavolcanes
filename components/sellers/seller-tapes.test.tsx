@@ -16,24 +16,21 @@ describe("SellerTapes", () => {
     const { container } = render(<SellerTapes promoActive />);
 
     expect(exposed(container)).toEqual([
-      "0% comisión",
-      "pago directo",
-      "Hasta 50 artículos gratis",
+      "50 productos",
       "insignia fundadora",
-      "Premium por 1 año",
-      "Trae tu reputación de",
+      "0% comisión 12 meses",
+      "pago directo",
+      "25 productos gratis para todas",
+      "Muestra tu perfil de",
       "Mercado Libre",
       "Facebook Marketplace",
-      "Amazon",
-      "Etsy",
-      "Instagram",
     ]);
   });
 
   it("stops promising founder perks once the promotion has ended", () => {
     const { container } = render(<SellerTapes promoActive={false} />);
 
-    expect(container.textContent).not.toMatch(/50 artículos|fundadora|Premium/);
-    expect(container.textContent).toContain("0% comisión");
+    expect(container.textContent).not.toMatch(/50 productos|fundadora|12 meses/);
+    expect(container.textContent).toContain("25 productos gratis");
   });
 });

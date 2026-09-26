@@ -1,17 +1,24 @@
-import { ArrowUpRight, Camera, Headphones, Smartphone, Sparkle } from "lucide-react";
+import { ArrowUpRight, Camera, Headphones, Smartphone } from "lucide-react";
 
 import { Accent, Eyebrow, TYPE, VolcanoLines } from "@/components/home/landing/primitives";
 import { FounderSeal } from "@/components/sellers/founder-seal";
-import { FOUNDERS_CAP } from "@/lib/launch";
+import {
+  BASE_LISTING_LIMIT,
+  FOUNDER_COMMISSION_LOCK_MONTHS,
+  FOUNDER_FEATURE_DAYS,
+  FOUNDER_LISTING_LIMIT,
+  FOUNDER_MIN_LIVE_ITEMS,
+  FOUNDER_QUALIFY_DAYS,
+  FOUNDERS_CAP,
+} from "@/lib/launch";
 
 /** The store mock's published count: an illustration, not anybody's store. */
 const EXAMPLE_PUBLISHED = 12;
-const FOUNDER_LISTING_LIMIT = 50;
 
 /**
- * #fundadoras: what the first stores get. A plum block with a mock of the
- * store they would open, then four tiles, one per perk. Only rendered while
- * the promotion is open.
+ * #fundadoras: what a founding seat brings, and how it is earned. A plum
+ * block with a mock of a founder's shop, then one tile per perk. Only
+ * rendered while seats remain.
  */
 export function FoundersPackage() {
   return (
@@ -26,11 +33,12 @@ export function FoundersPackage() {
             <Eyebrow>Paquete fundador</Eyebrow>
             <h2 className={`${TYPE.h2} text-ink`} id="fundadoras-paquete-heading">
               Lo que te llevas <br className="hidden sm:inline" />
-              por <Accent>llegar primero.</Accent>
+              por <Accent>publicar primero.</Accent>
             </h2>
           </div>
-          <p className={`${TYPE.aside} lg:max-w-[390px] lg:pb-2`}>
-            Para las primeras {FOUNDERS_CAP} tiendas que se registren durante los primeros tres meses.
+          <p className={`${TYPE.aside} lg:max-w-[400px] lg:pb-2`}>
+            Para las primeras {FOUNDERS_CAP} tiendas que publiquen {FOUNDER_MIN_LIVE_ITEMS} productos en sus primeros{" "}
+            {FOUNDER_QUALIFY_DAYS} días. Registrarte no aparta un lugar: se gana publicando.
           </p>
         </div>
 
@@ -40,25 +48,18 @@ export function FoundersPackage() {
             <StoreMock />
             <div className="relative flex flex-col gap-2.5 text-white">
               <h3 className="font-display text-[30px] font-semibold leading-[1.02] tracking-[-0.03em] lg:text-[40px]">
-                Así luce tu tienda <Accent className="text-accent">desde el día uno.</Accent>
+                Así luce una <Accent className="text-accent">tienda fundadora.</Accent>
               </h3>
               <p className="text-[15px] text-white/70 lg:text-[16px]">
-                Insignia, sello Premium y espacio para crecer, sin pagar nada.
+                Insignia permanente, marco dorado en tus tarjetas y acceso anticipado a las nuevas herramientas para
+                vender.
               </p>
             </div>
           </article>
 
-          <PerkTile className="bg-accent text-brand" figure="1" title="tienda gratis">
-            Ábrela, personalízala y compártela sin costo.
-          </PerkTile>
-          <PerkTile
-            bodyClassName="text-muted"
-            className="border border-line bg-surface text-ink"
-            figure={String(FOUNDER_LISTING_LIMIT)}
-            figureClassName="text-brand"
-            title="artículos gratis"
-          >
-            El nivel inicial permite 15. Tú empiezas con {FOUNDER_LISTING_LIMIT}.
+          <PerkTile className="bg-accent text-brand" figure={String(FOUNDER_LISTING_LIMIT)} title="productos en vivo">
+            Todas las tiendas publican {BASE_LISTING_LIMIT} gratis. Las fundadoras, {FOUNDER_LISTING_LIMIT}, sin fecha de
+            vencimiento.
           </PerkTile>
           <PerkTile
             bodyClassName="text-premium-text"
@@ -66,22 +67,27 @@ export function FoundersPackage() {
             figure={<FounderSeal className="size-16 border-[3px] lg:size-[84px]" labelled={false} />}
             title="Insignia fundadora"
           >
-            Para que todos sepan que llegaste primero.
+            Permanente, con marco dorado en tu tienda y tus productos.
+          </PerkTile>
+          <PerkTile
+            bodyClassName="text-muted"
+            className="border border-line bg-surface text-ink"
+            figure="0%"
+            figureClassName="text-brand"
+            title={`comisión fija ${FOUNDER_COMMISSION_LOCK_MONTHS} meses`}
+          >
+            Durante tus primeros {FOUNDER_COMMISSION_LOCK_MONTHS} meses como fundadora no pagas comisión, cambie lo que
+            cambie.
           </PerkTile>
           <PerkTile
             bodyClassName="text-white/70"
             className="bg-premium-ink text-white"
-            figure={
-              <span className="flex h-9 items-center gap-2 self-start rounded-full border-[1.5px] border-premium-gold px-3.5 text-[14px] font-bold text-premium-gold lg:h-11 lg:px-[18px] lg:text-[17px]">
-                <Sparkle aria-hidden="true" className="size-4" fill="currentColor" strokeWidth={0} />
-                Premium
-              </span>
-            }
-            title="Premium por 1 año"
+            figure={String(FOUNDER_FEATURE_DAYS)}
+            figureClassName="text-premium-gold"
+            title="días en la portada"
             titleClassName="text-premium-gold"
           >
-            Tu tienda luce el sello Premium durante 12 meses. Tus productos también lucen el diseño Premium en
-            toda la plaza.
+            Tu tienda rota en la portada de Plaza Volcanes durante {FOUNDER_FEATURE_DAYS} días.
           </PerkTile>
         </div>
       </div>
@@ -152,10 +158,6 @@ function StoreMock() {
               <path d="M2 18 8 9.5l2.5 2.5 3-4.5L22 18" />
             </svg>
             Tienda fundadora
-          </span>
-          <span className="flex h-7 items-center gap-1.5 rounded-full bg-premium-ink px-2.5 font-bold text-premium-gold">
-            <Sparkle className="size-3" fill="currentColor" strokeWidth={0} />
-            Premium
           </span>
           <span className="flex h-7 items-center rounded-full bg-lime-tint px-2.5 font-bold text-brand">Nivel Estándar</span>
         </div>

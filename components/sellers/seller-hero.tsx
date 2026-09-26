@@ -1,21 +1,22 @@
 import Link from "next/link";
-import { ArrowRight, Check, Mic, Sparkle, Star } from "lucide-react";
+import { ArrowRight, Check, Mic, Sparkle } from "lucide-react";
 
 import { FoundersCounter } from "@/components/home/landing/founders-counter";
 import { VolcanoLines } from "@/components/home/landing/primitives";
 import { FounderSeal } from "@/components/sellers/founder-seal";
-import { FOUNDERS_CAP, REPUTATION_IMPORT_AVAILABLE } from "@/lib/launch";
+import { BASE_LISTING_LIMIT, FOUNDER_EARN_RULE, FOUNDERS_CAP, REPUTATION_IMPORT_AVAILABLE } from "@/lib/launch";
 import { OWNER_CTA_LABEL, sellerCtaHref, type SellerViewer } from "@/lib/seller-cta";
 
+/** What every shop gets, shown once the founders offer is over. */
 const CHECKLIST = [
-  "Sin retenciones ni comisiones",
-  REPUTATION_IMPORT_AVAILABLE ? "Transfiere tu reputación" : "Transfiere tu reputación (pronto)",
-  "Tu catálogo en un solo lugar",
+  `${BASE_LISTING_LIMIT} productos gratis`,
+  "Sin comisión en pago directo",
+  REPUTATION_IMPORT_AVAILABLE ? "Muestra tu perfil de Mercado Libre y Facebook" : "Tu catálogo en un solo lugar",
 ];
 
 /** The receipt's own summary, for anyone who never sees the picture. */
 const RECEIPT_SUMMARY =
-  "Ejemplo: vendes un artículo en $1,999.00 y recibes $1,999.00; Plaza Volcanes no cobra comisión ni retiene tu pago.";
+  "Ejemplo: vendes un artículo en $1,999.00 y recibes $1,999.00; en pago directo Plaza Volcanes no cobra comisión ni retiene tu pago.";
 
 function ReceiptLine({
   label,
@@ -34,7 +35,7 @@ function ReceiptLine({
   );
 }
 
-const HERO_NOTE = "Los lugares se asignan por orden de registro durante los primeros tres meses.";
+const HERO_NOTE = `${FOUNDER_EARN_RULE} Registrarte no aparta un lugar: se gana publicando.`;
 
 /**
  * The /vender hero on plum: the pitch, the CTA, the founders counter and a
@@ -83,8 +84,8 @@ export function SellerHero({
           </h1>
 
           <p className="max-w-[590px] text-pretty text-[17px] leading-[1.55] text-white/80 lg:text-[20px]">
-            Publica tu catálogo, trae la reputación que ya ganaste en otras plataformas y cobra
-            directo a tus clientes. Sin retenciones ni comisiones.
+            Publica {BASE_LISTING_LIMIT} productos gratis, muestra tu perfil de Mercado Libre o Facebook y cobra
+            directo a tus clientes. Sin retenciones ni comisión en pago directo.
           </p>
 
           <div className="flex flex-col items-center gap-4 self-stretch sm:flex-row sm:gap-[22px] sm:self-auto">
@@ -200,14 +201,9 @@ function HeroCollage({ promoActive }: { promoActive: boolean }) {
 
         {REPUTATION_IMPORT_AVAILABLE ? (
           <div className="animate-rise-in absolute left-[170px] top-0 flex w-[180px] rotate-5 flex-col gap-1 rounded-[18px] bg-accent px-3.5 py-3 text-brand shadow-[0_20px_36px_-18px_rgb(0_0_0/0.6)] [animation-delay:200ms] sm:left-[300px] sm:top-2.5 sm:w-[250px] sm:rotate-4 sm:gap-2.5 sm:rounded-[24px] sm:p-[18px]">
-            <span className="text-[10px] font-bold uppercase tracking-[0.12em] sm:text-[11px]">Reputación importada</span>
-            <span className="hidden gap-[3px] sm:flex">
-              {Array.from({ length: 5 }, (_, index) => (
-                <Star className="size-4" fill="currentColor" key={index} strokeWidth={0} />
-              ))}
-            </span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.12em] sm:text-[11px]">Tu reputación, visible</span>
             <span className="font-display text-[17px] font-semibold leading-[1.05] tracking-[-0.02em] sm:text-[22px]">
-              Tu historial viaja contigo
+              Tus perfiles, en tu tienda
             </span>
             {["Mercado Libre", "Facebook Marketplace"].map((platform) => (
               <span className="hidden h-9 items-center justify-between rounded-[10px] bg-surface px-3 text-[13px] font-semibold sm:flex" key={platform}>
@@ -223,7 +219,7 @@ function HeroCollage({ promoActive }: { promoActive: boolean }) {
             <FounderSeal className="animate-rise-in absolute left-[236px] top-[270px] size-28 border-[3px] text-[11px] [animation-delay:320ms] sm:-left-10 sm:top-[548px] sm:size-[150px] sm:border-4 sm:text-[13px]" />
             <span className="animate-rise-in absolute left-4 top-[352px] flex h-[38px] -rotate-3 items-center gap-1.5 rounded-full bg-premium-ink px-3.5 text-[13px] font-bold text-premium-gold shadow-[0_16px_30px_-14px_rgb(0_0_0/0.7)] [animation-delay:440ms] sm:left-[330px] sm:top-[590px] sm:h-11 sm:gap-2 sm:px-[18px] sm:text-[15px]">
               <Sparkle className="size-4" fill="currentColor" strokeWidth={0} />
-              Premium · 1 año
+              0% comisión · 12 meses
             </span>
           </>
         ) : null}

@@ -1,17 +1,18 @@
-import { Check, Star, Store } from "lucide-react";
+import { Check, Store } from "lucide-react";
 
 /**
  * Text only, never a logo: the marketplaces named here are not partners, and a
  * borrowed wordmark would imply an endorsement none of them have given.
  */
-const PLATFORMS = ["Mercado Libre", "Facebook Marketplace", "Amazon", "Etsy", "Instagram"];
+const PLATFORMS = ["Mercado Libre", "Facebook Marketplace"];
 
 const FLOW_SUMMARY =
-  "Diagrama: las calificaciones que ya tienes en Mercado Libre, Facebook Marketplace, Amazon, Etsy e Instagram llegan a tu tienda de Plaza Volcanes.";
+  "Diagrama: tus perfiles de Mercado Libre y Facebook Marketplace, visibles en tu tienda de Plaza Volcanes.";
 
 /**
- * Where a reputation comes from and where it lands: the platforms as a wrap
- * of checked chips, beside the store card that shows it. Stacked on a phone.
+ * The profiles a shop can show, beside the store card that shows them. It
+ * claims visibility, not imported ratings: "tus estrellas viajan" would be a
+ * promise the plaza cannot back. Stacked on a phone.
  */
 export function ReputationFlow() {
   return (
@@ -39,14 +40,7 @@ export function ReputationFlow() {
             </span>
             <span className="text-[15px] font-bold">Tu tienda</span>
           </span>
-          <span className="flex items-center gap-1.5 text-[12px] font-bold text-brand">
-            <span className="flex gap-0.5">
-              {Array.from({ length: 5 }, (_, index) => (
-                <Star className="size-3.5" fill="currentColor" key={index} strokeWidth={0} />
-              ))}
-            </span>
-            Reputación importada
-          </span>
+          <span className="text-[12px] font-bold text-brand">Perfiles de Mercado Libre y Facebook</span>
         </div>
       </div>
     </>
