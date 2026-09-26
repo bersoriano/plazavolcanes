@@ -32,7 +32,7 @@ describe("SellerProgram", () => {
       "Trae la confianza que ya ganaste.",
     ]);
     // The catalogue keeps a section of its own, with its current copy.
-    const catalog = screen.getByRole("region", { name: "Maneja tu catálogo de productos aquí" });
+    const catalog = screen.getByRole("region", { name: "Maneja tu catálogo de productos aquí." });
     expect(catalog).toHaveAttribute("id", "catalogo");
   });
 

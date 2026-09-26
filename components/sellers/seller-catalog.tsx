@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 
+import { Accent, VolcanoLines } from "@/components/home/landing/primitives";
 import { CatalogPreview } from "@/components/sellers/catalog-preview";
 
 const CATALOG_POINTS = [
@@ -8,44 +9,51 @@ const CATALOG_POINTS = [
   "Guarda borradores y publica cuando quieras",
 ];
 
-/** #catalogo: managing the catalogue, its own section with the current copy. */
+/**
+ * #catalogo: managing the catalogue, its own lime panel with the current
+ * copy. The panel stacks below xl, where the preview would have no room
+ * beside the text.
+ */
 export function SellerCatalog() {
   return (
-    <section aria-label="Maneja tu catálogo de productos aquí" className="px-5 pb-16 sm:px-8 lg:pb-[120px]" id="catalogo">
-      <div className="mx-auto max-w-[1200px]">
-          <article className="flex flex-col gap-4 rounded-[1.75rem] bg-accent px-6 py-7 text-brand-hover lg:col-span-12 lg:grid lg:grid-cols-12 lg:items-center lg:gap-6 lg:rounded-[2rem] lg:p-12">
-            <div className="flex flex-col gap-4 lg:col-span-5">
-              <span className="text-[13px] font-bold tracking-[0.12em] text-brand-hover/60 lg:text-[14px]">
-                03
-              </span>
-              <h3 className="text-balance font-display text-[30px] font-semibold leading-[1.05] tracking-[-0.025em] lg:text-[42px] lg:leading-[1.04]">
-                Maneja tu catálogo de productos aquí
-              </h3>
-              <p className="text-pretty text-[16px] leading-[1.6] text-brand-hover/85 lg:text-[17px]">
-                Sube, edita y organiza todos tus productos desde un solo lugar. Tu tienda pública se
-                actualiza con cada cambio.
-              </p>
-              <ul className="flex flex-col gap-2.5 lg:mt-2 lg:gap-3">
-                {CATALOG_POINTS.map((point) => (
-                  <li
-                    className="flex items-center gap-2.5 text-[15px] font-semibold lg:gap-3 lg:text-[16px]"
-                    key={point}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="grid size-6 shrink-0 place-items-center rounded-full bg-brand text-accent lg:size-[26px]"
-                    >
-                      <Check className="size-[13px] lg:size-3.5" strokeWidth={3} />
-                    </span>
-                    {point}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="lg:col-span-7">
-              <CatalogPreview />
-            </div>
-          </article>
+    <section
+      aria-labelledby="catalogo-heading"
+      className="scroll-mt-20 px-5 pb-16 sm:px-8 lg:scroll-mt-24 lg:pb-20 xl:px-20"
+      id="catalogo"
+    >
+      <div className="relative mx-auto flex max-w-[1280px] flex-col gap-8 overflow-hidden rounded-[30px] bg-accent p-6 text-brand sm:p-10 lg:rounded-[40px] xl:flex-row xl:items-center xl:gap-14 xl:p-14">
+        <VolcanoLines className="pointer-events-none absolute inset-x-0 bottom-0 h-[160px] w-full text-brand opacity-10 lg:h-[260px]" />
+        <div className="relative flex flex-col gap-5 xl:w-[460px] xl:shrink-0 xl:gap-[22px]">
+          <span
+            aria-hidden="true"
+            className="font-display text-[44px] font-extrabold leading-[0.85] tracking-[-0.035em] text-transparent text-outline lg:text-[56px]"
+          >
+            03
+          </span>
+          <h2
+            className="font-display text-[clamp(36px,29.3px+1.714vw,56px)] font-semibold leading-[0.98] tracking-[-0.036em] text-ink"
+            id="catalogo-heading"
+          >
+            Maneja tu catálogo de productos <Accent>aquí.</Accent>
+          </h2>
+          <p className="text-[16px] leading-[1.55] lg:text-[18px]">
+            Sube, edita y organiza todos tus productos desde un solo lugar. Tu tienda pública se actualiza con cada
+            cambio.
+          </p>
+          <ul className="flex flex-col gap-3 text-[15px] font-semibold lg:text-[17px]">
+            {CATALOG_POINTS.map((point) => (
+              <li className="flex items-center gap-3" key={point}>
+                <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-full bg-brand text-accent">
+                  <Check className="size-3.5" strokeWidth={3} />
+                </span>
+                {point}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="relative min-w-0 grow">
+          <CatalogPreview />
+        </div>
       </div>
     </section>
   );
