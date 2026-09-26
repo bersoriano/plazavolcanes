@@ -1,6 +1,7 @@
 import { BenefitsBento } from "@/components/home/landing/benefits-bento";
 import { CrossingTapes } from "@/components/home/landing/crossing-tapes";
 import type { CollageProduct } from "@/components/home/landing/hero-collage";
+import { LandingStores } from "@/components/home/landing/landing-stores";
 import { SellerHero } from "@/components/home/landing/seller-hero";
 import { SellerStepsShowcase } from "@/components/home/landing/seller-steps-showcase";
 import type { CatalogFilters } from "@/lib/queries/catalog";
@@ -21,7 +22,7 @@ type HomeLandingProps = {
  * the hero's tiles.
  */
 export function HomeLanding({ catalog, filters }: HomeLandingProps) {
-  const { products, categories } = catalog;
+  const { products, categories, shops } = catalog;
   const photographed = products.filter((product) => product.imageUrl);
   const tiles: [CollageProduct | null, CollageProduct | null] = [photographed[0] ?? null, photographed[1] ?? null];
 
@@ -31,6 +32,7 @@ export function HomeLanding({ catalog, filters }: HomeLandingProps) {
       <CrossingTapes categories={categories.map((category) => category.name)} />
       <BenefitsBento />
       <SellerStepsShowcase />
+      <LandingStores shops={shops} />
     </>
   );
 }
