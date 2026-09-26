@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { CatalogScreen } from "@/components/catalog/catalog-screen";
+import { HomeLanding } from "@/components/home/landing/home-landing";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildCatalogHref, listingCategoryIds, resolveCategorySelection } from "@/lib/categories";
 import { normalizeCatalogFilters } from "@/lib/queries/catalog";
@@ -75,6 +76,17 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
   ]);
 
   const bareHome = !filters.query && !filters.categorySlug && !filters.subcategorySlug && !filters.invalidCategorySelection;
+
+  // The bare home is the seller-first landing; anything filtered, or an
+  // unknown state that fell back to all of México, keeps the catalogue.
+  if (bareHome && !filters.invalidAreaSelection) {
+    return (
+      <>
+        <HomeStructuredData />
+        <HomeLanding catalog={catalog} filters={filters} stateCounts={stateCounts} />
+      </>
+    );
+  }
 
   return (
     <>
