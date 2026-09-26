@@ -18,8 +18,9 @@ describe("SellerProgram", () => {
     for (const region of [
       HERO,
       "Hecho para quien vende por su cuenta.",
-      "Tu tienda lista en tres pasos.",
-      "Cuanto mejor atiendes, más publicas.",
+      "Dónde se queda tu dinero.",
+      "De cero a tienda en tres pasos.",
+      "Tu nivel habla por tu servicio.",
       "Lo que te estás preguntando.",
       "Sé una de las primeras 100 tiendas.",
     ]) {
@@ -40,31 +41,30 @@ describe("SellerProgram", () => {
     render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 
     const steps = within(
-      screen.getByRole("region", { name: "Tu tienda lista en tres pasos." }),
+      screen.getByRole("region", { name: "De cero a tienda en tres pasos." }),
     ).getAllByRole("listitem");
 
     expect(steps).toHaveLength(3);
     expect(steps[0]).toHaveTextContent("Paso 1");
-    expect(steps[0]).toHaveTextContent("Crea tu tienda");
+    expect(steps[0]).toHaveTextContent("Nombre y estado");
     expect(steps[1]).toHaveTextContent("Paso 2");
-    expect(steps[1]).toHaveTextContent("Trae tu reputación");
+    expect(steps[1]).toHaveTextContent("Tu primer producto");
     expect(steps[2]).toHaveTextContent("Paso 3");
-    expect(steps[2]).toHaveTextContent("Publica y recibe pedidos");
+    expect(steps[2]).toHaveTextContent("8 productos en 7 días");
+    expect(steps[2]).toHaveTextContent("ganas tu lugar fundador");
   });
 
-  it("keeps the publication ladder every tier sets", () => {
+  it("shows the tiers as a quality signal, not a listing cap", () => {
     render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 
-    const tiers = screen.getByRole("region", { name: "Cuanto mejor atiendes, más publicas." });
+    const tiers = screen.getByRole("region", { name: "Tu nivel habla por tu servicio." });
 
-    // The limits come from the tiers the plaza enforces, not from copy.
     expect(within(tiers).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual(
       (["standard", "reliable", "top_rated"] as const).map((tier) => getTrustTierMarker(tier).label),
     );
-    for (const tier of ["standard", "reliable", "top_rated"] as const) {
-      expect(within(tiers).getByText((_, element) => element?.tagName === "P" && element.textContent === `Hasta ${getTrustTierMarker(tier).listingLimit} productos`)).toBeInTheDocument();
-    }
-    expect(within(tiers).getByText("Tiendas fundadoras: 50 desde el día uno")).toBeInTheDocument();
+    expect(tiers).not.toHaveTextContent(/Hasta \d+/);
+    expect(tiers).toHaveTextContent("Hoy todas las tiendas publican 25 productos, sea cual sea su nivel.");
+    expect(within(tiers).getByText("Tiendas fundadoras: 50 productos")).toBeInTheDocument();
   });
 
   it("sends every call to action to the same registration link", () => {

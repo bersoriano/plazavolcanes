@@ -2,6 +2,7 @@ import { FoundersCta } from "@/components/sellers/founders-cta";
 import { SellerBenefits } from "@/components/sellers/seller-benefits";
 import { FoundersPackage } from "@/components/sellers/founders-package";
 import { SellerFaq } from "@/components/sellers/seller-faq";
+import { SellerComparison } from "@/components/sellers/seller-comparison";
 import { SellerCatalog } from "@/components/sellers/seller-catalog";
 import { SellerHero } from "@/components/sellers/seller-hero";
 import { SellerSteps } from "@/components/sellers/seller-steps";
@@ -38,8 +39,9 @@ export function SellerProgram({
       <SellerTapes promoActive={promoActive} />
       {promoActive ? <FoundersPackage /> : null}
       <SellerBenefits />
+      <SellerComparison />
       <SellerCatalog />
-      <SellerSteps viewer={viewer} />
+      <SellerSteps promoActive={promoActive} viewer={viewer} />
       <SellerTrustTiers promoActive={promoActive} />
       <SellerFaq promoActive={promoActive} />
       {promoActive ? <FoundersCta spotsTaken={spotsTaken} viewer={viewer} /> : null}

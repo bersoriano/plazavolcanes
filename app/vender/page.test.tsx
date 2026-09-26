@@ -33,9 +33,9 @@ describe("Seller page", () => {
         name: "Abre tu tienda gratis y quédate con cada peso.",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Crea tu tienda")).toBeInTheDocument();
-    expect(screen.getByText("Trae tu reputación")).toBeInTheDocument();
-    expect(screen.getByText("Publica y recibe pedidos")).toBeInTheDocument();
+    expect(screen.getByText("Nombre y estado")).toBeInTheDocument();
+    expect(screen.getByText("Tu primer producto")).toBeInTheDocument();
+    expect(screen.getByRole("table")).toBeInTheDocument();
 
     for (const cta of screen.getAllByRole("link", { name: "Crear mi tienda gratis" })) {
       expect(cta.getAttribute("href")).toMatch(/^\/registro\?vender=1(&desde=[a-z]+)?$/);
