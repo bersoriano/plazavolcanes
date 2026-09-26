@@ -194,7 +194,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
             dissolves into the grid, so the invite card becomes its last cell. */}
         <div className="flex flex-col gap-6 lg:grid lg:grid-cols-3">
           <div className="flex snap-x gap-3.5 overflow-x-auto scroll-px-5 px-5 pb-1 sm:scroll-px-8 sm:px-8 lg:contents">
-            {shops.map((shop) => <PublicShopCard key={shop.id} shop={shop} />)}
+            {shops.slice(0, 8).map((shop) => <PublicShopCard key={shop.id} shop={shop} />)}
           </div>
           {hasFilters ? null : <ShopInviteCard />}
         </div>

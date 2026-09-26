@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, ArrowUpRight, MapPin, Plus, ShieldCheck, Sparkles, Store } from "lucide-react";
 
 import { CatalogImage } from "@/components/catalog/catalog-image";
+import { FounderMark } from "@/components/shops/founder-mark";
 import type { CatalogShop } from "@/lib/queries/catalog.server";
 import { formatShopLocation } from "@/lib/shop-location";
 import { getTrustTierMarker } from "@/lib/trust-tiers";
@@ -20,7 +21,9 @@ export function PublicShopCard({
   tint?: "lilac" | "gold";
   className?: string;
 }) {
-  const isPremium = shop.is_premium === true;
+  const isFounder = Boolean(shop.founder_since);
+  // The founder theme is the Premium frame with its own badge.
+  const isPremium = shop.is_premium === true || isFounder;
   const tier = getTrustTierMarker(shop.trust_tier);
 
   return (
@@ -36,9 +39,19 @@ export function PublicShopCard({
         }`}
       >
         {isPremium ? (
-          <span className="absolute left-3.5 top-3.5 z-10 inline-flex h-7 items-center gap-1.5 rounded-full bg-premium-ink px-2.5 text-[12px] font-bold text-premium-gold lg:left-[18px] lg:top-[18px] lg:h-[30px] lg:px-3">
-            <Sparkles aria-hidden="true" className="size-3.5" />
-            Premium
+          <span className="absolute left-3.5 top-3.5 z-10 flex gap-1.5 lg:left-[18px] lg:top-[18px]">
+            {isFounder ? (
+              <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-premium-ink px-2.5 text-[12px] font-bold text-premium-gold lg:h-[30px] lg:px-3">
+                <FounderMark className="size-3.5" />
+                Tienda fundadora
+              </span>
+            ) : null}
+            {shop.is_premium ? (
+              <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-premium-ink px-2.5 text-[12px] font-bold text-premium-gold lg:h-[30px] lg:px-3">
+                <Sparkles aria-hidden="true" className="size-3.5" />
+                Premium
+              </span>
+            ) : null}
           </span>
         ) : null}
         <CatalogImage

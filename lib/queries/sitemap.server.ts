@@ -91,3 +91,26 @@ export async function hasPublishedProducts(categoryIds: number[]): Promise<boole
 
   return (count ?? 0) > 0;
 }
+
+/**
+ * The leaf categories with something public filed under them, by the same
+ * publication filters as the sitemap. The home page hides every category
+ * chip and tape name without one: an empty category is a dead end.
+ */
+export async function getListedCategoryIds(): Promise<Set<number>> {
+  if (!isSupabaseConfigured()) return new Set();
+
+  const supabase = await createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("products")
+    .select("category_id, shops!inner(is_publishing_approved)")
+    .eq("status", "published")
+    .eq("is_admin_enabled", true)
+    .eq("shops.is_publishing_approved", true)
+    .not("expires_at", "is", null)
+    .gt("expires_at", new Date().toISOString())
+    .limit(SITEMAP_ROW_LIMIT);
+  if (error) return new Set();
+
+  return new Set((data ?? []).flatMap((product) => (product.category_id == null ? [] : [product.category_id])));
+}

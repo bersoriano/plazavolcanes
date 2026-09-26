@@ -153,3 +153,15 @@ export function buildCatalogHref({
 
   return basePath === "/" ? `/?${queryString}` : `${basePath}?${queryString}`;
 }
+
+/**
+ * The tree cut down to what has listings: leaves in `listed`, and the roots
+ * that still have one of them (or are listed themselves).
+ */
+export function listedCategoryTree(tree: CategoryTree[], listed: Set<number>): CategoryTree[] {
+  return tree.flatMap((category) => {
+    const children = category.children.filter((child) => listed.has(child.id));
+    if (!children.length && !listed.has(category.id)) return [];
+    return [{ ...category, children }];
+  });
+}

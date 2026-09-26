@@ -34,6 +34,21 @@ function shop(id: number, overrides: Partial<CatalogShop> = {}): CatalogShop {
 }
 
 describe("rankShops", () => {
+  it("leads with founders inside their 90 days, then the usual order", () => {
+    const now = Date.parse("2026-10-10T12:00:00Z");
+    const ranked = rankShops(
+      [
+        shop(1, { is_premium: true }),
+        shop(2, { founder_since: "2026-10-01T00:00:00Z" }),
+        shop(3, { founder_since: "2026-01-01T00:00:00Z" }),
+        shop(4),
+      ],
+      now,
+    );
+
+    expect(ranked.map((item) => item.id)).toEqual([2, 1, 3, 4]);
+  });
+
   it("puts premium first, then the higher tier, then a cover photo, and keeps recency for ties", () => {
     const ranked = rankShops([
       shop(1),
@@ -57,12 +72,11 @@ describe("LandingStores", () => {
     expect(links.at(-1)).toHaveAttribute("href", "/vender?desde=tiendas");
   });
 
-  it("shows two shops in the desktop grid and up to six in the phone's scroller", () => {
-    render(<LandingStores shops={Array.from({ length: 8 }, (_, index) => shop(index + 1))} />);
+  it("shows up to seven shops and the open seat", () => {
+    render(<LandingStores shops={Array.from({ length: 9 }, (_, index) => shop(index + 1))} />);
 
-    const cards = screen.getAllByRole("link", { name: /Tienda \d/ });
-    expect(cards).toHaveLength(6);
-    expect(cards.filter((card) => card.classList.contains("lg:hidden"))).toHaveLength(4);
+    expect(screen.getAllByRole("link", { name: /Tienda \d/ })).toHaveLength(7);
+    expect(screen.getByRole("link", { name: /Tu tienda podría estar aquí/ })).toBeInTheDocument();
   });
 
   it("still offers the open seat when no shop exists yet", () => {

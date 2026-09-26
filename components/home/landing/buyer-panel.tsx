@@ -62,7 +62,8 @@ export function BuyerPanel({
         <CategoryNavigation countryCode={countryCode} locale={locale} tree={categories} variant="panel" />
 
         <div className="mt-2 grid grid-cols-2 gap-x-3.5 gap-y-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
-          {products.slice(0, 3).map((product, index) => (
+          {/* Photographed listings only: a grey placeholder reads as a broken page. */}
+          {products.filter((product) => product.imageUrl).slice(0, 3).map((product, index) => (
             <ProductCard
               key={product.id}
               locale={locale}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ImageIcon, MapPin, Sparkles } from "lucide-react";
 
 import { CatalogImage } from "@/components/catalog/catalog-image";
+import { FounderMark } from "@/components/shops/founder-mark";
 import {
   DEFAULT_CATALOG_CURRENCY,
   DEFAULT_CATALOG_LOCALE,
@@ -31,6 +32,7 @@ type ProductCardProps = {
       administrative_area_codes: string[];
       trust_tier: TrustTier;
       is_premium?: boolean;
+      founder_since?: string | null;
     };
   };
   categoryName?: string | null;
@@ -58,7 +60,21 @@ export function ProductCard({
     ? catalogHref.slice(catalogHref.indexOf("?"))
     : "";
   const currencyCode = product.currency_code ?? DEFAULT_CATALOG_CURRENCY;
-  const isPremium = product.shop.is_premium === true;
+  // A founding shop wears the same gold frame as a Premium one, with its own
+  // chip: status earned at launch (docs/launch-package.md).
+  const isFounder = Boolean(product.shop.founder_since);
+  const isPremium = product.shop.is_premium === true || isFounder;
+  const chip = isFounder ? (
+    <>
+      <FounderMark className="size-3" />
+      Fundadora
+    </>
+  ) : (
+    <>
+      <Sparkles aria-hidden="true" className="size-3" />
+      Premium
+    </>
+  );
   const compact = variant === "compact";
 
   function recordSelection() {
@@ -86,8 +102,7 @@ export function ProductCard({
             </span>
             {isPremium ? (
               <span className="hidden h-7 shrink-0 items-center gap-1 rounded-full bg-premium-ink px-2.5 text-[12px] font-bold text-premium-gold sm:inline-flex">
-                <Sparkles aria-hidden="true" className="size-3" />
-                Premium
+                {chip}
               </span>
             ) : null}
           </span>
@@ -126,8 +141,7 @@ export function ProductCard({
           // Bottom-left on a phone, where top-right would collide with the
           // condition pill on a narrow card.
           <span className="absolute bottom-2 left-2 z-10 inline-flex items-center gap-1 rounded-full bg-premium-ink px-[9px] py-[5px] text-[11px] font-bold text-premium-gold shadow-sm sm:bottom-auto sm:left-auto sm:right-3 sm:top-3 sm:px-2.5 sm:py-1.5 sm:text-xs">
-            <Sparkles aria-hidden="true" className="size-3" />
-            Premium
+            {chip}
           </span>
         ) : null}
         <CatalogImage

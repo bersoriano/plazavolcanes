@@ -1,21 +1,33 @@
 import { PublicShopCard, ShopInviteCard } from "@/components/catalog/shop-card";
 import { Accent, Eyebrow, TYPE } from "@/components/home/landing/primitives";
 import type { CatalogShop } from "@/lib/queries/catalog.server";
+import { isFeaturedFounder } from "@/lib/launch";
 import type { TrustTier } from "@/lib/trust-tiers";
 
 const TIER_RANK: Record<TrustTier, number> = { top_rated: 0, reliable: 1, standard: 2 };
 
-/** How many shops the phone's scroller carries; the desktop grid shows two. */
-const SCROLLER_LIMIT = 6;
+/** How many shops the section shows: seven and the open seat fill two rows of four. */
+const SHOP_LIMIT = 7;
+
+/** A stable daily order among featured founders, so each gets its turn at the front. */
+function rotation(shopId: number, day: number) {
+  return ((shopId * 2654435761 + day * 40503) >>> 0) % 1000;
+}
 
 /**
- * The shops worth showing first: premium, then by trust tier, then those
- * with a cover photo. The query already returns them newest first, and the
- * sort is stable, so recency breaks every remaining tie.
+ * The shops worth showing first. Founders inside their 90 days of homepage
+ * rotation lead (docs/launch-package.md), reshuffled daily; then Premium,
+ * the higher trust tier, a cover photo, and recency, which the query already
+ * returns and a stable sort keeps.
  */
-export function rankShops(shops: CatalogShop[]) {
+export function rankShops(shops: CatalogShop[], now = Date.now()) {
+  const day = Math.floor(now / 86_400_000);
+  const featured = (shop: CatalogShop) => isFeaturedFounder(shop.founder_since, now);
+
   return [...shops].sort(
     (a, b) =>
+      Number(featured(b)) - Number(featured(a)) ||
+      (featured(a) && featured(b) ? rotation(a.id, day) - rotation(b.id, day) : 0) ||
       Number(b.is_premium === true) - Number(a.is_premium === true) ||
       TIER_RANK[a.trust_tier] - TIER_RANK[b.trust_tier] ||
       Number(Boolean(b.imageUrl)) - Number(Boolean(a.imageUrl)),
@@ -23,12 +35,12 @@ export function rankShops(shops: CatalogShop[]) {
 }
 
 /**
- * Real shops and the open seat. From lg a three-column grid: the top two
- * shops and the invite card. Below lg the shops scroll sideways and the
+ * Real shops and the open seat. From lg a four-column grid of up to seven
+ * shops and the invite card; below lg the shops scroll sideways and the
  * invite card sits full width under them.
  */
 export function LandingStores({ shops }: { shops: CatalogShop[] }) {
-  const ranked = rankShops(shops).slice(0, SCROLLER_LIMIT);
+  const ranked = rankShops(shops).slice(0, SHOP_LIMIT);
 
   return (
     <section
@@ -51,12 +63,11 @@ export function LandingStores({ shops }: { shops: CatalogShop[] }) {
 
         {/* The scroller dissolves into the grid at lg, so its cards and the
             invite card become the grid's cells. */}
-        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-3 lg:gap-5">
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-4 lg:gap-5">
           {ranked.length ? (
             <div className="flex snap-x snap-mandatory gap-3.5 overflow-x-auto scroll-px-5 px-5 pb-1 sm:scroll-px-8 sm:px-8 lg:contents">
               {ranked.map((shop, index) => (
                 <PublicShopCard
-                  className={index >= 2 ? "lg:hidden" : ""}
                   key={shop.id}
                   shop={shop}
                   tint={index % 2 ? "gold" : "lilac"}

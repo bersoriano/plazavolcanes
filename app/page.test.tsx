@@ -4,14 +4,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import Home, { generateMetadata } from "@/app/page";
 import { getHomeCatalog } from "@/lib/queries/catalog.server";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
-import { hasPublishedProducts } from "@/lib/queries/sitemap.server";
+import { getListedCategoryIds, hasPublishedProducts } from "@/lib/queries/sitemap.server";
 
 vi.mock("@/lib/queries/catalog.server", () => ({
   getHomeCatalog: vi.fn(),
   getCatalogStateCounts: vi.fn(async () => []),
 }));
 vi.mock("@/lib/queries/categories.server", () => ({ getProductCategoryTree: vi.fn(async () => []) }));
-vi.mock("@/lib/queries/sitemap.server", () => ({ hasPublishedProducts: vi.fn(async () => false) }));
+vi.mock("@/lib/queries/sitemap.server", () => ({
+  hasPublishedProducts: vi.fn(async () => false),
+  // Every category counts as listed unless a test says otherwise.
+  getListedCategoryIds: vi.fn(async () => ({ has: () => true }) as unknown as Set<number>),
+}));
 
 const redirect = vi.hoisted(() => vi.fn());
 vi.mock("next/navigation", () => ({ redirect, notFound: vi.fn() }));
@@ -178,6 +182,7 @@ function sampleProduct() {
       administrative_area_codes: ["MX-OAX"],
       trust_tier: "standard" as const,
       is_premium: false,
+      founder_since: null,
     },
   };
 }
@@ -371,8 +376,55 @@ describe("Home landing", () => {
     );
   });
 
+  it("hides the categories nothing is published under", async () => {
+    vi.mocked(getListedCategoryIds).mockResolvedValueOnce(new Set([11]));
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({
+        categories: [
+          { id: 1, parentId: null, slug: "electronica", name: "Electrónica", sortOrder: 1, isActive: true, children: [
+            { id: 11, parentId: 1, slug: "celulares", name: "Celulares", sortOrder: 1, isActive: true },
+          ] },
+          { id: 2, parentId: null, slug: "moda", name: "Moda", sortOrder: 2, isActive: true, children: [
+            { id: 21, parentId: 2, slug: "ropa", name: "Ropa", sortOrder: 1, isActive: true },
+          ] },
+        ],
+      }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const categories = screen.getByRole("navigation", { name: "Categorías de productos" });
+    expect(within(categories).getByRole("link", { name: "Electrónica" })).toBeInTheDocument();
+    expect(within(categories).queryByRole("link", { name: "Moda" })).not.toBeInTheDocument();
+  });
+
+  it("shows only photographed products, never a grey placeholder", async () => {
+    const products = [1, 2, 3].map((id) => ({
+      ...sampleProduct(),
+      id,
+      slug: `producto-${id}`,
+      name: `Producto ${id}`,
+      imageUrl: id === 2 ? null : `https://example.com/${id}.jpg`,
+    }));
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products }));
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const panel = screen.getByRole("region", { name: "Encuentra productos únicos cerca de ti." });
+    expect(within(panel).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
+      "Producto 1",
+      "Producto 3",
+    ]);
+  });
+
   it("shows the three newest products, then the way into the whole plaza and the guide", async () => {
-    const products = [1, 2, 3, 4].map((id) => ({ ...sampleProduct(), id, slug: `producto-${id}`, name: `Producto ${id}` }));
+    const products = [1, 2, 3, 4].map((id) => ({
+      ...sampleProduct(),
+      id,
+      slug: `producto-${id}`,
+      name: `Producto ${id}`,
+      imageUrl: `https://example.com/${id}.jpg`,
+    }));
     vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products }));
 
     render(await Home({ searchParams: Promise.resolve({}) }));
