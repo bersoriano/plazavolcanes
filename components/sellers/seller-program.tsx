@@ -15,14 +15,17 @@ import { isFoundersPromoActive } from "@/lib/launch";
  * nobody can stand behind.
  */
 export function SellerProgram({ spotsTaken }: { spotsTaken?: number | null }) {
+  // Read per request, so the founders wording leaves the moment the promotion ends.
+  const promoActive = isFoundersPromoActive();
+
   return (
     <>
-      <SellerHero spotsTaken={spotsTaken} />
-      <SellerBenefits />
+      <SellerHero promoActive={promoActive} spotsTaken={spotsTaken} />
+      <SellerBenefits promoActive={promoActive} />
       <SellerSteps />
       <SellerTrustTiers />
-      <SellerFaq />
-      {isFoundersPromoActive() ? <FoundersCta spotsTaken={spotsTaken} /> : null}
+      <SellerFaq promoActive={promoActive} />
+      {promoActive ? <FoundersCta spotsTaken={spotsTaken} /> : null}
     </>
   );
 }
