@@ -1,25 +1,20 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { SellerProgram } from "@/components/sellers/seller-program";
-
-vi.mock("@/lib/launch", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/launch")>()),
-  isFoundersPromoActive: () => false,
-}));
 
 afterEach(cleanup);
 
 describe("SellerProgram after the founders promotion", () => {
   it("no longer mentions the founders spots anywhere", () => {
-    const { container } = render(<SellerProgram />);
+    const { container } = render(<SellerProgram founders={{ open: false, taken: 100, cap: 100 }} />);
 
     expect(container.textContent).not.toMatch(/primeras 100|tres meses|Lanzamiento|fundadoras/i);
     expect(screen.queryByRole("region", { name: "Sé una de las primeras 100 tiendas." })).not.toBeInTheDocument();
   });
 
   it("states what every shop keeps instead", () => {
-    render(<SellerProgram />);
+    render(<SellerProgram founders={{ open: false, taken: 100, cap: 100 }} />);
 
     expect(screen.getByText("Publica gratis · 0% comisión")).toBeInTheDocument();
     expect(

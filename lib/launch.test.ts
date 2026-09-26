@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { FOUNDERS_CAP, isFoundersPromoActive, resolveFoundersProgress } from "@/lib/launch";
+import { FOUNDERS_CAP, FOUNDERS_FALLBACK, resolveFoundersProgress, toFoundersProgram } from "@/lib/launch";
 
 describe("resolveFoundersProgress", () => {
   it("refuses to invent a count", () => {
@@ -29,20 +29,15 @@ describe("resolveFoundersProgress", () => {
   });
 });
 
-describe("isFoundersPromoActive", () => {
-  const end = "2026-12-31T23:59:59-06:00";
-
-  it("runs while no end date is set", () => {
-    expect(isFoundersPromoActive(new Date("2030-01-01"), null)).toBe(true);
+describe("toFoundersProgram", () => {
+  it("reads the counter and whether new stores can still land a spot", () => {
+    expect(toFoundersProgram({ cap: 100, taken: 38, is_open: true })).toEqual({ open: true, taken: 38, cap: 100 });
+    expect(toFoundersProgram({ cap: 100, taken: 100, is_open: false })).toEqual({ open: false, taken: 100, cap: 100 });
   });
 
-  it("runs until the end instant and stops from then on", () => {
-    expect(isFoundersPromoActive(new Date("2026-12-31T23:59:58-06:00"), end)).toBe(true);
-    expect(isFoundersPromoActive(new Date("2026-12-31T23:59:59-06:00"), end)).toBe(false);
-    expect(isFoundersPromoActive(new Date("2027-01-15"), end)).toBe(false);
-  });
-
-  it("treats a malformed end date as ended rather than running forever", () => {
-    expect(isFoundersPromoActive(new Date("2026-01-01"), "fin de año")).toBe(false);
+  it("keeps the offer up without a number when there is no status to trust", () => {
+    expect(toFoundersProgram(null)).toEqual(FOUNDERS_FALLBACK);
+    expect(toFoundersProgram({ cap: 100, taken: Number.NaN, is_open: true })).toEqual(FOUNDERS_FALLBACK);
+    expect(FOUNDERS_FALLBACK).toEqual({ open: true, taken: null, cap: FOUNDERS_CAP });
   });
 });

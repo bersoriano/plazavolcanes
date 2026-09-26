@@ -8,6 +8,7 @@ import { buildCatalogHref, listingCategoryIds, resolveCategorySelection } from "
 import { normalizeCatalogFilters } from "@/lib/queries/catalog";
 import { getCatalogStateCounts, getHomeCatalog } from "@/lib/queries/catalog.server";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
+import { getFoundersProgram } from "@/lib/queries/founders.server";
 import { hasPublishedProducts } from "@/lib/queries/sitemap.server";
 import { buildHomeMetadata, SITE_NAME } from "@/lib/seo/home-metadata";
 import { buildSiteUrl } from "@/lib/site-url";
@@ -79,18 +80,20 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
     redirect(buildCatalogHref({ locale: filters.locale, countryCode: filters.countryCode }));
   }
 
-  const [catalog, stateCounts] = await Promise.all([
+  const landing = bareHome && !filters.invalidAreaSelection;
+  const [catalog, stateCounts, founders] = await Promise.all([
     getHomeCatalog(filters),
     getCatalogStateCounts(filters.countryCode),
+    landing ? getFoundersProgram() : null,
   ]);
 
   // The bare home is the seller-first landing; anything filtered, or an
   // unknown state that fell back to all of México, keeps the catalogue.
-  if (bareHome && !filters.invalidAreaSelection) {
+  if (landing && founders) {
     return (
       <>
         <HomeStructuredData />
-        <HomeLanding catalog={catalog} filters={filters} stateCounts={stateCounts} />
+        <HomeLanding catalog={catalog} filters={filters} founders={founders} stateCounts={stateCounts} />
       </>
     );
   }

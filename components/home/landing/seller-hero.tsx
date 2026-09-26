@@ -16,12 +16,15 @@ export function SellerHero({
   latest,
   locale,
   promoActive = true,
+  spotsTaken = null,
 }: {
   tiles: [CollageProduct | null, CollageProduct | null];
   latest: CollageProduct | null;
   locale?: CatalogLocale;
   /** False once the founders promotion has ended: the card leaves the hero. */
   promoActive?: boolean;
+  /** Founding spots taken, when there is a count to show. */
+  spotsTaken?: number | null;
 }) {
   return (
     <section
@@ -63,7 +66,7 @@ export function SellerHero({
             </Link>
           </div>
 
-          {promoActive ? <FoundersCounter /> : null}
+          {promoActive ? <FoundersCounter spotsTaken={spotsTaken} /> : null}
         </div>
 
         <HeroCollage latest={latest} locale={locale} tiles={tiles} />

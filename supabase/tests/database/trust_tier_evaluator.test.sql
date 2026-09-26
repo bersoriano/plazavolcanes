@@ -4,6 +4,11 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(36);
 
+-- These stores measure the tiers alone, so the founders window is closed:
+-- inside it a new store would hold the founder floor of 50 articles.
+update private.founders_program
+set starts_at = now() - interval '2 days', ends_at = now() - interval '1 day';
+
 select has_table('public', 'shop_trust_evaluation_queue', 'trust evaluation queue exists');
 select has_table('public', 'shop_trust_evaluations', 'trust evaluation history exists');
 select has_function(

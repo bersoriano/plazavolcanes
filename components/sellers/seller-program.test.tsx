@@ -2,6 +2,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { SellerProgram } from "@/components/sellers/seller-program";
+import { FOUNDERS_FALLBACK } from "@/lib/launch";
 import { getTrustTierMarker } from "@/lib/trust-tiers";
 
 afterEach(cleanup);
@@ -10,7 +11,7 @@ const HERO = "Abre tu tienda gratis y quédate con cada peso.";
 
 describe("SellerProgram", () => {
   it("carries the three promises as labelled regions under a single h1", () => {
-    render(<SellerProgram />);
+    render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
 
@@ -34,7 +35,7 @@ describe("SellerProgram", () => {
   });
 
   it("numbers the ordered steps to opening a store", () => {
-    render(<SellerProgram />);
+    render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 
     const steps = within(
       screen.getByRole("region", { name: "Tu tienda lista en tres pasos." }),
@@ -50,7 +51,7 @@ describe("SellerProgram", () => {
   });
 
   it("keeps the publication ladder every tier sets", () => {
-    render(<SellerProgram />);
+    render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 
     const tiers = screen.getByRole("region", { name: "Cuanto mejor atiendes, más publicas." });
 
@@ -63,7 +64,7 @@ describe("SellerProgram", () => {
   });
 
   it("sends every call to action to the same registration link", () => {
-    render(<SellerProgram />);
+    render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 
     const ctas = screen.getAllByRole("link", { name: "Crear mi tienda gratis" });
 
@@ -85,7 +86,7 @@ describe("SellerProgram", () => {
   });
 
   it("answers what happens when the promotion ends", () => {
-    render(<SellerProgram />);
+    render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 
     const faq = screen.getByRole("region", { name: "Lo que te estás preguntando." });
 
@@ -98,7 +99,7 @@ describe("SellerProgram", () => {
   });
 
   it("describes its illustrations in words and gives them nothing to operate", () => {
-    const { container } = render(<SellerProgram />);
+    const { container } = render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 
     expect(
       screen.getByText(/vendes un artículo en \$1,999\.00 y recibes \$1,999\.00/),
@@ -115,7 +116,7 @@ describe("SellerProgram", () => {
   });
 
   it("shows no founders count until real data arrives", () => {
-    render(<SellerProgram />);
+    render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 
     expect(screen.getByText("Lanzamiento · Primeras 100 tiendas")).toBeInTheDocument();
     expect(screen.queryByRole("progressbar")).not.toBeInTheDocument();
@@ -124,7 +125,7 @@ describe("SellerProgram", () => {
   });
 
   it("states the direct-sale limits without claiming protection it cannot give", () => {
-    render(<SellerProgram />);
+    render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 
     const hero = screen.getByRole("region", { name: HERO });
 

@@ -4,19 +4,18 @@ import { SellerFaq } from "@/components/sellers/seller-faq";
 import { SellerHero } from "@/components/sellers/seller-hero";
 import { SellerSteps } from "@/components/sellers/seller-steps";
 import { SellerTrustTiers } from "@/components/sellers/seller-trust-tiers";
-import { isFoundersPromoActive } from "@/lib/launch";
+import type { FoundersProgram } from "@/lib/launch";
 
 /**
  * /vender, end to end.
  *
- * `spotsTaken` is the founders counter, and there is deliberately nothing
- * feeding it yet: until the launch window and the qualifying rule are settled,
- * the hero pill and the progress card show no number at all rather than one
- * nobody can stand behind.
+ * `founders` is the promotion's status, read per request by the page: while it
+ * is open the page makes the founders offer with its counter (no number when
+ * there is no count to trust); once it closes or fills, the offer leaves.
  */
-export function SellerProgram({ spotsTaken }: { spotsTaken?: number | null }) {
-  // Read per request, so the founders wording leaves the moment the promotion ends.
-  const promoActive = isFoundersPromoActive();
+export function SellerProgram({ founders }: { founders: FoundersProgram }) {
+  const promoActive = founders.open;
+  const spotsTaken = founders.taken;
 
   return (
     <>

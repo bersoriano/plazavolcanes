@@ -1,7 +1,11 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import SellerPage, { metadata } from "@/app/vender/page";
+
+vi.mock("@/lib/queries/founders.server", () => ({
+  getFoundersProgram: vi.fn(async () => ({ open: true, taken: null, cap: 100 })),
+}));
 
 afterEach(cleanup);
 
@@ -15,8 +19,8 @@ describe("Seller page", () => {
     });
   });
 
-  it("renders the complete seller program", () => {
-    render(<SellerPage />);
+  it("renders the complete seller program", async () => {
+    render(await SellerPage());
 
     expect(
       screen.getByRole("heading", {

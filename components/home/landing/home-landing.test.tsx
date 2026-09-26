@@ -1,14 +1,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { HomeLanding } from "@/components/home/landing/home-landing";
 import { normalizeCatalogFilters } from "@/lib/queries/catalog";
 
-const promo = vi.hoisted(() => ({ active: true }));
-vi.mock("@/lib/launch", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/launch")>()),
-  isFoundersPromoActive: () => promo.active,
-}));
+const promo = { active: true };
 
 afterEach(() => {
   cleanup();
@@ -28,6 +24,7 @@ function renderLanding() {
         searchEventId: null,
       }}
       filters={normalizeCatalogFilters({})}
+      founders={{ open: promo.active, taken: null, cap: 100 }}
       stateCounts={[]}
     />,
   );

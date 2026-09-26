@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { SellerProgram } from "@/components/sellers/seller-program";
+import { getFoundersProgram } from "@/lib/queries/founders.server";
 
 import "./vender.css";
 
@@ -13,6 +14,6 @@ export const metadata: Metadata = {
   alternates: { canonical: "/vender" },
 };
 
-export default function SellerPage() {
-  return <SellerProgram />;
+export default async function SellerPage() {
+  return <SellerProgram founders={await getFoundersProgram()} />;
 }

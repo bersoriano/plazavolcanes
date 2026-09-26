@@ -2,22 +2,25 @@
 export const FOUNDERS_CAP = 100;
 
 /**
- * When the founders promotion stops taking shops, as an ISO 8601 instant
- * (e.g. "2026-12-31T23:59:59-06:00"), or null while no end date is set.
+ * The founders promotion as the site shows it: whether a new store can still
+ * land a spot, and how many are taken (null when there is no count to trust).
  *
- * Every block that makes the offer (the launch bar, the landing's founders
- * card, 0% block and closing call, and the founders section on /vender)
- * reads isFoundersPromoActive(), so the offer leaves the site in one edit and
- * no page goes on promising it after it has ended.
+ * The window and the cap live in the database (private.founders_program),
+ * next to the ledger that decides who is a founder; getFoundersProgram() in
+ * lib/queries/founders.server.ts reads them once per request. Every block
+ * that makes the offer reads `open`, so the offer leaves the site the moment
+ * the window closes or the last spot goes.
  */
-export const FOUNDERS_PROMO_ENDS_AT: string | null = null;
+export type FoundersProgram = { open: boolean; taken: number | null; cap: number };
 
-export function isFoundersPromoActive(now: Date = new Date(), endsAt: string | null = FOUNDERS_PROMO_ENDS_AT) {
-  if (!endsAt) return true;
-  const end = new Date(endsAt);
-  // A malformed date must not quietly keep an ended offer on the page.
-  if (Number.isNaN(end.getTime())) return false;
-  return now < end;
+/** What the site shows while there is no status to read: the offer, without a number. */
+export const FOUNDERS_FALLBACK: FoundersProgram = { open: true, taken: null, cap: FOUNDERS_CAP };
+
+export function toFoundersProgram(
+  row: { cap: number; taken: number; is_open: boolean } | null | undefined,
+): FoundersProgram {
+  if (!row || !Number.isFinite(row.taken) || !Number.isFinite(row.cap)) return FOUNDERS_FALLBACK;
+  return { open: row.is_open, taken: row.taken, cap: row.cap };
 }
 
 /**
