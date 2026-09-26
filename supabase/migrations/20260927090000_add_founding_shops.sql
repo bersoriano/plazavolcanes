@@ -1,244 +1,177 @@
--- Founding stores: the first 100 stores registered during the first three
--- months get 1 free store, up to 50 published articles and Premium status
--- for their first year, plus the "Tienda fundadora" badge.
+-- The launch package (docs/launch-package.md).
 --
--- Registration order is a ledger, not a flag on the shop: an owner's first
--- store is recorded once and never removed, so deleting a store does not hand
--- its spot to somebody else, and moving the window re-ranks nothing by hand.
--- Who is a founder is computed from that ledger, the window and the cap.
+-- Every shop publishes up to 25 live listings for free. The first 100 shops
+-- that publish at least 8 items within 7 days earn a founding seat: 50 live
+-- listings, locked, and a permanent badge. The seat is earned with inventory,
+-- not by registering, and it is kept forever: deleting the shop does not hand
+-- it to somebody else.
+--
+-- Listing caps no longer follow the trust tier. The evaluator still writes a
+-- tier's limit; a trigger replaces it with the launch policy.
 
 create table private.founders_program (
   id boolean primary key default true check (id),
-  starts_at timestamptz not null,
-  -- Three months from the start unless administration sets another end.
-  ends_at timestamptz not null,
+  -- When the plaza opened to sellers. A shop opened earlier gets its 7 days
+  -- from here, so the seed shops have the same chance as everybody else.
+  opens_at timestamptz not null default now(),
+  -- Optional: stop assigning seats before the 100 run out.
+  closes_at timestamptz,
   cap integer not null default 100 check (cap > 0),
-  perk_listing_limit integer not null default 50 check (perk_listing_limit > 0),
-  perk_period interval not null default interval '1 year',
-  check (ends_at > starts_at)
+  min_live_items integer not null default 8 check (min_live_items > 0),
+  qualify_window interval not null default interval '7 days',
+  base_listing_limit integer not null default 25 check (base_listing_limit > 0),
+  founder_listing_limit integer not null default 50 check (founder_listing_limit > 0)
 );
 
 revoke all on table private.founders_program from public, anon, authenticated;
 alter table private.founders_program enable row level security;
 
-create table private.shop_registrations (
-  owner_id uuid primary key references auth.users (id) on delete cascade,
-  -- Kept when the store is deleted: the spot stays taken.
+insert into private.founders_program default values;
+
+create table private.founding_shops (
+  seat integer primary key check (seat > 0),
+  -- Kept when the shop is deleted: the seat stays taken.
   shop_id bigint unique references public.shops (id) on delete set null,
-  registered_at timestamptz not null
+  owner_id uuid not null,
+  claimed_at timestamptz not null default now()
 );
 
-revoke all on table private.shop_registrations from public, anon, authenticated;
-alter table private.shop_registrations enable row level security;
+revoke all on table private.founding_shops from public, anon, authenticated;
+alter table private.founding_shops enable row level security;
 
-create index shop_registrations_registered_at_idx
-  on private.shop_registrations (registered_at, owner_id);
+-- Public cache of the seat, like trust_tier: the badge, the founder theme
+-- and the 90-day homepage rotation read it with the shop. Only the triggers
+-- below write it.
+alter table public.shops
+  add column founder_since timestamptz;
 
--- Every owner's first store, ranked inside the window. Ties on the same
--- instant fall back to the owner id so the order never changes between reads.
-create function private.founding_registrations()
-returns table (owner_id uuid, shop_id bigint, registered_at timestamptz, founder_rank bigint, perks_until timestamptz)
-language sql
-stable
-set search_path = ''
-as $$
-  select r.owner_id,
-         r.shop_id,
-         r.registered_at,
-         row_number() over (order by r.registered_at, r.owner_id) as founder_rank,
-         r.registered_at + p.perk_period as perks_until
-  from private.shop_registrations r
-  cross join private.founders_program p
-  where r.registered_at >= p.starts_at
-    and r.registered_at < p.ends_at
-  order by r.registered_at, r.owner_id
-  limit (select cap from private.founders_program)
-$$;
+alter table public.shops
+  alter column listing_limit set default 25;
 
-revoke all on function private.founding_registrations() from public, anon, authenticated;
-
--- The perks a shop holds right now: null when it is not a founder or its
--- first year is over.
-create function private.active_founder_listing_limit(p_shop_id bigint)
+-- The cap a shop has under the launch policy.
+create function private.launch_listing_limit(p_is_founder boolean)
 returns integer
 language sql
 stable
 set search_path = ''
 as $$
-  select p.perk_listing_limit
-  from private.founding_registrations() f
-  cross join private.founders_program p
-  where f.shop_id = p_shop_id
-    and now() < f.perks_until
+  select case when p_is_founder then p.founder_listing_limit else p.base_listing_limit end
+  from private.founders_program p
 $$;
 
-revoke all on function private.active_founder_listing_limit(bigint) from public, anon, authenticated;
+revoke all on function private.launch_listing_limit(boolean) from public, anon, authenticated;
 
--- Floors a founder's limits while its perks last. It runs on every update,
--- including evaluate_shop_trust writing the tier's limit, so a founder at
--- Estándar keeps 50 and one at Mejor valorada keeps 100. Premium stays on;
--- an administrator's own grant (private.shop_premium_grants) outlives it.
-create function private.apply_founder_perks()
-returns trigger
-language plpgsql
-security definer
-set search_path = ''
-as $$
-declare
-  v_limit integer := private.active_founder_listing_limit(new.id);
-begin
-  if v_limit is not null then
-    new.listing_limit := greatest(new.listing_limit, v_limit);
-    new.is_premium := true;
-  end if;
-  return new;
-end;
-$$;
-
-revoke all on function private.apply_founder_perks() from public, anon, authenticated;
-
--- Named to fire last: before-triggers run in name order, and
--- guard_shop_trust_cache must judge what the seller sent, not the floor this
--- adds on top of it.
-create trigger zz_apply_founder_perks
-before update on public.shops
-for each row
-execute function private.apply_founder_perks();
-
--- Records an owner's first store and, if it lands a founding spot, applies
--- the perks at once rather than at the next trust evaluation.
-create function private.record_shop_registration()
+-- Applies the launch policy on every write to a shop. Named to fire after
+-- guard_shop_trust_cache (before-triggers run in name order), which must
+-- judge what the seller sent, not what this sets on top of it.
+create function private.apply_launch_policy()
 returns trigger
 language plpgsql
 security definer
 set search_path = ''
 as $$
 begin
-  insert into private.shop_registrations (owner_id, shop_id, registered_at)
-  values (new.owner_id, new.id, new.created_at)
-  on conflict (owner_id) do nothing;
-
-  if private.active_founder_listing_limit(new.id) is not null then
-    -- A no-op update: apply_founder_perks does the rest.
-    update public.shops set updated_at = updated_at where id = new.id;
+  if tg_op = 'INSERT' then
+    new.founder_since := null;
+  else
+    new.founder_since := (select f.claimed_at from private.founding_shops f where f.shop_id = new.id);
   end if;
-
+  new.listing_limit := private.launch_listing_limit(new.founder_since is not null);
   return new;
 end;
 $$;
 
-revoke all on function private.record_shop_registration() from public, anon, authenticated;
+revoke all on function private.apply_launch_policy() from public, anon, authenticated;
 
-create trigger record_shop_registration
-after insert on public.shops
+create trigger zz_apply_launch_policy
+before insert or update on public.shops
 for each row
-execute function private.record_shop_registration();
+execute function private.apply_launch_policy();
 
--- Once a founder's first year is over its limits return to its tier and its
--- Premium status to whatever administration granted.
-create function private.expire_founder_perks()
-returns integer
+-- Gives a shop a seat if it has just earned one: at least min_live_items
+-- published within qualify_window of opening (or of the plaza's opening),
+-- while seats remain and the programme is open. The programme row is locked
+-- so two shops reaching 8 at once cannot both take seat 100.
+create function private.claim_founding_seat(p_shop_id bigint)
+returns void
 language plpgsql
 security definer
 set search_path = ''
 as $$
 declare
-  v_count integer;
+  v_program private.founders_program%rowtype;
+  v_shop public.shops%rowtype;
+  v_published integer;
+  v_taken integer;
 begin
-  with ended as (
-    select f.shop_id
-    from private.founding_registrations() f
-    where f.shop_id is not null
-      and f.perks_until <= now()
-  )
-  update public.shops s
-  set listing_limit = case s.trust_tier when 'top_rated' then 100 when 'reliable' then 40 else 15 end,
-      is_premium = exists (select 1 from private.shop_premium_grants g where g.shop_id = s.id)
-  from ended
-  where s.id = ended.shop_id
-    and (
-      s.listing_limit <> case s.trust_tier when 'top_rated' then 100 when 'reliable' then 40 else 15 end
-      or s.is_premium <> exists (select 1 from private.shop_premium_grants g where g.shop_id = s.id)
-    );
+  select * into v_program from private.founders_program for update;
+  if not found then return; end if;
+  if v_program.closes_at is not null and now() >= v_program.closes_at then return; end if;
+  if exists (select 1 from private.founding_shops f where f.shop_id = p_shop_id) then return; end if;
 
-  get diagnostics v_count = row_count;
-  return v_count;
+  select * into v_shop from public.shops s where s.id = p_shop_id;
+  if not found then return; end if;
+  if now() > greatest(v_shop.created_at, v_program.opens_at) + v_program.qualify_window then return; end if;
+
+  select count(*) into v_published
+  from public.products p
+  where p.shop_id = p_shop_id and p.status = 'published';
+  if v_published < v_program.min_live_items then return; end if;
+
+  select count(*) into v_taken from private.founding_shops;
+  if v_taken >= v_program.cap then return; end if;
+
+  insert into private.founding_shops (seat, shop_id, owner_id)
+  values (v_taken + 1, p_shop_id, v_shop.owner_id);
+
+  -- A no-op write: apply_launch_policy caches the seat and raises the cap.
+  update public.shops set updated_at = updated_at where id = p_shop_id;
 end;
 $$;
 
-revoke all on function private.expire_founder_perks() from public, anon, authenticated;
+revoke all on function private.claim_founding_seat(bigint) from public, anon, authenticated;
 
-select cron.schedule(
-  'plaza-expire-founder-perks',
-  '30 0 * * *',
-  'select private.expire_founder_perks()'
-);
+create function private.claim_founding_seat_on_publish()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  if new.status = 'published' then
+    perform private.claim_founding_seat(new.shop_id);
+  end if;
+  return new;
+end;
+$$;
 
--- What the site shows: the cap, the spots taken, the window, and whether a
--- new store can still land a spot. Counts only, so anyone may read it.
+revoke all on function private.claim_founding_seat_on_publish() from public, anon, authenticated;
+
+create trigger claim_founding_seat_on_publish
+after insert or update of status on public.products
+for each row
+execute function private.claim_founding_seat_on_publish();
+
+-- What the site shows: the cap, the seats taken and whether one can still
+-- be earned. Counts only, so anyone may read it.
 create function public.founders_status()
-returns table (cap integer, taken integer, starts_at timestamptz, ends_at timestamptz, is_open boolean)
+returns table (cap integer, taken integer, is_open boolean, min_live_items integer, qualify_days integer)
 language sql
 stable
 security definer
 set search_path = ''
 as $$
   select p.cap,
-         (select count(*)::integer from private.founding_registrations()) as taken,
-         p.starts_at,
-         p.ends_at,
-         now() >= p.starts_at
-           and now() < p.ends_at
-           and (select count(*) from private.founding_registrations()) < p.cap as is_open
+         (select count(*)::integer from private.founding_shops) as taken,
+         (p.closes_at is null or now() < p.closes_at)
+           and (select count(*) from private.founding_shops) < p.cap as is_open,
+         p.min_live_items,
+         extract(day from p.qualify_window)::integer as qualify_days
   from private.founders_program p
 $$;
 
 revoke all on function public.founders_status() from public;
 grant execute on function public.founders_status() to anon, authenticated;
 
--- Whether a store is a founder. The badge is public, like the store itself.
-create function public.is_founding_shop(p_shop_id bigint)
-returns boolean
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select exists (select 1 from private.founding_registrations() f where f.shop_id = p_shop_id)
-$$;
-
-revoke all on function public.is_founding_shop(bigint) from public;
-grant execute on function public.is_founding_shop(bigint) to anon, authenticated;
-
--- Whether the signed-in owner runs a founding store, for /vender.
-create function public.current_user_is_founder()
-returns boolean
-language sql
-stable
-security definer
-set search_path = ''
-as $$
-  select exists (
-    select 1 from private.founding_registrations() f
-    where f.owner_id = (select auth.uid()) and f.shop_id is not null
-  )
-$$;
-
-revoke all on function public.current_user_is_founder() from public, anon;
-grant execute on function public.current_user_is_founder() to authenticated;
-
--- Backfill: every existing owner's first store, in registration order. The
--- window opens with the plaza's first store; administration moves it with
---   update private.founders_program set starts_at = …, ends_at = …;
-insert into private.shop_registrations (owner_id, shop_id, registered_at)
-select distinct on (s.owner_id) s.owner_id, s.id, s.created_at
-from public.shops s
-order by s.owner_id, s.created_at, s.id;
-
-insert into private.founders_program (starts_at, ends_at)
-select coalesce(min(s.created_at), now()), coalesce(min(s.created_at), now()) + interval '3 months'
-from public.shops s;
-
-update public.shops s
-set updated_at = s.updated_at
-where exists (select 1 from private.founding_registrations() f where f.shop_id = s.id);
+-- Every existing shop moves to the launch cap now; none holds a seat yet.
+update public.shops set updated_at = updated_at;

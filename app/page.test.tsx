@@ -197,6 +197,7 @@ function sampleShop() {
     is_premium: false,
     publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
     listing_limit: 15,
+    founder_since: null,
     name: "Taller Volcán",
     owner_id: "00000000-0000-0000-0000-000000000003",
     slug: "taller-volcan",

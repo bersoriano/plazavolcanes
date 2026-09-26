@@ -21,6 +21,7 @@ function shop(id: number, overrides: Partial<CatalogShop> = {}): CatalogShop {
     is_premium: false,
     publishing_reviewed_at: null,
     listing_limit: 15,
+    founder_since: null,
     name: `Tienda ${id}`,
     owner_id: `owner-${id}`,
     slug: `tienda-${id}`,

@@ -1,15 +1,44 @@
-/** Founding shops the launch promotion covers, in order of registration. */
+/**
+ * The launch package (docs/launch-package.md). The database enforces these
+ * (private.founders_program); the copy reads them from here so every page
+ * states the same numbers.
+ */
+/** Founding seats, in the order shops earn them. */
 export const FOUNDERS_CAP = 100;
+/** Live listings every shop gets, free. */
+export const BASE_LISTING_LIMIT = 25;
+/** Live listings a founding shop gets, locked. */
+export const FOUNDER_LISTING_LIMIT = 50;
+/** What earns a seat: this many live items within FOUNDER_QUALIFY_DAYS of opening. */
+export const FOUNDER_MIN_LIVE_ITEMS = 8;
+export const FOUNDER_QUALIFY_DAYS = 7;
+/** How long a founder's 0% commission is locked, from earning the seat. */
+export const FOUNDER_COMMISSION_LOCK_MONTHS = 12;
+/** How long a founder rotates on the home page, from earning the seat. */
+export const FOUNDER_FEATURE_DAYS = 90;
+
+/** The one founder sentence, repeated everywhere the offer appears. */
+export const FOUNDER_OFFER = `Primeras ${FOUNDERS_CAP} tiendas: ${FOUNDER_LISTING_LIMIT} productos, insignia fundadora y 0% comisión fija ${FOUNDER_COMMISSION_LOCK_MONTHS} meses. Todas las demás: ${BASE_LISTING_LIMIT} productos gratis.`;
+
+/** How a seat is earned, in one line. */
+export const FOUNDER_EARN_RULE = `Publica ${FOUNDER_MIN_LIVE_ITEMS} productos en tus primeros ${FOUNDER_QUALIFY_DAYS} días y gana tu lugar.`;
+
+/** Whether a shop still rotates on the home page as a founder. */
+export function isFeaturedFounder(founderSince: string | null | undefined, now = Date.now()) {
+  if (!founderSince) return false;
+  const since = Date.parse(founderSince);
+  return Number.isFinite(since) && now - since < FOUNDER_FEATURE_DAYS * 24 * 60 * 60 * 1000;
+}
 
 /**
  * The founders promotion as the site shows it: whether a new store can still
  * land a spot, and how many are taken (null when there is no count to trust).
  *
- * The window and the cap live in the database (private.founders_program),
- * next to the ledger that decides who is a founder; getFoundersProgram() in
+ * The cap and the rule live in the database (private.founders_program),
+ * next to the ledger of seats; getFoundersProgram() in
  * lib/queries/founders.server.ts reads them once per request. Every block
  * that makes the offer reads `open`, so the offer leaves the site the moment
- * the window closes or the last spot goes.
+ * the last seat goes (or administration closes the programme).
  */
 export type FoundersProgram = { open: boolean; taken: number | null; cap: number };
 

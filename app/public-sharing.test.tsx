@@ -202,6 +202,7 @@ describe("public sharing controls", () => {
       is_premium: false,
       publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
       listing_limit: 15,
+      founder_since: null,
       time_zone: "America/Mexico_City",
       trust_evaluated_at: null,
       trust_metrics: null,

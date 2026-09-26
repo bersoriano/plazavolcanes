@@ -32,9 +32,14 @@ export const viewerIsFounder = cache(async (): Promise<boolean> => {
   try {
     const supabase = await createServerSupabaseClient();
     const { data: claims } = await supabase.auth.getClaims();
-    if (!claims?.claims?.sub) return false;
-    const { data, error } = await supabase.rpc("current_user_is_founder");
-    return !error && data === true;
+    const userId = claims?.claims?.sub;
+    if (typeof userId !== "string" || !userId) return false;
+    const { count } = await supabase
+      .from("shops")
+      .select("id", { count: "exact", head: true })
+      .eq("owner_id", userId)
+      .not("founder_since", "is", null);
+    return (count ?? 0) > 0;
   } catch {
     return false;
   }

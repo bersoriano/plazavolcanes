@@ -4,11 +4,6 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(36);
 
--- These stores measure the tiers alone, so the founders window is closed:
--- inside it a new store would hold the founder floor of 50 articles.
-update private.founders_program
-set starts_at = now() - interval '2 days', ends_at = now() - interval '1 day';
-
 select has_table('public', 'shop_trust_evaluation_queue', 'trust evaluation queue exists');
 select has_table('public', 'shop_trust_evaluations', 'trust evaluation history exists');
 select has_function(
@@ -178,7 +173,7 @@ select results_eq(
 
 select results_eq(
   $$select trust_tier || ':' || listing_limit from public.shops where slug = 'nivel-uno'$$,
-  array['standard:15'::text],
+  array['standard:25'::text],
   'empty shop evaluates to Standard 15'
 );
 
@@ -212,7 +207,7 @@ select results_eq(
 
 select results_eq(
   $$select trust_tier || ':' || listing_limit from public.shops where slug = 'nivel-uno'$$,
-  array['standard:15'::text],
+  array['standard:25'::text],
   'failed evaluation preserves cached tier and limit'
 );
 
@@ -276,7 +271,7 @@ select private.evaluate_shop_trust((select id from public.shops where slug = 'ni
 
 select results_eq(
   $$select trust_tier || ':' || listing_limit from public.shops where slug = 'nivel-uno'$$,
-  array['top_rated:100'::text],
+  array['top_rated:25'::text],
   'resolved dispute allows Top Rated promotion and 100 listings'
 );
 

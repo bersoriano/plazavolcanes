@@ -410,6 +410,7 @@ export type Database = {
       };
       shops: {
         Row: {
+          founder_since: string | null;
           administrative_area_codes: string[] | null;
           country_code: string;
           created_at: string;
@@ -431,6 +432,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          founder_since?: string | null;
           administrative_area_codes?: string[] | null;
           country_code?: string;
           created_at?: string;
@@ -452,6 +454,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          founder_since?: string | null;
           administrative_area_codes?: string[] | null;
           country_code?: string;
           created_at?: string;
@@ -662,13 +665,11 @@ export type Database = {
       confirm_order_satisfied: { Args: { p_order_id: number; p_idempotency_key: string }; Returns: undefined };
       create_order_review: { Args: { p_order_id: number; p_rating: number; p_matched_description: boolean; p_comment: string | null }; Returns: number };
       current_legal_document: { Args: { p_type: string }; Returns: Database["public"]["Tables"]["legal_document_versions"]["Row"] };
-      current_user_is_founder: { Args: Record<never, never>; Returns: boolean };
       current_user_shop_limit: { Args: Record<never, never>; Returns: number };
       founders_status: {
         Args: Record<never, never>;
-        Returns: { cap: number; taken: number; starts_at: string; ends_at: string; is_open: boolean }[];
+        Returns: { cap: number; taken: number; is_open: boolean; min_live_items: number; qualify_days: number }[];
       };
-      is_founding_shop: { Args: { p_shop_id: number }; Returns: boolean };
       is_current_user_admin: { Args: Record<never, never>; Returns: boolean };
       set_shop_publishing_approval: {
         Args: { p_shop_id: number; p_enabled: boolean };
