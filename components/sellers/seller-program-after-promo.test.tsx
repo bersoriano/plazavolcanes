@@ -23,4 +23,11 @@ describe("SellerProgram after the founders promotion", () => {
     expect(screen.queryByText("¿Qué pasa cuando termine la promoción?")).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 3, name: "Tu cliente te paga directo a ti." })).toBeInTheDocument();
   });
+
+  it("keeps the ladder without the founders marker", () => {
+    render(<SellerProgram founders={{ open: false, taken: 100, cap: 100 }} />);
+
+    expect(screen.getByText("Hasta 15 productos")).toBeInTheDocument();
+    expect(screen.queryByText(/50 desde el día uno/)).not.toBeInTheDocument();
+  });
 });

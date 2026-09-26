@@ -57,12 +57,14 @@ describe("SellerProgram", () => {
 
     const tiers = screen.getByRole("region", { name: "Cuanto mejor atiendes, más publicas." });
 
+    // The limits come from the tiers the plaza enforces, not from copy.
+    expect(within(tiers).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual(
+      (["standard", "reliable", "top_rated"] as const).map((tier) => getTrustTierMarker(tier).label),
+    );
     for (const tier of ["standard", "reliable", "top_rated"] as const) {
-      const marker = getTrustTierMarker(tier);
-      expect(within(tiers).getByText(marker.label)).toBeInTheDocument();
-      expect(within(tiers).getByText(`${marker.listingLimit} productos publicados`)).toBeInTheDocument();
-      expect(within(tiers).getByText(marker.tooltip)).toBeInTheDocument();
+      expect(within(tiers).getByText(`Hasta ${getTrustTierMarker(tier).listingLimit} productos`)).toBeInTheDocument();
     }
+    expect(within(tiers).getByText("Tiendas fundadoras: 50 desde el día uno")).toBeInTheDocument();
   });
 
   it("sends every call to action to the same registration link", () => {

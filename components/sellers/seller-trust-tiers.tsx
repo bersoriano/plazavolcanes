@@ -1,59 +1,127 @@
+import { CircleCheck, MessageCircle, Star, Truck } from "lucide-react";
+
+import { Accent, Eyebrow, TYPE } from "@/components/home/landing/primitives";
 import { getTrustTierMarker, type TrustTier } from "@/lib/trust-tiers";
 
-const TIERS: TrustTier[] = ["standard", "reliable", "top_rated"];
+const METRICS = [
+  { label: "Respuestas", icon: MessageCircle },
+  { label: "Envíos a tiempo", icon: Truck },
+  { label: "Pedidos completados", icon: CircleCheck },
+  { label: "Reseñas", icon: Star },
+];
 
 /**
- * The publication ladder, restyled for the new page.
- *
- * The redesign drops it, but a seller's tier is what caps how many products
- * they may publish, so it stays: finding that limit out after hitting it is the
- * kind of surprise the rest of this page exists to avoid.
+ * Each rung of the ladder. The label and the publishing limit come from the
+ * tiers themselves (lib/trust-tiers.ts), so the page cannot drift from what
+ * the plaza enforces; the description is this page's own wording.
  */
-export function SellerTrustTiers() {
+const RUNGS: { tier: TrustTier; description: string; card: string; kicker: string; limit: string; title: string; body: string; height: string }[] = [
+  {
+    tier: "standard",
+    description: "Nivel inicial mientras tu tienda reúne evidencia de servicio, cumplimiento y satisfacción.",
+    card: "border border-line bg-surface",
+    kicker: "text-muted",
+    limit: "text-brand",
+    title: "text-ink",
+    body: "text-muted",
+    height: "lg:h-[300px]",
+  },
+  {
+    tier: "reliable",
+    description:
+      "Cumples de forma consistente con respuestas, envíos, pedidos completados y baja tasa de disputas.",
+    card: "border-[1.5px] border-brand bg-lime-tint",
+    kicker: "text-brand",
+    limit: "text-brand",
+    title: "text-ink",
+    body: "text-text-body",
+    height: "lg:h-[380px]",
+  },
+  {
+    tier: "top_rated",
+    description: "Los estándares más altos de servicio, cumplimiento, actividad y satisfacción en la plaza.",
+    card: "bg-brand",
+    kicker: "text-accent",
+    limit: "text-accent",
+    title: "text-white",
+    body: "text-white/80",
+    height: "lg:h-[460px]",
+  },
+];
+
+/**
+ * #niveles: the publishing ladder, three rungs rising from lg with the
+ * founders' 50 marked above Confiable while the promotion runs. Three equal
+ * columns at md, stacked on a phone. The marker spans the grid's full row
+ * (centred over Confiable at md, offset from the grid at lg): an absolutely
+ * placed grid item measures from its own grid area, not from the grid.
+ */
+export function SellerTrustTiers({ promoActive = true }: { promoActive?: boolean }) {
   return (
     <section
       aria-labelledby="niveles-heading"
-      className="px-5 py-16 sm:px-8 lg:py-[120px]"
+      className="scroll-mt-20 px-5 pb-16 pt-14 sm:px-8 lg:scroll-mt-24 lg:pb-24 lg:pt-24 xl:px-20"
       id="niveles"
     >
-      <div className="mx-auto flex max-w-[1200px] flex-col gap-7 lg:gap-14">
-        <div className="flex flex-col gap-3.5 lg:gap-[18px]">
-          <h2
-            className="text-balance font-display text-[38px] font-medium leading-[1.02] tracking-[-0.03em] lg:text-[60px]"
-            id="niveles-heading"
-          >
-            Cuanto mejor atiendes, <em className="italic text-brand">más publicas.</em>
-          </h2>
-          <p className="max-w-[640px] text-pretty text-[16px] leading-[1.6] text-muted lg:text-[18px]">
-            Tu nivel se calcula con tus respuestas, envíos a tiempo, pedidos completados y reseñas.
-            Nadie edita sus propias métricas.
+      <div className="mx-auto flex max-w-[1280px] flex-col gap-6 lg:gap-8">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
+          <div className="flex flex-col gap-3.5 lg:gap-4">
+            <Eyebrow>Niveles de tienda</Eyebrow>
+            <h2 className={`${TYPE.h2} text-ink`} id="niveles-heading">
+              Cuanto mejor atiendes, <Accent>más publicas.</Accent>
+            </h2>
+          </div>
+          <p className={`${TYPE.aside} lg:max-w-[400px] lg:pb-2`}>
+            Tu nivel se calcula con datos reales de tu tienda. Nadie edita sus propias métricas.
           </p>
         </div>
 
-        <dl className="grid gap-4 lg:grid-cols-3 lg:gap-6">
-          {TIERS.map((tier) => {
-            const marker = getTrustTierMarker(tier);
+        <ul aria-label="Lo que mide tu nivel" className="flex flex-wrap gap-2.5">
+          {METRICS.map((metric) => (
+            <li
+              className="flex h-11 items-center gap-2 rounded-full border border-line bg-surface px-4 text-[14px] font-semibold lg:text-[15px]"
+              key={metric.label}
+            >
+              <metric.icon aria-hidden="true" className="size-[18px] text-brand" strokeWidth={2} />
+              {metric.label}
+            </li>
+          ))}
+        </ul>
+
+        <div className="relative grid gap-3 md:grid-cols-3 md:gap-5 lg:h-[460px] lg:items-end lg:pt-0">
+          {RUNGS.map((rung, index) => {
+            const marker = getTrustTierMarker(rung.tier);
 
             return (
-              <div
-                className="flex flex-col gap-2 rounded-[1.75rem] border border-line/60 bg-surface p-7 lg:p-8"
-                key={tier}
+              <article
+                className={`flex flex-col gap-3 rounded-[26px] p-6 lg:rounded-[32px] lg:p-[30px] ${rung.card} ${rung.height} ${
+                  index === 2 ? "order-3" : index === 1 ? "order-1" : "order-0"
+                }`}
+                key={rung.tier}
               >
-                <dt className="font-display text-[23px] font-semibold leading-[1.15] tracking-[-0.015em] lg:text-[28px] lg:leading-[1.1] lg:tracking-[-0.02em]">
+                <span className={`text-[12px] font-bold uppercase tracking-[0.1em] lg:text-[13px] ${rung.kicker}`}>
+                  Nivel {index + 1}
+                </span>
+                <h3 className={`font-display text-[28px] font-semibold tracking-[-0.03em] lg:text-[34px] ${rung.title}`}>
                   {marker.label}
-                </dt>
-                <dd className="flex flex-col gap-2">
-                  <span className="text-[15px] font-bold text-brand lg:text-[16px]">
-                    {marker.listingLimit} productos publicados
-                  </span>
-                  <span className="text-[15px] leading-[1.6] text-muted lg:text-[16px]">
-                    {marker.tooltip}
-                  </span>
-                </dd>
-              </div>
+                </h3>
+                <p className={`font-display text-[20px] font-bold lg:text-[22px] ${rung.limit}`}>
+                  Hasta {marker.listingLimit} productos
+                </p>
+                <p className={`mt-auto pt-2 text-[15px] leading-[1.5] ${rung.body}`}>{rung.description}</p>
+              </article>
             );
           })}
-        </dl>
+
+          {promoActive ? (
+            <p className="order-2 flex h-12 -rotate-3 items-center gap-2 justify-self-center rounded-full border-2 border-premium-ink bg-premium-gold px-[18px] text-[14px] font-extrabold text-premium-ink shadow-[0_12px_24px_-12px_rgb(0_0_0/0.5)] md:order-first md:col-span-3 md:justify-self-center lg:absolute lg:left-[calc((100%-40px)/3+6px)] lg:top-3 lg:text-[15px]">
+              <svg aria-hidden="true" className="size-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} viewBox="0 0 24 24">
+                <path d="M2 18 8 9.5l2.5 2.5 3-4.5L22 18" />
+              </svg>
+              Tiendas fundadoras: 50 desde el día uno
+            </p>
+          ) : null}
+        </div>
       </div>
     </section>
   );

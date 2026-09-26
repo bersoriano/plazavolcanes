@@ -39,7 +39,7 @@ export function SellerProgram({
       <SellerBenefits />
       <SellerCatalog />
       <SellerSteps viewer={viewer} />
-      <SellerTrustTiers />
+      <SellerTrustTiers promoActive={promoActive} />
       <SellerFaq promoActive={promoActive} />
       {promoActive ? <FoundersCta spotsTaken={spotsTaken} /> : null}
     </>
