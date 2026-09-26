@@ -53,7 +53,7 @@ export function LaunchBarFrame({
         </p>
 
         <Link
-          className="shrink-0 whitespace-nowrap text-white underline underline-offset-[3px] sm:text-accent"
+          className="inline-flex h-10 shrink-0 items-center whitespace-nowrap text-white underline underline-offset-[3px] sm:h-11 sm:text-accent"
           href="/vender?desde=barra"
         >
           Vender →

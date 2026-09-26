@@ -31,8 +31,8 @@ export function SiteFooter() {
 
           <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-12 text-[15px] lg:flex lg:gap-12 xl:gap-24">
             <nav aria-label="Navegación" className="flex flex-col gap-1">
-              {/* As tall as the legal shelf's 44px summary beside it on a phone. */}
-              <p className={`${LABEL} flex min-h-11 items-center lg:mb-1 lg:min-h-0`}>Plaza</p>
+              {/* As tall as the legal shelf's 44px summary beside it. */}
+              <p className={`${LABEL} flex min-h-11 items-center`}>Plaza</p>
               <Link className={LINK} href="/">Explorar</Link>
               <Link className={LINK} href="/vender?desde=footer">Vender</Link>
               <Link className={LINK} href="/ingresar">Ingresar</Link>
@@ -44,7 +44,7 @@ export function SiteFooter() {
             */}
             <details aria-label="Información legal" className="disclosure-mobile" name="footer-shelf">
               <summary
-                className={`tap flex cursor-pointer list-none items-center gap-2 lg:mb-1 lg:min-h-0 lg:cursor-default [&::-webkit-details-marker]:hidden ${LABEL}`}
+                className={`tap flex cursor-pointer list-none items-center gap-2 lg:cursor-default [&::-webkit-details-marker]:hidden ${LABEL}`}
               >
                 Información legal
                 <ChevronDown aria-hidden="true" className="size-4 transition-transform lg:hidden [details[open]_&]:rotate-180" />
