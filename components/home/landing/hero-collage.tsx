@@ -35,8 +35,12 @@ const ZERO = "$0.00";
  *
  * The whole picture is aria-hidden; the summary above it carries its facts.
  * Only the cards that float over the photos make an entrance, so the photos
- * themselves are painted at once and the page's largest image is not held
- * back by an animation.
+ * themselves are painted at once.
+ *
+ * No photo is preloaded: the page's largest paint is the h1 at every width,
+ * and on a phone the collage sits below the fold, where a preload only
+ * competed with the stylesheet and fonts (Lighthouse mobile LCP ~4.1s with
+ * it, ~3.5s without).
  */
 export function HeroCollage({
   tiles,
@@ -64,7 +68,6 @@ export function HeroCollage({
         <PhotoTile
           className="left-0 top-[5.714cqw] h-[54.286cqw] w-[42.857cqw] -rotate-6 bg-lilac-tint text-brand sm:top-[6.667cqw] sm:h-[50cqw] sm:w-[40cqw]"
           fallbackIcon={<Shirt className="size-[45%] opacity-80" strokeWidth={1.2} />}
-          preload
           product={first}
         />
         <PhotoTile
