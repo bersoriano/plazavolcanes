@@ -25,7 +25,8 @@ const TILES: (Tile & { shown: boolean })[] = [
     shown: true,
   },
   {
-    // TODO(product): final wording pending from the product team.
+    // The first sellers' reputation is brought over by hand, so the tile only
+    // names the offer.
     title: "Transfiere tu reputación",
     text: "Llega con la confianza que ya ganaste vendiendo en otros lados.",
     icon: <BadgeCheck className="size-[22px] lg:size-[26px]" strokeWidth={2} />,

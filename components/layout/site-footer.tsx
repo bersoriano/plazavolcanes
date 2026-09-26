@@ -33,7 +33,7 @@ export function SiteFooter() {
             <nav aria-label="Navegación" className="flex flex-col gap-1">
               {/* As tall as the legal shelf's 44px summary beside it. */}
               <p className={`${LABEL} flex min-h-11 items-center`}>Plaza</p>
-              <Link className={LINK} href="/">Explorar</Link>
+              <Link className={LINK} href="/explorar">Explorar</Link>
               <Link className={LINK} href="/vender?desde=footer">Vender</Link>
               <Link className={LINK} href="/ingresar">Ingresar</Link>
             </nav>
