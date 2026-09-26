@@ -27,11 +27,13 @@ describe("SellerProgram", () => {
     }
 
     const benefits = screen.getByRole("region", { name: "Hecho para quien vende por su cuenta." });
-    expect(within(benefits).getByText("Sin retenciones ni comisiones")).toBeInTheDocument();
-    expect(
-      within(benefits).getByText("Transfiere tu reputación de otras plataformas"),
-    ).toBeInTheDocument();
-    expect(within(benefits).getByText("Maneja tu catálogo de productos aquí")).toBeInTheDocument();
+    expect(within(benefits).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
+      "Tu cliente te paga directo a ti.",
+      "Trae la confianza que ya ganaste.",
+    ]);
+    // The catalogue keeps a section of its own, with its current copy.
+    const catalog = screen.getByRole("region", { name: "Maneja tu catálogo de productos aquí" });
+    expect(catalog).toHaveAttribute("id", "catalogo");
   });
 
   it("numbers the ordered steps to opening a store", () => {
@@ -129,7 +131,7 @@ describe("SellerProgram", () => {
 
     const hero = screen.getByRole("region", { name: HERO });
 
-    expect(hero).toHaveTextContent("Sin retenciones ni comisiones");
+    expect(hero).toHaveTextContent("Sin retenciones ni comisiones.");
     expect(document.body).toHaveTextContent(
       "Directo de tu cliente. Acuerdan juntos el método de pago y Plaza Volcanes no procesa ni retiene ese dinero, así que no hay retenciones.",
     );

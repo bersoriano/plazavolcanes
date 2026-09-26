@@ -21,6 +21,6 @@ describe("SellerProgram after the founders promotion", () => {
       screen.getByText("Sí. Publicar es gratis y Plaza Volcanes no cobra comisión por cada artículo vendido."),
     ).toBeInTheDocument();
     expect(screen.queryByText("¿Qué pasa cuando termine la promoción?")).not.toBeInTheDocument();
-    expect(screen.getByText("Sin retenciones ni comisiones", { selector: "h3" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Tu cliente te paga directo a ti." })).toBeInTheDocument();
   });
 });
