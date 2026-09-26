@@ -65,3 +65,35 @@ describe("premium scope", () => {
     expect(css).toMatch(/--color-premium-cream:\s*var\(--premium-cream\);/);
   });
 });
+
+describe("landing v2 tokens", () => {
+  it("adds the handoff's tints to :root with their exact values", () => {
+    expect(token(":root", "--text-body")).toBe("#4f4a55");
+    expect(token(":root", "--lime-tint")).toBe("#eaffd2");
+    expect(token(":root", "--lilac-tint")).toBe("#ece4f6");
+    expect(token(":root", "--coral-tint")).toBe("#ffe3de");
+    expect(token(":root", "--coral-ink")).toBe("#b23a2e");
+    expect(token(":root", "--coral-text")).toBe("#5a2a24");
+    expect(token(":root", "--gold-tint")).toBe("#fff1cf");
+    expect(token(":root", "--progress-track")).toBe("#f1ece6");
+    expect(token(":root", "--hairline")).toBe("#efeae4");
+  });
+
+  it("keeps the existing tokens as they were", () => {
+    expect(token(":root", "--brand")).toBe("#32174d");
+    expect(token(":root", "--accent")).toBe("#b8ff6a");
+    expect(token(":root", "--background")).toBe("#fbf8f4");
+  });
+
+  it("declares the radii and shadows in a static theme", () => {
+    expect(token("@theme static", "--radius-panel")).toBe("44px");
+    expect(token("@theme static", "--shadow-cta")).toBe("0 14px 30px -12px rgb(50 23 77 / 0.6)");
+  });
+
+  it("stops the marquee and the hero entrance under reduced motion", () => {
+    const start = css.indexOf("@media (prefers-reduced-motion: reduce) {");
+    const rule = css.slice(start, css.indexOf("\n}", start));
+
+    expect(rule).toMatch(/\.animate-marquee,\s*\.animate-marquee-reverse,\s*\.animate-rise-in\s*\{\s*animation:\s*none !important;/);
+  });
+});

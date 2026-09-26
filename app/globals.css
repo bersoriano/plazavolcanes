@@ -25,6 +25,21 @@
      inherits this already-computed value, not one mixed from its own accent:
      such a scope must override --trust-tier-fill too. */
   --trust-tier-fill: color-mix(in oklab, var(--accent) 40%, transparent);
+
+  /* Landing v2 (docs/design/landing-v2/tokens/tokens.css). */
+  /* Long paragraphs on cream, at AA contrast. */
+  --text-body: #4f4a55;
+  --lime-tint: #eaffd2;
+  --lilac-tint: #ece4f6;
+  --coral-tint: #ffe3de;
+  /* Icons on coral-tint. */
+  --coral-ink: #b23a2e;
+  /* Body text on coral-tint. */
+  --coral-text: #5a2a24;
+  --gold-tint: #fff1cf;
+  --progress-track: #f1ece6;
+  /* Dividers inside cards. */
+  --hairline: #efeae4;
 }
 
 @theme inline {
@@ -46,8 +61,35 @@
   --color-premium-text: var(--premium-text);
   --color-premium-cream: var(--premium-cream);
   --color-trust-tier-fill: var(--trust-tier-fill);
+  --color-text-body: var(--text-body);
+  --color-lime-tint: var(--lime-tint);
+  --color-lilac-tint: var(--lilac-tint);
+  --color-coral-tint: var(--coral-tint);
+  --color-coral-ink: var(--coral-ink);
+  --color-coral-text: var(--coral-text);
+  --color-gold-tint: var(--gold-tint);
+  --color-progress-track: var(--progress-track);
+  --color-hairline: var(--hairline);
   --font-sans: var(--font-instrument);
   --font-display: var(--font-bricolage);
+}
+
+/* Landing v2 radii and shadows. They live in a plain @theme, not the inline
+   one above: Tailwind already emits every theme value as a :root variable of
+   the same name (--radius-card, --shadow-float…), so `rounded-card` and
+   `var(--radius-card)` both work, and redeclaring them in :root as
+   var(--radius-card) would only point each one at itself. `static` keeps them
+   emitted even where only a var() reads them. */
+@theme static {
+  --radius-chip: 999px;
+  --radius-card-sm: 20px;
+  --radius-card: 28px;
+  --radius-card-lg: 36px;
+  --radius-panel: 44px;
+
+  --shadow-float: 0 24px 50px -24px rgb(50 23 77 / 0.45);
+  --shadow-cta: 0 14px 30px -12px rgb(50 23 77 / 0.6);
+  --shadow-card: 0 10px 30px -18px rgb(50 23 77 / 0.35);
 }
 
 /* Layered, not bare: Tailwind's utilities live in @layer utilities, and an
@@ -193,6 +235,42 @@ a {
   }
 }
 
+/*
+ * The home page's only motion: the two tapes' marquee and the hero collage's
+ * entrance. Each track holds its text twice, so sliding it by half its width
+ * lands on an identical frame and the loop has no seam.
+ */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes marquee-reverse {
+  from {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    translate: 0 24px;
+  }
+}
+
+@utility animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+@utility animate-marquee-reverse {
+  animation: marquee-reverse 40s linear infinite;
+}
+
+@utility animate-rise-in {
+  animation: rise-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -201,6 +279,14 @@ a {
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+
+  /* Shortening a marquee to one frame would park it halfway along its loop;
+     a tape stands still instead, where it starts. */
+  .animate-marquee,
+  .animate-marquee-reverse,
+  .animate-rise-in {
+    animation: none !important;
   }
 }
 
