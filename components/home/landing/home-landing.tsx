@@ -2,6 +2,7 @@ import { BuyerPanel } from "@/components/home/landing/buyer-panel";
 import { BenefitsBento } from "@/components/home/landing/benefits-bento";
 import { CrossingTapes } from "@/components/home/landing/crossing-tapes";
 import type { CollageProduct } from "@/components/home/landing/hero-collage";
+import { FinalCta } from "@/components/home/landing/final-cta";
 import { LandingStores } from "@/components/home/landing/landing-stores";
 import { SellerHero } from "@/components/home/landing/seller-hero";
 import { SellerStepsShowcase } from "@/components/home/landing/seller-steps-showcase";
@@ -41,6 +42,7 @@ export function HomeLanding({ catalog, stateCounts, filters }: HomeLandingProps)
         products={products}
         stateCounts={stateCounts}
       />
+      <FinalCta />
     </>
   );
 }

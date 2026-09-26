@@ -168,6 +168,12 @@ main:has(> [data-theme="premium"]) {
   background: #0f0d12;
 }
 
+/* The same padding under the landing's lime closing band would open a cream
+   stripe between it and the footer, so it takes the band's colour. */
+main:has(> [data-closing-band]:last-child) {
+  background: var(--accent);
+}
+
 /* The site's focus ring pairs an aubergine outline with a lime shadow, and
    aubergine is invisible on obsidian. Gold carries the same two-tone ring. */
 [data-theme="premium"] :where(a, button, input, textarea, select):focus-visible {
