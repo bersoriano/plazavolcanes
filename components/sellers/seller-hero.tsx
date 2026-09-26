@@ -23,7 +23,14 @@ function ReceiptLine({ label, children }: { label: string; children: React.React
   );
 }
 
-export function SellerHero({ spotsTaken }: { spotsTaken?: number | null }) {
+/** `promoActive` false: the pill stops naming the founders spots and states what every shop gets. */
+export function SellerHero({
+  spotsTaken,
+  promoActive = true,
+}: {
+  spotsTaken?: number | null;
+  promoActive?: boolean;
+}) {
   const progress = resolveFoundersProgress(spotsTaken);
 
   return (
@@ -59,7 +66,9 @@ export function SellerHero({ spotsTaken }: { spotsTaken?: number | null }) {
               aria-hidden="true"
               className="size-[7px] shrink-0 rounded-full bg-accent shadow-[0_0_0_3px] shadow-accent/20 lg:size-2 lg:shadow-[0_0_0_4px]"
             />
-            {progress ? (
+            {!promoActive ? (
+              <>Publica gratis · 0% comisión</>
+            ) : progress ? (
               <>
                 Lanzamiento · Quedan {progress.left}
                 {/* The phone pill has no room for the cap, and the sentence has

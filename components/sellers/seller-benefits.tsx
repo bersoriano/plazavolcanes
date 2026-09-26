@@ -11,7 +11,11 @@ const CATALOG_POINTS = [
   "Guarda borradores y publica cuando quieras",
 ];
 
-export function SellerBenefits() {
+/**
+ * `promoActive` false: the 0% card loses its launch tag and the founders
+ * footnote, since every shop keeps publishing free and paying no commission.
+ */
+export function SellerBenefits({ promoActive = true }: { promoActive?: boolean }) {
   return (
     <section
       aria-labelledby="beneficios-heading"
@@ -47,9 +51,11 @@ export function SellerBenefits() {
               <span className="text-[13px] font-bold tracking-[0.12em] text-white/60 lg:text-[14px]">
                 01
               </span>
-              <span className="rounded-full border border-accent/50 px-2.5 py-[5px] text-[11px] font-bold uppercase tracking-[0.08em] text-accent lg:px-3 lg:py-1.5 lg:text-[12px]">
-                Lanzamiento
-              </span>
+              {promoActive ? (
+                <span className="rounded-full border border-accent/50 px-2.5 py-[5px] text-[11px] font-bold uppercase tracking-[0.08em] text-accent lg:px-3 lg:py-1.5 lg:text-[12px]">
+                  Lanzamiento
+                </span>
+              ) : null}
             </div>
             <p className="relative font-display text-[148px] font-bold leading-[0.82] tracking-[-0.06em] text-accent lg:text-[220px]">
               0%
@@ -62,11 +68,13 @@ export function SellerBenefits() {
                 Tu cliente te paga directo a ti, con el método que acuerden. Plaza Volcanes no
                 procesa, no retiene y no descuenta nada de tu venta.
               </p>
-              <p className="flex items-start gap-2.5 border-t border-white/15 pt-4 text-[13px] leading-[1.5] text-white/70 lg:mt-1.5 lg:pt-[18px] lg:text-[14px]">
-                <Info aria-hidden="true" className="mt-px size-[17px] shrink-0 lg:size-[18px]" strokeWidth={1.8} />
-                Para las primeras {FOUNDERS_CAP} tiendas que se registren durante los primeros tres
-                meses.
-              </p>
+              {promoActive ? (
+                <p className="flex items-start gap-2.5 border-t border-white/15 pt-4 text-[13px] leading-[1.5] text-white/70 lg:mt-1.5 lg:pt-[18px] lg:text-[14px]">
+                  <Info aria-hidden="true" className="mt-px size-[17px] shrink-0 lg:size-[18px]" strokeWidth={1.8} />
+                  Para las primeras {FOUNDERS_CAP} tiendas que se registren durante los primeros tres
+                  meses.
+                </p>
+              ) : null}
             </div>
           </article>
 

@@ -1,10 +1,14 @@
 import Link from "next/link";
 
+const PROMO_ANSWER =
+  "Sí. Las primeras 100 tiendas que se registren durante los primeros tres meses pueden publicar gratis y no pagan comisión por cada artículo vendido.";
+const STANDING_ANSWER = "Sí. Publicar es gratis y Plaza Volcanes no cobra comisión por cada artículo vendido.";
+const AFTER_PROMO_QUESTION = "¿Qué pasa cuando termine la promoción?";
+
 const QUESTIONS = [
   {
     question: "¿De verdad no cobran comisión?",
-    answer:
-      "Sí. Las primeras 100 tiendas que se registren durante los primeros tres meses pueden publicar gratis y no pagan comisión por cada artículo vendido.",
+    answer: PROMO_ANSWER,
   },
   {
     question: "¿Cómo recibo mi dinero?",
@@ -17,12 +21,22 @@ const QUESTIONS = [
       "Mensajes, acuerdos, envío y entrega quedan registrados en el pedido. Si un cliente abre una aclaración, puedes responder y administración registra una resolución.",
   },
   {
-    question: "¿Qué pasa cuando termine la promoción?",
+    question: AFTER_PROMO_QUESTION,
     answer: "La publicación y la comisión por artículo vendido seguirán siendo gratuitas.",
   },
 ];
 
-export function SellerFaq() {
+/**
+ * `promoActive` false: every shop publishes free and pays no commission, so
+ * the first answer stops naming the founders and the question about the end
+ * of the promotion leaves.
+ */
+export function SellerFaq({ promoActive = true }: { promoActive?: boolean }) {
+  const questions = promoActive
+    ? QUESTIONS
+    : QUESTIONS.filter((entry) => entry.question !== AFTER_PROMO_QUESTION).map((entry) =>
+        entry.answer === PROMO_ANSWER ? { ...entry, answer: STANDING_ANSWER } : entry,
+      );
   return (
     <section
       aria-labelledby="preguntas-heading"
@@ -58,10 +72,10 @@ export function SellerFaq() {
         </p>
 
         <div className="order-2 flex flex-col lg:order-none lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
-          {QUESTIONS.map((entry, index) => (
+          {questions.map((entry, index) => (
             <div
               className={`flex flex-col gap-2 border-t border-line py-[22px] lg:gap-2.5 lg:py-7 ${
-                index === QUESTIONS.length - 1 ? "border-b" : ""
+                index === questions.length - 1 ? "border-b" : ""
               }`}
               key={entry.question}
             >
