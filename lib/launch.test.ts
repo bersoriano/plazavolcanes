@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { FOUNDERS_CAP, resolveFoundersProgress } from "@/lib/launch";
+import { FOUNDERS_CAP, isFoundersPromoActive, resolveFoundersProgress } from "@/lib/launch";
 
 describe("resolveFoundersProgress", () => {
   it("refuses to invent a count", () => {
@@ -26,5 +26,23 @@ describe("resolveFoundersProgress", () => {
 
   it("clamps a count that has run past the cap", () => {
     expect(resolveFoundersProgress(137)).toEqual({ taken: FOUNDERS_CAP, left: 0, percent: 100 });
+  });
+});
+
+describe("isFoundersPromoActive", () => {
+  const end = "2026-12-31T23:59:59-06:00";
+
+  it("runs while no end date is set", () => {
+    expect(isFoundersPromoActive(new Date("2030-01-01"), null)).toBe(true);
+  });
+
+  it("runs until the end instant and stops from then on", () => {
+    expect(isFoundersPromoActive(new Date("2026-12-31T23:59:58-06:00"), end)).toBe(true);
+    expect(isFoundersPromoActive(new Date("2026-12-31T23:59:59-06:00"), end)).toBe(false);
+    expect(isFoundersPromoActive(new Date("2027-01-15"), end)).toBe(false);
+  });
+
+  it("treats a malformed end date as ended rather than running forever", () => {
+    expect(isFoundersPromoActive(new Date("2026-01-01"), "fin de año")).toBe(false);
   });
 });

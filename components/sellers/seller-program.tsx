@@ -4,6 +4,7 @@ import { SellerFaq } from "@/components/sellers/seller-faq";
 import { SellerHero } from "@/components/sellers/seller-hero";
 import { SellerSteps } from "@/components/sellers/seller-steps";
 import { SellerTrustTiers } from "@/components/sellers/seller-trust-tiers";
+import { isFoundersPromoActive } from "@/lib/launch";
 
 /**
  * /vender, end to end.
@@ -21,7 +22,7 @@ export function SellerProgram({ spotsTaken }: { spotsTaken?: number | null }) {
       <SellerSteps />
       <SellerTrustTiers />
       <SellerFaq />
-      <FoundersCta spotsTaken={spotsTaken} />
+      {isFoundersPromoActive() ? <FoundersCta spotsTaken={spotsTaken} /> : null}
     </>
   );
 }

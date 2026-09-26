@@ -37,4 +37,12 @@ describe("BenefitsBento", () => {
       "Todo queda por escrito",
     ]);
   });
+
+  it("drops the founders block once the promotion has ended", () => {
+    render(<BenefitsBento promoActive={false} />);
+
+    expect(screen.queryByRole("heading", { level: 3, name: "0% de comisión por cada venta." })).not.toBeInTheDocument();
+    expect(screen.queryByText("TIENDAS FUNDADORAS")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(4);
+  });
 });

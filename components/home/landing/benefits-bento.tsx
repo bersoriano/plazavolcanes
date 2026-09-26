@@ -62,7 +62,11 @@ const TILES: (Tile & { shown: boolean })[] = [
  * a phone, two columns from md with the block across the top, and from lg the
  * handoff's 4×2 grid with the block filling the left half.
  */
-export function BenefitsBento() {
+/**
+ * `promoActive` false drops the founders block once the promotion has ended;
+ * the four benefits then fill a single row from lg.
+ */
+export function BenefitsBento({ promoActive = true }: { promoActive?: boolean }) {
   const tiles = TILES.filter((tile) => tile.shown);
 
   return (
@@ -84,8 +88,12 @@ export function BenefitsBento() {
           </p>
         </div>
 
-        <div className="grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-4 lg:grid-rows-[320px_320px] lg:gap-5">
-          <FoundersBlock />
+        <div
+          className={`grid gap-3 md:grid-cols-2 md:gap-4 lg:grid-cols-4 lg:gap-5 ${
+            promoActive ? "lg:grid-rows-[320px_320px]" : "lg:auto-rows-[320px]"
+          }`}
+        >
+          {promoActive ? <FoundersBlock /> : null}
           {tiles.map((tile, index) => (
             <article
               className={`flex items-start gap-4 rounded-[24px] p-5 md:flex-col md:justify-between md:gap-8 md:rounded-[32px] md:p-7 lg:p-8 ${tile.card} ${

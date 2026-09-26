@@ -6,6 +6,7 @@ import { FinalCta } from "@/components/home/landing/final-cta";
 import { LandingStores } from "@/components/home/landing/landing-stores";
 import { SellerHero } from "@/components/home/landing/seller-hero";
 import { SellerStepsShowcase } from "@/components/home/landing/seller-steps-showcase";
+import { isFoundersPromoActive } from "@/lib/launch";
 import type { CatalogFilters } from "@/lib/queries/catalog";
 import type { getCatalogStateCounts, getHomeCatalog } from "@/lib/queries/catalog.server";
 
@@ -26,13 +27,16 @@ type HomeLandingProps = {
 export function HomeLanding({ catalog, stateCounts, filters }: HomeLandingProps) {
   const { products, categories, shops } = catalog;
   const photographed = products.filter((product) => product.imageUrl);
+  // Read per request: the landing is rendered on demand, so the offer leaves
+  // the page the moment the promotion ends.
+  const promoActive = isFoundersPromoActive();
   const tiles: [CollageProduct | null, CollageProduct | null] = [photographed[0] ?? null, photographed[1] ?? null];
 
   return (
     <>
-      <SellerHero latest={products[0] ?? null} locale={filters.locale} tiles={tiles} />
+      <SellerHero promoActive={promoActive} latest={products[0] ?? null} locale={filters.locale} tiles={tiles} />
       <CrossingTapes categories={categories.map((category) => category.name)} />
-      <BenefitsBento />
+      <BenefitsBento promoActive={promoActive} />
       <SellerStepsShowcase />
       <LandingStores shops={shops} />
       <BuyerPanel
@@ -42,7 +46,7 @@ export function HomeLanding({ catalog, stateCounts, filters }: HomeLandingProps)
         products={products}
         stateCounts={stateCounts}
       />
-      <FinalCta />
+      {promoActive ? <FinalCta /> : null}
     </>
   );
 }

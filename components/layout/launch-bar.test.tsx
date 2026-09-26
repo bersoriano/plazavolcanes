@@ -5,7 +5,7 @@ import { LaunchBar } from "@/components/layout/launch-bar";
 import { FOUNDERS_CAP } from "@/lib/launch";
 import { LAUNCH_BAR_DISMISS_COOKIE } from "@/lib/launch-bar";
 
-const state = { dismissed: false, ownsShop: false, pathname: "/" };
+const state = { dismissed: false, ownsShop: false, pathname: "/", promoActive: true };
 
 vi.mock("next/navigation", () => ({ usePathname: () => state.pathname }));
 vi.mock("next/headers", () => ({
@@ -17,12 +17,17 @@ vi.mock("next/headers", () => ({
 vi.mock("@/lib/queries/seller-standing.server", () => ({
   viewerOwnsAnyShop: vi.fn(async () => state.ownsShop),
 }));
+vi.mock("@/lib/launch", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/launch")>()),
+  isFoundersPromoActive: () => state.promoActive,
+}));
 vi.mock("@/lib/actions/launch-bar", () => ({ dismissLaunchBar: vi.fn(async () => {}) }));
 
 beforeEach(() => {
   state.dismissed = false;
   state.ownsShop = false;
   state.pathname = "/";
+  state.promoActive = true;
 });
 
 afterEach(cleanup);
@@ -62,6 +67,13 @@ describe("LaunchBar", () => {
 
   it("stops asking once the cap is reached", async () => {
     await renderBar({ spotsTaken: FOUNDERS_CAP });
+
+    expect(bar()).not.toBeInTheDocument();
+  });
+
+  it("comes down once the founders promotion has ended", async () => {
+    state.promoActive = false;
+    await renderBar();
 
     expect(bar()).not.toBeInTheDocument();
   });
