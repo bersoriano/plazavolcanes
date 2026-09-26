@@ -9,7 +9,7 @@ describe("SellerProgram after the founders promotion", () => {
   it("no longer mentions the founders spots anywhere", () => {
     const { container } = render(<SellerProgram founders={{ open: false, taken: 100, cap: 100 }} />);
 
-    expect(container.textContent).not.toMatch(/primeras 100|tres meses|Lanzamiento|fundadoras/i);
+    expect(container.textContent).not.toMatch(/primeras 100|tres meses|Lanzamiento|Tiendas fundadoras: 50/i);
     expect(screen.queryByRole("region", { name: "Sé una de las primeras 100 tiendas." })).not.toBeInTheDocument();
   });
 

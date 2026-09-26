@@ -1,89 +1,97 @@
 import Link from "next/link";
+import { Minus, Plus } from "lucide-react";
+
+import { Accent, Eyebrow } from "@/components/home/landing/primitives";
 
 const PROMO_ANSWER =
   "Sí. Las primeras 100 tiendas que se registren durante los primeros tres meses pueden publicar gratis y no pagan comisión por cada artículo vendido.";
 const STANDING_ANSWER = "Sí. Publicar es gratis y Plaza Volcanes no cobra comisión por cada artículo vendido.";
-const AFTER_PROMO_QUESTION = "¿Qué pasa cuando termine la promoción?";
 
-const QUESTIONS = [
-  {
-    question: "¿De verdad no cobran comisión?",
-    answer: PROMO_ANSWER,
-  },
-  {
-    question: "¿Cómo recibo mi dinero?",
-    answer:
-      "Directo de tu cliente. Acuerdan juntos el método de pago y Plaza Volcanes no procesa ni retiene ese dinero, así que no hay retenciones.",
-  },
-  {
-    question: "¿Qué pasa si hay un problema con un pedido?",
-    answer:
-      "Mensajes, acuerdos, envío y entrega quedan registrados en el pedido. Si un cliente abre una aclaración, puedes responder y administración registra una resolución.",
-  },
-  {
-    question: AFTER_PROMO_QUESTION,
-    answer: "La publicación y la comisión por artículo vendido seguirán siendo gratuitas.",
-  },
-];
+const FOUNDERS_QUESTION = {
+  question: "¿Qué incluye ser tienda fundadora?",
+  answer:
+    "Las primeras 100 tiendas que se registren durante los primeros tres meses abren 1 tienda gratis con hasta 50 artículos publicados, reciben la insignia de Tienda fundadora y tienen estatus Premium durante 1 año. Y como en toda la plaza: 0% comisión y pago directo.",
+};
+
+// "¿Qué pasa después del primer año?" joins once product provides its answer.
+function questionsFor(promoActive: boolean) {
+  return [
+    ...(promoActive ? [FOUNDERS_QUESTION] : []),
+    { question: "¿De verdad no cobran comisión?", answer: promoActive ? PROMO_ANSWER : STANDING_ANSWER },
+    {
+      question: "¿Cómo recibo mi dinero?",
+      answer:
+        "Directo de tu cliente. Acuerdan juntos el método de pago y Plaza Volcanes no procesa ni retiene ese dinero, así que no hay retenciones.",
+    },
+    {
+      question: "¿Cuántos productos puedo publicar?",
+      answer:
+        "Depende del nivel de tu tienda: Estándar hasta 15, Confiable hasta 40 y Mejor valorada hasta 100. Las tiendas fundadoras pueden publicar hasta 50 desde el primer día.",
+    },
+    {
+      question: "¿Qué pasa si hay un problema con un pedido?",
+      answer:
+        "Mensajes, acuerdos, envío y entrega quedan registrados en el pedido. Si un cliente abre una aclaración, puedes responder y administración registra una resolución.",
+    },
+  ];
+}
 
 /**
- * `promoActive` false: every shop publishes free and pays no commission, so
- * the first answer stops naming the founders and the question about the end
- * of the promotion leaves.
+ * #preguntas: a native exclusive accordion (<details name>), so the browser
+ * announces each item's state and handles the keyboard. The first item opens
+ * by default. `promoActive` false drops the founders question and states the
+ * standing commission rule.
  */
 export function SellerFaq({ promoActive = true }: { promoActive?: boolean }) {
-  const questions = promoActive
-    ? QUESTIONS
-    : QUESTIONS.filter((entry) => entry.question !== AFTER_PROMO_QUESTION).map((entry) =>
-        entry.answer === PROMO_ANSWER ? { ...entry, answer: STANDING_ANSWER } : entry,
-      );
+  const questions = questionsFor(promoActive);
+
   return (
     <section
       aria-labelledby="preguntas-heading"
-      className="px-5 py-16 sm:px-8 lg:py-[120px]"
+      className="scroll-mt-20 border-t border-line bg-surface px-5 py-14 sm:px-8 lg:scroll-mt-24 lg:py-[88px] xl:px-20"
       id="preguntas"
     >
-      {/* auto/1fr, so the answers spanning both rows cannot stretch the first
-          one and push the closing line away from the heading it belongs to. */}
-      <div className="mx-auto flex max-w-[1200px] flex-col gap-6 lg:grid lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-6">
-        <div className="flex flex-col gap-3.5 lg:col-span-4 lg:col-start-1 lg:row-start-1 lg:gap-[18px]">
-          <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-brand lg:text-[13px]">
-            Preguntas de quien vende
-          </span>
+      <div className="mx-auto flex max-w-[1280px] flex-col gap-6 lg:flex-row lg:items-start lg:gap-20">
+        <div className="flex flex-col gap-3.5 lg:sticky lg:top-28 lg:w-[420px] lg:shrink-0 lg:gap-[18px]">
+          <Eyebrow>Preguntas de quien vende</Eyebrow>
           <h2
-            className="font-display text-[36px] font-medium leading-[1.04] tracking-[-0.03em] lg:text-[48px]"
+            className="font-display text-[clamp(40px,31.1px+2.286vw,64px)] font-semibold leading-[0.98] tracking-[-0.04em] text-ink"
             id="preguntas-heading"
           >
-            Lo que te estás <em className="italic text-brand">preguntando.</em>
+            Lo que te estás <Accent>preguntando.</Accent>
           </h2>
+          <p className="text-[15px] leading-[1.55] text-muted lg:text-[16px]">
+            ¿Tienes otra duda? Revisa los{" "}
+            <Link
+              className="font-bold text-brand underline decoration-accent decoration-[3px] underline-offset-4"
+              href="/terminos-vendedores"
+            >
+              Términos para vendedores
+            </Link>
+            .
+          </p>
         </div>
 
-        {/* On a phone this closing line belongs after the answers; beside them
-            at lg, where the left column would otherwise end early. */}
-        <p className="order-3 text-[15px] leading-[1.6] text-muted lg:order-none lg:col-span-4 lg:col-start-1 lg:row-start-2 lg:mt-[18px] lg:self-start lg:text-[16px]">
-          ¿Tienes otra duda? Revisa los{" "}
-          <Link
-            className="font-semibold text-brand underline decoration-accent decoration-[3px] underline-offset-4"
-            href="/terminos-vendedores"
-          >
-            Términos para vendedores
-          </Link>
-          .
-        </p>
-
-        <div className="order-2 flex flex-col lg:order-none lg:col-span-7 lg:col-start-6 lg:row-span-2 lg:row-start-1">
+        <div className="flex grow flex-col">
           {questions.map((entry, index) => (
-            <div
-              className={`flex flex-col gap-2 border-t border-line py-[22px] lg:gap-2.5 lg:py-7 ${
-                index === questions.length - 1 ? "border-b" : ""
-              }`}
+            <details
+              className="faq-item group rounded-[20px] border-b border-hairline px-4 open:border-[1.5px] open:border-brand open:bg-background lg:rounded-[24px] lg:px-[26px]"
               key={entry.question}
+              name="preguntas"
+              open={index === 0}
             >
-              <h3 className="font-display text-[20px] font-semibold leading-[1.2] lg:text-[23px] lg:tracking-[-0.015em]">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-5 py-5 font-display text-[19px] font-semibold tracking-[-0.02em] text-ink lg:py-[22px] lg:text-[22px] lg:group-open:text-[24px] [&::-webkit-details-marker]:hidden">
                 {entry.question}
-              </h3>
-              <p className="text-[15px] leading-[1.65] text-muted lg:text-[16px]">{entry.answer}</p>
-            </div>
+                <span
+                  aria-hidden="true"
+                  className="grid size-10 shrink-0 place-items-center rounded-full border-[1.5px] border-line text-brand group-open:border-brand group-open:bg-brand group-open:text-accent"
+                >
+                  <Plus className="size-4 group-open:hidden" strokeWidth={2.4} />
+                  <Minus className="hidden size-4 group-open:block" strokeWidth={2.4} />
+                </span>
+              </summary>
+              <p className="max-w-[680px] pb-6 text-[15px] leading-[1.6] text-text-body lg:text-[16px]">{entry.answer}</p>
+            </details>
           ))}
         </div>
       </div>

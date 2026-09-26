@@ -89,19 +89,6 @@ describe("SellerProgram", () => {
     );
   });
 
-  it("answers what happens when the promotion ends", () => {
-    render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
-
-    const faq = screen.getByRole("region", { name: "Lo que te estás preguntando." });
-
-    expect(within(faq).getByText("¿Qué pasa cuando termine la promoción?")).toBeInTheDocument();
-    expect(faq).toHaveTextContent(
-      "La publicación y la comisión por artículo vendido seguirán siendo gratuitas.",
-    );
-    // The mockup shipped a bracketed note for somebody to fill in later.
-    expect(faq).not.toHaveTextContent(/\[.*\]/);
-  });
-
   it("describes its illustrations in words and gives them nothing to operate", () => {
     const { container } = render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 
