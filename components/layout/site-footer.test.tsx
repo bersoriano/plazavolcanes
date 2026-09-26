@@ -57,4 +57,20 @@ describe("SiteFooter", () => {
 
     expect(screen.getByRole("contentinfo")).toHaveAttribute("data-site-footer");
   });
+
+  it("signs off with the year and where it is made, above a decorative wordmark", () => {
+    render(<SiteFooter />);
+
+    const footer = screen.getByRole("contentinfo");
+    expect(within(footer).getByText("© 2026 Plaza Volcanes")).toBeInTheDocument();
+    expect(within(footer).getByText("Hecho en México")).toBeInTheDocument();
+    const wordmark = within(footer).getByText("Volcanes", { selector: "em" }).parentElement;
+    expect(wordmark).toHaveAttribute("aria-hidden", "true");
+  });
+
+  it("gives its links the lime focus ring of a dark surface", () => {
+    render(<SiteFooter />);
+
+    expect(screen.getByRole("contentinfo")).toHaveAttribute("data-surface", "dark");
+  });
 });
