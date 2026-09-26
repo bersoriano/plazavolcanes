@@ -6,9 +6,10 @@ import { SellerCatalog } from "@/components/sellers/seller-catalog";
 import { SellerHero } from "@/components/sellers/seller-hero";
 import { SellerSteps } from "@/components/sellers/seller-steps";
 import { SellerTapes } from "@/components/sellers/seller-tapes";
+import { StickyCta } from "@/components/sellers/sticky-cta";
 import { SellerTrustTiers } from "@/components/sellers/seller-trust-tiers";
 import type { FoundersProgram } from "@/lib/launch";
-import type { SellerViewer } from "@/lib/seller-cta";
+import { sellerCtaHref, type SellerViewer } from "@/lib/seller-cta";
 
 /**
  * /vender, end to end.
@@ -42,6 +43,10 @@ export function SellerProgram({
       <SellerTrustTiers promoActive={promoActive} />
       <SellerFaq promoActive={promoActive} />
       {promoActive ? <FoundersCta spotsTaken={spotsTaken} viewer={viewer} /> : null}
+      {/* Only for somebody who could still open a founding store. */}
+      {promoActive && viewer !== "owner" ? (
+        <StickyCta href={sellerCtaHref(viewer, "sticky")} spotsTaken={spotsTaken} />
+      ) : null}
     </>
   );
 }

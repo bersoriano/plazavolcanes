@@ -90,6 +90,7 @@ export function SellerHero({
           <div className="flex flex-col items-center gap-4 self-stretch sm:flex-row sm:gap-[22px] sm:self-auto">
             <Link
               className="flex h-[58px] items-center justify-between gap-4 self-stretch rounded-full bg-accent pl-6 pr-2 text-[17px] font-bold text-brand shadow-[0_16px_36px_-14px] shadow-accent/55 sm:self-auto lg:h-[62px] lg:pl-[30px] lg:pr-2.5 lg:text-[18px]"
+              data-hero-cta
               href={sellerCtaHref(viewer, "hero")}
             >
               {owner ? OWNER_CTA_LABEL : "Crear mi tienda gratis"}
