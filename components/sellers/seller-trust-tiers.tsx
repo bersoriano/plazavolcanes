@@ -94,21 +94,25 @@ export function SellerTrustTiers({ promoActive = true }: { promoActive?: boolean
 
             return (
               <article
-                className={`flex flex-col gap-3 rounded-[26px] p-6 lg:rounded-[32px] lg:p-[30px] ${rung.card} ${rung.height} ${
+                className={`flex flex-col gap-1.5 rounded-[22px] px-5 py-4 md:gap-3 md:rounded-[26px] md:p-6 lg:rounded-[32px] lg:p-[30px] ${rung.card} ${rung.height} ${
                   index === 2 ? "order-3" : index === 1 ? "order-1" : "order-0"
                 }`}
                 key={rung.tier}
               >
-                <span className={`text-[12px] font-bold uppercase tracking-[0.1em] lg:text-[13px] ${rung.kicker}`}>
+                <span className={`hidden text-[12px] font-bold uppercase tracking-[0.1em] md:block lg:text-[13px] ${rung.kicker}`}>
                   Nivel {index + 1}
                 </span>
-                <h3 className={`font-display text-[28px] font-semibold tracking-[-0.03em] lg:text-[34px] ${rung.title}`}>
-                  {marker.label}
-                </h3>
-                <p className={`font-display text-[20px] font-bold lg:text-[22px] ${rung.limit}`}>
-                  Hasta {marker.listingLimit} productos
-                </p>
-                <p className={`mt-auto pt-2 text-[15px] leading-[1.5] ${rung.body}`}>{rung.description}</p>
+                {/* A phone keeps the name and the limit on one line, as its mockup does. */}
+                <div className="flex items-baseline justify-between gap-3 md:flex-col md:gap-3">
+                  <h3 className={`font-display text-[26px] font-semibold tracking-[-0.03em] lg:text-[34px] ${rung.title}`}>
+                    {marker.label}
+                  </h3>
+                  <p className={`shrink-0 font-display text-[17px] font-bold md:text-[20px] lg:text-[22px] ${rung.limit}`}>
+                    Hasta {marker.listingLimit}
+                    <span className="hidden md:inline"> productos</span>
+                  </p>
+                </div>
+                <p className={`text-[14px] leading-[1.5] md:mt-auto md:pt-2 md:text-[15px] ${rung.body}`}>{rung.description}</p>
               </article>
             );
           })}

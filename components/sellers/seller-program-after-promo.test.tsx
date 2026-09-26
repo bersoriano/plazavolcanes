@@ -27,7 +27,7 @@ describe("SellerProgram after the founders promotion", () => {
   it("keeps the ladder without the founders marker", () => {
     render(<SellerProgram founders={{ open: false, taken: 100, cap: 100 }} />);
 
-    expect(screen.getByText("Hasta 15 productos")).toBeInTheDocument();
+    expect(screen.getByText((_, element) => element?.tagName === "P" && element.textContent === "Hasta 15 productos")).toBeInTheDocument();
     expect(screen.queryByText(/50 desde el día uno/)).not.toBeInTheDocument();
   });
 });

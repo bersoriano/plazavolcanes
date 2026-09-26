@@ -6,12 +6,14 @@ import { Accent, Eyebrow, TYPE } from "@/components/home/landing/primitives";
 import { REPUTATION_IMPORT_AVAILABLE } from "@/lib/launch";
 import { OWNER_CTA_LABEL, sellerCtaHref, type SellerViewer } from "@/lib/seller-cta";
 
-type Step = { title: string; description: string; preview: ReactNode; highlight?: boolean };
+/** `phonePreview` false: the drawing only appears from lg, as in the phone mockup. */
+type Step = { title: string; description: string; preview: ReactNode; highlight?: boolean; phonePreview?: boolean };
 
 const REPUTATION_STEP: Step = {
   title: "Trae tu reputación",
   description: "Vincula tus perfiles de Mercado Libre, Facebook Marketplace, Amazon, Etsy o Instagram.",
   preview: <LinkedPlatforms />,
+  phonePreview: false,
 };
 
 /** What step 2 says while the import is still only a plan. */
@@ -19,6 +21,7 @@ const CATALOG_STEP: Step = {
   title: "Publica tus productos",
   description: "Foto, precio, categoría y condición. Guarda borradores y publica cuando quieras.",
   preview: <AddProduct />,
+  phonePreview: false,
 };
 
 const STEPS: Step[] = [
@@ -90,7 +93,12 @@ export function SellerSteps({ viewer = "signed-out" }: { viewer?: SellerViewer }
                 <span className="sr-only">Paso {index + 1}: </span>
                 {step.title}
               </h3>
-              <div aria-hidden="true" className="col-span-2 lg:order-2 lg:min-h-[108px]">
+              <div
+                aria-hidden="true"
+                className={`order-last col-span-2 lg:order-2 lg:block lg:min-h-[108px] ${
+                  step.phonePreview === false ? "hidden" : ""
+                }`}
+              >
                 {step.preview}
               </div>
               <p
@@ -114,8 +122,8 @@ export function SellerSteps({ viewer = "signed-out" }: { viewer?: SellerViewer }
 
 function NameField() {
   return (
-    <div className="flex flex-col gap-2.5 rounded-[20px] border border-line bg-surface p-3.5">
-      <span className="flex h-[42px] items-center rounded-xl border-2 border-brand px-3.5 text-[15px] font-semibold text-ink">
+    <div className="flex flex-col gap-2.5 lg:rounded-[20px] lg:border lg:border-line lg:bg-surface lg:p-3.5">
+      <span className="hidden h-[42px] items-center rounded-xl border-2 border-brand px-3.5 text-[15px] font-semibold text-ink lg:flex">
         Tienda de [tu nombre]
         <span className="ml-0.5 h-[18px] w-0.5 bg-brand" />
       </span>
@@ -129,7 +137,7 @@ function NameField() {
 
 function LinkedPlatforms() {
   return (
-    <div className="flex min-h-[108px] flex-wrap content-center gap-2 text-[13px] font-semibold">
+    <div className="hidden min-h-[108px] flex-wrap content-center gap-2 text-[13px] font-semibold lg:flex">
       {["Mercado Libre", "Facebook Marketplace"].map((platform) => (
         <span className="flex h-[34px] items-center gap-1.5 rounded-full bg-brand px-3 text-white" key={platform}>
           {platform}
@@ -151,7 +159,7 @@ function LinkedPlatforms() {
 
 function AddProduct() {
   return (
-    <div className="grid h-[108px] grid-cols-3 gap-2.5">
+    <div className="hidden h-[108px] grid-cols-3 gap-2.5 lg:grid">
       <span className="rounded-[18px] bg-lilac-tint" />
       <span className="rounded-[18px] bg-coral-tint" />
       <span className="grid place-items-center rounded-[18px] border-2 border-dashed border-brand text-brand">
@@ -163,8 +171,8 @@ function AddProduct() {
 
 function OrderChat() {
   return (
-    <div className="flex min-h-[108px] flex-col justify-center gap-2 text-[14px] font-semibold lg:text-[15px]">
-      <span className="self-start rounded-[18px_18px_18px_6px] bg-surface px-4 py-2.5 text-ink">
+    <div className="flex flex-col justify-center gap-2 text-[14px] font-semibold lg:min-h-[108px] lg:text-[15px]">
+      <span className="hidden self-start rounded-[18px_18px_18px_6px] bg-surface px-4 py-2.5 text-ink lg:block">
         Nueva solicitud de pedido · Micrófono Rode
       </span>
       <span className="flex items-center gap-2 self-end rounded-[18px_18px_6px_18px] bg-brand px-4 py-2.5 text-white">

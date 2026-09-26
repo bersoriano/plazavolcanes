@@ -62,7 +62,7 @@ describe("SellerProgram", () => {
       (["standard", "reliable", "top_rated"] as const).map((tier) => getTrustTierMarker(tier).label),
     );
     for (const tier of ["standard", "reliable", "top_rated"] as const) {
-      expect(within(tiers).getByText(`Hasta ${getTrustTierMarker(tier).listingLimit} productos`)).toBeInTheDocument();
+      expect(within(tiers).getByText((_, element) => element?.tagName === "P" && element.textContent === `Hasta ${getTrustTierMarker(tier).listingLimit} productos`)).toBeInTheDocument();
     }
     expect(within(tiers).getByText("Tiendas fundadoras: 50 desde el día uno")).toBeInTheDocument();
   });
