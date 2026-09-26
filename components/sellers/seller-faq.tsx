@@ -13,7 +13,12 @@ const FOUNDERS_QUESTION = {
     "Las primeras 100 tiendas que se registren durante los primeros tres meses abren 1 tienda gratis con hasta 50 artículos publicados, reciben la insignia de Tienda fundadora y tienen estatus Premium durante 1 año. Y como en toda la plaza: 0% comisión y pago directo.",
 };
 
-// "¿Qué pasa después del primer año?" joins once product provides its answer.
+const AFTER_FIRST_YEAR = {
+  question: "¿Qué pasa después del primer año?",
+  answer:
+    "Al terminar el primer año, la tienda y los 50 artículos publicados dejan de ser gratuitos. La comisión sigue en 0% y tu cliente te sigue pagando directo.",
+};
+
 function questionsFor(promoActive: boolean) {
   return [
     ...(promoActive ? [FOUNDERS_QUESTION] : []),
@@ -33,14 +38,16 @@ function questionsFor(promoActive: boolean) {
       answer:
         "Mensajes, acuerdos, envío y entrega quedan registrados en el pedido. Si un cliente abre una aclaración, puedes responder y administración registra una resolución.",
     },
+    // A founder's question, so it leaves with the founders offer.
+    ...(promoActive ? [AFTER_FIRST_YEAR] : []),
   ];
 }
 
 /**
  * #preguntas: a native exclusive accordion (<details name>), so the browser
  * announces each item's state and handles the keyboard. The first item opens
- * by default. `promoActive` false drops the founders question and states the
- * standing commission rule.
+ * by default. `promoActive` false drops the two founders questions and states
+ * the standing commission rule.
  */
 export function SellerFaq({ promoActive = true }: { promoActive?: boolean }) {
   const questions = questionsFor(promoActive);
