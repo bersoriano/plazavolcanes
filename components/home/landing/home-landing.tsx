@@ -1,3 +1,4 @@
+import { CrossingTapes } from "@/components/home/landing/crossing-tapes";
 import type { CollageProduct } from "@/components/home/landing/hero-collage";
 import { SellerHero } from "@/components/home/landing/seller-hero";
 import type { CatalogFilters } from "@/lib/queries/catalog";
@@ -18,13 +19,14 @@ type HomeLandingProps = {
  * the hero's tiles.
  */
 export function HomeLanding({ catalog, filters }: HomeLandingProps) {
-  const { products } = catalog;
+  const { products, categories } = catalog;
   const photographed = products.filter((product) => product.imageUrl);
   const tiles: [CollageProduct | null, CollageProduct | null] = [photographed[0] ?? null, photographed[1] ?? null];
 
   return (
     <>
       <SellerHero latest={products[0] ?? null} locale={filters.locale} tiles={tiles} />
+      <CrossingTapes categories={categories.map((category) => category.name)} />
     </>
   );
 }
