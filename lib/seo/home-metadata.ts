@@ -6,6 +6,11 @@ import type { CatalogFilters } from "@/lib/queries/catalog";
 export const SITE_NAME = "Plaza Volcanes";
 
 const HOME_TITLE = "Plaza Volcanes: tiendas independientes de México";
+// The bare home page is the seller landing, so it speaks to sellers; every
+// catalogue view of "/" keeps the buyer wording above.
+const LANDING_TITLE = "Plaza Volcanes: abre tu tienda independiente en México";
+const LANDING_DESCRIPTION =
+  "Abre tu tienda en Plaza Volcanes, publica productos nuevos o usados y recibe el pago directo de cada cliente. 0% comisión para las primeras 100 tiendas.";
 const HOME_DESCRIPTION =
   "Compra productos nuevos y usados de tiendas independientes de todo México. Revisa quién vende y acuerda pago y entrega directamente con cada tienda.";
 
@@ -82,7 +87,7 @@ export function buildHomeMetadata({ filters, selection, listed }: HomeMetadataIn
   const category = describeCategory(selection);
 
   if (!category) {
-    return withSharing({ title: HOME_TITLE, description: HOME_DESCRIPTION }, { canonical: "/" });
+    return withSharing({ title: LANDING_TITLE, description: LANDING_DESCRIPTION }, { canonical: "/" });
   }
 
   const canonical = buildCatalogHref({
