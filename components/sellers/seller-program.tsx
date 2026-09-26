@@ -41,7 +41,7 @@ export function SellerProgram({
       <SellerSteps viewer={viewer} />
       <SellerTrustTiers promoActive={promoActive} />
       <SellerFaq promoActive={promoActive} />
-      {promoActive ? <FoundersCta spotsTaken={spotsTaken} /> : null}
+      {promoActive ? <FoundersCta spotsTaken={spotsTaken} viewer={viewer} /> : null}
     </>
   );
 }

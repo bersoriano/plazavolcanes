@@ -82,7 +82,7 @@ export function SellerFaq({ promoActive = true }: { promoActive?: boolean }) {
         <div className="flex grow flex-col">
           {questions.map((entry, index) => (
             <details
-              className="faq-item group rounded-[20px] border-b border-hairline px-4 open:border-[1.5px] open:border-brand open:bg-background lg:rounded-[24px] lg:px-[26px]"
+              className="faq-item group border-b border-hairline px-4 open:rounded-[20px] open:border-[1.5px] open:border-brand open:bg-background lg:px-[26px] lg:open:rounded-[24px]"
               key={entry.question}
               name="preguntas"
               open={index === 0}

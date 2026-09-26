@@ -1,51 +1,54 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
-import { VolcanoMark } from "@/components/brand/volcano-mark";
+import { Accent, VolcanoLines } from "@/components/home/landing/primitives";
 import { FOUNDERS_CAP, resolveFoundersProgress } from "@/lib/launch";
+import { OWNER_CTA_LABEL, sellerCtaHref, type SellerViewer } from "@/lib/seller-cta";
 
-export function FoundersCta({ spotsTaken }: { spotsTaken?: number | null }) {
+/**
+ * The closing call on /vender: a plum card with the offer on the left and,
+ * on the right, the spots left and the CTA. Without a trustworthy count the
+ * box keeps the CTA and drops the number and the bar. Only rendered while the
+ * promotion is open. `data-final-cta` lets the phone's sticky bar step aside
+ * once this is on screen.
+ */
+export function FoundersCta({
+  spotsTaken,
+  viewer = "signed-out",
+}: {
+  spotsTaken?: number | null;
+  viewer?: SellerViewer;
+}) {
   const progress = resolveFoundersProgress(spotsTaken);
 
   return (
-    <section aria-labelledby="fundadoras-heading" className="px-5 pb-16 sm:px-8 lg:pb-[120px]">
-      <div className="relative mx-auto max-w-[1200px] overflow-hidden rounded-[1.75rem] bg-brand px-6 pb-7 pt-9 text-white lg:grid lg:grid-cols-12 lg:items-center lg:gap-x-6 lg:rounded-[2.25rem] lg:px-20 lg:py-[72px]">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-[260px] -left-[160px] size-[520px] rounded-full bg-radial-[closest-side] from-accent/20 to-accent/0 lg:-bottom-[380px] lg:-left-[200px] lg:size-[720px]"
-        />
-        <VolcanoMark
-          className="pointer-events-none absolute -right-[160px] top-[150px] h-[138px] w-[520px] max-w-none text-accent opacity-10 lg:-bottom-10 lg:-right-20 lg:top-auto lg:h-[239px] lg:w-[900px]"
-          strokeWidth={5}
-        />
+    <section aria-labelledby="fundadoras-heading" className="px-3 pb-12 pt-6 sm:px-8 lg:pb-20 lg:pt-10 xl:px-20" data-final-cta>
+      <div className="relative mx-auto flex max-w-[1280px] flex-col gap-6 overflow-hidden rounded-[32px] bg-brand px-[22px] pb-7 pt-9 text-white lg:flex-row lg:items-center lg:justify-between lg:gap-14 lg:rounded-[40px] lg:p-16">
+        <VolcanoLines className="pointer-events-none absolute inset-x-0 bottom-0 h-[160px] w-full text-accent opacity-10 lg:h-[280px]" />
 
-        <div className="relative flex flex-col gap-[18px] lg:col-span-7 lg:gap-5">
-          <span className="text-[12px] font-bold uppercase tracking-[0.18em] text-accent lg:text-[13px]">
-            Tiendas fundadoras
-          </span>
+        <div className="relative flex flex-col gap-[18px] lg:max-w-[640px] lg:gap-5">
+          <p className="text-[12px] font-bold uppercase tracking-[0.14em] text-accent lg:text-[13px]">Tiendas fundadoras</p>
           <h2
-            className="text-balance font-display text-[42px] font-medium leading-none tracking-[-0.035em] lg:text-[64px]"
+            className="font-display text-[clamp(46px,35.3px+2.476vw,72px)] font-semibold leading-[0.98] tracking-[-0.039em]"
             id="fundadoras-heading"
           >
-            Sé una de las primeras{" "}
-            <em className="italic text-accent">{FOUNDERS_CAP} tiendas.</em>
+            Sé una de las primeras <Accent className="text-accent">{FOUNDERS_CAP} tiendas.</Accent>
           </h2>
-          <p className="max-w-[520px] text-[16px] leading-[1.6] text-white/80 lg:text-[18px]">
-            Publica gratis y no pagues comisión por cada artículo vendido. Los lugares se asignan por
-            orden de registro.
+          <p className="text-[16px] leading-[1.55] text-white/80 lg:text-[18px]">
+            Publica gratis hasta 50 artículos, luce la insignia fundadora y el sello Premium por un año. Los lugares
+            se asignan por orden de registro.
           </p>
         </div>
 
-        {/* On a phone the counter is its own card and the buttons sit below it;
-            from lg the panel itself is the card and holds everything. */}
-        <div className="relative mt-[18px] flex flex-col gap-3.5 lg:col-span-4 lg:col-start-9 lg:mt-0 lg:gap-4 lg:rounded-[1.5rem] lg:border lg:border-white/15 lg:bg-white/5 lg:p-7">
+        <div className="relative flex flex-col gap-4 rounded-[24px] border border-white/15 bg-white/5 p-5 lg:w-[400px] lg:shrink-0 lg:rounded-[28px] lg:p-7">
           {progress ? (
-            <div className="flex flex-col gap-3.5 rounded-[1.25rem] border border-white/15 bg-white/5 p-5 lg:gap-4 lg:rounded-none lg:border-0 lg:bg-transparent lg:p-0">
-              <p className="flex items-baseline justify-between">
-                <span className="text-[14px] font-semibold text-white/80">Lugares ocupados</span>
-                <span className="font-display text-[26px] font-bold tracking-[-0.02em] tabular-nums lg:text-[30px]">
-                  {progress.taken}
-                  <span className="text-[16px] text-white/60 lg:text-[18px]">/{FOUNDERS_CAP}</span>
+            <>
+              <p className="flex items-baseline justify-between gap-3">
+                <span className="font-display text-[32px] font-bold tracking-[-0.035em] text-accent tabular-nums lg:text-[44px]">
+                  {progress.left}
+                </span>
+                <span className="text-[14px] font-semibold text-white/80 lg:text-[15px]">
+                  de {FOUNDERS_CAP} lugares libres
                 </span>
               </p>
               <div
@@ -53,30 +56,28 @@ export function FoundersCta({ spotsTaken }: { spotsTaken?: number | null }) {
                 aria-valuemax={FOUNDERS_CAP}
                 aria-valuemin={0}
                 aria-valuenow={progress.taken}
-                className="h-2.5 overflow-hidden rounded-full bg-white/15 lg:h-3"
+                className="h-3 overflow-hidden rounded-full bg-white/15"
                 role="progressbar"
               >
                 <div className="h-full rounded-full bg-accent" style={{ width: `${progress.percent}%` }} />
               </div>
-              <p className="text-[14px] leading-[1.5] text-white/80">
-                Quedan {progress.left} lugares para tiendas fundadoras.
-              </p>
-            </div>
+            </>
           ) : null}
-
           <Link
-            className="flex h-[58px] items-center justify-center gap-2.5 rounded-full bg-accent text-[18px] font-bold text-brand-hover lg:h-[60px]"
-            href="/registro?vender=1"
+            className="mt-1.5 flex h-[58px] items-center justify-center gap-2.5 rounded-full bg-accent text-[17px] font-bold text-brand lg:h-[60px] lg:text-[18px]"
+            href={sellerCtaHref(viewer, "final")}
           >
-            Crear mi tienda gratis
+            {viewer === "owner" ? OWNER_CTA_LABEL : "Crear mi tienda gratis"}
             <ArrowRight aria-hidden="true" className="size-5" strokeWidth={2.2} />
           </Link>
-          <Link
-            className="tap inline-flex items-center justify-center self-center text-[15px] font-semibold text-white/85 underline decoration-accent/70 decoration-2 underline-offset-4"
-            href="/ingresar?intent=vender"
-          >
-            ¿Ya tienes cuenta? Ingresa
-          </Link>
+          {viewer === "signed-out" ? (
+            <Link
+              className="tap inline-flex items-center justify-center self-center text-[15px] font-semibold text-white underline decoration-accent underline-offset-4"
+              href="/ingresar?intent=vender"
+            >
+              ¿Ya tienes cuenta? Ingresa
+            </Link>
+          ) : null}
         </div>
       </div>
     </section>
