@@ -44,7 +44,7 @@ export function BuyerPanel({
   return (
     <section
       aria-labelledby="explorar-heading"
-      className="scroll-mt-16 border-t border-line bg-surface px-5 pb-12 pt-14 sm:px-8 lg:scroll-mt-24 lg:border-0 lg:bg-transparent lg:pb-24 lg:pt-10 xl:px-20"
+      className="scroll-mt-20 border-t border-line bg-surface px-5 pb-12 pt-14 sm:px-8 lg:scroll-mt-24 lg:border-0 lg:bg-transparent lg:pb-24 lg:pt-10 xl:px-20"
       id="explorar"
     >
       <div className="mx-auto flex max-w-[1280px] flex-col gap-5 lg:gap-7 lg:rounded-panel lg:border lg:border-line lg:bg-surface lg:px-14 lg:py-16">
