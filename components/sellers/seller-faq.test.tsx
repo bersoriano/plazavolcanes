@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { SellerFaq } from "@/components/sellers/seller-faq";
@@ -10,22 +10,24 @@ function questions() {
 }
 
 describe("SellerFaq", () => {
-  it("asks the founders questions first and last while the promotion runs", () => {
+  it("answers the founders package and sellers' objections while the promotion runs", () => {
     render(<SellerFaq />);
 
     expect(questions()).toEqual([
       "¿Qué incluye ser tienda fundadora?",
-      "¿De verdad no cobran comisión?",
-      "¿Cómo recibo mi dinero?",
+      "¿Cobran comisión?",
       "¿Cuántos productos puedo publicar?",
-      "¿Qué pasa si hay un problema con un pedido?",
-      "¿Qué pasa después del primer año?",
+      "¿Quién compra aquí?",
+      "¿Cómo recibo mi dinero?",
+      "¿Y si el cliente desaparece?",
+      "¿Y si una publicación es un fraude?",
+      "¿Qué pasa en el mes 13?",
+      "¿Puedo irme cuando quiera?",
     ]);
-    expect(
-      screen.getByText(
-        "Al terminar el primer año, la tienda y los 50 artículos publicados dejan de ser gratuitos. La comisión sigue en 0% y tu cliente te sigue pagando directo.",
-      ),
-    ).toBeInTheDocument();
+    expect(document.body).toHaveTextContent(
+      "Conservas tus 50 productos y tu insignia. Lo único que termina es la comisión fija",
+    );
+    expect(document.body).not.toHaveTextContent("para siempre");
   });
 
   it("is one exclusive accordion with the first item open", () => {
@@ -33,13 +35,14 @@ describe("SellerFaq", () => {
 
     const items = [...container.querySelectorAll("details")];
     expect(items.every((item) => item.getAttribute("name") === "preguntas")).toBe(true);
-    expect(items.map((item) => item.open)).toEqual([true, false, false, false, false, false]);
+    expect(items.map((item) => item.open)).toEqual([true, false, false, false, false, false, false, false, false]);
   });
 
   it("drops both founders questions once the promotion has ended", () => {
     render(<SellerFaq promoActive={false} />);
 
     expect(questions()).not.toContain("¿Qué incluye ser tienda fundadora?");
-    expect(questions()).not.toContain("¿Qué pasa después del primer año?");
+    expect(questions()).not.toContain("¿Qué pasa en el mes 13?");
+    expect(document.body).not.toHaveTextContent("fundadoras");
   });
 });

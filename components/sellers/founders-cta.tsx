@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { Accent, VolcanoLines } from "@/components/home/landing/primitives";
-import { FOUNDERS_CAP, resolveFoundersProgress } from "@/lib/launch";
+import { FOUNDER_EARN_RULE, FOUNDER_MIN_LIVE_ITEMS, FOUNDER_OFFER, FOUNDERS_CAP, resolveFoundersProgress } from "@/lib/launch";
 import { OWNER_CTA_LABEL, sellerCtaHref, type SellerViewer } from "@/lib/seller-cta";
 
 /**
@@ -35,8 +35,8 @@ export function FoundersCta({
             Sé una de las primeras <Accent className="text-accent">{FOUNDERS_CAP} tiendas.</Accent>
           </h2>
           <p className="text-[16px] leading-[1.55] text-white/80 lg:text-[18px]">
-            Publica gratis hasta 50 artículos, luce la insignia fundadora y el sello Premium por un año. Los lugares
-            se asignan por orden de registro.
+            {FOUNDER_OFFER} {FOUNDER_EARN_RULE} Los lugares se asignan en el orden en que las tiendas llegan a {FOUNDER_MIN_LIVE_ITEMS}
+            productos.
           </p>
         </div>
 

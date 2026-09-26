@@ -2,52 +2,80 @@ import Link from "next/link";
 import { Minus, Plus } from "lucide-react";
 
 import { Accent, Eyebrow } from "@/components/home/landing/primitives";
+import {
+  BASE_LISTING_LIMIT,
+  FOUNDER_COMMISSION_LOCK_MONTHS,
+  FOUNDER_FEATURE_DAYS,
+  FOUNDER_LISTING_LIMIT,
+  FOUNDER_MIN_LIVE_ITEMS,
+  FOUNDER_QUALIFY_DAYS,
+  FOUNDERS_CAP,
+} from "@/lib/launch";
 
-const PROMO_ANSWER =
-  "Sí. Las primeras 100 tiendas que se registren durante los primeros tres meses pueden publicar gratis y no pagan comisión por cada artículo vendido.";
-const STANDING_ANSWER = "Sí. Publicar es gratis y Plaza Volcanes no cobra comisión por cada artículo vendido.";
+const COMMISSION_ANSWER =
+  "En pago directo, no: tu cliente te paga a ti y Plaza Volcanes no toca ese dinero, así que no hay nada sobre qué cobrar ni nada que retener.";
+const TERMS_NOTE =
+  "Cualquier cambio a la política general se publica en los Términos para vendedores antes de aplicarse.";
 
 const FOUNDERS_QUESTION = {
   question: "¿Qué incluye ser tienda fundadora?",
-  answer:
-    "Las primeras 100 tiendas que se registren durante los primeros tres meses abren 1 tienda gratis con hasta 50 artículos publicados, reciben la insignia de Tienda fundadora y tienen estatus Premium durante 1 año. Y como en toda la plaza: 0% comisión y pago directo.",
+  answer: `Las primeras ${FOUNDERS_CAP} tiendas que publiquen ${FOUNDER_MIN_LIVE_ITEMS} productos en sus primeros ${FOUNDER_QUALIFY_DAYS} días reciben ${FOUNDER_LISTING_LIMIT} productos en vivo, la insignia permanente de Tienda fundadora, ${FOUNDER_FEATURE_DAYS} días en la rotación de la portada, 0% comisión fija ${FOUNDER_COMMISSION_LOCK_MONTHS} meses y acceso anticipado a las nuevas herramientas para vender. Registrarte no aparta un lugar: se gana publicando.`,
 };
 
-const AFTER_FIRST_YEAR = {
-  question: "¿Qué pasa después del primer año?",
-  answer:
-    "Al terminar el primer año, la tienda y los 50 artículos publicados dejan de ser gratuitos. La comisión sigue en 0% y tu cliente te sigue pagando directo.",
+const MONTH_13 = {
+  question: `¿Qué pasa en el mes ${FOUNDER_COMMISSION_LOCK_MONTHS + 1}?`,
+  answer: `Conservas tus ${FOUNDER_LISTING_LIMIT} productos y tu insignia. Lo único que termina es la comisión fija: pasas a la política general de los Términos para vendedores, la misma para todas las tiendas. Hoy el pago directo no tiene comisión. ${TERMS_NOTE}`,
 };
 
 function questionsFor(promoActive: boolean) {
   return [
     ...(promoActive ? [FOUNDERS_QUESTION] : []),
-    { question: "¿De verdad no cobran comisión?", answer: promoActive ? PROMO_ANSWER : STANDING_ANSWER },
+    {
+      question: "¿Cobran comisión?",
+      answer: promoActive
+        ? `${COMMISSION_ANSWER} Las tiendas fundadoras tienen además 0% comisión fija ${FOUNDER_COMMISSION_LOCK_MONTHS} meses en cualquier cargo de la plaza. ${TERMS_NOTE}`
+        : `${COMMISSION_ANSWER} ${TERMS_NOTE}`,
+    },
+    {
+      question: "¿Cuántos productos puedo publicar?",
+      answer: `${BASE_LISTING_LIMIT} productos en vivo, gratis y sin costo por publicar.${
+        promoActive ? ` Las tiendas fundadoras publican hasta ${FOUNDER_LISTING_LIMIT}.` : ""
+      } El nivel de tu tienda muestra la calidad de tu servicio; hoy no cambia tu límite.`,
+    },
+    {
+      question: "¿Quién compra aquí?",
+      answer:
+        "Personas en México que buscan productos nuevos y usados de tiendas independientes. Exploran sin cuenta, filtran por estado y te envían una solicitud de pedido cuando quieren comprar. Tus productos también pueden aparecer en buscadores.",
+    },
     {
       question: "¿Cómo recibo mi dinero?",
       answer:
         "Directo de tu cliente. Acuerdan juntos el método de pago y Plaza Volcanes no procesa ni retiene ese dinero, así que no hay retenciones.",
     },
     {
-      question: "¿Cuántos productos puedo publicar?",
+      question: "¿Y si el cliente desaparece?",
       answer:
-        "Depende del nivel de tu tienda: Estándar hasta 15, Confiable hasta 40 y Mejor valorada hasta 100. Las tiendas fundadoras pueden publicar hasta 50 desde el primer día.",
+        "Tú decides cuándo entregar: no envíes hasta recibir el pago que acordaron. Si el cliente deja de responder, cancelas el pedido desde tu panel. Mensajes, acuerdos, envío y entrega quedan por escrito en el pedido, y si hay una aclaración, administración registra una resolución.",
     },
     {
-      question: "¿Qué pasa si hay un problema con un pedido?",
+      question: "¿Y si una publicación es un fraude?",
       answer:
-        "Mensajes, acuerdos, envío y entrega quedan registrados en el pedido. Si un cliente abre una aclaración, puedes responder y administración registra una resolución.",
+        "Cada tienda nueva pasa por revisión antes de que sus productos se vean, y administración puede desactivar productos y tiendas. Cualquier persona puede reportarlo en Quejas y aclaraciones.",
     },
-    // A founder's question, so it leaves with the founders offer.
-    ...(promoActive ? [AFTER_FIRST_YEAR] : []),
+    ...(promoActive ? [MONTH_13] : []),
+    {
+      question: "¿Puedo irme cuando quiera?",
+      answer:
+        "Sí. No hay permanencia ni cargo por salir: retiras tus productos cuando quieras y, si tu tienda no tiene pedidos, la eliminas desde sus ajustes con sus productos e imágenes. Los pedidos que ya hiciste se conservan como registro para ti y tus clientes.",
+    },
   ];
 }
 
 /**
  * #preguntas: a native exclusive accordion (<details name>), so the browser
  * announces each item's state and handles the keyboard. The first item opens
- * by default. `promoActive` false drops the two founders questions and states
- * the standing commission rule.
+ * by default. It answers the objections sellers actually raise. `promoActive`
+ * false drops the founders questions (what it includes, month 13).
  */
 export function SellerFaq({ promoActive = true }: { promoActive?: boolean }) {
   const questions = questionsFor(promoActive);
