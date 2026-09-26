@@ -3,6 +3,7 @@ import { SellerBenefits } from "@/components/sellers/seller-benefits";
 import { SellerFaq } from "@/components/sellers/seller-faq";
 import { SellerHero } from "@/components/sellers/seller-hero";
 import { SellerSteps } from "@/components/sellers/seller-steps";
+import { SellerTapes } from "@/components/sellers/seller-tapes";
 import { SellerTrustTiers } from "@/components/sellers/seller-trust-tiers";
 import type { FoundersProgram } from "@/lib/launch";
 import type { SellerViewer } from "@/lib/seller-cta";
@@ -31,6 +32,7 @@ export function SellerProgram({
   return (
     <>
       <SellerHero isFounder={isFounder} promoActive={promoActive} spotsTaken={spotsTaken} viewer={viewer} />
+      <SellerTapes promoActive={promoActive} />
       <SellerBenefits promoActive={promoActive} />
       <SellerSteps />
       <SellerTrustTiers />
