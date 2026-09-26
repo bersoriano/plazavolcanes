@@ -2,6 +2,25 @@
 export const FOUNDERS_CAP = 100;
 
 /**
+ * When the founders promotion stops taking shops, as an ISO 8601 instant
+ * (e.g. "2026-12-31T23:59:59-06:00"), or null while no end date is set.
+ *
+ * Every block that makes the offer (the launch bar, the landing's founders
+ * card, 0% block and closing call, and the founders section on /vender)
+ * reads isFoundersPromoActive(), so the offer leaves the site in one edit and
+ * no page goes on promising it after it has ended.
+ */
+export const FOUNDERS_PROMO_ENDS_AT: string | null = null;
+
+export function isFoundersPromoActive(now: Date = new Date(), endsAt: string | null = FOUNDERS_PROMO_ENDS_AT) {
+  if (!endsAt) return true;
+  const end = new Date(endsAt);
+  // A malformed date must not quietly keep an ended offer on the page.
+  if (Number.isNaN(end.getTime())) return false;
+  return now < end;
+}
+
+/**
  * Whether sellers can actually bring a history over from another marketplace.
  *
  * Every string on /vender that promises the import reads this flag, so the page

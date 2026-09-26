@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 
 import { LaunchBarFrame } from "@/components/layout/launch-bar-frame";
 import { dismissLaunchBar } from "@/lib/actions/launch-bar";
-import { FOUNDERS_CAP, resolveFoundersProgress } from "@/lib/launch";
+import { FOUNDERS_CAP, isFoundersPromoActive, resolveFoundersProgress } from "@/lib/launch";
 import { LAUNCH_BAR_DISMISS_COOKIE } from "@/lib/launch-bar";
 import { viewerOwnsAnyShop } from "@/lib/queries/seller-standing.server";
 
@@ -21,6 +21,7 @@ import { viewerOwnsAnyShop } from "@/lib/queries/seller-standing.server";
 export async function LaunchBar({ spotsTaken }: { spotsTaken?: number | null } = {}) {
   const [cookieStore, ownsShop] = await Promise.all([cookies(), viewerOwnsAnyShop()]);
 
+  if (!isFoundersPromoActive()) return null;
   if (ownsShop) return null;
   if (cookieStore.get(LAUNCH_BAR_DISMISS_COOKIE)) return null;
 
