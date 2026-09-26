@@ -105,7 +105,7 @@ describe("LaunchBar", () => {
   it("keeps to a single line", async () => {
     await renderBar({ spotsTaken: 2 });
 
-    expect(bar()?.firstElementChild).toHaveClass("h-10", "overflow-hidden");
+    expect(bar()?.firstElementChild).toHaveClass("h-11", "overflow-hidden");
     for (const node of [
       screen.getByRole("link", { name: "Vender →" }),
       bar()!.querySelector("p")!,
