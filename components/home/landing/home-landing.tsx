@@ -2,6 +2,7 @@ import { BenefitsBento } from "@/components/home/landing/benefits-bento";
 import { CrossingTapes } from "@/components/home/landing/crossing-tapes";
 import type { CollageProduct } from "@/components/home/landing/hero-collage";
 import { SellerHero } from "@/components/home/landing/seller-hero";
+import { SellerStepsShowcase } from "@/components/home/landing/seller-steps-showcase";
 import type { CatalogFilters } from "@/lib/queries/catalog";
 import type { getCatalogStateCounts, getHomeCatalog } from "@/lib/queries/catalog.server";
 
@@ -29,6 +30,7 @@ export function HomeLanding({ catalog, filters }: HomeLandingProps) {
       <SellerHero latest={products[0] ?? null} locale={filters.locale} tiles={tiles} />
       <CrossingTapes categories={categories.map((category) => category.name)} />
       <BenefitsBento />
+      <SellerStepsShowcase />
     </>
   );
 }
