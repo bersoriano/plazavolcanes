@@ -48,7 +48,7 @@ describe("SellerHero", () => {
   it("drops the founders offer once the promotion has ended", () => {
     const { container } = render(<SellerHero promoActive={false} spotsTaken={100} />);
 
-    expect(screen.getByText("Publica gratis · 0% comisión")).toBeInTheDocument();
+    expect(screen.getByText("25 productos gratis · pago directo")).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/Primeras 100|fundadora|12 meses/i);
     expect(screen.getByText("25 productos gratis")).toBeInTheDocument();
   });

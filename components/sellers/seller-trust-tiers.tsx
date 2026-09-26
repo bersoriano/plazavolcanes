@@ -1,6 +1,7 @@
 import { CircleCheck, MessageCircle, Star, Truck } from "lucide-react";
 
 import { Accent, Eyebrow, TYPE } from "@/components/home/landing/primitives";
+import { BASE_LISTING_LIMIT, FOUNDER_LISTING_LIMIT } from "@/lib/launch";
 import { getTrustTierMarker, type TrustTier } from "@/lib/trust-tiers";
 
 const METRICS = [
@@ -11,14 +12,16 @@ const METRICS = [
 ];
 
 /**
- * Each rung of the ladder. The label and the publishing limit come from the
- * tiers themselves (lib/trust-tiers.ts), so the page cannot drift from what
- * the plaza enforces; the description is this page's own wording.
+ * Each rung of the ladder. The label comes from the tiers themselves
+ * (lib/trust-tiers.ts); the description and what the rung shows a buyer are
+ * this page's own wording. No rung promises listing slots: at launch the cap
+ * is the same for every tier (docs/launch-package.md).
  */
-const RUNGS: { tier: TrustTier; description: string; card: string; kicker: string; limit: string; title: string; body: string; height: string }[] = [
+const RUNGS: { tier: TrustTier; description: string; shows: string; card: string; kicker: string; limit: string; title: string; body: string; height: string }[] = [
   {
     tier: "standard",
     description: "Nivel inicial mientras tu tienda reúne evidencia de servicio, cumplimiento y satisfacción.",
+    shows: "Todas empiezan aquí",
     card: "border border-line bg-surface",
     kicker: "text-muted",
     limit: "text-brand",
@@ -30,6 +33,7 @@ const RUNGS: { tier: TrustTier; description: string; card: string; kicker: strin
     tier: "reliable",
     description:
       "Cumples de forma consistente con respuestas, envíos, pedidos completados y baja tasa de disputas.",
+    shows: "Insignia en tu tienda",
     card: "border-[1.5px] border-brand bg-lime-tint",
     kicker: "text-brand",
     limit: "text-brand",
@@ -40,6 +44,7 @@ const RUNGS: { tier: TrustTier; description: string; card: string; kicker: strin
   {
     tier: "top_rated",
     description: "Los estándares más altos de servicio, cumplimiento, actividad y satisfacción en la plaza.",
+    shows: "Insignia en tu tienda",
     card: "bg-brand",
     kicker: "text-accent",
     limit: "text-accent",
@@ -50,8 +55,9 @@ const RUNGS: { tier: TrustTier; description: string; card: string; kicker: strin
 ];
 
 /**
- * #niveles: the publishing ladder, three rungs rising from lg with the
- * founders' 50 marked above Confiable while the promotion runs. Three equal
+ * #niveles: the trust ladder as a quality signal buyers see, three rungs
+ * rising from lg, with the founders' 50 marked above Confiable while the
+ * promotion runs and a note on what the higher rungs will add later. Three equal
  * columns at md, stacked on a phone. The marker spans the grid's full row
  * (centred over Confiable at md, offset from the grid at lg): an absolutely
  * placed grid item measures from its own grid area, not from the grid.
@@ -68,11 +74,12 @@ export function SellerTrustTiers({ promoActive = true }: { promoActive?: boolean
           <div className="flex flex-col gap-3.5 lg:gap-4">
             <Eyebrow>Niveles de tienda</Eyebrow>
             <h2 className={`${TYPE.h2} text-ink`} id="niveles-heading">
-              Cuanto mejor atiendes, <Accent>más publicas.</Accent>
+              Tu nivel habla <Accent>por tu servicio.</Accent>
             </h2>
           </div>
           <p className={`${TYPE.aside} lg:max-w-[400px] lg:pb-2`}>
-            Tu nivel se calcula con datos reales de tu tienda. Nadie edita sus propias métricas.
+            Tu nivel se calcula con datos reales de tu tienda y tus clientes lo ven. Nadie edita sus propias
+            métricas.
           </p>
         </div>
 
@@ -102,14 +109,13 @@ export function SellerTrustTiers({ promoActive = true }: { promoActive?: boolean
                 <span className={`hidden text-[12px] font-bold uppercase tracking-[0.1em] md:block lg:text-[13px] ${rung.kicker}`}>
                   Nivel {index + 1}
                 </span>
-                {/* A phone keeps the name and the limit on one line, as its mockup does. */}
+                {/* A phone keeps the name and what it shows on one line, as its mockup does. */}
                 <div className="flex items-baseline justify-between gap-3 md:flex-col md:gap-3">
                   <h3 className={`font-display text-[26px] font-semibold tracking-[-0.03em] lg:text-[34px] ${rung.title}`}>
                     {marker.label}
                   </h3>
-                  <p className={`shrink-0 font-display text-[17px] font-bold md:text-[20px] lg:text-[22px] ${rung.limit}`}>
-                    Hasta {marker.listingLimit}
-                    <span className="hidden md:inline"> productos</span>
+                  <p className={`text-right text-[14px] font-bold md:text-left md:text-[16px] lg:text-[17px] ${rung.limit}`}>
+                    {rung.shows}
                   </p>
                 </div>
                 <p className={`text-[14px] leading-[1.5] md:mt-auto md:pt-2 md:text-[15px] ${rung.body}`}>{rung.description}</p>
@@ -122,10 +128,16 @@ export function SellerTrustTiers({ promoActive = true }: { promoActive?: boolean
               <svg aria-hidden="true" className="size-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.4} viewBox="0 0 24 24">
                 <path d="M2 18 8 9.5l2.5 2.5 3-4.5L22 18" />
               </svg>
-              Tiendas fundadoras: 50 desde el día uno
+              Tiendas fundadoras: {FOUNDER_LISTING_LIMIT} productos
             </p>
           ) : null}
         </div>
+
+        <p className="text-[14px] leading-[1.55] text-muted lg:text-[15px]">
+          Hoy todas las tiendas publican {BASE_LISTING_LIMIT} productos, sea cual sea su nivel.{" "}
+          <strong className="font-semibold text-ink">Próximamente:</strong> más espacio y mejor ubicación para los
+          niveles más altos.
+        </p>
       </div>
     </section>
   );

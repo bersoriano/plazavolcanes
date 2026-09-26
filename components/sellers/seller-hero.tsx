@@ -70,7 +70,7 @@ export function SellerHero({
         <div className="flex flex-col items-start gap-[22px] lg:gap-7">
           <p className="flex h-8 items-center gap-2.5 rounded-full border-[1.5px] border-accent/50 bg-accent/10 px-3.5 text-[11px] font-bold uppercase tracking-[0.12em] text-accent lg:h-[34px] lg:px-4 lg:text-[12px]">
             <span aria-hidden="true" className="size-[7px] shrink-0 rounded-full bg-accent shadow-[0_0_0_4px] shadow-accent/20" />
-            {promoActive ? <>Lanzamiento · Primeras {FOUNDERS_CAP} tiendas</> : <>Publica gratis · 0% comisión</>}
+            {promoActive ? <>Lanzamiento · Primeras {FOUNDERS_CAP} tiendas</> : <>{BASE_LISTING_LIMIT} productos gratis · pago directo</>}
           </p>
 
           <h1

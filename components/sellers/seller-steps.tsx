@@ -2,49 +2,62 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight, Check, MapPin, Plus } from "lucide-react";
 
+import { FounderMark } from "@/components/shops/founder-mark";
+
 import { Accent, Eyebrow, TYPE } from "@/components/home/landing/primitives";
-import { REPUTATION_IMPORT_AVAILABLE } from "@/lib/launch";
+import {
+  FOUNDER_COMMISSION_LOCK_MONTHS,
+  FOUNDER_LISTING_LIMIT,
+  FOUNDER_MIN_LIVE_ITEMS,
+  FOUNDER_QUALIFY_DAYS,
+} from "@/lib/launch";
 import { OWNER_CTA_LABEL, sellerCtaHref, type SellerViewer } from "@/lib/seller-cta";
 
 /** `phonePreview` false: the drawing only appears from lg, as in the phone mockup. */
 type Step = { title: string; description: string; preview: ReactNode; highlight?: boolean; phonePreview?: boolean };
 
-const REPUTATION_STEP: Step = {
-  title: "Trae tu reputación",
-  description: "Vincula tus perfiles de Mercado Libre, Facebook Marketplace, Amazon, Etsy o Instagram.",
-  preview: <LinkedPlatforms />,
-  phonePreview: false,
-};
-
-/** What step 2 says while the import is still only a plan. */
-const CATALOG_STEP: Step = {
-  title: "Publica tus productos",
-  description: "Foto, precio, categoría y condición. Guarda borradores y publica cuando quieras.",
-  preview: <AddProduct />,
-  phonePreview: false,
-};
-
-const STEPS: Step[] = [
+const FIRST_STEPS: Step[] = [
   {
-    title: "Crea tu tienda",
-    description: "Regístrate gratis, ponle nombre a tu tienda y elige la zona donde entregas.",
+    title: "Nombre y estado",
+    description: "Regístrate gratis, ponle nombre a tu tienda y elige el estado donde entregas.",
     preview: <NameField />,
   },
-  REPUTATION_IMPORT_AVAILABLE ? REPUTATION_STEP : CATALOG_STEP,
   {
-    title: "Publica y recibe pedidos",
-    description: "Recibe solicitudes y acuerda pago y entrega directo con cada cliente.",
-    preview: <OrderChat />,
-    highlight: true,
+    title: "Tu primer producto",
+    description: "Foto, precio, categoría y condición. Tienes 25 productos en vivo gratis.",
+    preview: <AddProduct />,
+    phonePreview: false,
   },
 ];
 
+/** While seats remain, the path ends at the founding seat; after, at orders. */
+const FOUNDER_STEP: Step = {
+  title: `${FOUNDER_MIN_LIVE_ITEMS} productos en ${FOUNDER_QUALIFY_DAYS} días`,
+  description: `Llega a ${FOUNDER_MIN_LIVE_ITEMS} productos en vivo en tus primeros ${FOUNDER_QUALIFY_DAYS} días y ganas tu lugar fundador: ${FOUNDER_LISTING_LIMIT} productos, insignia y 0% comisión fija ${FOUNDER_COMMISSION_LOCK_MONTHS} meses.`,
+  preview: <FounderProgress />,
+  highlight: true,
+};
+
+const ORDERS_STEP: Step = {
+  title: "Recibe pedidos",
+  description: "Recibe solicitudes y acuerda pago y entrega directo con cada cliente.",
+  preview: <OrderChat />,
+  highlight: true,
+};
+
 /**
- * #pasos: three cards with outlined numbers and a small drawing of each step,
- * the third on lime. The drawings are aria-hidden and hold no controls. On a
+ * #pasos: the seller's path in three cards (name and state, first product,
+ * then the founding seat or, once seats are gone, orders), the third on lime. The drawings are aria-hidden and hold no controls. On a
  * phone the number sits beside the title and the CTA drops below the list.
  */
-export function SellerSteps({ viewer = "signed-out" }: { viewer?: SellerViewer }) {
+export function SellerSteps({
+  viewer = "signed-out",
+  promoActive = false,
+}: {
+  viewer?: SellerViewer;
+  promoActive?: boolean;
+}) {
+  const steps = [...FIRST_STEPS, promoActive ? FOUNDER_STEP : ORDERS_STEP];
   const cta = (
     <>
       {viewer === "owner" ? OWNER_CTA_LABEL : "Crear mi tienda gratis"}
@@ -65,7 +78,7 @@ export function SellerSteps({ viewer = "signed-out" }: { viewer?: SellerViewer }
           <div className="flex flex-col gap-3.5 lg:gap-4">
             <Eyebrow>Cómo empezar</Eyebrow>
             <h2 className={`${TYPE.h2} text-ink`} id="como-empezar-heading">
-              Tu tienda lista en <Accent>tres pasos.</Accent>
+              De cero a tienda en <Accent>tres pasos.</Accent>
             </h2>
           </div>
           <Link className={`hidden lg:inline-flex ${ctaClass}`} href={sellerCtaHref(viewer, "pasos")}>
@@ -74,7 +87,7 @@ export function SellerSteps({ viewer = "signed-out" }: { viewer?: SellerViewer }
         </div>
 
         <ol className="grid gap-4 lg:grid-cols-3 lg:gap-5">
-          {STEPS.map((step, index) => (
+          {steps.map((step, index) => (
             <li
               className={`grid grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3.5 gap-y-5 rounded-[26px] p-6 lg:flex lg:flex-col lg:items-stretch lg:gap-[22px] lg:rounded-[32px] lg:p-8 ${
                 step.highlight ? "bg-accent text-brand" : "border border-line bg-background text-ink"
@@ -135,24 +148,20 @@ function NameField() {
   );
 }
 
-function LinkedPlatforms() {
+function FounderProgress() {
   return (
-    <div className="hidden min-h-[108px] flex-wrap content-center gap-2 text-[13px] font-semibold lg:flex">
-      {["Mercado Libre", "Facebook Marketplace"].map((platform) => (
-        <span className="flex h-[34px] items-center gap-1.5 rounded-full bg-brand px-3 text-white" key={platform}>
-          {platform}
-          <Check className="size-3.5 text-accent" strokeWidth={3} />
+    <div className="flex flex-col justify-center gap-2.5 lg:min-h-[108px]">
+      <span className="flex items-center justify-between text-[14px] font-semibold">
+        Productos en vivo
+        <span className="tabular-nums">
+          {FOUNDER_MIN_LIVE_ITEMS} / {FOUNDER_MIN_LIVE_ITEMS}
         </span>
-      ))}
-      {["Amazon", "Etsy", "Instagram"].map((platform) => (
-        <span
-          className="flex h-[34px] items-center gap-1 rounded-full border-[1.5px] border-dashed border-brand bg-surface px-3 text-ink"
-          key={platform}
-        >
-          <Plus className="size-3.5" strokeWidth={2.4} />
-          {platform}
-        </span>
-      ))}
+      </span>
+      <span className="h-2.5 rounded-full bg-brand" />
+      <span className="flex items-center gap-1.5 self-start rounded-full bg-premium-ink px-3 py-1.5 text-[13px] font-bold text-premium-gold">
+        <FounderMark />
+        Tienda fundadora
+      </span>
     </div>
   );
 }
