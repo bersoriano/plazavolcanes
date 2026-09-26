@@ -73,7 +73,7 @@ Evaluation performs two stages:
 
 Deterministic private PostgreSQL functions own evaluation. `private.evaluate_trust_tier(...)` is the pure core evaluator and returns the exact JSONB contract. `private.evaluate_shop_trust(shop_id)` aggregates canonical records, calls the core evaluator, applies policy, and writes history plus cache atomically. Scheduled database jobs process the queue. Neither function is executable from public API roles.
 
-Every successful evaluation transaction appends a history row and updates the cached shop tier and limit. A failed evaluation preserves the last valid snapshot, records the failure, and remains queued for retry. A shop without any valid snapshot uses Standard and 15.
+Every successful evaluation transaction appends a history row and updates the cached shop tier and limit. A failed evaluation preserves the last valid snapshot, records the failure, and remains queued for retry. A shop without any valid snapshot uses Standard; its listing cap follows the launch policy.
 
 ## Data Model
 
@@ -82,7 +82,7 @@ Every successful evaluation transaction appends a history row and updates the ca
 #### `shops`
 
 - `trust_tier`: constrained key `standard`, `reliable`, or `top_rated`; default `standard`
-- `listing_limit`: positive integer; default `15`
+- `listing_limit`: positive integer; default `25` (launch policy, see `docs/launch-package.md`)
 - `trust_evaluated_at`: nullable timezone-aware timestamp
 - `time_zone`: validated IANA time-zone name; existing shops default to `America/Mexico_City`
 
