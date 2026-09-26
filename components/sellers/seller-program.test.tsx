@@ -44,11 +44,11 @@ describe("SellerProgram", () => {
     ).getAllByRole("listitem");
 
     expect(steps).toHaveLength(3);
-    expect(steps[0]).toHaveTextContent("PASO 1");
+    expect(steps[0]).toHaveTextContent("Paso 1");
     expect(steps[0]).toHaveTextContent("Crea tu tienda");
-    expect(steps[1]).toHaveTextContent("PASO 2");
+    expect(steps[1]).toHaveTextContent("Paso 2");
     expect(steps[1]).toHaveTextContent("Trae tu reputación");
-    expect(steps[2]).toHaveTextContent("PASO 3");
+    expect(steps[2]).toHaveTextContent("Paso 3");
     expect(steps[2]).toHaveTextContent("Publica y recibe pedidos");
   });
 
