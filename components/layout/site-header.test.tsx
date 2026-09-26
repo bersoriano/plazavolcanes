@@ -136,12 +136,12 @@ describe("SiteHeader", () => {
     ]);
   });
 
-  it("opens the same sections from a named menu button below lg", async () => {
+  it("opens the same sections from a named menu button below xl", async () => {
     await renderHeader(false);
 
     const button = screen.getByRole("button", { name: "Abrir menú" });
     expect(button).toHaveAttribute("popovertarget", "menu-principal");
-    expect(button).toHaveClass("tap", "lg:hidden");
+    expect(button).toHaveClass("tap", "xl:hidden");
   });
 
   it("leaves the signed-in header without the landing's section links or menu", async () => {

@@ -7,7 +7,7 @@ import { Menu, X } from "lucide-react";
 export type HeaderMenuLink = { href: string; label: string };
 
 /**
- * The signed-out header's sheet below lg, built on the Popover API: the
+ * The signed-out header's sheet below xl, built on the Popover API: the
  * browser owns opening, light dismiss, Escape and the top layer. The only
  * script here closes the sheet when a link inside it is followed, because an
  * in-page anchor never leaves the page that would otherwise take it away.
@@ -20,7 +20,7 @@ export function HeaderMenu({ links }: { links: HeaderMenuLink[] }) {
     <>
       <button
         aria-label="Abrir menú"
-        className="tap grid place-items-center rounded-full text-brand transition-colors hover:bg-background lg:hidden"
+        className="tap grid place-items-center rounded-full text-brand transition-colors hover:bg-background xl:hidden"
         popoverTarget="menu-principal"
         type="button"
       >

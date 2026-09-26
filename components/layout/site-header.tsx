@@ -14,7 +14,7 @@ import { getCurrentUserAdminStatus } from "@/lib/admin-auth.server";
  * the full row again and the bar hides itself.
  *
  * Signed out, the header follows the seller-first landing: the home page's
- * sections in the middle from lg, a sheet with the same links below it, and
+ * sections in the middle from xl, a sheet with the same links below it, and
  * a way in for would-be sellers at every width. The section links are rooted
  * at "/" so they lead home from any other page.
  */
@@ -54,15 +54,15 @@ export async function SiteHeader() {
             <span className="relative grid size-9 place-items-center overflow-hidden rounded-[10px] bg-brand text-accent lg:size-[42px] lg:rounded-xl">
               <VolcanoMark className="absolute left-1/2 top-1/2 w-12 -translate-x-1/2 -translate-y-1/2 lg:w-14" />
             </span>
-            <span className="font-display text-[19px] font-bold tracking-[-0.02em] lg:text-[22px]">Plaza Volcanes</span>
+            <span className="whitespace-nowrap font-display text-[19px] font-bold tracking-[-0.02em] lg:text-[22px]">Plaza Volcanes</span>
           </Link>
         )}
 
         {signedIn ? null : (
-          <nav aria-label="Secciones de la plaza" className="hidden items-center gap-1 lg:flex xl:gap-4">
+          <nav aria-label="Secciones de la plaza" className="hidden items-center gap-1 xl:flex 2xl:gap-4">
             {SECTION_LINKS.map((link) => (
               <Link
-                className="inline-flex min-h-11 items-center rounded-full px-3 text-[15px] font-semibold text-brand transition-colors hover:bg-background"
+                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-3 text-[15px] font-semibold text-brand transition-colors hover:bg-background"
                 href={link.href}
                 key={link.href}
               >
