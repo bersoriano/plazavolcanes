@@ -169,9 +169,17 @@ main:has(> [data-theme="premium"]) {
 }
 
 /* The same padding under the landing's lime closing band would open a cream
-   stripe between it and the footer, so it takes the band's colour. */
-main:has(> [data-closing-band]:last-child) {
-  background: var(--accent);
+   stripe between it and the footer, so that strip alone takes the band's
+   colour. Only below md, where the padding exists; the rest of <main> keeps
+   the page background. */
+@media (max-width: 767px) {
+  main:has(> [data-closing-band]:last-child) {
+    background: linear-gradient(
+      to top,
+      var(--accent) calc(4.5rem + 1px + env(safe-area-inset-bottom)),
+      transparent 0
+    );
+  }
 }
 
 /* The site's focus ring pairs an aubergine outline with a lime shadow, and
