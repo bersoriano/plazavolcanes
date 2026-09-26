@@ -9,13 +9,13 @@ import { ArrowRight } from "lucide-react";
  */
 export const TYPE = {
   /** 52/0.96 → 100/0.94 */
-  h1: "font-display text-[clamp(52px,34.2px+4.571vw,100px)] font-semibold leading-[0.95] tracking-[-0.042em]",
+  h1: "font-display text-[clamp(52px,34.2px+4.571vw,100px)] font-semibold leading-[0.95] tracking-[-0.04em]",
   /** 46/1 → 76/0.98 */
   h2: "font-display text-[clamp(46px,34.9px+2.857vw,76px)] font-semibold leading-[0.99] tracking-[-0.04em]",
   /** 24 → 30 */
-  h3: "font-display text-[clamp(22px,19.8px+0.571vw,30px)] font-semibold leading-[1.05] tracking-[-0.027em]",
-  /** 16 → 18, for the text beside a section heading. */
-  aside: "text-[clamp(16px,15.3px+0.19vw,18px)] leading-[1.55] text-text-body",
+  h3: "font-display text-[clamp(22px,19.8px+0.571vw,30px)] font-semibold leading-[1.05] tracking-[-0.03em]",
+  /** 16 → 18 at lg, for the text beside a section heading. */
+  aside: "text-[16px] leading-[1.55] text-text-body lg:text-[18px]",
 } as const;
 
 /** The worked example the hero's receipt and the 0% block both show. */

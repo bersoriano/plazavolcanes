@@ -1,3 +1,4 @@
+import type { CSSProperties, ReactNode } from "react";
 import { Camera, Check, Mic, Shirt, Wallet } from "lucide-react";
 
 import { LandingPhoto } from "@/components/home/landing/landing-photo";
@@ -21,6 +22,23 @@ export type CollageProduct = {
 };
 
 const ZERO = "$0.00";
+
+type CqKey = "l" | "t" | "w" | "h" | "s" | "r" | "p" | "px" | "g" | "fs" | "b";
+
+/**
+ * One piece's geometry for the cq-* utilities in globals.css, in cqw: a
+ * single number for both canvases, or [phone, sm]. Both values are always
+ * set on the element itself, so a piece never inherits its parent's.
+ */
+function cq(values: Partial<Record<CqKey, number | [number, number]>>) {
+  const style: Record<string, string> = {};
+  for (const [key, value] of Object.entries(values)) {
+    const [phone, wide] = Array.isArray(value) ? value : [value, value];
+    style[`--cq-${key}`] = `${phone}cqw`;
+    style[`--cq-s${key}`] = `${wide}cqw`;
+  }
+  return style as CSSProperties;
+}
 
 /**
  * The hero's right-hand picture: two tilted product photos, a receipt that
@@ -64,45 +82,72 @@ export function HeroCollage({
   return (
     <div className="@container mx-auto w-full max-w-[350px] sm:max-w-[600px]">
       <p className="sr-only">{summary}</p>
-      <div aria-hidden="true" className="relative h-[105.714cqw] sm:h-[116.667cqw]">
+      <div aria-hidden="true" className="relative cq-h" style={cq({ h: [105.714, 116.667] })}>
         <PhotoTile
-          className="left-0 top-[5.714cqw] h-[54.286cqw] w-[42.857cqw] -rotate-6 bg-lilac-tint text-brand sm:top-[6.667cqw] sm:h-[50cqw] sm:w-[40cqw]"
+          className="-rotate-6 bg-lilac-tint text-brand"
           fallbackIcon={<Shirt className="size-[45%] opacity-80" strokeWidth={1.2} />}
+          geometry={{ l: 0, t: [5.714, 6.667], w: [42.857, 40], h: [54.286, 50] }}
           product={first}
         />
         <PhotoTile
-          className="left-[58.571cqw] top-0 h-[51.429cqw] w-[40cqw] rotate-6 bg-coral-tint text-coral-ink sm:left-[60cqw] sm:top-[1cqw] sm:h-[48.333cqw] sm:w-[38.333cqw]"
+          className="rotate-6 bg-coral-tint text-coral-ink"
           fallbackIcon={<Camera className="size-[45%]" strokeWidth={1.2} />}
+          geometry={{ l: [58.571, 60], t: [0, 1], w: [40, 38.333], h: [51.429, 48.333] }}
           product={second}
         />
 
         <Receipt />
 
-        <span className="animate-rise-in absolute left-[13.714cqw] top-[27.429cqw] flex h-[10.286cqw] -rotate-4 items-center gap-[2cqw] rounded-full bg-brand px-[4cqw] text-[3.714cqw] font-bold text-accent shadow-[0_12px_24px_-10px_rgb(50_23_77/0.6)] [animation-delay:240ms] sm:left-[30cqw] sm:top-[29.667cqw] sm:h-[7.333cqw] sm:gap-[1.333cqw] sm:px-[3cqw] sm:text-[2.5cqw]">
+        <span
+          className="animate-rise-in absolute flex -rotate-4 items-center rounded-full bg-brand font-bold text-accent shadow-cta cq-pos cq-h cq-gap cq-px cq-text [animation-delay:240ms]"
+          style={cq({ l: [13.714, 30], t: [27.429, 29.667], h: [10.286, 7.333], g: [2, 1.333], px: [4, 3], fs: [3.714, 2.5] })}
+        >
           <Wallet className="hidden size-[3cqw] sm:block" strokeWidth={2} />
           Te pagan directo
         </span>
 
-        <span className="animate-rise-in absolute left-[70.857cqw] top-[27.429cqw] flex size-[29.714cqw] rotate-12 flex-col items-center justify-center rounded-full border-[0.857cqw] border-brand bg-accent text-brand shadow-[0_16px_30px_-12px_rgb(50_23_77/0.5)] [animation-delay:360ms] sm:left-[73.333cqw] sm:top-[80cqw] sm:size-[26.667cqw] sm:border-[0.667cqw]">
-          <span className="font-display text-[11.429cqw] font-extrabold leading-[0.9] tracking-[-0.05em] sm:text-[10.333cqw]">0%</span>
-          <span className="text-[3.143cqw] font-bold uppercase tracking-[0.08em] sm:text-[2.5cqw]">comisión</span>
+        <span
+          className="animate-rise-in absolute flex rotate-12 flex-col items-center justify-center rounded-full border-brand bg-accent text-brand shadow-float cq-pos cq-size cq-border [animation-delay:360ms]"
+          style={cq({ l: [70.857, 73.333], t: [27.429, 80], s: [29.714, 26.667], b: [0.857, 0.667] })}
+        >
+          <span
+            className="font-display font-extrabold leading-[0.9] tracking-[-0.045em] cq-text"
+            style={cq({ fs: [11.429, 10.333] })}
+          >
+            0%
+          </span>
+          <span className="font-bold uppercase tracking-[0.08em] cq-text" style={cq({ fs: [3.143, 2.5] })}>
+            comisión
+          </span>
         </span>
 
         {latest ? (
-          <div className="animate-rise-in absolute left-0 top-[96.667cqw] hidden w-[55cqw] items-center gap-[2.333cqw] rounded-[3.667cqw] bg-surface p-[2cqw] shadow-[0_20px_40px_-20px_rgb(50_23_77/0.45)] [animation-delay:480ms] sm:flex">
-            <span className="relative grid size-[12cqw] shrink-0 place-items-center overflow-hidden rounded-[2.667cqw] bg-photo-backdrop text-brand">
+          <div
+            className="animate-rise-in absolute hidden items-center bg-surface shadow-float cq-pos cq-w cq-gap cq-r cq-p [animation-delay:480ms] sm:flex"
+            style={cq({ l: 0, t: 96.667, w: 55, g: 2.333, r: 3.667, p: 2 })}
+          >
+            <span
+              className="relative grid shrink-0 place-items-center overflow-hidden bg-photo-backdrop text-brand cq-size cq-r"
+              style={cq({ s: 12, r: 2.667 })}
+            >
               <LandingPhoto
                 fallback={<Mic className="size-[47%]" strokeWidth={1.5} />}
                 sizes="72px"
                 src={latest.imageUrl}
               />
             </span>
-            <span className="flex min-w-0 flex-col gap-[0.333cqw]">
-              <span className="text-[1.833cqw] font-bold tracking-[0.12em] text-success">RECIÉN PUBLICADO</span>
-              <span className="truncate text-[2.833cqw] font-bold text-ink">{latest.name}</span>
-              <span className="text-[2.833cqw] font-bold text-brand">
+            <span className="flex min-w-0 flex-col cq-gap" style={cq({ g: 0.333 })}>
+              <span className="font-bold tracking-[0.12em] text-success cq-text" style={cq({ fs: 1.833 })}>
+                RECIÉN PUBLICADO
+              </span>
+              <span className="truncate font-bold text-ink cq-text" style={cq({ fs: 2.833 })}>
+                {latest.name}
+              </span>
+              <span className="font-bold text-brand cq-text" style={cq({ fs: 2.833 })}>
                 {formatCurrency(latest.price_mxn, latest.currency_code ?? DEFAULT_CATALOG_CURRENCY, locale)}{" "}
-                <span className="text-[2cqw] font-semibold text-muted">{latest.currency_code ?? DEFAULT_CATALOG_CURRENCY}</span>
+                <span className="font-semibold text-muted cq-text" style={cq({ fs: 2 })}>
+                  {latest.currency_code ?? DEFAULT_CATALOG_CURRENCY}
+                </span>
               </span>
             </span>
           </div>
@@ -115,26 +160,27 @@ export function HeroCollage({
 function PhotoTile({
   product,
   className,
+  geometry,
   fallbackIcon,
-  preload = false,
 }: {
   product: CollageProduct | null;
   className: string;
-  fallbackIcon: React.ReactNode;
-  preload?: boolean;
+  geometry: Parameters<typeof cq>[0];
+  fallbackIcon: ReactNode;
 }) {
   const fallback = <span className="grid size-full place-items-center">{fallbackIcon}</span>;
 
   return (
-    <div className={`absolute overflow-hidden rounded-[6.286cqw] shadow-float sm:rounded-[4.667cqw] ${className}`}>
-      <LandingPhoto
-        fallback={fallback}
-        preload={preload}
-        sizes="(max-width: 639px) 150px, 240px"
-        src={product?.imageUrl ?? null}
-      />
+    <div
+      className={`absolute overflow-hidden shadow-float cq-pos cq-w cq-h cq-r ${className}`}
+      style={cq({ ...geometry, r: [6.286, 4.667] })}
+    >
+      <LandingPhoto fallback={fallback} sizes="(max-width: 639px) 150px, 240px" src={product?.imageUrl ?? null} />
       {product ? (
-        <span className="absolute left-[2.333cqw] top-[2.333cqw] hidden h-[4.667cqw] items-center rounded-full bg-surface px-[2cqw] text-[2cqw] font-semibold text-ink sm:flex">
+        <span
+          className="absolute hidden items-center rounded-full bg-surface font-semibold text-ink cq-pos cq-h cq-px cq-text sm:flex"
+          style={cq({ l: 2.333, t: 2.333, h: 4.667, px: 2, fs: 2 })}
+        >
           {formatProductCondition(product.condition, product.used_condition)}
         </span>
       ) : null}
@@ -144,14 +190,21 @@ function PhotoTile({
 
 function Receipt() {
   return (
-    <div className="animate-rise-in absolute left-[8.571cqw] top-[38.857cqw] flex w-[82.857cqw] flex-col leading-[1.2] gap-[2.857cqw] rounded-[6.286cqw] bg-surface p-[5.143cqw] text-ink shadow-[0_24px_48px_-20px_rgb(50_23_77/0.5)] [animation-delay:120ms] sm:left-[23.333cqw] sm:top-[39.333cqw] sm:w-[61.667cqw] sm:gap-[2.333cqw] sm:rounded-[4.667cqw] sm:p-[4cqw] sm:shadow-[0_30px_60px_-24px_rgb(50_23_77/0.5)]">
-      <div className="flex items-center gap-[2.857cqw] sm:gap-[2cqw]">
-        <span className="grid size-[9.143cqw] shrink-0 place-items-center rounded-full bg-accent text-brand sm:size-[6.667cqw]">
+    <div
+      className="animate-rise-in absolute flex flex-col bg-surface leading-[1.2] text-ink shadow-float cq-pos cq-w cq-gap cq-r cq-p [animation-delay:120ms]"
+      style={cq({ l: [8.571, 23.333], t: [38.857, 39.333], w: [82.857, 61.667], g: [2.857, 2.333], r: [6.286, 4.667], p: [5.143, 4] })}
+    >
+      <div className="flex items-center cq-gap" style={cq({ g: [2.857, 2] })}>
+        <span className="grid shrink-0 place-items-center rounded-full bg-accent text-brand cq-size" style={cq({ s: [9.143, 6.667] })}>
           <Check className="size-1/2" strokeWidth={2.6} />
         </span>
         <span className="flex flex-col">
-          <span className="text-[4cqw] font-bold sm:text-[2.667cqw]">Pedido confirmado</span>
-          <span className="text-[3.429cqw] text-muted sm:text-[2.167cqw]">Tu tienda · Pago directo</span>
+          <span className="font-bold cq-text" style={cq({ fs: [4, 2.667] })}>
+            Pedido confirmado
+          </span>
+          <span className="text-muted cq-text" style={cq({ fs: [3.429, 2.167] })}>
+            Tu tienda · Pago directo
+          </span>
         </span>
       </div>
       <span className="h-px bg-hairline" />
@@ -160,12 +213,18 @@ function Receipt() {
       <ReceiptRow label="Retención" value={ZERO} valueClassName="font-bold text-success" />
       <span className="h-px bg-hairline" />
       <div className="flex items-baseline justify-between">
-        <span className="text-[3.714cqw] font-bold sm:text-[2.5cqw]">Tú recibes</span>
-        <span className="font-display text-[8cqw] font-bold tracking-[-0.03em] text-brand sm:text-[6.333cqw]">{EXAMPLE_PRICE}</span>
+        <span className="font-bold cq-text" style={ROW_TEXT}>
+          Tú recibes
+        </span>
+        <span className="font-display font-bold tracking-[-0.03em] text-brand cq-text" style={cq({ fs: [8, 6.333] })}>
+          {EXAMPLE_PRICE}
+        </span>
       </div>
     </div>
   );
 }
+
+const ROW_TEXT = cq({ fs: [3.714, 2.5] });
 
 function ReceiptRow({
   label,
@@ -179,7 +238,7 @@ function ReceiptRow({
   className?: string;
 }) {
   return (
-    <div className={`${className} justify-between text-[3.714cqw] sm:text-[2.5cqw]`}>
+    <div className={`${className} justify-between cq-text`} style={ROW_TEXT}>
       <span className="text-muted">{label}</span>
       <span className={valueClassName}>{value}</span>
     </div>

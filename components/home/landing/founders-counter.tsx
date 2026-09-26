@@ -35,7 +35,7 @@ export function FoundersCounter({ spotsTaken }: { spotsTaken?: number | null }) 
           role="progressbar"
         >
           <div
-            className="h-full rounded-full bg-accent shadow-[inset_0_0_0_1.5px_var(--brand)]"
+            className="h-full rounded-full border-[1.5px] border-brand bg-accent"
             style={{ width: `${progress.percent}%` }}
           />
         </div>

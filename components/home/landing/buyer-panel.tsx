@@ -51,7 +51,7 @@ export function BuyerPanel({
         <div className="flex flex-col gap-3.5 lg:gap-4">
           <Eyebrow>¿Vienes a comprar?</Eyebrow>
           <h2
-            className="font-display text-[clamp(40px,31.1px+2.286vw,64px)] font-semibold leading-[1.01] tracking-[-0.038em] text-ink"
+            className="font-display text-[clamp(40px,31.1px+2.286vw,64px)] font-semibold leading-[1.01] tracking-[-0.04em] text-ink"
             id="explorar-heading"
           >
             Encuentra productos únicos <Accent>cerca de ti.</Accent>

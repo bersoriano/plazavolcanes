@@ -28,7 +28,7 @@ export function HeaderMenu({ links }: { links: HeaderMenuLink[] }) {
       </button>
       <div
         aria-label="Menú"
-        className="fixed inset-x-0 top-0 bottom-auto m-0 h-auto w-full max-w-none border-b border-brand/12 bg-accent p-0 text-brand shadow-float backdrop:bg-brand/30"
+        className="fixed inset-x-0 top-0 bottom-auto m-0 h-auto w-full max-w-none border-b border-brand/10 bg-accent p-0 text-brand shadow-float backdrop:bg-brand/30"
         id="menu-principal"
         popover="auto"
         ref={sheet}
@@ -49,7 +49,7 @@ export function HeaderMenu({ links }: { links: HeaderMenuLink[] }) {
         <nav aria-label="Secciones" className="flex flex-col px-4 pb-6 sm:px-8">
           {links.map((link) => (
             <Link
-              className="flex min-h-14 items-center border-t border-brand/12 font-display text-[22px] font-semibold tracking-[-0.02em]"
+              className="flex min-h-14 items-center border-t border-brand/10 font-display text-[22px] font-semibold tracking-[-0.02em]"
               href={link.href}
               key={link.href}
               onClick={close}

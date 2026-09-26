@@ -32,7 +32,7 @@ export async function SiteHeader() {
 
   return (
     <header
-      className={`sticky top-0 z-40 border-b bg-accent/95 backdrop-blur-lg ${signedIn ? "border-brand/10" : "border-brand/12"}`}
+      className={`sticky top-0 z-40 border-b bg-accent/95 backdrop-blur-lg ${signedIn ? "border-brand/10" : "border-brand/10"}`}
       data-site-header
     >
       <div

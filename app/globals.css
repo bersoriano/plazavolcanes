@@ -1,4 +1,12 @@
-@import "tailwindcss";
+/* Only the app's own source feeds Tailwind. Scanning the whole repository
+   also compiled every class-like word in docs/, tests and scripts into the
+   stylesheet, and every byte counts here: Turbopack only folds the font CSS
+   into this file while the two together stay under 100 KiB, and a second
+   render-blocking stylesheet cost 0.3s of mobile FCP. */
+@import "tailwindcss" source(none);
+@source "../app";
+@source "../components";
+@source "../lib";
 
 :root {
   --brand: #32174d;
@@ -278,6 +286,102 @@ a {
   from {
     opacity: 0;
     translate: 0 24px;
+  }
+}
+
+/*
+ * The hero collage's geometry. Each piece sets its phone and sm values as
+ * custom properties (cq() in hero-collage.tsx builds them), and these few
+ * utilities read them, instead of sixty one-off cqw classes: the stylesheet
+ * has to stay under the 100 KiB Turbopack folds the font CSS into.
+ */
+@utility cq-pos {
+  left: var(--cq-l);
+  top: var(--cq-t);
+  @variant sm {
+    left: var(--cq-sl);
+    top: var(--cq-st);
+  }
+}
+
+@utility cq-w {
+  width: var(--cq-w);
+  @variant sm {
+    width: var(--cq-sw);
+  }
+}
+
+@utility cq-h {
+  height: var(--cq-h);
+  @variant sm {
+    height: var(--cq-sh);
+  }
+}
+
+@utility cq-size {
+  width: var(--cq-s);
+  height: var(--cq-s);
+  @variant sm {
+    width: var(--cq-ss);
+    height: var(--cq-ss);
+  }
+}
+
+@utility cq-r {
+  border-radius: var(--cq-r);
+  @variant sm {
+    border-radius: var(--cq-sr);
+  }
+}
+
+@utility cq-p {
+  padding: var(--cq-p);
+  @variant sm {
+    padding: var(--cq-sp);
+  }
+}
+
+@utility cq-px {
+  padding-inline: var(--cq-px);
+  @variant sm {
+    padding-inline: var(--cq-spx);
+  }
+}
+
+@utility cq-gap {
+  gap: var(--cq-g);
+  @variant sm {
+    gap: var(--cq-sg);
+  }
+}
+
+@utility cq-text {
+  font-size: var(--cq-fs);
+  @variant sm {
+    font-size: var(--cq-sfs);
+  }
+}
+
+@utility cq-border {
+  border-width: var(--cq-b);
+  @variant sm {
+    border-width: var(--cq-sb);
+  }
+}
+
+/* The numbers' outline in the seller steps, heavier from lg. */
+@utility text-outline {
+  -webkit-text-stroke: 1.5px var(--brand);
+  @variant lg {
+    -webkit-text-stroke-width: 2px;
+  }
+}
+
+/* The hero's lime glow, from the top-right corner. */
+@utility hero-glow {
+  background-image: radial-gradient(circle at 100% 0%, rgb(184 255 106 / 0.5), transparent 55%);
+  @variant xl {
+    background-image: radial-gradient(circle at 88% 8%, rgb(184 255 106 / 0.45), transparent 42%);
   }
 }
 

@@ -64,7 +64,7 @@ export function SellerStepsShowcase() {
                 className={`font-display text-[64px] font-extrabold leading-[0.85] tracking-[-0.045em] lg:text-[96px] ${
                   step.highlight
                     ? "text-brand"
-                    : "text-transparent [-webkit-text-stroke:1.5px_var(--brand)] lg:[-webkit-text-stroke:2px_var(--brand)]"
+                    : "text-transparent text-outline"
                 }`}
               >
                 {step.number}

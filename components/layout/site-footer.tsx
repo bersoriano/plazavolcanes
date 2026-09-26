@@ -15,7 +15,7 @@ const LABEL = "text-[11px] font-bold uppercase tracking-[0.14em] text-accent lg:
 export function SiteFooter() {
   return (
     <footer className="relative overflow-hidden bg-brand text-white" data-site-footer data-surface="dark">
-      <div className="relative mx-auto flex max-w-[1440px] flex-col gap-8 px-5 pb-[190px] pt-14 sm:px-8 lg:gap-12 lg:px-12 lg:pb-[clamp(200px,16.5vw,300px)] lg:pt-20 xl:px-20">
+      <div className="relative mx-auto flex max-w-[1440px] flex-col gap-8 px-5 pb-[190px] pt-14 sm:px-8 lg:gap-12 lg:px-12 lg:pb-60 lg:pt-20 xl:px-20">
         <div className="flex flex-col gap-8 lg:flex-row lg:justify-between">
           <div className="flex flex-col gap-3.5 lg:max-w-[300px] lg:gap-[18px] xl:max-w-[380px]">
             <p className="flex items-center gap-2.5 lg:gap-3">
@@ -24,7 +24,7 @@ export function SiteFooter() {
               </span>
               <span className="font-display text-[20px] font-bold lg:text-[22px]">Plaza Volcanes</span>
             </p>
-            <p className="text-[15px] leading-[1.55] text-white/75 lg:text-[16px]">
+            <p className="text-[15px] leading-[1.55] text-white/70 lg:text-[16px]">
               Un punto de encuentro para tiendas independientes y personas curiosas.
             </p>
           </div>
@@ -60,7 +60,7 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="flex justify-between gap-4 border-t border-white/14 pt-[18px] text-[13px] text-white/65 lg:pt-[22px] lg:text-[14px]">
+        <div className="flex justify-between gap-4 border-t border-white/15 pt-[18px] text-[13px] text-white/60 lg:pt-[22px] lg:text-[14px]">
           <p>© 2026 Plaza Volcanes</p>
           <p>Hecho en México</p>
         </div>
@@ -68,7 +68,7 @@ export function SiteFooter() {
 
       <p
         aria-hidden="true"
-        className="pointer-events-none absolute -bottom-[18px] left-3.5 select-none font-display text-[104px] font-extrabold leading-[0.9] tracking-[-0.05em] text-accent lg:-bottom-[0.14em] lg:left-[clamp(24px,4.2vw,60px)] lg:whitespace-nowrap lg:text-[clamp(160px,16.5vw,238px)] lg:leading-none"
+        className="pointer-events-none absolute -bottom-[18px] left-3.5 select-none font-display text-[104px] font-extrabold leading-[0.9] tracking-[-0.045em] text-accent lg:-bottom-[0.14em] lg:left-14 lg:whitespace-nowrap lg:text-[clamp(160px,16.5vw,238px)] lg:leading-none"
       >
         Plaza <br className="lg:hidden" />
         <em className="italic">Volcanes</em>
