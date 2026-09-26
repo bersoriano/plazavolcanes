@@ -5,6 +5,7 @@ import { SellerHero } from "@/components/sellers/seller-hero";
 import { SellerSteps } from "@/components/sellers/seller-steps";
 import { SellerTrustTiers } from "@/components/sellers/seller-trust-tiers";
 import type { FoundersProgram } from "@/lib/launch";
+import type { SellerViewer } from "@/lib/seller-cta";
 
 /**
  * /vender, end to end.
@@ -13,13 +14,23 @@ import type { FoundersProgram } from "@/lib/launch";
  * is open the page makes the founders offer with its counter (no number when
  * there is no count to trust); once it closes or fills, the offer leaves.
  */
-export function SellerProgram({ founders }: { founders: FoundersProgram }) {
+export function SellerProgram({
+  founders,
+  viewer = "signed-out",
+  isFounder = false,
+}: {
+  founders: FoundersProgram;
+  /** Who is looking: decides where every create-store CTA leads. */
+  viewer?: SellerViewer;
+  /** A signed-in owner of a founding store: sees that instead of the counter. */
+  isFounder?: boolean;
+}) {
   const promoActive = founders.open;
   const spotsTaken = founders.taken;
 
   return (
     <>
-      <SellerHero promoActive={promoActive} spotsTaken={spotsTaken} />
+      <SellerHero isFounder={isFounder} promoActive={promoActive} spotsTaken={spotsTaken} viewer={viewer} />
       <SellerBenefits promoActive={promoActive} />
       <SellerSteps />
       <SellerTrustTiers />

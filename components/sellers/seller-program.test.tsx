@@ -69,7 +69,7 @@ describe("SellerProgram", () => {
     const ctas = screen.getAllByRole("link", { name: "Crear mi tienda gratis" });
 
     expect(ctas.length).toBeGreaterThanOrEqual(3);
-    for (const cta of ctas) expect(cta).toHaveAttribute("href", "/registro?vender=1");
+    for (const cta of ctas) expect(cta.getAttribute("href")).toMatch(/^\/registro\?vender=1(&desde=[a-z]+)?$/);
 
     expect(screen.getByRole("link", { name: "¿Ya tienes cuenta? Ingresa" })).toHaveAttribute(
       "href",
@@ -81,7 +81,7 @@ describe("SellerProgram", () => {
     );
     expect(screen.getByRole("link", { name: "Ver cómo funciona" })).toHaveAttribute(
       "href",
-      "#como-empezar",
+      "#pasos",
     );
   });
 

@@ -5,7 +5,12 @@ import SellerPage, { metadata } from "@/app/vender/page";
 
 vi.mock("@/lib/queries/founders.server", () => ({
   getFoundersProgram: vi.fn(async () => ({ open: true, taken: null, cap: 100 })),
+  viewerIsFounder: vi.fn(async () => false),
 }));
+vi.mock("@/lib/admin-auth.server", () => ({
+  getCurrentUserAdminStatus: vi.fn(async () => ({ isAdmin: false, signedIn: false })),
+}));
+vi.mock("@/lib/queries/seller-standing.server", () => ({ viewerOwnsAnyShop: vi.fn(async () => false) }));
 
 afterEach(cleanup);
 
@@ -33,7 +38,7 @@ describe("Seller page", () => {
     expect(screen.getByText("Publica y recibe pedidos")).toBeInTheDocument();
 
     for (const cta of screen.getAllByRole("link", { name: "Crear mi tienda gratis" })) {
-      expect(cta).toHaveAttribute("href", "/registro?vender=1");
+      expect(cta.getAttribute("href")).toMatch(/^\/registro\?vender=1(&desde=[a-z]+)?$/);
     }
     expect(screen.getByRole("link", { name: "¿Ya tienes cuenta? Ingresa" })).toHaveAttribute(
       "href",

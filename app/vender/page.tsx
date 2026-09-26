@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 
 import { SellerProgram } from "@/components/sellers/seller-program";
-import { getFoundersProgram } from "@/lib/queries/founders.server";
+import { getCurrentUserAdminStatus } from "@/lib/admin-auth.server";
+import { getFoundersProgram, viewerIsFounder } from "@/lib/queries/founders.server";
+import { viewerOwnsAnyShop } from "@/lib/queries/seller-standing.server";
+import { sellerViewer } from "@/lib/seller-cta";
 
 import "./vender.css";
 
@@ -15,5 +18,12 @@ export const metadata: Metadata = {
 };
 
 export default async function SellerPage() {
-  return <SellerProgram founders={await getFoundersProgram()} />;
+  const [founders, { signedIn }, ownsShop, isFounder] = await Promise.all([
+    getFoundersProgram(),
+    getCurrentUserAdminStatus(),
+    viewerOwnsAnyShop(),
+    viewerIsFounder(),
+  ]);
+
+  return <SellerProgram founders={founders} isFounder={isFounder} viewer={sellerViewer(signedIn, ownsShop)} />;
 }

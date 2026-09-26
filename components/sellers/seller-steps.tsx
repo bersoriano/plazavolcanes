@@ -37,7 +37,7 @@ export function SellerSteps() {
     <section
       aria-labelledby="como-empezar-heading"
       className="border-y border-line bg-surface px-5 py-16 sm:px-8 lg:py-[120px]"
-      id="como-empezar"
+      id="pasos"
     >
       {/* One grid for both shapes: on a phone the three blocks stack and the
           call to action drops below the list, at lg it sits beside the heading. */}
