@@ -1,3 +1,4 @@
+import { BenefitsBento } from "@/components/home/landing/benefits-bento";
 import { CrossingTapes } from "@/components/home/landing/crossing-tapes";
 import type { CollageProduct } from "@/components/home/landing/hero-collage";
 import { SellerHero } from "@/components/home/landing/seller-hero";
@@ -27,6 +28,7 @@ export function HomeLanding({ catalog, filters }: HomeLandingProps) {
     <>
       <SellerHero latest={products[0] ?? null} locale={filters.locale} tiles={tiles} />
       <CrossingTapes categories={categories.map((category) => category.name)} />
+      <BenefitsBento />
     </>
   );
 }

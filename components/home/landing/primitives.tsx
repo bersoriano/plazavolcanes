@@ -18,6 +18,9 @@ export const TYPE = {
   aside: "text-[clamp(16px,15.3px+0.19vw,18px)] leading-[1.55] text-text-body",
 } as const;
 
+/** The worked example the hero's receipt and the 0% block both show. */
+export const EXAMPLE_PRICE = "$1,999.00";
+
 /** The section eyebrow: small, bold, spaced capitals in plum. */
 export function Eyebrow({ children, className = "" }: { children: ReactNode; className?: string }) {
   return (

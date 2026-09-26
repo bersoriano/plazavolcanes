@@ -1,6 +1,7 @@
 import { Camera, Check, Mic, Shirt, Wallet } from "lucide-react";
 
 import { LandingPhoto } from "@/components/home/landing/landing-photo";
+import { EXAMPLE_PRICE } from "@/components/home/landing/primitives";
 import {
   DEFAULT_CATALOG_CURRENCY,
   DEFAULT_CATALOG_LOCALE,
@@ -19,8 +20,6 @@ export type CollageProduct = {
   used_condition: UsedCondition | null;
 };
 
-/** The worked example the receipt and the bento both show. */
-export const EXAMPLE_PRICE = "$1,999.00";
 const ZERO = "$0.00";
 
 /**
