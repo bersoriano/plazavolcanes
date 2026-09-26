@@ -70,7 +70,7 @@ export function SellerFaq({ promoActive = true }: { promoActive?: boolean }) {
           <p className="text-[15px] leading-[1.55] text-muted lg:text-[16px]">
             ¿Tienes otra duda? Revisa los{" "}
             <Link
-              className="font-bold text-brand underline decoration-accent decoration-[3px] underline-offset-4"
+              className="tap-halo font-bold text-brand underline decoration-accent decoration-[3px] underline-offset-4"
               href="/terminos-vendedores"
             >
               Términos para vendedores
