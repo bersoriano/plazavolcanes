@@ -203,6 +203,14 @@ main:has(> [data-theme="premium"]) {
   outline-offset: 3px;
 }
 
+/* On plum the aubergine outline disappears, so dark surfaces (the launch bar,
+   the footer) swap the pair: a lime outline over a plum gap. Unlayered like
+   the rule above, which a utility could never override. */
+[data-surface="dark"] :where(a, button, input, textarea, select, summary):focus-visible {
+  box-shadow: 0 0 0 3px var(--brand);
+  outline-color: var(--accent);
+}
+
 button,
 a {
   -webkit-tap-highlight-color: transparent;
