@@ -1,7 +1,6 @@
-import { FOUNDERS_CAP, resolveFoundersProgress } from "@/lib/launch";
+import { FOUNDER_EARN_RULE, FOUNDERS_CAP, resolveFoundersProgress } from "@/lib/launch";
 
-const LANDING_NOTE =
-  "Publican gratis y no pagan comisión por venta si se registran durante los primeros tres meses.";
+const LANDING_NOTE = `${FOUNDER_EARN_RULE} 50 productos, insignia fundadora y 0% comisión fija 12 meses.`;
 
 const TONES = {
   light: {

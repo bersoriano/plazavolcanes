@@ -50,7 +50,7 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ color: "rgba(255,255,255,0.78)", display: "flex", fontSize: 32, marginTop: 34 }}>
-          0% comisión para las primeras 100 tiendas.
+          Primeras 100 tiendas: 50 productos y 0% comisión 12 meses.
         </div>
 
         {/* The brand's volcano line, the same paths as VolcanoMark. */}

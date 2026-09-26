@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowRight, BadgeCheck, FileText, LayoutGrid, Wallet } from "lucide-react";
 
 import { Accent, EXAMPLE_PRICE, Eyebrow, TYPE, VolcanoLines } from "@/components/home/landing/primitives";
-import { REPUTATION_IMPORT_AVAILABLE } from "@/lib/launch";
+import { FOUNDER_OFFER, REPUTATION_IMPORT_AVAILABLE } from "@/lib/launch";
 
 type Tile = {
   title: string;
@@ -27,8 +27,8 @@ const TILES: (Tile & { shown: boolean })[] = [
   {
     // The first sellers' reputation is brought over by hand, so the tile only
     // names the offer.
-    title: "Transfiere tu reputación",
-    text: "Llega con la confianza que ya ganaste vendiendo en otros lados.",
+    title: "Muestra tu reputación",
+    text: "Tu perfil de Mercado Libre o Facebook, visible en tu tienda desde el primer día.",
     icon: <BadgeCheck className="size-[22px] lg:size-[26px]" strokeWidth={2} />,
     card: "border border-line bg-surface text-ink",
     chip: "bg-lilac-tint text-brand",
@@ -132,13 +132,12 @@ function FoundersBlock() {
             0%
           </span>{" "}
           <span className="font-display text-[28px] font-medium leading-[1.1] tracking-[-0.03em] lg:text-[40px]">
-            de comisión <Accent className="text-accent">por cada venta.</Accent>
+            de comisión <Accent className="text-accent">fija 12 meses.</Accent>
           </span>
         </h3>
       </div>
       <p className="relative max-w-[480px] text-[15px] leading-[1.55] text-white/80 lg:text-[17px]">
-        Las primeras 100 tiendas que se registren durante los primeros tres meses publican gratis y no pagan comisión
-        por cada artículo vendido.
+        {FOUNDER_OFFER} Se gana publicando 8 productos en tus primeros 7 días.
       </p>
       <div className="relative flex items-center justify-between gap-4 rounded-[18px] border border-white/15 bg-white/5 px-4 py-3.5 lg:justify-start lg:rounded-[20px] lg:px-[22px] lg:py-[18px]">
         <p className="flex flex-col">

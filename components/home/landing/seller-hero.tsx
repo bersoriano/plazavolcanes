@@ -51,7 +51,7 @@ export function SellerHero({
 
           <p className="max-w-[560px] text-pretty text-[17px] leading-[1.55] text-text-body lg:text-[20px]">
             Abre tu tienda en Plaza Volcanes, publica productos nuevos o usados y recibe el pago directo de cada cliente.
-            Sin comisiones. Sin retenciones.
+            Sin comisión en pago directo. Sin retenciones.
           </p>
 
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-3.5">

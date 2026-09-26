@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Accent, PrimaryCta, VolcanoLines } from "@/components/home/landing/primitives";
+import { FOUNDER_OFFER } from "@/lib/launch";
 
 /**
  * The closing call on lime, straight above the footer. Left-aligned on a
@@ -24,7 +25,7 @@ export function FinalCta() {
           Sé de las primeras <Accent>100 tiendas.</Accent>
         </h2>
         <p className="max-w-[620px] text-[17px] font-medium leading-[1.5] lg:text-[20px]">
-          Publica gratis y vende sin comisión. Tu cliente te paga directo y todo queda por escrito.
+          {FOUNDER_OFFER} Gana tu lugar publicando 8 productos en tus primeros 7 días.
         </p>
         <div className="mt-1 flex flex-col gap-2.5 sm:flex-row sm:gap-3.5 lg:mt-1.5">
           <PrimaryCta block href="/registro?vender=1">

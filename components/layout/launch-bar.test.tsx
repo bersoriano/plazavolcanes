@@ -50,8 +50,10 @@ describe("LaunchBar", () => {
       "href",
       "/vender?desde=barra",
     );
-    expect(bar()).toHaveTextContent(`0% comisión para las primeras ${FOUNDERS_CAP} tiendas`);
-    expect(bar()).toHaveTextContent(`0% comisión · primeras ${FOUNDERS_CAP} tiendas`);
+    expect(bar()).toHaveTextContent(
+      `Primeras ${FOUNDERS_CAP} tiendas: 50 productos, insignia fundadora y 0% comisión fija 12 meses`,
+    );
+    expect(bar()).toHaveTextContent(`Primeras ${FOUNDERS_CAP} tiendas: 50 productos`);
   });
 
   it("shows no tally while nothing counts the spots", async () => {

@@ -13,13 +13,13 @@ describe("BenefitsBento", () => {
     expect(section).toHaveAttribute("id", "vender");
   });
 
-  it("states the founders offer exactly as the handoff words it", () => {
+  it("states the founder sentence and how a seat is earned", () => {
     render(<BenefitsBento />);
 
-    expect(screen.getByRole("heading", { level: 3, name: "0% de comisión por cada venta." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "0% de comisión fija 12 meses." })).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Las primeras 100 tiendas que se registren durante los primeros tres meses publican gratis y no pagan comisión por cada artículo vendido.",
+        "Primeras 100 tiendas: 50 productos, insignia fundadora y 0% comisión fija 12 meses. Todas las demás: 25 productos gratis. Se gana publicando 8 productos en tus primeros 7 días.",
       ),
     ).toBeInTheDocument();
     expect(screen.getAllByText("$1,999.00")).toHaveLength(2);
@@ -30,9 +30,9 @@ describe("BenefitsBento", () => {
 
     const section = screen.getByRole("region", { name: "Lo que vendes, es tuyo." });
     expect(within(section).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
-      "0% de comisión por cada venta.",
+      "0% de comisión fija 12 meses.",
       "Sin retenciones",
-      "Transfiere tu reputación",
+      "Muestra tu reputación",
       "Tu catálogo en un solo lugar",
       "Todo queda por escrito",
     ]);
@@ -41,7 +41,7 @@ describe("BenefitsBento", () => {
   it("drops the founders block once the promotion has ended", () => {
     render(<BenefitsBento promoActive={false} />);
 
-    expect(screen.queryByRole("heading", { level: 3, name: "0% de comisión por cada venta." })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 3, name: "0% de comisión fija 12 meses." })).not.toBeInTheDocument();
     expect(screen.queryByText("TIENDAS FUNDADORAS")).not.toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 3 })).toHaveLength(4);
   });

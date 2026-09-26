@@ -40,8 +40,10 @@ export function LaunchBarFrame({
       <div className="relative mx-auto flex h-11 max-w-[1440px] items-center justify-center gap-2.5 overflow-hidden px-10 tracking-[0.01em] sm:gap-[18px] sm:px-12">
         <p className="flex min-w-0 items-center gap-2.5 truncate whitespace-nowrap sm:gap-[18px]">
           <span aria-hidden="true">✦</span>
-          <span className="sm:hidden">0% comisión · primeras {cap} tiendas</span>
-          <span className="hidden sm:inline">0% comisión para las primeras {cap} tiendas</span>
+          <span className="sm:hidden">Primeras {cap} tiendas: 50 productos</span>
+          <span className="hidden sm:inline">
+            Primeras {cap} tiendas: 50 productos, insignia fundadora y 0% comisión fija 12 meses
+          </span>
           {spotsLeft === null ? null : (
             <>
               <span aria-hidden="true" className="hidden opacity-50 sm:inline">

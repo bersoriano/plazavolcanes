@@ -35,7 +35,7 @@ describe("HomeLanding and the founders promotion", () => {
     renderLanding();
 
     expect(screen.getByText("Primeras 100 tiendas")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 3, name: "0% de comisión por cada venta." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "0% de comisión fija 12 meses." })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Sé de las primeras 100 tiendas." })).toBeInTheDocument();
   });
 
@@ -44,7 +44,7 @@ describe("HomeLanding and the founders promotion", () => {
     renderLanding();
 
     expect(screen.queryByText("Primeras 100 tiendas")).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { level: 3, name: "0% de comisión por cada venta." })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 3, name: "0% de comisión fija 12 meses." })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Sé de las primeras 100 tiendas." })).not.toBeInTheDocument();
     // The rest of the landing stays.
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Vende lo tuyo. Quédate con todo.");

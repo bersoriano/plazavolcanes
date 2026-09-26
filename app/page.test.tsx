@@ -324,7 +324,7 @@ describe("Home landing", () => {
     expect(within(hero).getByText("Primeras 100 tiendas")).toBeInTheDocument();
     expect(
       within(hero).getByText(
-        "Publican gratis y no pagan comisión por venta si se registran durante los primeros tres meses.",
+        "Publica 8 productos en tus primeros 7 días y gana tu lugar. 50 productos, insignia fundadora y 0% comisión fija 12 meses.",
       ),
     ).toBeInTheDocument();
     expect(within(hero).queryByRole("progressbar")).not.toBeInTheDocument();
