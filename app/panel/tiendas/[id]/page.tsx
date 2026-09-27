@@ -5,9 +5,11 @@ import { notFound, redirect } from "next/navigation";
 import { CatalogToolbar } from "@/components/products/catalog-toolbar";
 import { ProductRow } from "@/components/products/product-row";
 import { ShopWorkspaceHeader } from "@/components/shops/shop-workspace-header";
+import { ShopAnalyticsCard } from "@/components/shops/shop-analytics-card";
 import { TrustDashboardCard } from "@/components/shops/trust-dashboard-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { ListingStatus } from "@/components/ui/status-badge";
+import { getShopAnalytics } from "@/lib/queries/shop-analytics.server";
 import { getOwnedShop } from "@/lib/queries/shops.server";
 import { getShopTrustDashboard } from "@/lib/queries/trust.server";
 import { organizeCatalog, parseCatalogTab } from "@/lib/seller-catalog";
@@ -58,7 +60,11 @@ export default async function ShopCatalogPage({
   // The shop's own picture is no longer asked for here: it belongs to the form
   // in /ajustes, which fetches it there.
   const imageUrls = mediaUrls(visible.map((product) => product.image_path), MEDIA_VARIANTS.thumbnail);
-  const trustDashboard = await getShopTrustDashboard(shopId);
+  const isFounder = Boolean(shop.founder_since);
+  const [trustDashboard, analytics] = await Promise.all([
+    getShopTrustDashboard(shopId),
+    isFounder ? getShopAnalytics(shopId) : null,
+  ]);
   const isFiltered = tab !== "todos" || search.trim() !== "";
 
   return (
@@ -66,6 +72,7 @@ export default async function ShopCatalogPage({
       <ShopWorkspaceHeader active="catalogo" isPremium={shop.is_premium === true} shopId={shopId} shopName={shop.name} shopSlug={shop.slug} />
 
       {trustDashboard ? <div className="mb-6"><TrustDashboardCard dashboard={trustDashboard} /></div> : null}
+      {isFounder && !analytics ? null : <div className="mb-6"><ShopAnalyticsCard analytics={analytics} isFounder={isFounder} /></div>}
 
       <section aria-labelledby="catalogo-title" className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
         <h2 className="sr-only" id="catalogo-title">Productos</h2>

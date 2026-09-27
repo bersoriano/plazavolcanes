@@ -674,6 +674,11 @@ export type Database = {
         Returns: { cap: number; taken: number; is_open: boolean; min_live_items: number; qualify_days: number }[];
       };
       is_current_user_admin: { Args: Record<never, never>; Returns: boolean };
+      record_product_view: { Args: { p_product_id: number }; Returns: undefined };
+      shop_product_stats: {
+        Args: { p_shop_id: number; p_days?: number };
+        Returns: { product_id: number; name: string; slug: string; status: string; views: number; questions: number; orders: number }[];
+      };
       set_shop_publishing_approval: {
         Args: { p_shop_id: number; p_enabled: boolean };
         Returns: { shop_id: number; shop_slug: string; product_slugs: string[] }[];
