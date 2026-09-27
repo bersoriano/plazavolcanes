@@ -13,6 +13,7 @@ import {
   type CategoryTree,
 } from "@/lib/categories";
 import type { Product, Shop, UserTrustProfile } from "@/lib/database.types";
+import { FOUNDER_FEATURE_DAYS, withFeaturedFounders } from "@/lib/launch";
 import type { CatalogFilters } from "@/lib/queries/catalog";
 import { escapePostgresLikePattern, normalizeSearchQuery } from "@/lib/queries/catalog";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
@@ -262,6 +263,37 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
       .order("created_at", { ascending: false })
       .limit(24);
     productRows = (data ?? []) as unknown as ProductQueryRow[];
+  }
+
+  // A category page gives founders in their 90 days the featured slot.
+  if (selection.categoryId && !normalizedFilters.query && !selection.invalidCategorySelection) {
+    const leafIds = listingCategoryIds(selection);
+
+    if (leafIds.length) {
+      try {
+        let founderQuery = supabase
+          .from("products")
+          .select(productSelection)
+          .eq("status", "published")
+          .eq("is_admin_enabled", true)
+          .eq("shops.is_publishing_approved", true)
+          .not("expires_at", "is", null)
+          .gt("expires_at", new Date().toISOString())
+          .eq("shops.country_code", normalizedFilters.countryCode)
+          .gte("shops.founder_since", new Date(Date.now() - FOUNDER_FEATURE_DAYS * 86_400_000).toISOString())
+          .in("category_id", leafIds)
+          .order("created_at", { ascending: false })
+          .limit(40);
+
+        if (areaCode) {
+          founderQuery = founderQuery.overlaps("shops.administrative_area_codes", [areaCode]);
+        }
+        const { data } = await founderQuery;
+        productRows = withFeaturedFounders(productRows, (data ?? []) as unknown as ProductQueryRow[]);
+      } catch {
+        // The featured slot is a bonus; the category's results stand without it.
+      }
+    }
   }
 
   const shopsResult = await shopsQuery;

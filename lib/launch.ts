@@ -24,10 +24,49 @@ export const FOUNDER_OFFER = `Primeras ${FOUNDERS_CAP} tiendas: ${FOUNDER_LISTIN
 export const FOUNDER_EARN_RULE = `Publica ${FOUNDER_MIN_LIVE_ITEMS} productos en tus primeros ${FOUNDER_QUALIFY_DAYS} días y gana tu lugar.`;
 
 /** Whether a shop still rotates on the home page as a founder. */
+/** How many founder products lead a category page, one per shop. */
+export const FOUNDER_CATEGORY_SLOTS = 4;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** A stable daily order among featured founders, so each gets its turn at the front. */
+export function founderRotation(shopId: number, day: number) {
+  return ((shopId * 2654435761 + day * 40503) >>> 0) % 1000;
+}
+
+/**
+ * The featured slot on a category page: founders inside their 90 days lead
+ * with one product each (the newest), in the day's rotation, ahead of the
+ * rest of the results. `candidates` are the category's founder products,
+ * newest first; anything already in `rows` moves up instead of repeating.
+ */
+export function withFeaturedFounders<T extends { id: number; shops: { id: number; founder_since: string | null } }>(
+  rows: T[],
+  candidates: T[],
+  now = Date.now(),
+  slots = FOUNDER_CATEGORY_SLOTS,
+): T[] {
+  const day = Math.floor(now / DAY_MS);
+  const perShop = new Map<number, T>();
+  for (const candidate of candidates) {
+    if (isFeaturedFounder(candidate.shops.founder_since, now) && !perShop.has(candidate.shops.id)) {
+      perShop.set(candidate.shops.id, candidate);
+    }
+  }
+  const featured = [...perShop.values()]
+    .sort((a, b) => founderRotation(a.shops.id, day) - founderRotation(b.shops.id, day))
+    .slice(0, slots);
+  if (!featured.length) return rows;
+
+  const ids = new Set(featured.map((row) => row.id));
+  // The page shows as many as it asked for (24), so a newcomer pushes the last one off.
+  return [...featured, ...rows.filter((row) => !ids.has(row.id))].slice(0, Math.max(rows.length, 24));
+}
+
 export function isFeaturedFounder(founderSince: string | null | undefined, now = Date.now()) {
   if (!founderSince) return false;
   const since = Date.parse(founderSince);
-  return Number.isFinite(since) && now - since < FOUNDER_FEATURE_DAYS * 24 * 60 * 60 * 1000;
+  return Number.isFinite(since) && now - since < FOUNDER_FEATURE_DAYS * DAY_MS;
 }
 
 /**

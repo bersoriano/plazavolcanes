@@ -1,18 +1,13 @@
 import { PublicShopCard, ShopInviteCard } from "@/components/catalog/shop-card";
 import { Accent, Eyebrow, TYPE } from "@/components/home/landing/primitives";
 import type { CatalogShop } from "@/lib/queries/catalog.server";
-import { isFeaturedFounder } from "@/lib/launch";
+import { founderRotation as rotation, isFeaturedFounder } from "@/lib/launch";
 import type { TrustTier } from "@/lib/trust-tiers";
 
 const TIER_RANK: Record<TrustTier, number> = { top_rated: 0, reliable: 1, standard: 2 };
 
 /** How many shops the section shows: seven and the open seat fill two rows of four. */
 const SHOP_LIMIT = 7;
-
-/** A stable daily order among featured founders, so each gets its turn at the front. */
-function rotation(shopId: number, day: number) {
-  return ((shopId * 2654435761 + day * 40503) >>> 0) % 1000;
-}
 
 /**
  * The shops worth showing first. Founders inside their 90 days of homepage
