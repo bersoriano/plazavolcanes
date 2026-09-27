@@ -1,14 +1,10 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { HomeLanding } from "@/components/home/landing/home-landing";
 import { normalizeCatalogFilters } from "@/lib/queries/catalog";
 
-const promo = vi.hoisted(() => ({ active: true }));
-vi.mock("@/lib/launch", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/launch")>()),
-  isFoundersPromoActive: () => promo.active,
-}));
+const promo = { active: true };
 
 afterEach(() => {
   cleanup();
@@ -28,6 +24,7 @@ function renderLanding() {
         searchEventId: null,
       }}
       filters={normalizeCatalogFilters({})}
+      founders={{ open: promo.active, taken: null, cap: 100 }}
       stateCounts={[]}
     />,
   );
@@ -38,7 +35,7 @@ describe("HomeLanding and the founders promotion", () => {
     renderLanding();
 
     expect(screen.getByText("Primeras 100 tiendas")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 3, name: "0% de comisión por cada venta." })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "0% de comisión fija 12 meses." })).toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Sé de las primeras 100 tiendas." })).toBeInTheDocument();
   });
 
@@ -47,7 +44,7 @@ describe("HomeLanding and the founders promotion", () => {
     renderLanding();
 
     expect(screen.queryByText("Primeras 100 tiendas")).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { level: 3, name: "0% de comisión por cada venta." })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 3, name: "0% de comisión fija 12 meses." })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Sé de las primeras 100 tiendas." })).not.toBeInTheDocument();
     // The rest of the landing stays.
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Vende lo tuyo. Quédate con todo.");

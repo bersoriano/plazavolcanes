@@ -1,31 +1,35 @@
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { SellerProgram } from "@/components/sellers/seller-program";
-
-vi.mock("@/lib/launch", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/launch")>()),
-  isFoundersPromoActive: () => false,
-}));
 
 afterEach(cleanup);
 
 describe("SellerProgram after the founders promotion", () => {
   it("no longer mentions the founders spots anywhere", () => {
-    const { container } = render(<SellerProgram />);
+    const { container } = render(<SellerProgram founders={{ open: false, taken: 100, cap: 100 }} />);
 
-    expect(container.textContent).not.toMatch(/primeras 100|tres meses|Lanzamiento|fundadoras/i);
+    expect(container.textContent).not.toMatch(/primeras 100|tres meses|Lanzamiento|fundadora|mes 13/i);
     expect(screen.queryByRole("region", { name: "Sé una de las primeras 100 tiendas." })).not.toBeInTheDocument();
   });
 
   it("states what every shop keeps instead", () => {
-    render(<SellerProgram />);
+    render(<SellerProgram founders={{ open: false, taken: 100, cap: 100 }} />);
 
-    expect(screen.getByText("Publica gratis · 0% comisión")).toBeInTheDocument();
+    expect(screen.getByText("25 productos gratis · pago directo")).toBeInTheDocument();
     expect(
-      screen.getByText("Sí. Publicar es gratis y Plaza Volcanes no cobra comisión por cada artículo vendido."),
+      screen.getByText(/^En pago directo, no: tu cliente te paga a ti/),
     ).toBeInTheDocument();
     expect(screen.queryByText("¿Qué pasa cuando termine la promoción?")).not.toBeInTheDocument();
-    expect(screen.getByText("Sin retenciones ni comisiones", { selector: "h3" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 3, name: "Tu cliente te paga directo a ti." })).toBeInTheDocument();
+  });
+
+  it("ends the seller path at orders and keeps the ladder without the founders marker", () => {
+    render(<SellerProgram founders={{ open: false, taken: 100, cap: 100 }} />);
+
+    const steps = within(screen.getByRole("region", { name: "De cero a tienda en tres pasos." })).getAllByRole("listitem");
+    expect(steps[2]).toHaveTextContent("Recibe pedidos");
+    expect(screen.getByRole("region", { name: "Tu nivel habla por tu servicio." })).toBeInTheDocument();
+    expect(screen.queryByText(/Tiendas fundadoras: 50/)).not.toBeInTheDocument();
   });
 });

@@ -2,7 +2,9 @@
 
 ## Objective
 
-Add auditable platform-created orders and the performance evidence required to assign each shop one trust tier: Standard, Reliable, or Top Rated. Enforce each tier's free active-listing limit without inventing historical data or allowing sellers to edit their own metrics.
+Add auditable platform-created orders and the performance evidence required to assign each shop one trust tier: Standard, Reliable, or Top Rated, without inventing historical data or allowing sellers to edit their own metrics.
+
+> **Listing caps superseded (2026-09-27).** Tiers no longer set how many products a shop may publish. At launch every shop gets 25 live listings and founding shops 50, whatever their tier; tiers are a quality signal only. See `docs/launch-package.md` §3. The evaluator still writes `free_listing_limit` to its history, but a database trigger applies the launch policy to `shops.listing_limit`.
 
 The marketplace remains Spanish-facing. Stable internal keys and the trust-engine `trust_tier` values remain English where required by the evaluator contract.
 
@@ -71,7 +73,7 @@ Evaluation performs two stages:
 
 Deterministic private PostgreSQL functions own evaluation. `private.evaluate_trust_tier(...)` is the pure core evaluator and returns the exact JSONB contract. `private.evaluate_shop_trust(shop_id)` aggregates canonical records, calls the core evaluator, applies policy, and writes history plus cache atomically. Scheduled database jobs process the queue. Neither function is executable from public API roles.
 
-Every successful evaluation transaction appends a history row and updates the cached shop tier and limit. A failed evaluation preserves the last valid snapshot, records the failure, and remains queued for retry. A shop without any valid snapshot uses Standard and 15.
+Every successful evaluation transaction appends a history row and updates the cached shop tier and limit. A failed evaluation preserves the last valid snapshot, records the failure, and remains queued for retry. A shop without any valid snapshot uses Standard; its listing cap follows the launch policy.
 
 ## Data Model
 
@@ -80,7 +82,7 @@ Every successful evaluation transaction appends a history row and updates the ca
 #### `shops`
 
 - `trust_tier`: constrained key `standard`, `reliable`, or `top_rated`; default `standard`
-- `listing_limit`: positive integer; default `15`
+- `listing_limit`: positive integer; default `25` (launch policy, see `docs/launch-package.md`)
 - `trust_evaluated_at`: nullable timezone-aware timestamp
 - `time_zone`: validated IANA time-zone name; existing shops default to `America/Mexico_City`
 
@@ -355,14 +357,13 @@ Core output contains exactly:
 }
 ```
 
-`trust_tier` is exactly `Standard`, `Reliable`, or `Top Rated`; its corresponding listing limit is exactly 15, 40, or 100. Summary contains at most 35 words. Reasons reference actual metrics and include meaningful positive and negative evidence. Missing values are never invented.
+`trust_tier` is exactly `Standard`, `Reliable`, or `Top Rated`. Summary contains at most 35 words. Reasons reference actual metrics and include meaningful positive and negative evidence. Missing values are never invented.
 
 Evaluation order is Top Rated, Reliable, then Standard. A shop must satisfy every applicable gate.
 
 ### Standard
 
 - Default when any higher-tier requirement fails
-- Free active listings: 15
 
 ### Reliable
 
@@ -375,7 +376,6 @@ Evaluation order is Top Rated, Reliable, then Standard. A shop must satisfy ever
 - `order_completion_rate >= 95`
 - `average_rating >= 4.6` when `review_count >= 10`
 - `last_active_days_ago <= 21`
-- Free active listings: 40
 
 ### Top Rated
 
@@ -388,7 +388,6 @@ Evaluation order is Top Rated, Reliable, then Standard. A shop must satisfy ever
 - `order_completion_rate >= 98`
 - `average_rating >= 4.8` when `review_count >= 25`
 - `last_active_days_ago <= 14`
-- Free active listings: 100
 
 Null fails every directly applicable requirement. A null `review_count` fails higher-tier qualification; system aggregation emits zero when no reviews exist. `average_rating` may be null only while `review_count` is below the applicable rating gate. Rating is waived below that boundary, exactly matching the approved contract.
 
@@ -410,11 +409,11 @@ Application behavior:
 Database behavior:
 
 - Insert as published and draft-to-published updates enter a transactional guard.
-- Guard locks the parent shop row, reads cached `listing_limit`, and counts current published products.
+- Guard locks the parent shop row, reads cached `listing_limit` (25, or 50 for a founding shop; see `docs/launch-package.md`), and counts current published products.
 - Publication is rejected when count is already at or above limit.
 - Concurrent publication attempts serialize on the shop row, preventing limit overflow.
 - Published-to-published updates bypass capacity rejection.
-- Tier downgrade updates limit but never changes product status.
+- A limit change never changes product status.
 
 ## Authorization and Data Security
 

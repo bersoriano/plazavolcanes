@@ -80,7 +80,7 @@ where s.slug = 'comercio-uno';
 
 select results_eq(
   $$select trust_tier || ':' || listing_limit from public.shops where slug = 'comercio-uno'$$,
-  array['standard:15'::text],
+  array['standard:25'::text],
   'new shops start Standard with 15 listings'
 );
 

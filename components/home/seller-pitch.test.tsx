@@ -14,7 +14,7 @@ describe("SellerPitch", () => {
     expect(within(pitch).getByRole("heading", { name: "Vende en Plaza Volcanes." }))
       .toBeInTheDocument();
     expect(pitch).toHaveTextContent(
-      "Las primeras 100 tiendas que se registren durante los primeros tres meses pueden publicar gratis y no pagan comisión por cada artículo vendido.",
+      "Publica 25 productos gratis y cobra directo a cada cliente. Sin retenciones ni comisión en pago directo.",
     );
     expect(within(pitch).getByRole("link", { name: "Crear mi tienda gratis" })).toHaveAttribute(
       "href",
@@ -36,8 +36,8 @@ describe("SellerPitch", () => {
         .getAllByRole("listitem")
         .map((promise) => promise.textContent),
     ).toEqual([
-      "Sin retenciones ni comisiones",
-      "Transfiere tu reputación",
+      "Sin comisión en pago directo",
+      "Muestra tu perfil de Mercado Libre y Facebook",
       "Tu catálogo en un solo lugar",
     ]);
   });

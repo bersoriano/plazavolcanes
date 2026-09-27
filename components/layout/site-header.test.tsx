@@ -4,6 +4,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { SiteHeader } from "@/components/layout/site-header";
 
 const auth = { admin: false, signedIn: false };
+const route = { pathname: "/" };
+
+vi.mock("next/navigation", () => ({ usePathname: () => route.pathname }));
 
 vi.mock("@/lib/actions/auth", () => ({ signOut: vi.fn() }));
 vi.mock("@/lib/admin-auth.server", () => ({
@@ -14,7 +17,10 @@ vi.mock("@/lib/admin-auth.server", () => ({
 }));
 vi.mock("@/lib/queries/messages.server", () => ({ fetchUnreadCount: vi.fn(async () => 0) }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  route.pathname = "/";
+});
 
 async function renderHeader(signedIn: boolean, admin = false) {
   auth.admin = admin;
@@ -150,5 +156,36 @@ describe("SiteHeader", () => {
     expect(screen.queryByRole("navigation", { name: "Secciones de la plaza" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Abrir menú" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Abrir mi tienda" })).not.toBeInTheDocument();
+  });
+
+  it("gives /vender its own sections and sends its pill straight to signup", async () => {
+    route.pathname = "/vender";
+    await renderHeader(false);
+
+    const sections = screen.getByRole("navigation", { name: "Secciones de la plaza" });
+    expect(within(sections).getAllByRole("link").map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
+      ["Explorar", "/explorar"],
+      ["Tiendas fundadoras", "#fundadoras"],
+      ["Cómo funciona", "#pasos"],
+      ["Niveles", "#niveles"],
+      ["Preguntas", "#preguntas"],
+    ]);
+    expect(screen.getByRole("link", { name: "Crear mi tienda" })).toHaveAttribute(
+      "href",
+      "/registro?vender=1&desde=header",
+    );
+    // A phone keeps Ingresar beside the menu rather than a second selling pill.
+    expect(screen.queryByRole("link", { name: "Vender" })).not.toBeInTheDocument();
+    const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
+    expect(within(navigation).getByRole("link", { name: "Ingresar" })).toHaveClass("inline-flex");
+  });
+
+  it("keeps the signed-in header the same on /vender", async () => {
+    route.pathname = "/vender";
+    await renderHeader(true);
+
+    expect(screen.queryByRole("navigation", { name: "Secciones de la plaza" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Crear mi tienda" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Salir" })).toBeInTheDocument();
   });
 });

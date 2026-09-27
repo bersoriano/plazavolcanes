@@ -1,0 +1,55 @@
+/*
+ * The Tailwind theme, and only the theme: app/globals.css imports it, and
+ * route stylesheets (app/vender/vender.css) import it by reference, so a
+ * class means the same thing in every stylesheet.
+ */
+
+@theme inline {
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-accent: var(--accent);
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-ink: var(--text);
+  --color-muted: var(--text-muted);
+  --color-line: var(--border);
+  --color-surface-raised: var(--surface-raised);
+  --color-on-brand: var(--on-brand);
+  --color-photo-backdrop: var(--photo-backdrop);
+  --color-sale: var(--sale);
+  --color-success: var(--success);
+  --color-premium-gold: var(--premium-gold);
+  --color-premium-ink: var(--premium-ink);
+  --color-premium-text: var(--premium-text);
+  --color-premium-cream: var(--premium-cream);
+  --color-trust-tier-fill: var(--trust-tier-fill);
+  --color-text-body: var(--text-body);
+  --color-lime-tint: var(--lime-tint);
+  --color-lilac-tint: var(--lilac-tint);
+  --color-coral-tint: var(--coral-tint);
+  --color-coral-ink: var(--coral-ink);
+  --color-coral-text: var(--coral-text);
+  --color-gold-tint: var(--gold-tint);
+  --color-progress-track: var(--progress-track);
+  --color-hairline: var(--hairline);
+  --font-sans: var(--font-instrument);
+  --font-display: var(--font-bricolage);
+}
+
+/* Landing v2 radii and shadows. They live in a plain @theme, not the inline
+   one above: Tailwind already emits every theme value as a :root variable of
+   the same name (--radius-card, --shadow-float…), so `rounded-card` and
+   `var(--radius-card)` both work, and redeclaring them in :root as
+   var(--radius-card) would only point each one at itself. `static` keeps them
+   emitted even where only a var() reads them. */
+@theme static {
+  --radius-chip: 999px;
+  --radius-card-sm: 20px;
+  --radius-card: 28px;
+  --radius-card-lg: 36px;
+  --radius-panel: 44px;
+
+  --shadow-float: 0 24px 50px -24px rgb(50 23 77 / 0.45);
+  --shadow-cta: 0 14px 30px -12px rgb(50 23 77 / 0.6);
+  --shadow-card: 0 10px 30px -18px rgb(50 23 77 / 0.35);
+}

@@ -1,23 +1,94 @@
-/** Founding shops the launch promotion covers, in order of registration. */
+/**
+ * The launch package (docs/launch-package.md). The database enforces these
+ * (private.founders_program); the copy reads them from here so every page
+ * states the same numbers.
+ */
+/** Founding seats, in the order shops earn them. */
 export const FOUNDERS_CAP = 100;
+/** Live listings every shop gets, free. */
+export const BASE_LISTING_LIMIT = 25;
+/** Live listings a founding shop gets, locked. */
+export const FOUNDER_LISTING_LIMIT = 50;
+/** What earns a seat: this many live items within FOUNDER_QUALIFY_DAYS of opening. */
+export const FOUNDER_MIN_LIVE_ITEMS = 8;
+export const FOUNDER_QUALIFY_DAYS = 7;
+/** How long a founder's 0% commission is locked, from earning the seat. */
+export const FOUNDER_COMMISSION_LOCK_MONTHS = 12;
+/** How long a founder rotates on the home page, from earning the seat. */
+export const FOUNDER_FEATURE_DAYS = 90;
+
+/** The one founder sentence, repeated everywhere the offer appears. */
+export const FOUNDER_OFFER = `Primeras ${FOUNDERS_CAP} tiendas: ${FOUNDER_LISTING_LIMIT} productos, insignia fundadora y 0% comisión fija ${FOUNDER_COMMISSION_LOCK_MONTHS} meses. Todas las demás: ${BASE_LISTING_LIMIT} productos gratis.`;
+
+/** How a seat is earned, in one line. */
+export const FOUNDER_EARN_RULE = `Publica ${FOUNDER_MIN_LIVE_ITEMS} productos en tus primeros ${FOUNDER_QUALIFY_DAYS} días y gana tu lugar.`;
+
+/** Whether a shop still rotates on the home page as a founder. */
+/** How many founder products lead a category page, one per shop. */
+export const FOUNDER_CATEGORY_SLOTS = 4;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** A stable daily order among featured founders, so each gets its turn at the front. */
+export function founderRotation(shopId: number, day: number) {
+  return ((shopId * 2654435761 + day * 40503) >>> 0) % 1000;
+}
 
 /**
- * When the founders promotion stops taking shops, as an ISO 8601 instant
- * (e.g. "2026-12-31T23:59:59-06:00"), or null while no end date is set.
- *
- * Every block that makes the offer (the launch bar, the landing's founders
- * card, 0% block and closing call, and the founders section on /vender)
- * reads isFoundersPromoActive(), so the offer leaves the site in one edit and
- * no page goes on promising it after it has ended.
+ * The featured slot on a category page: founders inside their 90 days lead
+ * with one product each (the newest), in the day's rotation, ahead of the
+ * rest of the results. `candidates` are the category's founder products,
+ * newest first; anything already in `rows` moves up instead of repeating.
  */
-export const FOUNDERS_PROMO_ENDS_AT: string | null = null;
+export function withFeaturedFounders<T extends { id: number; shops: { id: number; founder_since: string | null } }>(
+  rows: T[],
+  candidates: T[],
+  now = Date.now(),
+  slots = FOUNDER_CATEGORY_SLOTS,
+): T[] {
+  const day = Math.floor(now / DAY_MS);
+  const perShop = new Map<number, T>();
+  for (const candidate of candidates) {
+    if (isFeaturedFounder(candidate.shops.founder_since, now) && !perShop.has(candidate.shops.id)) {
+      perShop.set(candidate.shops.id, candidate);
+    }
+  }
+  const featured = [...perShop.values()]
+    .sort((a, b) => founderRotation(a.shops.id, day) - founderRotation(b.shops.id, day))
+    .slice(0, slots);
+  if (!featured.length) return rows;
 
-export function isFoundersPromoActive(now: Date = new Date(), endsAt: string | null = FOUNDERS_PROMO_ENDS_AT) {
-  if (!endsAt) return true;
-  const end = new Date(endsAt);
-  // A malformed date must not quietly keep an ended offer on the page.
-  if (Number.isNaN(end.getTime())) return false;
-  return now < end;
+  const ids = new Set(featured.map((row) => row.id));
+  // The page shows as many as it asked for (24), so a newcomer pushes the last one off.
+  return [...featured, ...rows.filter((row) => !ids.has(row.id))].slice(0, Math.max(rows.length, 24));
+}
+
+export function isFeaturedFounder(founderSince: string | null | undefined, now = Date.now()) {
+  if (!founderSince) return false;
+  const since = Date.parse(founderSince);
+  return Number.isFinite(since) && now - since < FOUNDER_FEATURE_DAYS * DAY_MS;
+}
+
+/**
+ * The founders promotion as the site shows it: whether a new store can still
+ * land a spot, and how many are taken (null when there is no count to trust).
+ *
+ * The cap and the rule live in the database (private.founders_program),
+ * next to the ledger of seats; getFoundersProgram() in
+ * lib/queries/founders.server.ts reads them once per request. Every block
+ * that makes the offer reads `open`, so the offer leaves the site the moment
+ * the last seat goes (or administration closes the programme).
+ */
+export type FoundersProgram = { open: boolean; taken: number | null; cap: number };
+
+/** What the site shows while there is no status to read: the offer, without a number. */
+export const FOUNDERS_FALLBACK: FoundersProgram = { open: true, taken: null, cap: FOUNDERS_CAP };
+
+export function toFoundersProgram(
+  row: { cap: number; taken: number; is_open: boolean } | null | undefined,
+): FoundersProgram {
+  if (!row || !Number.isFinite(row.taken) || !Number.isFinite(row.cap)) return FOUNDERS_FALLBACK;
+  return { open: row.is_open, taken: row.taken, cap: row.cap };
 }
 
 /**

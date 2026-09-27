@@ -1,7 +1,16 @@
 import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import SellerPage, { metadata } from "@/app/vender/page";
+
+vi.mock("@/lib/queries/founders.server", () => ({
+  getFoundersProgram: vi.fn(async () => ({ open: true, taken: null, cap: 100 })),
+  viewerIsFounder: vi.fn(async () => false),
+}));
+vi.mock("@/lib/admin-auth.server", () => ({
+  getCurrentUserAdminStatus: vi.fn(async () => ({ isAdmin: false, signedIn: false })),
+}));
+vi.mock("@/lib/queries/seller-standing.server", () => ({ viewerOwnsAnyShop: vi.fn(async () => false) }));
 
 afterEach(cleanup);
 
@@ -15,8 +24,8 @@ describe("Seller page", () => {
     });
   });
 
-  it("renders the complete seller program", () => {
-    render(<SellerPage />);
+  it("renders the complete seller program", async () => {
+    render(await SellerPage());
 
     expect(
       screen.getByRole("heading", {
@@ -24,12 +33,12 @@ describe("Seller page", () => {
         name: "Abre tu tienda gratis y quédate con cada peso.",
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText("Crea tu tienda")).toBeInTheDocument();
-    expect(screen.getByText("Trae tu reputación")).toBeInTheDocument();
-    expect(screen.getByText("Publica y recibe pedidos")).toBeInTheDocument();
+    expect(screen.getByText("Nombre y estado")).toBeInTheDocument();
+    expect(screen.getByText("Tu primer producto")).toBeInTheDocument();
+    expect(screen.getByRole("table")).toBeInTheDocument();
 
     for (const cta of screen.getAllByRole("link", { name: "Crear mi tienda gratis" })) {
-      expect(cta).toHaveAttribute("href", "/registro?vender=1");
+      expect(cta.getAttribute("href")).toMatch(/^\/registro\?vender=1(&desde=[a-z]+)?$/);
     }
     expect(screen.getByRole("link", { name: "¿Ya tienes cuenta? Ingresa" })).toHaveAttribute(
       "href",

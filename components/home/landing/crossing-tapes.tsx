@@ -1,6 +1,8 @@
 import { Fragment } from "react";
 
-const PROMISES: { text: string; italic: boolean }[] = [
+export type TapePromise = { text: string; italic: boolean };
+
+const PROMISES: TapePromise[] = [
   { text: "Sin retenciones", italic: false },
   { text: "ni comisiones", italic: true },
   { text: "Pago directo", italic: false },
@@ -25,13 +27,25 @@ function fill<T extends { text: string }>(items: T[]) {
 
 /**
  * Two full-bleed strips that cross: the lime one repeats what the plaza
- * promises sellers, the plum one lists the real top-level categories. Each
+ * promises sellers, the plum one lists names (the real top-level categories
+ * on the home page, the platforms a reputation comes from on /vender), after
+ * an optional white lead-in. Each
  * track holds its text twice and slides by half its width, in opposite
  * directions, which loops without a seam; under reduced motion both stand
  * still. Screen readers get each list once: the repeats are aria-hidden.
  */
-export function CrossingTapes({ categories }: { categories: string[] }) {
-  const promises = fill(PROMISES);
+export function CrossingTapes({
+  categories,
+  promises: promiseList = PROMISES,
+  lead,
+}: {
+  /** The plum tape's names. */
+  categories: string[];
+  promises?: TapePromise[];
+  /** Said once per loop before the names, in white. */
+  lead?: string;
+}) {
+  const promises = fill(promiseList);
   const names = fill((categories.length ? categories : ["Nuevo y usado"]).map((text) => ({ text })));
 
   return (
@@ -45,7 +59,7 @@ export function CrossingTapes({ categories }: { categories: string[] }) {
               return (
                 <Fragment key={`${copy}-${index}`}>
                   <Text
-                    aria-hidden={copy > 0 || index >= PROMISES.length ? "true" : undefined}
+                    aria-hidden={copy > 0 || index >= promiseList.length ? "true" : undefined}
                     className={promise.italic ? "italic" : undefined}
                   >
                     {promise.text}
@@ -60,16 +74,21 @@ export function CrossingTapes({ categories }: { categories: string[] }) {
 
       <div className="absolute -left-10 top-[82px] flex h-11 w-[calc(100%+80px)] rotate-2 items-center overflow-clip bg-brand font-display text-[18px] font-medium text-accent lg:-left-20 lg:top-[118px] lg:h-16 lg:w-[calc(100%+160px)] lg:rotate-[1.5deg] lg:text-[26px]">
         <Track gap="gap-3.5 pr-3.5 lg:gap-6 lg:pr-6" reverse>
-          {(copy) =>
-            names.map((name, index) => (
+          {(copy) => [
+            lead ? (
+              <span aria-hidden={copy > 0 ? "true" : undefined} className="text-white" key={`${copy}-lead`}>
+                {lead}
+              </span>
+            ) : null,
+            ...names.map((name, index) => (
               <Fragment key={`${copy}-${index}`}>
                 <span aria-hidden={copy > 0 || index >= categories.length ? "true" : undefined}>{name.text}</span>
                 <span aria-hidden="true" className="text-white">
                   ✦
                 </span>
               </Fragment>
-            ))
-          }
+            )),
+          ]}
         </Track>
       </div>
     </div>

@@ -28,20 +28,17 @@ export type TrustDashboard = {
 const markers = {
   standard: {
     label: "Estándar",
-    listingLimit: 15,
     tooltip: "Nivel inicial mientras la tienda reúne evidencia suficiente de servicio, cumplimiento y satisfacción.",
   },
   reliable: {
     label: "Confiable",
-    listingLimit: 40,
     tooltip: "Esta tienda cumple requisitos consistentes de respuesta, envíos, pedidos completados y baja tasa de disputas.",
   },
   top_rated: {
     label: "Mejor valorada",
-    listingLimit: 100,
     tooltip: "Esta tienda mantiene los estándares más altos de servicio, cumplimiento, actividad y satisfacción en Plaza Volcanes.",
   },
-} satisfies Record<TrustTier, { label: string; listingLimit: number; tooltip: string }>;
+} satisfies Record<TrustTier, { label: string; tooltip: string }>;
 
 export function getTrustTierMarker(tier: TrustTier) {
   return markers[tier];

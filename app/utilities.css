@@ -1,0 +1,151 @@
+/*
+ * The site's custom utilities. Shared like app/theme.css; a utility only
+ * reaches a stylesheet that actually uses it.
+ */
+
+/* A hairline that reads as metal rather than as a border. */
+@utility gold-rule {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--premium-gold) 18%,
+    var(--premium-gold) 82%,
+    transparent
+  );
+}
+
+/* A control a finger can land on, at the 44px both platforms ask for. */
+@utility tap {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/*
+ * The same 44px, for controls that have to stay visually small: a carousel dot
+ * reads as a dot, not as a button, so the hit area grows instead of the paint.
+ * The overlay is a child of the control, so the press still lands on it.
+ */
+@utility tap-halo {
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 100%;
+    height: 100%;
+    min-width: 44px;
+    min-height: 44px;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/*
+ * The hero collage's geometry. Each piece sets its phone and sm values as
+ * custom properties (cq() in hero-collage.tsx builds them), and these few
+ * utilities read them, instead of sixty one-off cqw classes: the stylesheet
+ * has to stay under the 100 KiB Turbopack folds the font CSS into.
+ */
+@utility cq-pos {
+  left: var(--cq-l);
+  top: var(--cq-t);
+  @variant sm {
+    left: var(--cq-sl);
+    top: var(--cq-st);
+  }
+}
+
+@utility cq-w {
+  width: var(--cq-w);
+  @variant sm {
+    width: var(--cq-sw);
+  }
+}
+
+@utility cq-h {
+  height: var(--cq-h);
+  @variant sm {
+    height: var(--cq-sh);
+  }
+}
+
+@utility cq-size {
+  width: var(--cq-s);
+  height: var(--cq-s);
+  @variant sm {
+    width: var(--cq-ss);
+    height: var(--cq-ss);
+  }
+}
+
+@utility cq-r {
+  border-radius: var(--cq-r);
+  @variant sm {
+    border-radius: var(--cq-sr);
+  }
+}
+
+@utility cq-p {
+  padding: var(--cq-p);
+  @variant sm {
+    padding: var(--cq-sp);
+  }
+}
+
+@utility cq-px {
+  padding-inline: var(--cq-px);
+  @variant sm {
+    padding-inline: var(--cq-spx);
+  }
+}
+
+@utility cq-gap {
+  gap: var(--cq-g);
+  @variant sm {
+    gap: var(--cq-sg);
+  }
+}
+
+@utility cq-text {
+  font-size: var(--cq-fs);
+  @variant sm {
+    font-size: var(--cq-sfs);
+  }
+}
+
+@utility cq-border {
+  border-width: var(--cq-b);
+  @variant sm {
+    border-width: var(--cq-sb);
+  }
+}
+
+/* The numbers' outline in the seller steps, heavier from lg. */
+@utility text-outline {
+  -webkit-text-stroke: 1.5px var(--brand);
+  @variant lg {
+    -webkit-text-stroke-width: 2px;
+  }
+}
+
+/* The hero's lime glow, from the top-right corner. */
+@utility hero-glow {
+  background-image: radial-gradient(circle at 100% 0%, rgb(184 255 106 / 0.5), transparent 55%);
+  @variant xl {
+    background-image: radial-gradient(circle at 88% 8%, rgb(184 255 106 / 0.45), transparent 42%);
+  }
+}
+
+@utility animate-marquee {
+  animation: marquee 40s linear infinite;
+}
+
+@utility animate-marquee-reverse {
+  animation: marquee-reverse 40s linear infinite;
+}
+
+@utility animate-rise-in {
+  animation: rise-in 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}

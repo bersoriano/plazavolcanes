@@ -13,6 +13,7 @@ import {
   type CategoryTree,
 } from "@/lib/categories";
 import type { Product, Shop, UserTrustProfile } from "@/lib/database.types";
+import { FOUNDER_FEATURE_DAYS, withFeaturedFounders } from "@/lib/launch";
 import type { CatalogFilters } from "@/lib/queries/catalog";
 import { escapePostgresLikePattern, normalizeSearchQuery } from "@/lib/queries/catalog";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
@@ -40,7 +41,7 @@ export type CatalogProduct = Pick<
   category_id?: Product["category_id"];
   currency_code?: Product["currency_code"];
   imageUrl: string | null;
-  shop: Pick<Shop, "name" | "slug" | "country_code" | "trust_tier" | "is_premium"> & {
+  shop: Pick<Shop, "name" | "slug" | "country_code" | "trust_tier" | "is_premium" | "founder_since"> & {
     administrative_area_codes: string[];
   };
 };
@@ -48,7 +49,7 @@ export type CatalogProduct = Pick<
 export type CatalogShop = Shop & { imageUrl: string | null };
 
 const productSelection =
-  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, is_admin_enabled, expires_at, shops!inner(id, owner_id, name, slug, country_code, administrative_area_codes, trust_tier, is_publishing_approved, is_premium), product_translations(locale, name, description, review_status)";
+  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, is_admin_enabled, expires_at, shops!inner(id, owner_id, name, slug, country_code, administrative_area_codes, trust_tier, is_publishing_approved, is_premium, founder_since), product_translations(locale, name, description, review_status)";
 
 type ProductQueryRow = {
   id: number;
@@ -75,6 +76,7 @@ type ProductQueryRow = {
     trust_tier: Shop["trust_tier"];
     is_publishing_approved: boolean;
     is_premium: boolean;
+    founder_since: string | null;
   };
   product_translations: {
     locale: CatalogLocale;
@@ -116,6 +118,7 @@ function mapProduct(
       administrative_area_codes: item.shops.administrative_area_codes ?? [],
       trust_tier: item.shops.trust_tier,
       is_premium: item.shops.is_premium,
+      founder_since: item.shops.founder_since,
     },
   };
 }
@@ -162,7 +165,9 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
     .select("*")
     .eq("country_code", normalizedFilters.countryCode)
     .order("created_at", { ascending: false })
-    .limit(8);
+    // Enough for the landing to rotate its founders and still fill a grid;
+    // the catalogue screen shows the first 8.
+    .limit(24);
 
   if (areaCode) {
     shopsQuery = shopsQuery.overlaps("administrative_area_codes", [areaCode]);
@@ -258,6 +263,37 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
       .order("created_at", { ascending: false })
       .limit(24);
     productRows = (data ?? []) as unknown as ProductQueryRow[];
+  }
+
+  // A category page gives founders in their 90 days the featured slot.
+  if (selection.categoryId && !normalizedFilters.query && !selection.invalidCategorySelection) {
+    const leafIds = listingCategoryIds(selection);
+
+    if (leafIds.length) {
+      try {
+        let founderQuery = supabase
+          .from("products")
+          .select(productSelection)
+          .eq("status", "published")
+          .eq("is_admin_enabled", true)
+          .eq("shops.is_publishing_approved", true)
+          .not("expires_at", "is", null)
+          .gt("expires_at", new Date().toISOString())
+          .eq("shops.country_code", normalizedFilters.countryCode)
+          .gte("shops.founder_since", new Date(Date.now() - FOUNDER_FEATURE_DAYS * 86_400_000).toISOString())
+          .in("category_id", leafIds)
+          .order("created_at", { ascending: false })
+          .limit(40);
+
+        if (areaCode) {
+          founderQuery = founderQuery.overlaps("shops.administrative_area_codes", [areaCode]);
+        }
+        const { data } = await founderQuery;
+        productRows = withFeaturedFounders(productRows, (data ?? []) as unknown as ProductQueryRow[]);
+      } catch {
+        // The featured slot is a bonus; the category's results stand without it.
+      }
+    }
   }
 
   const shopsResult = await shopsQuery;

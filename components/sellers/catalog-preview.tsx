@@ -1,4 +1,4 @@
-import { ImageIcon, Plus, Search } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 
 /**
  * Four real listings from the marketplace, frozen here as an illustration.
@@ -47,48 +47,35 @@ const TABS = ["Todos", "Publicados", "Borradores"];
 const CATALOG_SUMMARY =
   "Ejemplo del panel: cuatro productos con su categoría, precio y estado; tres publicados y uno guardado como borrador.";
 
-const ROW_COLUMNS = "grid-cols-[minmax(0,1fr)_150px_96px_56px]";
+const ROW_COLUMNS = "grid-cols-[2.2fr_1.3fr_1fr_60px]";
 
 /** A painted switch, not a control: the preview is a picture of the panel. */
 function Switch({ on }: { on: boolean }) {
   return (
-    <span
-      className={`relative block h-6 w-[42px] shrink-0 rounded-full ${on ? "bg-success" : "bg-line"}`}
-    >
-      <span
-        className={`absolute top-[3px] size-[18px] rounded-full bg-surface ${on ? "right-[3px]" : "left-[3px]"}`}
-      />
+    <span className={`relative block h-6 w-10 shrink-0 rounded-full ${on ? "bg-success" : "bg-line"}`}>
+      <span className={`absolute top-[3px] size-[18px] rounded-full bg-surface ${on ? "right-[3px]" : "left-[3px]"}`} />
     </span>
   );
 }
 
-function Thumbnail({ size }: { size: "sm" | "md" }) {
+function StateChip({ state, draft }: { state: string; draft: boolean }) {
   return (
     <span
-      className={`grid shrink-0 place-items-center rounded-[0.625rem] bg-photo-backdrop text-muted/70 ${size === "sm" ? "size-10" : "size-[42px]"}`}
+      className={`flex h-[26px] items-center justify-self-start whitespace-nowrap rounded-full px-2.5 text-[12px] font-semibold ${
+        draft ? "bg-photo-backdrop text-muted" : "bg-lime-tint text-brand"
+      }`}
     >
-      <ImageIcon className={size === "sm" ? "size-[17px]" : "size-[18px]"} strokeWidth={1.6} />
+      {state}
     </span>
   );
 }
 
-function Tabs({ compact }: { compact?: boolean }) {
-  return (
-    <div className={compact ? "flex gap-1.5 px-4 py-2.5" : "flex gap-2 px-[22px] py-3.5"}>
-      {TABS.map((tab, index) => (
-        <span
-          className={`flex items-center rounded-full font-semibold ${
-            compact ? "h-7 px-[11px] text-[12px]" : "h-[30px] px-3 text-[13px]"
-          } ${index === 0 ? "bg-brand text-white" : "bg-photo-backdrop/60 text-brand"}`}
-          key={tab}
-        >
-          {tab}
-        </span>
-      ))}
-    </div>
-  );
-}
-
+/**
+ * The seller panel's catalogue, drawn: a white card tilted 1°, with its
+ * toolbar, tabs and a table of four frozen listings. Nothing in it is a
+ * control, and all of it is aria-hidden; the summary above says what it
+ * shows. A phone gets a stacked header and two-line rows.
+ */
 export function CatalogPreview() {
   return (
     <>
@@ -96,90 +83,72 @@ export function CatalogPreview() {
 
       <div
         aria-hidden="true"
-        className="mt-1.5 overflow-hidden rounded-[1.125rem] border border-brand-hover/10 bg-surface text-ink shadow-[0_28px_56px_-30px_rgba(36,16,53,0.5)] lg:mt-0 lg:rounded-[1.25rem] lg:shadow-[0_32px_64px_-32px_rgba(36,16,53,0.5)]"
+        className="flex rotate-1 flex-col gap-4 rounded-[22px] bg-surface p-4 text-ink shadow-[0_40px_70px_-34px_rgb(50_23_77/0.6)] sm:p-[26px] lg:rounded-[28px]"
       >
-        {/* Phone header: the whole toolbar collapses into one add button. */}
-        <div className="flex items-center justify-between border-b border-line/60 py-3 pl-4 pr-3 lg:hidden">
-          <span className="flex flex-col gap-px">
-            <span className="font-display text-[17px] font-bold">Mi catálogo</span>
-            <span className="text-[12px] text-muted">{PRODUCTS.length} productos</span>
-          </span>
-          <span className="grid size-11 place-items-center rounded-full bg-brand text-white">
-            <Plus className="size-5" strokeWidth={2.4} />
-          </span>
-        </div>
-
-        <div className="hidden items-center justify-between gap-3 border-b border-line/60 px-[22px] py-[18px] lg:flex">
-          <span className="flex items-baseline gap-2.5">
-            <span className="font-display text-[19px] font-bold">Mi catálogo</span>
-            <span className="text-[13px] text-muted">{PRODUCTS.length} productos</span>
+        <div className="flex items-center justify-between gap-3">
+          <span className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2.5">
+            <span className="whitespace-nowrap font-display text-[20px] font-semibold sm:text-[24px]">Mi catálogo</span>
+            <span className="whitespace-nowrap text-[13px] text-muted sm:text-[14px]">{PRODUCTS.length} productos</span>
           </span>
           <span className="flex items-center gap-2.5">
-            <span className="flex h-[38px] w-[170px] items-center gap-2 rounded-full border border-line bg-background px-3.5 text-[13px] text-muted">
+            <span className="hidden h-10 w-[170px] items-center gap-2 rounded-full border border-line bg-background px-3.5 text-[14px] text-muted lg:flex">
               <Search className="size-4" strokeWidth={2} />
               Buscar
             </span>
-            <span className="flex h-[38px] items-center gap-1.5 rounded-full bg-brand px-4 text-[13px] font-bold text-white">
+            <span className="flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full bg-brand px-4 text-[13px] font-bold text-white sm:text-[14px]">
               <Plus className="size-4" strokeWidth={2.4} />
               Agregar producto
             </span>
           </span>
         </div>
 
-        <div className="lg:hidden">
-          <Tabs compact />
-        </div>
-        <div className="hidden lg:block">
-          <Tabs />
-        </div>
-
-        <div
-          className={`hidden gap-3 border-t border-line/60 bg-background px-[22px] py-2.5 text-[11px] font-bold uppercase tracking-[0.1em] text-muted lg:grid ${ROW_COLUMNS}`}
-        >
-          <span>Producto</span>
-          <span>Estado</span>
-          <span>Precio</span>
-          <span>Visible</span>
-        </div>
-
-        {PRODUCTS.map((product) => (
-          <div key={product.name}>
-            <div className="flex items-center gap-3 border-t border-line/60 px-4 py-2.5 lg:hidden">
-              <Thumbnail size="sm" />
-              <span className="flex min-w-0 grow flex-col gap-px">
-                <span className="truncate text-[14px] font-bold">{product.name}</span>
-                <span className="text-[12px] text-muted tabular-nums">
-                  {product.price} · {product.shortState}
-                </span>
-              </span>
-              <Switch on={product.visible} />
-            </div>
-
-            <div
-              className={`hidden items-center gap-3 border-t border-line/60 px-[22px] py-3 lg:grid ${ROW_COLUMNS}`}
+        <div className="flex gap-2 text-[13px] font-semibold">
+          {TABS.map((tab, index) => (
+            <span
+              className={`flex h-8 items-center rounded-full px-3.5 ${index === 0 ? "bg-brand text-white" : "bg-photo-backdrop/60 text-ink"}`}
+              key={tab}
             >
-              <span className="flex min-w-0 items-center gap-3">
-                <Thumbnail size="md" />
-                <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="truncate text-[14px] font-bold">{product.name}</span>
+              {tab}
+            </span>
+          ))}
+        </div>
+
+        <div>
+          <div
+            className={`hidden gap-2.5 px-2 pb-2 text-[11px] font-bold uppercase tracking-[0.08em] text-muted sm:grid ${ROW_COLUMNS}`}
+          >
+            <span>Producto</span>
+            <span>Estado</span>
+            <span>Precio</span>
+            <span>Visible</span>
+          </div>
+
+          {PRODUCTS.map((product) => (
+            <div key={product.name}>
+              <div className={`hidden items-center gap-2.5 border-t border-hairline px-2 py-3.5 text-[15px] sm:grid ${ROW_COLUMNS}`}>
+                <span className="flex min-w-0 flex-col">
+                  <span className="truncate font-bold">{product.name}</span>
                   <span className="text-[12px] text-muted">{product.category}</span>
                 </span>
-              </span>
-              <span className="justify-self-start whitespace-nowrap rounded-full border border-line bg-background px-2.5 py-1 text-[12px] font-semibold">
-                {product.state}
-              </span>
-              <span
-                className={`text-[14px] font-bold tabular-nums ${product.visible ? "" : "text-muted"}`}
-              >
-                {product.price}
-              </span>
-              <Switch on={product.visible} />
-            </div>
-          </div>
-        ))}
+                <StateChip draft={!product.visible} state={product.state} />
+                <span className={`font-bold tabular-nums ${product.visible ? "" : "text-muted"}`}>{product.price}</span>
+                <Switch on={product.visible} />
+              </div>
 
-        {/* The mockup's last row carries 4px more bottom padding than the rest. */}
-        <div className="h-1" />
+              <div className="flex items-center gap-3 border-t border-hairline py-3 sm:hidden">
+                <span className="flex min-w-0 grow flex-col gap-1">
+                  <span className="truncate text-[14px] font-bold">{product.name}</span>
+                  <span className="text-[12px] text-muted">{product.category}</span>
+                  <span className="flex items-center gap-2">
+                    <StateChip draft={!product.visible} state={product.state} />
+                    <span className="text-[13px] font-bold tabular-nums">{product.price}</span>
+                  </span>
+                </span>
+                <Switch on={product.visible} />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </>
   );

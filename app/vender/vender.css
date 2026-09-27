@@ -1,0 +1,49 @@
+/*
+ * /vender's own utilities. components/sellers is left out of the global
+ * stylesheet, which has to stay under the ~100 KiB Turbopack folds the font
+ * CSS into; this page alone would push it over. Only /vender loads this file.
+ *
+ * It loads after the global stylesheet in the same utilities layer, so it has
+ * to be complete for every element on the page: a class it held without its
+ * responsive partner (.flex here, lg:hidden only in the global file) would win
+ * the cascade and undo that partner. Hence it also scans the layout, the
+ * landing pieces the page reuses, and everything else /vender renders.
+ */
+@import "tailwindcss/theme.css" layer(theme) theme(reference);
+@import "../theme.css" theme(reference);
+@import "../utilities.css";
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "./";
+@source "../../components/sellers";
+@source "../../components/layout";
+@source "../../components/brand";
+@source "../../components/auth";
+/* Only the landing pieces this page reuses. */
+@source "../../components/home/landing/primitives.tsx";
+@source "../../components/home/landing/crossing-tapes.tsx";
+@source "../../components/home/landing/founders-counter.tsx";
+
+/* The FAQ's open and close, where the browser can animate to auto height. */
+@supports (interpolate-size: allow-keywords) {
+  .faq-item {
+    interpolate-size: allow-keywords;
+  }
+
+  .faq-item::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition:
+      block-size 0.3s ease,
+      content-visibility 0.3s allow-discrete;
+  }
+
+  .faq-item[open]::details-content {
+    block-size: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq-item::details-content {
+    transition: none;
+  }
+}

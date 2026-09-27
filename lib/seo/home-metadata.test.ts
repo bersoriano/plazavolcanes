@@ -29,7 +29,7 @@ describe("home metadata", () => {
 
     expect(metadata.title).toEqual({ absolute: "Plaza Volcanes: abre tu tienda independiente en México" });
     expect(metadata.description).toBe(
-      "Abre tu tienda en Plaza Volcanes, publica productos nuevos o usados y recibe el pago directo de cada cliente. 0% comisión para las primeras 100 tiendas.",
+      "Abre tu tienda en Plaza Volcanes: 25 productos gratis y pago directo de cada cliente. Primeras 100 tiendas: 50 productos y 0% comisión fija 12 meses.",
     );
     expect(metadata.alternates?.canonical).toBe("/");
     expect(metadata.robots).toBeUndefined();

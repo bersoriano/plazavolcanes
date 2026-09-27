@@ -16,12 +16,15 @@ export function SellerHero({
   latest,
   locale,
   promoActive = true,
+  spotsTaken = null,
 }: {
   tiles: [CollageProduct | null, CollageProduct | null];
   latest: CollageProduct | null;
   locale?: CatalogLocale;
   /** False once the founders promotion has ended: the card leaves the hero. */
   promoActive?: boolean;
+  /** Founding spots taken, when there is a count to show. */
+  spotsTaken?: number | null;
 }) {
   return (
     <section
@@ -48,7 +51,7 @@ export function SellerHero({
 
           <p className="max-w-[560px] text-pretty text-[17px] leading-[1.55] text-text-body lg:text-[20px]">
             Abre tu tienda en Plaza Volcanes, publica productos nuevos o usados y recibe el pago directo de cada cliente.
-            Sin comisiones. Sin retenciones.
+            Sin comisión en pago directo. Sin retenciones.
           </p>
 
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-3.5">
@@ -63,7 +66,7 @@ export function SellerHero({
             </Link>
           </div>
 
-          {promoActive ? <FoundersCounter /> : null}
+          {promoActive ? <FoundersCounter spotsTaken={spotsTaken} /> : null}
         </div>
 
         <HeroCollage latest={latest} locale={locale} tiles={tiles} />

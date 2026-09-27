@@ -410,6 +410,7 @@ export type Database = {
       };
       shops: {
         Row: {
+          founder_since: string | null;
           administrative_area_codes: string[] | null;
           country_code: string;
           created_at: string;
@@ -421,6 +422,7 @@ export type Database = {
           is_publishing_approved: boolean;
           is_premium: boolean;
           publishing_reviewed_at: string | null;
+          publishing_approved_at: string | null;
           listing_limit: number;
           name: string;
           owner_id: string;
@@ -431,6 +433,7 @@ export type Database = {
           updated_at: string;
         };
         Insert: {
+          founder_since?: string | null;
           administrative_area_codes?: string[] | null;
           country_code?: string;
           created_at?: string;
@@ -442,6 +445,7 @@ export type Database = {
           is_publishing_approved?: boolean;
           is_premium?: boolean;
           publishing_reviewed_at?: string | null;
+          publishing_approved_at?: string | null;
           listing_limit?: number;
           name: string;
           owner_id: string;
@@ -452,6 +456,7 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
+          founder_since?: string | null;
           administrative_area_codes?: string[] | null;
           country_code?: string;
           created_at?: string;
@@ -463,6 +468,7 @@ export type Database = {
           is_publishing_approved?: boolean;
           is_premium?: boolean;
           publishing_reviewed_at?: string | null;
+          publishing_approved_at?: string | null;
           listing_limit?: number;
           name?: string;
           owner_id?: string;
@@ -663,7 +669,36 @@ export type Database = {
       create_order_review: { Args: { p_order_id: number; p_rating: number; p_matched_description: boolean; p_comment: string | null }; Returns: number };
       current_legal_document: { Args: { p_type: string }; Returns: Database["public"]["Tables"]["legal_document_versions"]["Row"] };
       current_user_shop_limit: { Args: Record<never, never>; Returns: number };
+      founders_status: {
+        Args: Record<never, never>;
+        Returns: { cap: number; taken: number; is_open: boolean; min_live_items: number; qualify_days: number }[];
+      };
       is_current_user_admin: { Args: Record<never, never>; Returns: boolean };
+      record_product_view: { Args: { p_product_id: number }; Returns: undefined };
+      request_listing_import: { Args: { p_shop_id: number; p_links: string[]; p_note?: string | null }; Returns: number };
+      shop_import_requests: {
+        Args: { p_shop_id: number };
+        Returns: { id: number; link_count: number; status: string; created_at: string; handled_at: string | null }[];
+      };
+      admin_import_requests: {
+        Args: Record<never, never>;
+        Returns: {
+          id: number;
+          shop_id: number;
+          shop_name: string;
+          shop_slug: string;
+          links: string[];
+          note: string | null;
+          status: string;
+          created_at: string;
+          handled_at: string | null;
+        }[];
+      };
+      complete_import_request: { Args: { p_request_id: number }; Returns: undefined };
+      shop_product_stats: {
+        Args: { p_shop_id: number; p_days?: number };
+        Returns: { product_id: number; name: string; slug: string; status: string; views: number; questions: number; orders: number }[];
+      };
       set_shop_publishing_approval: {
         Args: { p_shop_id: number; p_enabled: boolean };
         Returns: { shop_id: number; shop_slug: string; product_slugs: string[] }[];

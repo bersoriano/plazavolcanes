@@ -5,7 +5,7 @@ import { LaunchBar } from "@/components/layout/launch-bar";
 import { FOUNDERS_CAP } from "@/lib/launch";
 import { LAUNCH_BAR_DISMISS_COOKIE } from "@/lib/launch-bar";
 
-const state = { dismissed: false, ownsShop: false, pathname: "/", promoActive: true };
+const state = { dismissed: false, ownsShop: false, pathname: "/", promoActive: true, spotsTaken: null as number | null };
 
 vi.mock("next/navigation", () => ({ usePathname: () => state.pathname }));
 vi.mock("next/headers", () => ({
@@ -17,9 +17,8 @@ vi.mock("next/headers", () => ({
 vi.mock("@/lib/queries/seller-standing.server", () => ({
   viewerOwnsAnyShop: vi.fn(async () => state.ownsShop),
 }));
-vi.mock("@/lib/launch", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/launch")>()),
-  isFoundersPromoActive: () => state.promoActive,
+vi.mock("@/lib/queries/founders.server", () => ({
+  getFoundersProgram: vi.fn(async () => ({ open: state.promoActive, taken: state.spotsTaken, cap: 100 })),
 }));
 vi.mock("@/lib/actions/launch-bar", () => ({ dismissLaunchBar: vi.fn(async () => {}) }));
 
@@ -28,12 +27,14 @@ beforeEach(() => {
   state.ownsShop = false;
   state.pathname = "/";
   state.promoActive = true;
+  state.spotsTaken = null;
 });
 
 afterEach(cleanup);
 
-async function renderBar(props: { spotsTaken?: number | null } = {}) {
-  render(await LaunchBar(props));
+async function renderBar({ spotsTaken = null }: { spotsTaken?: number | null } = {}) {
+  state.spotsTaken = spotsTaken;
+  render(await LaunchBar());
 }
 
 function bar() {
@@ -49,8 +50,10 @@ describe("LaunchBar", () => {
       "href",
       "/vender?desde=barra",
     );
-    expect(bar()).toHaveTextContent(`0% comisión para las primeras ${FOUNDERS_CAP} tiendas`);
-    expect(bar()).toHaveTextContent(`0% comisión · primeras ${FOUNDERS_CAP} tiendas`);
+    expect(bar()).toHaveTextContent(
+      `Primeras ${FOUNDERS_CAP} tiendas: 50 productos, insignia fundadora y 0% comisión fija 12 meses`,
+    );
+    expect(bar()).toHaveTextContent(`Primeras ${FOUNDERS_CAP} tiendas: 50 productos`);
   });
 
   it("shows no tally while nothing counts the spots", async () => {
@@ -104,7 +107,7 @@ describe("LaunchBar", () => {
   it("keeps to a single line", async () => {
     await renderBar({ spotsTaken: 2 });
 
-    expect(bar()?.firstElementChild).toHaveClass("h-10", "overflow-hidden");
+    expect(bar()?.firstElementChild).toHaveClass("h-11", "overflow-hidden");
     for (const node of [
       screen.getByRole("link", { name: "Vender →" }),
       bar()!.querySelector("p")!,

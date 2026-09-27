@@ -4,7 +4,10 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-const css = readFileSync(fileURLToPath(new URL("./globals.css", import.meta.url)), "utf8");
+const read = (file: string) => readFileSync(fileURLToPath(new URL(file, import.meta.url)), "utf8");
+// The global stylesheet as Tailwind compiles it: globals.css plus the theme
+// and utilities it imports (shared with the route stylesheets).
+const css = [read("./globals.css"), read("./theme.css"), read("./utilities.css")].join("\n");
 
 /** The declarations of the first rule whose selector is exactly `selector`. */
 function block(selector: string) {
@@ -95,5 +98,29 @@ describe("landing v2 tokens", () => {
     const rule = css.slice(start, css.indexOf("\n}", start));
 
     expect(rule).toMatch(/\.animate-marquee,\s*\.animate-marquee-reverse,\s*\.animate-rise-in\s*\{\s*animation:\s*none !important;/);
+  });
+});
+
+describe("route stylesheets", () => {
+  const vender = read("./vender/vender.css");
+
+  it("keeps the seller page's classes out of the global stylesheet", () => {
+    expect(read("./globals.css")).toMatch(/@source not "..\/components\/sellers";/);
+  });
+
+  it("compiles /vender against the shared theme without emitting it again", () => {
+    expect(vender).toMatch(/@import "..\/theme.css" theme\(reference\);/);
+    expect(vender).toMatch(/@import "tailwindcss\/utilities.css" layer\(utilities\) source\(none\);/);
+    expect(vender).not.toMatch(/@import "tailwindcss";/);
+  });
+
+  it("scans everything /vender renders, so its utilities never undo a global one", () => {
+    for (const dir of ["components/sellers", "components/layout", "components/home/landing/primitives.tsx"]) {
+      expect(vender).toContain(`@source "../../${dir}";`);
+    }
+  });
+
+  it("keeps theme.css to theme blocks, as a reference import requires", () => {
+    expect(read("./theme.css").replace(/\/\*[\s\S]*?\*\//g, "")).not.toMatch(/@utility|@layer|@media|^:root/m);
   });
 });

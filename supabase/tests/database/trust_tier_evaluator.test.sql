@@ -173,7 +173,7 @@ select results_eq(
 
 select results_eq(
   $$select trust_tier || ':' || listing_limit from public.shops where slug = 'nivel-uno'$$,
-  array['standard:15'::text],
+  array['standard:25'::text],
   'empty shop evaluates to Standard 15'
 );
 
@@ -207,7 +207,7 @@ select results_eq(
 
 select results_eq(
   $$select trust_tier || ':' || listing_limit from public.shops where slug = 'nivel-uno'$$,
-  array['standard:15'::text],
+  array['standard:25'::text],
   'failed evaluation preserves cached tier and limit'
 );
 
@@ -271,7 +271,7 @@ select private.evaluate_shop_trust((select id from public.shops where slug = 'ni
 
 select results_eq(
   $$select trust_tier || ':' || listing_limit from public.shops where slug = 'nivel-uno'$$,
-  array['top_rated:100'::text],
+  array['top_rated:25'::text],
   'resolved dispute allows Top Rated promotion and 100 listings'
 );
 

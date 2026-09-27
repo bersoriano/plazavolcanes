@@ -4,6 +4,7 @@ import { ArrowLeft, ChevronRight, Store } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { ProductGallery } from "@/components/catalog/product-gallery";
+import { ProductViewBeacon } from "@/components/catalog/product-view-beacon";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ShareActions } from "@/components/share/share-actions";
 import { StartConversationButton } from "@/components/messages/start-conversation-button";
@@ -112,6 +113,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
 
   return (
     <PremiumScope className="pb-4" premium={isPremium}>
+      <ProductViewBeacon productId={product.id} />
       <JsonLd
         data={buildProductJsonLd(product, {
           category: rootCategory,

@@ -2,18 +2,18 @@ import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
-import { FOUNDERS_CAP, REPUTATION_IMPORT_AVAILABLE } from "@/lib/launch";
+import { BASE_LISTING_LIMIT } from "@/lib/launch";
 
 /** The same three promises /vender leads with, in the same order. */
 const PROMISES = [
-  "Sin retenciones ni comisiones",
-  REPUTATION_IMPORT_AVAILABLE ? "Transfiere tu reputación" : "Transfiere tu reputación (pronto)",
+  "Sin comisión en pago directo",
+  "Muestra tu perfil de Mercado Libre y Facebook",
   "Tu catálogo en un solo lugar",
 ];
 
 /** The receipt's own summary, for anyone who never sees the picture. */
 const RECEIPT_SUMMARY =
-  "Ejemplo: vendes un artículo en $1,999.00 y recibes $1,999.00; Plaza Volcanes no cobra comisión ni retiene tu pago.";
+  "Ejemplo: vendes un artículo en $1,999.00 y recibes $1,999.00; en pago directo Plaza Volcanes no cobra comisión ni retiene tu pago.";
 
 function ReceiptLine({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -84,8 +84,8 @@ export function SellerPitch() {
           Vende en <em className="italic text-accent">Plaza Volcanes.</em>
         </h2>
         <p className="relative max-w-[560px] text-pretty text-[16px] leading-[1.6] text-white/80 lg:col-span-7 lg:col-start-1 lg:text-[18px]">
-          Las primeras {FOUNDERS_CAP} tiendas que se registren durante los primeros tres meses
-          pueden publicar gratis y no pagan comisión por cada artículo vendido.
+          Publica {BASE_LISTING_LIMIT} productos gratis y cobra directo a cada cliente. Sin
+          retenciones ni comisión en pago directo.
         </p>
         <ul className="relative flex flex-col gap-2.5 lg:col-span-7 lg:col-start-1 lg:mt-1 lg:flex-row lg:flex-wrap lg:gap-x-6 lg:gap-y-3">
           {PROMISES.map((promise) => (

@@ -7,6 +7,7 @@ import { ProductCard } from "@/components/catalog/product-card";
 import { ProductGrid } from "@/components/catalog/product-grid";
 import { ShareActions } from "@/components/share/share-actions";
 import { StartConversationButton } from "@/components/messages/start-conversation-button";
+import { FounderBadge } from "@/components/shops/founder-badge";
 import { PremiumBadge } from "@/components/shops/premium-badge";
 import { PremiumScope } from "@/components/shops/premium-scope";
 import { TrustTierBadge } from "@/components/shops/trust-tier-badge";
@@ -80,13 +81,14 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
               </h1>
               <TrustTierBadge tier={shop.trust_tier} />
               {/* Same top margin as the tier badge beside it, so the two sit level. */}
+              {shop.founder_since ? <FounderBadge className="mt-4" /> : null}
               {isPremium ? <PremiumBadge className="mt-4" /> : null}
             </div>
             <p className="mt-3 flex items-center gap-2 text-sm font-semibold text-brand">
               <MapPin aria-hidden="true" className="size-4" />
               {formatShopLocation(shop.country_code, shop.administrative_area_codes)}
             </p>
-            {isPremium ? <div aria-hidden="true" className="gold-rule mt-6" /> : null}
+            {isPremium || shop.founder_since ? <div aria-hidden="true" className="gold-rule mt-6" /> : null}
             <p className="mt-4 max-w-2xl text-base leading-8 text-muted">{shop.description}</p>
 
             {/* The seller's own terms, in their own words, kept next to the

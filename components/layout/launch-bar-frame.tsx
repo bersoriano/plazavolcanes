@@ -14,7 +14,9 @@ import { isLaunchBarRoute } from "@/lib/launch-bar";
  * vanishes. Everything else it knows was decided on the server.
  *
  * Below sm the full sentence, the link and the close control do not fit on one
- * line at 390px, so a phone reads the short form of the same offer.
+ * line at 390px, so a phone reads the short form of the same offer. The bar is
+ * 44px at every width (the mockup's phone bar is 40): its link fills the bar's
+ * height, and 40 would leave it short of a 44px target.
  */
 export function LaunchBarFrame({
   cap,
@@ -35,11 +37,13 @@ export function LaunchBarFrame({
       data-launch-bar
       data-surface="dark"
     >
-      <div className="relative mx-auto flex h-10 max-w-[1440px] items-center justify-center gap-2.5 overflow-hidden px-10 tracking-[0.01em] sm:h-11 sm:gap-[18px] sm:px-12">
+      <div className="relative mx-auto flex h-11 max-w-[1440px] items-center justify-center gap-2.5 overflow-hidden px-10 tracking-[0.01em] sm:gap-[18px] sm:px-12">
         <p className="flex min-w-0 items-center gap-2.5 truncate whitespace-nowrap sm:gap-[18px]">
           <span aria-hidden="true">✦</span>
-          <span className="sm:hidden">0% comisión · primeras {cap} tiendas</span>
-          <span className="hidden sm:inline">0% comisión para las primeras {cap} tiendas</span>
+          <span className="sm:hidden">Primeras {cap} tiendas: 50 productos</span>
+          <span className="hidden sm:inline">
+            Primeras {cap} tiendas: 50 productos, insignia fundadora y 0% comisión fija 12 meses
+          </span>
           {spotsLeft === null ? null : (
             <>
               <span aria-hidden="true" className="hidden opacity-50 sm:inline">
@@ -53,7 +57,7 @@ export function LaunchBarFrame({
         </p>
 
         <Link
-          className="inline-flex h-10 shrink-0 items-center whitespace-nowrap text-white underline underline-offset-[3px] sm:h-11 sm:text-accent"
+          className="inline-flex h-11 shrink-0 items-center whitespace-nowrap text-white underline underline-offset-[3px] sm:text-accent"
           href="/vender?desde=barra"
         >
           Vender →
