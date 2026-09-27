@@ -23,7 +23,7 @@ const ROWS: { label: string; cells: [string, string, string, string] }[] = [
   },
   {
     label: "Retención",
-    cells: ["No: el dinero es tuyo al cobrar", "Libera el pago después de la entrega", "No: acuerdan directo", "Paga según su calendario de pagos"],
+    cells: ["No: el dinero es tuyo al cobrar", "Libera el pago después de la entrega", "No: acuerdan directo", "Puede retener pagos de vendedores nuevos"],
   },
   {
     label: "Tienda permanente",
@@ -48,8 +48,10 @@ const ROWS: { label: string; cells: [string, string, string, string] }[] = [
   },
 ];
 
-const FOOTNOTE =
-  "Resumen general de las condiciones públicas de cada plataforma. Pueden variar por categoría, país y tipo de publicación, y cambiar sin aviso: consulta cada plataforma. Mercado Libre, Facebook Marketplace y eBay son marcas de sus dueños; Plaza Volcanes no está afiliada a ellas.";
+/** When every cell was last checked against the public policies (docs/launch-package.md). */
+export const COMPARISON_CHECKED = "septiembre de 2026";
+
+const FOOTNOTE = `Resumen general de las condiciones públicas de cada plataforma, revisadas en ${COMPARISON_CHECKED}. Pueden variar por categoría, país y tipo de publicación, y cambiar sin aviso: consulta cada plataforma. Mercado Libre, Facebook Marketplace y eBay son marcas de sus dueños; Plaza Volcanes no está afiliada a ellas.`;
 
 /**
  * #compara: Plaza Volcanes beside the three places a seller already uses. A

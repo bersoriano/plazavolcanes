@@ -2,11 +2,12 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(18);
+select plan(23);
 
 select has_table('private', 'founders_program', 'the launch programme lives in a private table');
 select has_table('private', 'founding_shops', 'seats are a private ledger');
 select has_column('public', 'shops', 'founder_since', 'a shop caches when it earned its seat');
+select has_column('public', 'shops', 'publishing_approved_at', 'a shop records its first approval');
 select has_function('public', 'founders_status', 'anyone can read the founders counter');
 
 -- Two seats; the plaza opened an hour ago.
@@ -23,10 +24,11 @@ overriding system value values
   (9301, '40000000-0000-4000-8000-000000000001', 'Primera', 'fundadora-primera', 'Descripción suficientemente larga para la tienda.', now()),
   (9302, '40000000-0000-4000-8000-000000000002', 'Segunda', 'fundadora-segunda', 'Descripción suficientemente larga para la tienda.', now()),
   (9303, '40000000-0000-4000-8000-000000000003', 'Tercera', 'fundadora-tercera', 'Descripción suficientemente larga para la tienda.', now()),
-  -- Opened before the plaza did: its 7 days run from the plaza's opening.
+  -- Opened before the plaza did.
   (9304, '40000000-0000-4000-8000-000000000004', 'Semilla', 'fundadora-semilla', 'Descripción suficientemente larga para la tienda.', now() - interval '30 days');
 
 select is((select listing_limit from public.shops where id = 9301), 25, 'every shop starts with 25 live listings');
+select ok((select publishing_approved_at from public.shops where id = 9301) is null, 'a new shop waits for approval');
 select ok((select founder_since from public.shops where id = 9301) is null, 'registering alone earns no seat');
 
 -- Only seats are measured here, so the cover and publication guards step aside.
@@ -43,6 +45,28 @@ begin
   end loop;
 end;
 $$;
+
+-- Unapproved, 8 live items earn nothing: the shop is not visible yet.
+select pg_temp.publish(9301, 8);
+select ok((select founder_since from public.shops where id = 9301) is null, 'an unapproved shop earns no seat');
+
+-- Approving it claims the seat it already qualifies for.
+update public.shops set is_publishing_approved = true where id = 9301;
+select ok((select founder_since from public.shops where id = 9301) is not null, 'approval claims a seat already earned');
+create temp table first_approval as select publishing_approved_at as at from public.shops where id = 9301;
+delete from private.founding_shops;
+update public.shops set is_publishing_approved = false where id = 9301;
+update public.shops set updated_at = updated_at where id = 9301;
+delete from public.products where shop_id = 9301;
+
+update public.shops set is_publishing_approved = true where id in (9301, 9302, 9303, 9304);
+
+-- Suspending and re-approving does not reopen the window.
+select is(
+  (select publishing_approved_at from public.shops where id = 9301),
+  (select at from first_approval),
+  'the first approval is kept'
+);
 
 select pg_temp.publish(9301, 7);
 select ok((select founder_since from public.shops where id = 9301) is null, 'seven live items are not enough');
@@ -61,7 +85,7 @@ update public.shops set listing_limit = 15, trust_tier = 'standard' where id = 9
 select is((select listing_limit from public.shops where id = 9302), 25, 'a tier write keeps the launch cap');
 
 select pg_temp.publish(9304, 8);
-select ok((select founder_since from public.shops where id = 9304) is not null, 'a seed shop gets its 7 days from the plaza''s opening');
+select ok((select founder_since from public.shops where id = 9304) is not null, 'an older shop gets its 7 days from its approval');
 select is((select is_open from public.founders_status()), false, 'the last seat closes the programme');
 
 select pg_temp.publish(9303, 8);
@@ -70,9 +94,11 @@ select is((select listing_limit from public.shops where id = 9303), 25, 'and the
 
 -- Past the window, 8 items earn nothing.
 update private.founders_program set cap = 3, opens_at = now() - interval '40 days';
-update public.shops set created_at = now() - interval '8 days' where id = 9302;
+alter table public.shops disable trigger zz_apply_launch_policy;
+update public.shops set publishing_approved_at = now() - interval '8 days' where id = 9302;
+alter table public.shops enable trigger zz_apply_launch_policy;
 select pg_temp.publish(9302, 8);
-select ok((select founder_since from public.shops where id = 9302) is null, 'items published after the 7 days earn no seat');
+select ok((select founder_since from public.shops where id = 9302) is null, 'items published more than 7 days after approval earn no seat');
 
 -- Deleting a founder shop keeps its seat taken.
 delete from public.products where shop_id = 9301;

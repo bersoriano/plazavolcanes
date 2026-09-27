@@ -201,6 +201,7 @@ function sampleShop() {
     is_publishing_approved: true,
     is_premium: false,
     publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
+    publishing_approved_at: null,
     listing_limit: 15,
     founder_since: null,
     name: "Taller Volcán",

@@ -20,6 +20,7 @@ function shop(id: number, overrides: Partial<CatalogShop> = {}): CatalogShop {
     is_publishing_approved: true,
     is_premium: false,
     publishing_reviewed_at: null,
+    publishing_approved_at: null,
     listing_limit: 15,
     founder_since: null,
     name: `Tienda ${id}`,

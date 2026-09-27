@@ -422,6 +422,7 @@ export type Database = {
           is_publishing_approved: boolean;
           is_premium: boolean;
           publishing_reviewed_at: string | null;
+          publishing_approved_at: string | null;
           listing_limit: number;
           name: string;
           owner_id: string;
@@ -444,6 +445,7 @@ export type Database = {
           is_publishing_approved?: boolean;
           is_premium?: boolean;
           publishing_reviewed_at?: string | null;
+          publishing_approved_at?: string | null;
           listing_limit?: number;
           name: string;
           owner_id: string;
@@ -466,6 +468,7 @@ export type Database = {
           is_publishing_approved?: boolean;
           is_premium?: boolean;
           publishing_reviewed_at?: string | null;
+          publishing_approved_at?: string | null;
           listing_limit?: number;
           name?: string;
           owner_id?: string;

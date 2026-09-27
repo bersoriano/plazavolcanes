@@ -19,7 +19,7 @@ const TERMS_NOTE =
 
 const FOUNDERS_QUESTION = {
   question: "¿Qué incluye ser tienda fundadora?",
-  answer: `Las primeras ${FOUNDERS_CAP} tiendas que publiquen ${FOUNDER_MIN_LIVE_ITEMS} productos en sus primeros ${FOUNDER_QUALIFY_DAYS} días reciben ${FOUNDER_LISTING_LIMIT} productos en vivo, la insignia permanente de Tienda fundadora, ${FOUNDER_FEATURE_DAYS} días en la rotación de la portada, 0% comisión fija ${FOUNDER_COMMISSION_LOCK_MONTHS} meses y acceso anticipado a las nuevas herramientas para vender. Registrarte no aparta un lugar: se gana publicando.`,
+  answer: `Las primeras ${FOUNDERS_CAP} tiendas que publiquen ${FOUNDER_MIN_LIVE_ITEMS} productos en sus primeros ${FOUNDER_QUALIFY_DAYS} días reciben ${FOUNDER_LISTING_LIMIT} productos en vivo, la insignia permanente de Tienda fundadora, ${FOUNDER_FEATURE_DAYS} días en la rotación de la portada, 0% comisión fija ${FOUNDER_COMMISSION_LOCK_MONTHS} meses y acceso anticipado a las nuevas herramientas para vender. Registrarte no aparta un lugar: se gana publicando, y tus días cuentan desde que aprobamos tu tienda.`,
 };
 
 const MONTH_13 = {

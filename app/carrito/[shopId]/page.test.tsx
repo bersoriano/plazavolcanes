@@ -104,6 +104,7 @@ beforeEach(() => {
     is_publishing_approved: true,
     is_premium: false,
     publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
+    publishing_approved_at: null,
     listing_limit: 50,
     founder_since: null,
     owner_id: "seller-1",
