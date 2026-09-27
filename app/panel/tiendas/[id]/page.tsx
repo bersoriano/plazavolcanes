@@ -5,10 +5,13 @@ import { notFound, redirect } from "next/navigation";
 import { CatalogToolbar } from "@/components/products/catalog-toolbar";
 import { ProductRow } from "@/components/products/product-row";
 import { ShopWorkspaceHeader } from "@/components/shops/shop-workspace-header";
+import { ListingImportCard } from "@/components/shops/listing-import-card";
 import { ShopAnalyticsCard } from "@/components/shops/shop-analytics-card";
 import { TrustDashboardCard } from "@/components/shops/trust-dashboard-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { ListingStatus } from "@/components/ui/status-badge";
+import { requestListingImport } from "@/lib/actions/listing-import";
+import { getShopImportRequests } from "@/lib/queries/listing-import.server";
 import { getShopAnalytics } from "@/lib/queries/shop-analytics.server";
 import { getOwnedShop } from "@/lib/queries/shops.server";
 import { getShopTrustDashboard } from "@/lib/queries/trust.server";
@@ -61,9 +64,10 @@ export default async function ShopCatalogPage({
   // in /ajustes, which fetches it there.
   const imageUrls = mediaUrls(visible.map((product) => product.image_path), MEDIA_VARIANTS.thumbnail);
   const isFounder = Boolean(shop.founder_since);
-  const [trustDashboard, analytics] = await Promise.all([
+  const [trustDashboard, analytics, importRequests] = await Promise.all([
     getShopTrustDashboard(shopId),
     isFounder ? getShopAnalytics(shopId) : null,
+    getShopImportRequests(shopId),
   ]);
   const isFiltered = tab !== "todos" || search.trim() !== "";
 
@@ -73,6 +77,7 @@ export default async function ShopCatalogPage({
 
       {trustDashboard ? <div className="mb-6"><TrustDashboardCard dashboard={trustDashboard} /></div> : null}
       {isFounder && !analytics ? null : <div className="mb-6"><ShopAnalyticsCard analytics={analytics} isFounder={isFounder} /></div>}
+      <div className="mb-6"><ListingImportCard action={requestListingImport.bind(null, shopId)} requests={importRequests} /></div>
 
       <section aria-labelledby="catalogo-title" className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
         <h2 className="sr-only" id="catalogo-title">Productos</h2>

@@ -675,6 +675,26 @@ export type Database = {
       };
       is_current_user_admin: { Args: Record<never, never>; Returns: boolean };
       record_product_view: { Args: { p_product_id: number }; Returns: undefined };
+      request_listing_import: { Args: { p_shop_id: number; p_links: string[]; p_note?: string | null }; Returns: number };
+      shop_import_requests: {
+        Args: { p_shop_id: number };
+        Returns: { id: number; link_count: number; status: string; created_at: string; handled_at: string | null }[];
+      };
+      admin_import_requests: {
+        Args: Record<never, never>;
+        Returns: {
+          id: number;
+          shop_id: number;
+          shop_name: string;
+          shop_slug: string;
+          links: string[];
+          note: string | null;
+          status: string;
+          created_at: string;
+          handled_at: string | null;
+        }[];
+      };
+      complete_import_request: { Args: { p_request_id: number }; Returns: undefined };
       shop_product_stats: {
         Args: { p_shop_id: number; p_days?: number };
         Returns: { product_id: number; name: string; slug: string; status: string; views: number; questions: number; orders: number }[];
