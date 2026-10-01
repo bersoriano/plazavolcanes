@@ -40,7 +40,7 @@
      such a scope must override --trust-tier-fill too. */
   --trust-tier-fill: color-mix(in oklab, var(--accent) 40%, transparent);
 
-  /* Landing v2 (docs/design/landing-v2/tokens/tokens.css). */
+  /* Shared landing-page color tokens. */
   /* Long paragraphs on cream, at AA contrast. */
   --text-body: #4f4a55;
   --lime-tint: #eaffd2;

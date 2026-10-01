@@ -1,6 +1,6 @@
 /**
- * The gold "Tienda fundadora" seal (docs/design/vender-v2/assets), drawn with
- * the premium tokens. Decorative wherever it appears: the text beside it, or
+ * The gold "Tienda fundadora" seal, drawn with premium tokens. Decorative
+ * wherever it appears: the text beside it, or
  * the card it sits on, already says what it means. `labelled` false keeps the
  * mark alone, for small sizes such as the perk tile.
  */
