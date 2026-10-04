@@ -417,3 +417,8 @@ enabled = true
 # declarative_schema_path = "./schemas"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# The seller notification sender checks its own bearer token
+# (NOTIFICATIONS_DISPATCH_TOKEN); pg_cron calls it without a user JWT.
+[functions.send-notifications]
+verify_jwt = false
