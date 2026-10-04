@@ -112,7 +112,7 @@ export async function getSellerDashboard({
     supabase.rpc("list_conversations", { p_role: "seller" }),
     supabase
       .from("orders")
-      .select("id, shop_id, status, created_at, accepted_at, ship_by_at, handling_time_zone, payment_confirmation_required, payment_completed_at, fulfillment_method, order_items(product_name)")
+      .select("id, shop_id, status, created_at, accepted_at, ship_by_at, decide_by_at, handling_time_zone, payment_confirmation_required, payment_completed_at, fulfillment_method, order_items(product_name)")
       .in("shop_id", shopIds)
       .in("status", OPEN_ORDER_STATUSES)
       .order("created_at", { ascending: true }),

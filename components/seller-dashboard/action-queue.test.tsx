@@ -18,6 +18,7 @@ function order(overrides: Partial<DashboardOrder>): DashboardOrder {
     created_at: hoursAgo(5),
     accepted_at: null,
     ship_by_at: null,
+    decide_by_at: null,
     payment_confirmation_required: true,
     payment_completed_at: null,
     fulfillment_method: "shipping",

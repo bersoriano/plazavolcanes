@@ -26,6 +26,7 @@ function row(overrides: Partial<OrderDetailRow> = {}): OrderDetailRow {
     seller_cancellation_reason: null,
     accepted_at: null,
     ship_by_at: null,
+    decide_by_at: null,
     shipped_at: null,
     delivered_at: null,
     completed_at: null,

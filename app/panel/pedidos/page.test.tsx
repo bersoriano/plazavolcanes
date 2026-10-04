@@ -23,6 +23,7 @@ function row(overrides: Partial<SellerOrderRow>): SellerOrderRow {
     payment_confirmation_required: true,
     payment_completed_at: null,
     ship_by_at: null,
+    decide_by_at: null,
     delivered_at: null,
     handling_time_zone: "America/Mexico_City",
     ...overrides,

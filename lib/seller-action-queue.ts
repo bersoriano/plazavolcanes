@@ -6,15 +6,18 @@ import { formatOrderStatus } from "@/lib/order-status";
  *
  * The panel's queue, the orders page and the order itself all read this, so
  * the three never disagree about what the seller has to do next. Only
- * deadlines the database actually keeps are used: the ship-by promise fixed
- * when an order is accepted, the 24 hours the response rate gives an order
- * thread, and the seven days after which a received order completes on its
- * own. A purchase request and a question asked before buying have no
- * deadline, and none is made up for them.
+ * deadlines the database actually keeps are used: the 72 hours a purchase
+ * request has before it expires, the ship-by promise fixed when an order is
+ * accepted, the 24 hours the response rate gives an order thread, and the
+ * seven days after which a received order completes on its own. A question
+ * asked before buying has no deadline, and none is made up for it.
  */
 
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
+
+/** The default on orders.decide_by_at; private.expire_due_requests closes the request after it. */
+export const REQUEST_WINDOW_HOURS = 72;
 
 /** What seller_response_events.answered_within_24_hours measures. */
 export const REPLY_WINDOW_HOURS = 24;
@@ -44,6 +47,8 @@ export type SellerOrderFacts = {
   ship_by_at: string | null;
   /** Only a received order needs it, to say when it completes on its own. */
   delivered_at?: string | null;
+  /** Only a request needs it: when it expires if the seller has not decided. */
+  decide_by_at?: string | null;
   handling_time_zone: string;
 };
 
@@ -62,8 +67,7 @@ function addMs(value: string, ms: number) {
 export function sellerOrderStep(order: SellerOrderFacts): SellerOrderStep {
   switch (order.status) {
     case "requested":
-      // Nothing expires a request: it waits on the seller for as long as it takes.
-      return { kind: "decide", owner: "seller", dueAt: null };
+      return { kind: "decide", owner: "seller", dueAt: order.decide_by_at ?? null };
     case "accepted":
       // Shipping is refused until payment is confirmed, but the ship-by promise
       // was fixed at acceptance and keeps running meanwhile.
@@ -174,6 +178,7 @@ const CLOSED_DETAIL: Partial<Record<OrderStatus, string>> = {
   canceled_by_buyer: "El comprador canceló el pedido. No hay nada pendiente.",
   canceled_by_seller: "Cancelaste este pedido. No hay nada pendiente.",
   canceled_by_admin: "Administración canceló este pedido. No hay nada pendiente.",
+  expired: "La solicitud venció sin respuesta. Las unidades volvieron a tu catálogo.",
 };
 
 /**
@@ -203,12 +208,24 @@ export function sellerOrderGuidance(order: SellerOrderFacts, now: Date): SellerO
   };
 
   switch (step.kind) {
-    case "decide":
+    case "decide": {
+      const when = step.dueAt ? formatDeadline(step.dueAt, order.handling_time_zone) : null;
+      const urgency = deadlineUrgency(step.dueAt, now, PROMISE_SOON_HOURS);
       return {
         title: "El comprador espera tu decisión",
-        detail: `Acepta la solicitud si puedes cumplirla o recházala si no. No vence sola: sigue pendiente hasta que decidas o el pedido se cancele. Al aceptarla se fija la fecha comprometida para ${handOverVerb}, según el tiempo de preparación.`,
-        deadline: null,
+        detail: `Acepta la solicitud si puedes cumplirla o recházala si no. ${
+          when ? `Si no respondes antes del ${when}` : "Si no respondes a tiempo"
+        }, la solicitud vence y las unidades vuelven a tu catálogo. Al aceptarla se fija la fecha comprometida para ${handOverVerb}, según el tiempo de preparación.`,
+        deadline:
+          step.dueAt && when
+            ? {
+                dateTime: step.dueAt,
+                urgency,
+                label: urgency === "overdue" ? `El plazo para responder venció: ${when}` : `Responde antes del ${when}`,
+              }
+            : null,
       };
+    }
     case "confirm_payment":
       return {
         title: "El comprador espera tus indicaciones de pago",
@@ -275,6 +292,11 @@ const BUYER_CLOSED_TITLES: Partial<Record<OrderStatus, string>> = {
   canceled_by_buyer: "Cancelaste este pedido",
   canceled_by_seller: "La tienda canceló este pedido",
   canceled_by_admin: "Administración canceló este pedido",
+  expired: "La tienda no respondió a tiempo",
+};
+
+const BUYER_CLOSED_DETAIL: Partial<Record<OrderStatus, string>> = {
+  expired: "Puedes volver a solicitarlo o escribirle a la tienda.",
 };
 
 /**
@@ -308,8 +330,14 @@ export function buyerOrderGuidance(order: SellerOrderFacts, now: Date): BuyerOrd
       return {
         label: "Esperando a la tienda",
         title: "La tienda está revisando tu solicitud",
-        detail: "Puede aceptarla o rechazarla, y no tiene un plazo fijo para decidir. Si tienes dudas, escríbele en la conversación.",
-        deadline: null,
+        detail: "La tienda puede aceptarla o rechazarla. Si no responde a tiempo, la solicitud vence sola y puedes volver a pedirlo. Si tienes dudas, escríbele en la conversación.",
+        deadline: step.dueAt
+          ? {
+              dateTime: step.dueAt,
+              urgency: deadlineUrgency(step.dueAt, now, PROMISE_SOON_HOURS),
+              label: `La tienda tiene hasta el ${formatDeadline(step.dueAt, order.handling_time_zone)} para responder`,
+            }
+          : null,
       };
     case "confirm_payment": {
       const deadline = promise(step.dueAt);
@@ -367,7 +395,7 @@ export function buyerOrderGuidance(order: SellerOrderFacts, now: Date): BuyerOrd
       return {
         label: formatOrderStatus(order.status, order.fulfillment_method),
         title: BUYER_CLOSED_TITLES[order.status] ?? "Pedido cerrado",
-        detail: "No hay nada pendiente.",
+        detail: BUYER_CLOSED_DETAIL[order.status] ?? "No hay nada pendiente.",
         deadline: null,
       };
   }

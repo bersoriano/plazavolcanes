@@ -17,6 +17,7 @@ describe("formatOrderEvent", () => {
     ["canceled_by_admin", "Cancelada por administración"],
     ["admin_delivery_confirmed", "Entrega confirmada por administración"],
     ["admin_repair", "Corrección de administración"],
+    ["expired", "Venció sin respuesta de la tienda"],
   ] as const)("reads %s as %s", (eventType, label) => {
     expect(formatOrderEvent(eventType)).toBe(label);
   });
@@ -26,7 +27,7 @@ describe("formatOrderEvent", () => {
     // checked at compile time. This test is the exhaustiveness check: the list
     // mirrors the check constraint, and a value added to one without the other
     // fails here rather than reaching a buyer's screen.
-    expect(ORDER_EVENT_TYPES).toHaveLength(13);
+    expect(ORDER_EVENT_TYPES).toHaveLength(14);
     for (const eventType of ORDER_EVENT_TYPES) {
       expect(formatOrderEvent(eventType)).not.toMatch(/_/);
     }

@@ -86,6 +86,8 @@ export type DashboardOrder = {
   fulfillment_method: "pickup" | "shipping";
   /** The zone the ship-by promise was calculated in. */
   handling_time_zone: string;
+  /** When a request expires if the seller has not decided. */
+  decide_by_at: string | null;
   item_names: string[];
 };
 
@@ -269,7 +271,7 @@ type AttentionBase = {
 };
 
 export type AttentionItem =
-  | (AttentionBase & { kind: "purchase_request"; orderId: number })
+  | (AttentionBase & { kind: "purchase_request"; orderId: number; timeZone: string })
   | (AttentionBase & {
       kind: "buyer_waiting";
       conversationId: number;
@@ -363,7 +365,14 @@ export function buildAttention(
     };
     const { kind } = step;
     if (kind === "decide") {
-      items.push({ kind: "purchase_request", ...base, since: order.created_at, dueAt: null, urgency: "none" });
+      items.push({
+        kind: "purchase_request",
+        ...base,
+        timeZone: order.handling_time_zone,
+        since: order.created_at,
+        dueAt: step.dueAt,
+        urgency: deadlineUrgency(step.dueAt, input.now, PROMISE_SOON_HOURS),
+      });
       continue;
     }
     items.push({
@@ -646,7 +655,7 @@ export type PrimaryAction = {
 };
 
 export function choosePrimaryAction(
-  input: Pick<SellerDashboardInput, "shopLimit">,
+  input: Pick<SellerDashboardInput, "shopLimit" | "now">,
   attention: AttentionItem[],
   focus: ShopProgress | null,
   ongoing: OngoingTask[],
@@ -657,7 +666,13 @@ export function choosePrimaryAction(
     const shop = urgent.shop;
     const share = null;
     if (urgent.kind === "purchase_request") {
-      return { kind: "review_request", eyebrow: "Solicitud de compra", title: "Revisa la solicitud", detail: `${urgent.title} · ${urgent.shop.name}. Acepta o rechaza; el comprador verá tu decisión en su compra.`, shop, action: { label: "Revisar solicitud", href: urgent.href }, share };
+      const expiry =
+        urgent.urgency === "overdue"
+          ? " Su plazo para responder ya pasó."
+          : urgent.urgency === "due_soon" && urgent.dueAt
+            ? ` Vence ${formatRemaining(urgent.dueAt, input.now)}.`
+            : "";
+      return { kind: "review_request", eyebrow: "Solicitud de compra", title: "Revisa la solicitud", detail: `${urgent.title} · ${urgent.shop.name}. Acepta o rechaza; el comprador verá tu decisión en su compra.${expiry}`, shop, action: { label: "Revisar solicitud", href: urgent.href }, share };
     }
     if (urgent.kind === "buyer_waiting") {
       const window =
@@ -889,7 +904,17 @@ export type AttentionTiming = {
 export function attentionTiming(item: AttentionItem, now: Date): AttentionTiming {
   const waited = formatWaiting(item.since, now);
   if (item.kind === "purchase_request") {
-    return { waiting: `Recibida ${waited}`, deadline: null, urgencyLabel: null };
+    if (!item.dueAt) return { waiting: `Recibida ${waited}`, deadline: null, urgencyLabel: null };
+    return {
+      waiting: `Recibida ${waited}`,
+      deadline:
+        item.urgency === "overdue"
+          ? "El plazo para responder ya pasó"
+          : item.urgency === "due_soon"
+            ? `Responde ${formatRemaining(item.dueAt, now)}`
+            : `Responde antes del ${formatDeadline(item.dueAt, item.timeZone)}`,
+      urgencyLabel: URGENCY_LABELS[item.urgency],
+    };
   }
   if (item.kind === "buyer_waiting") {
     if (!item.replyWindow || !item.dueAt) return { waiting: `Escribió ${waited}`, deadline: null, urgencyLabel: null };

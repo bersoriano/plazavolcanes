@@ -46,7 +46,7 @@ const order: OrderDetail = {
   shop: { id: 2, name: "Casa Niebla", slug: "casa-niebla" }, buyer_note: null,
   handling_days: 2, handling_time_zone: "America/Mexico_City", payment_confirmation_required: true,
   payment_completed_at: null, seller_cancellation_reason: null, accepted_at: "2026-08-20T13:00:00Z",
-  ship_by_at: "2026-08-24T13:00:00Z", shipped_at: null, delivered_at: null, completed_at: null,
+  decide_by_at: null, ship_by_at: "2026-08-24T13:00:00Z", shipped_at: null, delivered_at: null, completed_at: null,
   tracking_text: null, items: [], address: null, events: [], conversation: null, review: null, dispute: null,
 };
 
