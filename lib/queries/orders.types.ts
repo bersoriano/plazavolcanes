@@ -40,6 +40,8 @@ export type OrderProgressRow = OrderSummary & {
   payment_completed_at: string | null;
   ship_by_at: string | null;
   delivered_at: string | null;
+  /** When an undecided request expires. */
+  decide_by_at: string | null;
   handling_time_zone: string;
 };
 
@@ -62,6 +64,7 @@ export type OrderDetail = OrderSummary & {
   payment_completed_at: string | null;
   seller_cancellation_reason: "buyer_non_payment" | "inventory_unavailable" | "seller_unavailable" | "other" | null;
   accepted_at: string | null;
+  decide_by_at: string | null;
   ship_by_at: string | null;
   shipped_at: string | null;
   delivered_at: string | null;

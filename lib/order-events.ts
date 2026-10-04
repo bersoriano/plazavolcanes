@@ -26,6 +26,7 @@ export const ORDER_EVENT_TYPES = [
   "canceled_by_admin",
   "admin_delivery_confirmed",
   "admin_repair",
+  "expired",
 ] as const;
 
 export type OrderEventType = (typeof ORDER_EVENT_TYPES)[number];
@@ -46,6 +47,8 @@ const eventLabels: Record<OrderEventType, string> = {
   canceled_by_admin: "Cancelada por administración",
   admin_delivery_confirmed: "Entrega confirmada por administración",
   admin_repair: "Corrección de administración",
+  // The plaza closes it, so the label says what the shop did not do.
+  expired: "Venció sin respuesta de la tienda",
 };
 
 export function formatOrderEvent(eventType: string, fulfillmentMethod: "pickup" | "shipping" = "shipping"): string {

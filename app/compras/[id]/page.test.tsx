@@ -34,6 +34,7 @@ const order: OrderDetail = {
   seller_cancellation_reason: null,
   accepted_at: null,
   ship_by_at: null,
+  decide_by_at: null,
   shipped_at: null,
   delivered_at: null,
   completed_at: null,
@@ -169,12 +170,13 @@ describe("what the buyer is waiting for", () => {
   }
 
   it("leads with the buyer's waiting status and their own buttons", async () => {
-    vi.mocked(getOrderDetail).mockResolvedValue(order);
+    vi.mocked(getOrderDetail).mockResolvedValue({ ...order, decide_by_at: "2026-08-23T18:00:00Z" });
 
     render(await PurchaseDetailPage({ params: Promise.resolve({ id: "41" }) }));
 
     const status = screen.getByRole("region", { name: "La tienda está revisando tu solicitud" });
-    expect(within(status).getByText(/no tiene un plazo fijo/)).toBeInTheDocument();
+    expect(within(status).getByText(/la solicitud vence sola/)).toBeInTheDocument();
+    expect(within(status).getByText(/^La tienda tiene hasta el .*23 de agosto.* para responder$/)).toBeInTheDocument();
     expect(within(status).getByRole("button", { name: "Cancelar pedido" })).toBeInTheDocument();
     expect(precedes(status, screen.getByRole("heading", { name: "Productos" }))).toBe(true);
   });

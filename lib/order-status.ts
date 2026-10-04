@@ -10,6 +10,7 @@ const labels: Record<OrderStatus, string> = {
   canceled_by_buyer: "Cancelado por comprador",
   canceled_by_seller: "Cancelado por vendedor",
   canceled_by_admin: "Cancelado por administración",
+  expired: "Vencido",
 };
 
 /**

@@ -26,14 +26,21 @@ function facts(overrides: Partial<SellerOrderFacts> = {}): SellerOrderFacts {
     payment_completed_at: null,
     ship_by_at: null,
     delivered_at: null,
+    decide_by_at: null,
     handling_time_zone: ZONE,
     ...overrides,
   };
 }
 
 describe("sellerOrderStep", () => {
-  it("leaves a purchase request to the seller, with no deadline the system never set", () => {
-    expect(sellerOrderStep(facts())).toEqual({ kind: "decide", owner: "seller", dueAt: null });
+  it("leaves a purchase request to the seller until it expires", () => {
+    const decideBy = hoursFromNow(50);
+
+    expect(sellerOrderStep(facts({ decide_by_at: decideBy }))).toEqual({ kind: "decide", owner: "seller", dueAt: decideBy });
+  });
+
+  it("closes an expired request", () => {
+    expect(sellerOrderStep(facts({ status: "expired" }))).toEqual({ kind: "closed", owner: "nobody", dueAt: null });
   });
 
   it("asks for payment confirmation first, while the ship-by promise keeps running", () => {
@@ -95,12 +102,30 @@ describe("deadlines", () => {
 });
 
 describe("sellerOrderGuidance", () => {
-  it("tells the seller a request waits on their decision, without inventing a deadline", () => {
-    const guidance = sellerOrderGuidance(facts(), NOW);
+  it("tells the seller a request waits on their decision until its deadline", () => {
+    const guidance = sellerOrderGuidance(facts({ decide_by_at: hoursFromNow(10) }), NOW);
 
     expect(guidance.title).toBe("El comprador espera tu decisión");
-    expect(guidance.detail).toContain("sigue pendiente hasta que decidas");
-    expect(guidance.deadline).toBeNull();
+    expect(guidance.detail).toContain("la solicitud vence y las unidades vuelven a tu catálogo");
+    expect(guidance.deadline).toMatchObject({ dateTime: hoursFromNow(10), urgency: "due_soon" });
+    expect(guidance.deadline?.label).toMatch(/^Responde antes del /);
+  });
+
+  it("says when the time to answer a request has run out", () => {
+    const guidance = sellerOrderGuidance(facts({ decide_by_at: hoursFromNow(-1) }), NOW);
+
+    expect(guidance.deadline).toMatchObject({ urgency: "overdue" });
+    expect(guidance.deadline?.label).toMatch(/^El plazo para responder venció: /);
+  });
+
+  it("tells the seller an expired request gave its units back", () => {
+    const guidance = sellerOrderGuidance(facts({ status: "expired" }), NOW);
+
+    expect(guidance).toEqual({
+      title: "Pedido cerrado",
+      detail: "La solicitud venció sin respuesta. Las unidades volvieron a tu catálogo.",
+      deadline: null,
+    });
   });
 
   it("explains that payment is agreed outside the plaza and must be confirmed first", () => {
@@ -171,11 +196,20 @@ describe("sellerOrderGuidance", () => {
 });
 
 describe("buyerOrderGuidance", () => {
-  it("tells the buyer the shop is deciding, without a deadline it never set", () => {
-    const guidance = buyerOrderGuidance(facts(), NOW);
+  it("tells the buyer how long the shop has to decide", () => {
+    const guidance = buyerOrderGuidance(facts({ decide_by_at: hoursFromNow(50) }), NOW);
 
-    expect(guidance).toMatchObject({ label: "Esperando a la tienda", title: "La tienda está revisando tu solicitud", deadline: null });
-    expect(guidance.detail).toContain("no tiene un plazo fijo");
+    expect(guidance).toMatchObject({ label: "Esperando a la tienda", title: "La tienda está revisando tu solicitud" });
+    expect(guidance.detail).toContain("la solicitud vence sola");
+    expect(guidance.deadline).toMatchObject({ dateTime: hoursFromNow(50), urgency: "none" });
+    expect(guidance.deadline?.label).toMatch(/^La tienda tiene hasta el .* para responder$/);
+  });
+
+  it("tells the buyer the shop did not answer in time", () => {
+    const guidance = buyerOrderGuidance(facts({ status: "expired" }), NOW);
+
+    expect(guidance).toMatchObject({ label: "Vencido", title: "La tienda no respondió a tiempo", deadline: null });
+    expect(guidance.detail).toBe("Puedes volver a solicitarlo o escribirle a la tienda.");
   });
 
   it("explains that payment is agreed with the shop, outside the plaza, and names the shop's promise", () => {
@@ -239,6 +273,27 @@ describe("buyerOrderGuidance", () => {
 
 describe("groupSellerOrders", () => {
   const base = { subtotal: 100, currency_code: "MXN", shop: { id: 1, name: "Casa Niebla", slug: "casa-niebla" } };
+
+  it("puts a request about to expire ahead of one with time left", () => {
+    const orders = [
+      { ...base, ...facts({ decide_by_at: hoursFromNow(60) }), id: 6, created_at: "2026-09-14T00:00:00.000Z" },
+      { ...base, ...facts({ decide_by_at: hoursFromNow(5) }), id: 7, created_at: "2026-09-15T00:00:00.000Z" },
+    ];
+
+    const [seller] = groupSellerOrders(orders, NOW);
+
+    expect(seller.orders.map((order) => order.id)).toEqual([7, 6]);
+    expect(seller.orders[0]).toMatchObject({ urgency: "due_soon" });
+  });
+
+  it("files an expired request with the history", () => {
+    const groups = groupSellerOrders([{ ...base, ...facts({ status: "expired" }), id: 8, created_at: "2026-09-01T00:00:00.000Z" }], NOW);
+
+    expect(groups.map((group) => [group.id, group.orders.map((order) => order.id)])).toEqual([
+      ["seller", []],
+      ["closed", [8]],
+    ]);
+  });
 
   it("splits orders into the seller's turn, the buyer's turn and history", () => {
     const orders = [

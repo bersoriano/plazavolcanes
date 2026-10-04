@@ -78,6 +78,7 @@ function order(overrides: Partial<DashboardOrder> = {}): DashboardOrder {
     payment_completed_at: null,
     fulfillment_method: "pickup",
     handling_time_zone: "America/Mexico_City",
+    decide_by_at: null,
     item_names: ["Taza Ceniza"],
     ...overrides,
   };
@@ -464,6 +465,33 @@ describe("attentionTiming", () => {
       deadline: null,
       urgencyLabel: null,
     });
+  });
+
+  it("counts down a request's time to answer and says when it ran out", () => {
+    const timing = (decideBy: string) => attentionTiming(only({ openOrders: { ok: true, value: [order({ decide_by_at: decideBy })] } }), NOW);
+
+    expect(timing(hoursAgo(-10))).toEqual({ waiting: "Recibida hace 5 h", deadline: "Responde en las próximas 10 h", urgencyLabel: "Vence pronto" });
+    expect(timing(hoursAgo(-60)).deadline).toMatch(/^Responde antes del /);
+    expect(timing(hoursAgo(-60)).urgencyLabel).toBeNull();
+    expect(timing(hoursAgo(1))).toEqual({ waiting: "Recibida hace 5 h", deadline: "El plazo para responder ya pasó", urgencyLabel: "Plazo vencido" });
+  });
+
+  it("puts the request closest to expiring first and says so on the next step", () => {
+    const dashboard = buildSellerDashboard(
+      input({
+        shops: [shop()],
+        openOrders: {
+          ok: true,
+          value: [
+            order({ id: 51, created_at: hoursAgo(8), decide_by_at: hoursAgo(-60) }),
+            order({ id: 52, created_at: hoursAgo(2), decide_by_at: hoursAgo(-5) }),
+          ],
+        },
+      }),
+    );
+
+    expect(dashboard.attention.map((item) => item.href)).toEqual(["/panel/pedidos/52", "/panel/pedidos/51"]);
+    expect(dashboard.primary.detail).toContain("Vence en las próximas 5 h.");
   });
 
   it("counts down an order thread's reply window and says when it ran out", () => {
