@@ -27,9 +27,9 @@ overriding system value
 values
   (800, 900, 'Taza de barro', 'Descripción completa de la taza de barro artesanal.', 250, 'published', 'tienda/taza.jpg', 3,
     (select id from public.categories where slug = 'celulares-y-accesorios')),
-  (801, 900, 'Plato de barro', 'Descripción completa del plato de barro artesanal.', 400, 'published', null, 2,
+  (801, 900, 'Plato de barro', 'Descripción completa del plato de barro artesanal.', 400, 'published', 'tienda/plato.jpg', 2,
     (select id from public.categories where slug = 'celulares-y-accesorios')),
-  (802, 901, 'Jarra ajena', 'Descripción completa de la jarra de la otra tienda.', 150, 'published', null, 1,
+  (802, 901, 'Jarra ajena', 'Descripción completa de la jarra de la otra tienda.', 150, 'published', 'otra/jarra.jpg', 1,
     (select id from public.categories where slug = 'celulares-y-accesorios')),
   (803, 900, 'Borrador privado', 'Descripción completa del borrador que nadie puede ver.', 90, 'draft', null, 1, null);
 
