@@ -81,7 +81,7 @@ export default async function SellerOrderDetailPage({ params }: { params: Promis
           />
         </div>
         <p className="mt-5 text-xs leading-5 text-muted">
-          Aún no enviamos avisos por correo ni notificaciones: el comprador ve cada cambio al abrir su compra. Si necesitas avisarle algo, escríbele en la conversación.
+          Al comprador no le enviamos avisos por correo: ve cada cambio al abrir su compra. Si necesitas avisarle algo, escríbele en la conversación.
         </p>
       </section>
 

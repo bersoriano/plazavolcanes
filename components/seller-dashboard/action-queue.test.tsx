@@ -169,9 +169,10 @@ describe("ActionQueue", () => {
     expect(within(queue).getByRole("status")).toHaveTextContent("No pudimos revisar los plazos de respuesta");
   });
 
-  it("is honest that nothing is pushed to the seller", () => {
+  it("says new requests and messages also arrive by email, and where to stop them", () => {
     const queue = renderQueue();
 
-    expect(within(queue).getByText(/Aún no enviamos avisos por correo ni notificaciones/)).toBeInTheDocument();
+    expect(within(queue).getByText(/Te avisamos por correo de solicitudes y mensajes nuevos/)).toBeInTheDocument();
+    expect(within(queue).getByRole("link", { name: "ajustes de avisos" })).toHaveAttribute("href", "/panel/cuenta");
   });
 });

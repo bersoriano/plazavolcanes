@@ -2,8 +2,10 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 import { DisplayNameForm } from "@/components/account/display-name-form";
+import { EmailNotificationsForm } from "@/components/account/email-notifications-form";
 import { PhoneForm } from "@/components/account/phone-form";
 import { updateDisplayName, updatePhone } from "@/lib/actions/auth";
+import { updateEmailNotifications } from "@/lib/actions/notifications";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -22,6 +24,12 @@ export default async function AccountPage() {
     .eq("user_id", userId ?? "")
     .maybeSingle();
   const { data: displayName } = await supabase.rpc("my_display_name");
+  // No row means the seller never changed it, and emails start switched on.
+  const { data: preferences } = await supabase
+    .from("notification_preferences")
+    .select("email_enabled")
+    .eq("user_id", userId ?? "")
+    .maybeSingle();
 
   return (
     <section className="mx-auto max-w-2xl px-5 py-10 sm:px-8 sm:py-14">
@@ -39,6 +47,10 @@ export default async function AccountPage() {
 
         <div className="mt-8 border-t border-line pt-8">
           <PhoneForm action={updatePhone} phone={contactDetails?.phone ?? null} />
+        </div>
+
+        <div className="mt-8 border-t border-line pt-8">
+          <EmailNotificationsForm action={updateEmailNotifications} email={email} enabled={preferences?.email_enabled ?? true} />
         </div>
       </div>
     </section>

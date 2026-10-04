@@ -595,6 +595,12 @@ export type Database = {
         Update: { user_id?: string; last_seen_at?: string };
         Relationships: [];
       };
+      notification_preferences: {
+        Row: { user_id: string; email_enabled: boolean; updated_at: string };
+        Insert: { user_id: string; email_enabled?: boolean; updated_at?: string };
+        Update: { user_id?: string; email_enabled?: boolean; updated_at?: string };
+        Relationships: [];
+      };
       user_contact_details: {
         Row: {
           created_at: string;

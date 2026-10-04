@@ -99,6 +99,7 @@ describe("SellerOrdersPage", () => {
     render(await SellerOrdersPage());
 
     expect(screen.getByRole("heading", { name: "Aún no recibes pedidos" })).toBeInTheDocument();
+    expect(screen.getByText(/te avisaremos por correo/)).toBeInTheDocument();
     expect(screen.queryByRole("region", { name: /Te toca actuar/ })).not.toBeInTheDocument();
   });
 
