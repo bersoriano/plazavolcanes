@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Import } from "lucide-react";
 
+import { pageContainer } from "@/components/layout/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { completeImportRequest } from "@/lib/actions/listing-import";
 import { formatDate } from "@/lib/format";
@@ -15,7 +16,7 @@ export default async function AdminImportsPage() {
   const requests = await getAdminImportRequests();
 
   return (
-    <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
+    <section className={`${pageContainer} py-10 sm:py-14`}>
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Administración</p>
       <h1 className="mt-2 font-display text-4xl font-semibold">Importaciones</h1>
       {requests.length ? (
