@@ -25,11 +25,37 @@ function product(overrides: Partial<Parameters<typeof ProductRow>[0]["product"]>
     is_admin_enabled: true,
     is_publishing_approved: true,
     publishing_reviewed_at: "2026-08-29T00:00:00.000Z",
+    units_available: 3 as number | null,
     ...overrides,
   };
 }
 
 describe("ProductRow", () => {
+  it("shows how many units are left, since orders now change the count", () => {
+    render(<ProductRow product={product({ units_available: 3 })} />);
+
+    expect(screen.getByText("3 unidades")).toBeInTheDocument();
+  });
+
+  it("names a single unit in the singular", () => {
+    render(<ProductRow product={product({ units_available: 1 })} />);
+
+    expect(screen.getByText("1 unidad")).toBeInTheDocument();
+  });
+
+  it("marks a listing whose last unit was ordered", () => {
+    render(<ProductRow product={product({ units_available: 0 })} />);
+
+    expect(screen.getByText("Agotado")).toBeInTheDocument();
+  });
+
+  it("says nothing about units a draft has not counted yet", () => {
+    render(<ProductRow product={product({ status: "draft", expires_at: null, units_available: null })} />);
+
+    expect(screen.queryByText(/unidad/)).not.toBeInTheDocument();
+    expect(screen.queryByText("Agotado")).not.toBeInTheDocument();
+  });
+
   it("says a draft has no price rather than pricing it at zero", () => {
     render(<ProductRow product={product({ price_mxn: null, status: "draft", expires_at: null })} />);
 

@@ -42,7 +42,7 @@ export default async function ShopCatalogPage({
   const supabase = await createServerSupabaseClient();
   const { data: products } = await supabase
     .from("products")
-    .select("id, name, price_mxn, image_path, status, expires_at, is_admin_enabled")
+    .select("id, name, price_mxn, image_path, status, expires_at, is_admin_enabled, units_available")
     .eq("shop_id", shopId)
     .neq("status", "deleted")
     .order("created_at", { ascending: false });
