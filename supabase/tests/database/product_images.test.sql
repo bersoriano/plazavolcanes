@@ -27,7 +27,9 @@ where slug = 'galeria';
 
 insert into public.products (shop_id, name, description, price_mxn, status, category_id, image_path) values
   ((select id from public.shops where slug='galeria'), 'Con imagen previa', 'Descripción completa del producto con imagen.', 100, 'published', (select id from public.categories where slug='celulares-y-accesorios'), 'owner/products/vieja.jpg'),
-  ((select id from public.shops where slug='galeria'), 'Borrador con galería', 'Descripción completa del borrador con galería.', 200, 'draft', null, null);
+  ((select id from public.shops where slug='galeria'), 'Borrador con galería', 'Descripción completa del borrador con galería.', 200, 'draft', null, null),
+  -- Everything a publication needs except a cover, so the cover is what refuses it.
+  ((select id from public.shops where slug='galeria'), 'Borrador sin portada', 'Descripción completa del borrador sin portada.', 150, 'draft', (select id from public.categories where slug='celulares-y-accesorios'), null);
 
 insert into public.product_images (product_id, storage_path, position) values
   ((select id from public.products where name='Con imagen previa'), 'owner/products/publicada.jpg', 0);
@@ -84,7 +86,7 @@ select results_eq(
 );
 
 select throws_ok(
-  $$update public.products set status = 'published' where name = 'Borrador con galería'$$,
+  $$update public.products set status = 'published' where name = 'Borrador sin portada'$$,
   'P0001',
   'Agrega una imagen de portada antes de publicar.',
   'a draft without a gallery cover cannot be published'
