@@ -205,7 +205,7 @@ function OrderRow({ order, now }: { order: SellerOrderEntry<SellerOrderRow>; now
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-lg font-semibold text-ink">{describeOrderItems(order.items)}</p>
+        <p className="line-clamp-2 text-lg font-semibold leading-snug text-ink">{describeOrderItems(order.items)}</p>
         <p className="mt-0.5 text-sm font-semibold text-brand">
           Pedido #{order.id} · {order.shop.name}
         </p>
