@@ -5,7 +5,6 @@ import {
   MAX_HANDLING_DAYS,
   MAX_UNITS,
   MIN_HANDLING_DAYS,
-  MIN_UNITS,
   NAME_MAX_LENGTH,
   NAME_MIN_LENGTH,
   DESCRIPTION_MAX_LENGTH,
@@ -73,7 +72,8 @@ const productFields = {
     z.coerce
       .number()
       .int("Escribe un número entero de unidades.")
-      .min(MIN_UNITS, `Publica al menos ${MIN_UNITS} unidad.`)
+      // Zero is a listing that sold out; publishing still asks for a unit.
+      .min(0, "Escribe 0 si se agotó; no puede ser negativo.")
       .max(MAX_UNITS, `El máximo es ${MAX_UNITS} unidades.`)
       .nullable(),
   ),

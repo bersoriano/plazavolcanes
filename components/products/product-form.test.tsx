@@ -349,8 +349,9 @@ describe("ProductForm units available", () => {
     const units = screen.getByLabelText("Unidades disponibles");
 
     expect(units).toHaveValue(1);
-    expect(units).toHaveAttribute("min", "1");
-    expect(units).toHaveAttribute("max", "10");
+    expect(units).toHaveAttribute("min", "0");
+    expect(units).toHaveAttribute("max", "999");
+    expect(units).toHaveAccessibleDescription("Cada pedido descuenta sus unidades. Escribe 0 si se agotó.");
     // Suggested, not demanded: a draft may be saved before the seller has
     // counted what they have. The checklist and the server gate publication.
     expect(units).not.toBeRequired();

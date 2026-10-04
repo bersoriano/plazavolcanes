@@ -17,6 +17,7 @@ import { rejectionMessage } from "@/lib/media/validation";
 import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import {
   listingQualityTips,
+  MAX_UNITS,
   missingForPublication,
   type ListingReadinessInput,
 } from "@/lib/listing-readiness";
@@ -347,7 +348,7 @@ export function ProductForm({
       </div>
       <Field defaultValue={state.values?.price_mxn ?? product?.price_mxn ?? undefined} error={state.errors?.price_mxn?.[0]} inputMode="decimal" label="Precio en MXN" min="0" name="price_mxn" placeholder="349.00" step="0.01" type="number" />
       <Field defaultValue={state.values?.handling_days ?? (product ? (product.handling_days ?? undefined) : 3)} error={state.errors?.handling_days?.[0]} inputMode="numeric" label="Tiempo de preparación (días hábiles)" max="30" min="1" name="handling_days" type="number" />
-      <Field defaultValue={state.values?.units_available ?? (product ? (product.units_available ?? undefined) : 1)} error={state.errors?.units_available?.[0]} inputMode="numeric" label="Unidades disponibles" max="10" min="1" name="units_available" type="number" />
+      <Field defaultValue={state.values?.units_available ?? (product ? (product.units_available ?? undefined) : 1)} error={state.errors?.units_available?.[0]} inputMode="numeric" hint="Cada pedido descuenta sus unidades. Escribe 0 si se agotó." label="Unidades disponibles" max={MAX_UNITS} min="0" name="units_available" type="number" />
 
       <fieldset className="space-y-3" id="condition">
         <legend className="text-sm font-semibold text-ink">Condición</legend>
