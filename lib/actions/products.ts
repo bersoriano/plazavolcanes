@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/lib/action-state";
-import { hasListingCapacity } from "@/lib/listing-limits";
+import { isListingLimitDatabaseError, isPublishableCategory, shopHasListingCapacity } from "@/lib/listing-publication.server";
+import { listingPublishBlocker } from "@/lib/listing-reactivation";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
@@ -15,7 +16,7 @@ import {
 import { deleteObjects } from "@/lib/media/store";
 import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import { productCreationSchema, productSchema, productStatusSchema } from "@/lib/validation/product";
-import { MIN_UNITS, missingForPublication } from "@/lib/listing-readiness";
+import { missingForPublication } from "@/lib/listing-readiness";
 import { buildSiteUrl } from "@/lib/site-url";
 import { uniqueProductSlug } from "@/lib/slug";
 
@@ -70,52 +71,6 @@ async function getAuthenticatedContext() {
   const { data } = await supabase.auth.getClaims();
   const userId = typeof data?.claims?.sub === "string" ? data.claims.sub : null;
   return userId ? { supabase, userId } : null;
-}
-
-async function isPublishableCategory(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  categoryId: number | null,
-) {
-  if (categoryId === null) return false;
-
-  const { data: leaf, error: leafError } = await supabase
-    .from("categories")
-    .select("parent_id")
-    .eq("id", categoryId)
-    .eq("listing_type", "product")
-    .eq("is_active", true)
-    .maybeSingle();
-  if (leafError) throw new Error("No pudimos validar la subcategoría.");
-  if (!leaf?.parent_id) return false;
-
-  const { data: root, error: rootError } = await supabase
-    .from("categories")
-    .select("id")
-    .eq("id", leaf.parent_id)
-    .is("parent_id", null)
-    .eq("listing_type", "product")
-    .eq("is_active", true)
-    .maybeSingle();
-  if (rootError) throw new Error("No pudimos validar la subcategoría.");
-  return Boolean(root);
-}
-
-async function shopHasListingCapacity(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  shopId: number,
-  listingLimit: number,
-) {
-  const { count, error } = await supabase
-    .from("products")
-    .select("id", { count: "exact", head: true })
-    .eq("shop_id", shopId)
-    .eq("status", "published");
-  if (error) throw new Error("No pudimos consultar las publicaciones activas.");
-  return hasListingCapacity(count ?? 0, listingLimit);
-}
-
-function isListingLimitDatabaseError(error: { message?: string } | null) {
-  return error?.message?.includes("Límite de publicaciones alcanzado") ?? false;
 }
 
 async function nextProductSlug(
@@ -335,10 +290,14 @@ export async function setProductStatus(
   const { data: shop, error: shopError } = await supabase.from("shops").select("slug, listing_limit, is_publishing_approved").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
   if (shopError) throw new Error("No pudimos consultar la tienda.");
   if (!shop) redirect("/panel");
-  if (parsedStatus.data === "published" && product.status !== "published" && !product.image_path) return coverImageRequiredError;
-  // A sold-out listing may stay up while it is live, but bringing one back
-  // would spend a listing slot on something nobody can order.
-  if (parsedStatus.data === "published" && (product.units_available ?? 0) < MIN_UNITS) return unitsRequiredError;
+  if (parsedStatus.data === "published") {
+    // The same rule "Reactivar todos" applies: a cover on the way into
+    // "published", and a unit to sell, since a sold-out listing brought back
+    // would spend a slot on something nobody can order.
+    const blocker = listingPublishBlocker(product, { alreadyPublished: product.status === "published" });
+    if (blocker === "cover") return coverImageRequiredError;
+    if (blocker === "units") return unitsRequiredError;
+  }
   if (parsedStatus.data === "published" && !(await isPublishableCategory(supabase, product.category_id))) {
     redirect(`/panel/productos/${productId}/editar?categoria=requerida=1`);
   }
