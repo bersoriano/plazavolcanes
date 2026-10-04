@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { CatalogToolbar } from "@/components/products/catalog-toolbar";
 import { ProductRow } from "@/components/products/product-row";
+import { ReactivateExpiredButton } from "@/components/products/reactivate-expired-button";
 import { ShopWorkspaceHeader } from "@/components/shops/shop-workspace-header";
 import { ListingImportCard } from "@/components/shops/listing-import-card";
 import { ShopAnalyticsCard } from "@/components/shops/shop-analytics-card";
@@ -82,6 +83,11 @@ export default async function ShopCatalogPage({
       <section aria-labelledby="catalogo-title" className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
         <h2 className="sr-only" id="catalogo-title">Productos</h2>
         <CatalogToolbar counts={counts} search={search} shopId={shopId} tab={tab} />
+
+        <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line py-4">
+          <p className="max-w-md text-xs leading-5 text-muted">Las unidades son las disponibles ahora; los pedidos ya hechos conservan las suyas.</p>
+          <ReactivateExpiredButton count={counts.vencidos} shopId={shopId} />
+        </div>
 
         {visible.length ? (
           <ul className="divide-y divide-line">

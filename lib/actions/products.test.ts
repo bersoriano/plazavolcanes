@@ -307,29 +307,32 @@ describe("setProductStatus", () => {
     },
   );
 
-  it("keeps a legacy published listing renewable when it has no gallery cover", () => {
+  it("asks a lapsed listing without a cover for one, since renewing it is a new publication", () => {
     return withProduct({ image_path: null, status: "published", expires_at: "2020-01-01T00:00:00.000Z" }, async () => {
-      await setProductStatus(22, "published");
+      const state = await setProductStatus(22, "published");
 
-      expect(mocks.update).toHaveBeenCalledWith(
-        expect.objectContaining({ status: "published", expires_at: null }),
-      );
+      expect(state).toMatchObject({ status: "error", message: "Agrega una imagen de portada antes de publicar." });
+      expect(mocks.update).not.toHaveBeenCalled();
     });
   });
 
   it("clears a lapsed window when a listing is brought back", () => {
     // A row keeps status "published" until the hourly sweep files it as
     // expired, so for up to an hour the seller sees "Vencido" on a row the
-    // column still calls published. Writing the same status back would leave
-    // the stale date in place and the trigger would grant no new window, so
-    // the listing would come back already expired. Nulling the date is what
-    // asks the trigger for a fresh 30 days, exactly as reactivating a row the
-    // sweep already touched does.
+    // column still calls published. Sellers may not write the date themselves
+    // (guard_product_administration_enablement), so the row is filed as
+    // expired first and then published, which is the change set_product_expiry
+    // answers with a fresh 30 days — the same path the sweep's rows take.
     return withProduct({ status: "published", expires_at: "2020-01-01T00:00:00.000Z" }, async () => {
       await setProductStatus(22, "published");
 
+      expect(mocks.update).toHaveBeenNthCalledWith(1, expect.objectContaining({ status: "expired" }));
+      expect(mocks.update).toHaveBeenNthCalledWith(2, expect.objectContaining({ status: "published" }));
+      for (const [payload] of mocks.update.mock.calls) {
+        expect(payload).not.toHaveProperty("expires_at");
+      }
       expect(mocks.update).toHaveBeenCalledWith(
-        expect.objectContaining({ status: "published", expires_at: null }),
+        expect.objectContaining({ status: "published" }),
       );
     });
   });

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { OrderActions } from "@/components/orders/order-actions";
@@ -46,6 +46,25 @@ describe("OrderActions payment evidence", () => {
 
     expect(busy).toBeDisabled();
     expect(slow).toHaveBeenCalledTimes(1);
+  });
+
+  it("asks before rejecting a request, and only the confirmation sends it", async () => {
+    const reject = vi.fn(async () => ({ status: "success" as const, message: "Estado actualizado." }));
+    render(<OrderActions actions={{ accept: action, reject }} role="seller" status="requested" />);
+
+    const confirm = screen.getByRole("button", { name: "Sí, rechazar" });
+    const fold = confirm.closest("details");
+    expect(fold).not.toBeNull();
+    expect(fold).not.toHaveAttribute("open");
+    expect(fold?.querySelector("summary")).toHaveTextContent("Rechazar");
+    expect(screen.getByText("¿Rechazar esta solicitud? El comprador verá que la rechazaste y las unidades vuelven a tu catálogo.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Rechazar" })).not.toBeInTheDocument();
+
+    fireEvent.click(confirm);
+    // Asserted on the call, not the reply: the earlier test leaves an action
+    // pending forever, and React holds every action's state update until all
+    // pending ones settle.
+    await waitFor(() => expect(reject).toHaveBeenCalledTimes(1));
   });
 
   it("lets buyers cancel requested or accepted unpaid orders", () => {

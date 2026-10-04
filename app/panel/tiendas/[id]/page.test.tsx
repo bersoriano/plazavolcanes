@@ -14,6 +14,7 @@ vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: vi.fn() })
 vi.mock("@/lib/queries/shops.server", () => ({ getOwnedShop: vi.fn() }));
 vi.mock("@/lib/queries/trust.server", () => ({ getShopTrustDashboard: vi.fn().mockResolvedValue(null) }));
 vi.mock("@/lib/actions/products", () => ({ deleteProduct: vi.fn(), setProductStatus: vi.fn() }));
+vi.mock("@/lib/actions/catalog", () => ({ setProductUnits: vi.fn(), reactivateExpiredListings: vi.fn() }));
 
 afterEach(cleanup);
 
@@ -172,5 +173,27 @@ describe("confianza", () => {
     render(await renderCatalog());
 
     expect(screen.queryByText("Confianza")).not.toBeInTheDocument();
+  });
+});
+
+describe("catalogue upkeep", () => {
+  it("offers to bring every expired listing back at once", async () => {
+    render(await renderCatalog());
+
+    expect(screen.getByRole("button", { name: "Reactivar todos (1)" })).toBeInTheDocument();
+  });
+
+  it("offers nothing to reactivate when no listing expired", async () => {
+    mockCatalogue([CATALOGUE[0], CATALOGUE[1]]);
+
+    render(await renderCatalog());
+
+    expect(screen.queryByRole("button", { name: /Reactivar todos/ })).not.toBeInTheDocument();
+  });
+
+  it("says what the units on each row mean", async () => {
+    render(await renderCatalog());
+
+    expect(screen.getByText("Las unidades son las disponibles ahora; los pedidos ya hechos conservan las suyas.")).toBeInTheDocument();
   });
 });

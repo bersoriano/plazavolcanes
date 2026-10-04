@@ -6,6 +6,7 @@ import { ProductRow } from "@/components/products/product-row";
 const { setProductStatus } = vi.hoisted(() => ({ setProductStatus: vi.fn() }));
 
 vi.mock("@/lib/actions/products", () => ({ deleteProduct: vi.fn(), setProductStatus }));
+vi.mock("@/lib/actions/catalog", () => ({ setProductUnits: vi.fn() }));
 
 afterEach(cleanup);
 
@@ -31,28 +32,27 @@ function product(overrides: Partial<Parameters<typeof ProductRow>[0]["product"]>
 }
 
 describe("ProductRow", () => {
-  it("shows how many units are left, since orders now change the count", () => {
+  it("lets the seller change the units left right on the row", () => {
     render(<ProductRow product={product({ units_available: 3 })} />);
 
-    expect(screen.getByText("3 unidades")).toBeInTheDocument();
-  });
-
-  it("names a single unit in the singular", () => {
-    render(<ProductRow product={product({ units_available: 1 })} />);
-
-    expect(screen.getByText("1 unidad")).toBeInTheDocument();
+    const field = screen.getByRole("spinbutton", { name: "Unidades de Taza de barro" });
+    expect(field).toHaveValue(3);
+    expect(field).toHaveAttribute("min", "0");
+    expect(field).toHaveAttribute("max", "999");
+    expect(screen.getByRole("button", { name: "Guardar unidades de Taza de barro" })).toBeInTheDocument();
   });
 
   it("marks a listing whose last unit was ordered", () => {
     render(<ProductRow product={product({ units_available: 0 })} />);
 
     expect(screen.getByText("Agotado")).toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: "Unidades de Taza de barro" })).toHaveValue(0);
   });
 
-  it("says nothing about units a draft has not counted yet", () => {
+  it("leaves the field empty for a draft that has not counted its units", () => {
     render(<ProductRow product={product({ status: "draft", expires_at: null, units_available: null })} />);
 
-    expect(screen.queryByText(/unidad/)).not.toBeInTheDocument();
+    expect(screen.getByRole("spinbutton", { name: "Unidades de Taza de barro" })).toHaveValue(null);
     expect(screen.queryByText("Agotado")).not.toBeInTheDocument();
   });
 
