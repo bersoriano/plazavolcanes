@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, PackageOpen, RotateCw } from "lucide-react";
+import { ArrowLeft, ChevronRight, ImageIcon, PackageOpen, RotateCw, SearchX } from "lucide-react";
 
+import { SellerOrdersToolbar } from "@/components/orders/seller-orders-toolbar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { formatOrderStatus } from "@/lib/order-status";
@@ -12,7 +13,16 @@ import {
   URGENCY_LABELS,
   type SellerOrderEntry,
   type SellerOrderGroup,
+  type SellerOrderGroupId,
 } from "@/lib/seller-action-queue";
+import {
+  CLOSED_PAGE_SIZE,
+  describeOrderItems,
+  parseSellerOrdersFilter,
+  sellerOrdersHref,
+  type OrderTab,
+  type SellerOrdersFilter,
+} from "@/lib/seller-orders-filter";
 
 const URGENCY_STYLES = {
   overdue: "bg-sale/15 text-sale",
@@ -20,12 +30,23 @@ const URGENCY_STYLES = {
   none: "",
 } as const;
 
+const GROUP_TABS: Record<SellerOrderGroupId, OrderTab> = {
+  seller: "actuar",
+  buyer: "comprador",
+  closed: "cerrados",
+};
+
 function orderCount(count: number) {
   return `${count} ${count === 1 ? "pedido" : "pedidos"}`;
 }
 
-export default async function SellerOrdersPage() {
-  const result = await getSellerOrderQueue();
+export default async function SellerOrdersPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+} = {}) {
+  const filter = parseSellerOrdersFilter((await searchParams) ?? {});
+  const result = await getSellerOrderQueue({ filter });
   if (!result) return null;
 
   return (
@@ -46,13 +67,10 @@ export default async function SellerOrdersPage() {
             Reintentar
           </Link>
         </div>
-      ) : result.orders.length ? (
+      ) : result.counts.todos > 0 || filter.search !== "" || filter.shopId !== null ? (
         <>
-          <div className="mt-8 space-y-8">
-            {groupSellerOrders(result.orders, result.now).map((group) => (
-              <OrderGroup group={group} key={group.id} now={result.now} />
-            ))}
-          </div>
+          <SellerOrdersToolbar counts={result.counts} filter={filter} shops={result.shops} />
+          <OrderGroups filter={filter} result={result} />
           <p className="mt-8 text-xs leading-5 text-muted">
             Te avisamos por correo de cada solicitud nueva; también aparecen aquí y en tu panel.
           </p>
@@ -70,14 +88,77 @@ export default async function SellerOrdersPage() {
   );
 }
 
-function OrderGroup({ group, now }: { group: SellerOrderGroup<SellerOrderRow>; now: Date }) {
+type ReadyQueue = Extract<Awaited<ReturnType<typeof getSellerOrderQueue>>, { status: "ready" }>;
+
+/**
+ * The groups the current tab shows. A search or shop that matched nothing,
+ * and a tab with nothing in it, both say so and offer the way back; neither
+ * is mistaken for a seller who has never had an order.
+ */
+function OrderGroups({ result, filter }: { result: ReadyQueue; filter: SellerOrdersFilter }) {
+  const narrowed = filter.search !== "" || filter.shopId !== null;
+  const groups = groupSellerOrders(result.orders, result.now).filter(
+    (group) => filter.tab === "todos" || GROUP_TABS[group.id] === filter.tab,
+  );
+
+  if ((narrowed && result.orders.length === 0) || groups.length === 0) {
+    return (
+      <div className="mt-8">
+        <EmptyState
+          action={
+            <Link
+              className="tap inline-flex items-center font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
+              href="/panel/pedidos"
+            >
+              Ver todos los pedidos
+            </Link>
+          }
+          description="Prueba con otro número de pedido, otro producto u otra pestaña."
+          icon={<SearchX aria-hidden="true" className="size-7" />}
+          title="Ningún pedido coincide"
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-8 space-y-8">
+      {groups.map((group) => (
+        <OrderGroup
+          // History arrives a page at a time, so its heading counts every closed order.
+          count={group.id === "closed" ? result.counts.cerrados : group.orders.length}
+          group={group}
+          key={group.id}
+          moreHref={
+            group.id === "closed" && result.hasMoreClosed
+              ? sellerOrdersHref({ ...filter, closedLimit: filter.closedLimit + CLOSED_PAGE_SIZE })
+              : null
+          }
+          now={result.now}
+        />
+      ))}
+    </div>
+  );
+}
+
+function OrderGroup({
+  group,
+  now,
+  count,
+  moreHref,
+}: {
+  group: SellerOrderGroup<SellerOrderRow>;
+  now: Date;
+  count: number;
+  moreHref: string | null;
+}) {
   const titleId = `orders-${group.id}`;
   return (
     <section aria-labelledby={titleId}>
       <h2 className="flex flex-wrap items-center gap-2 font-display text-2xl font-semibold" id={titleId}>
         {group.title}
         <span className="sr-only">,</span>{" "}
-        <span className="rounded-full bg-accent px-3 py-0.5 font-sans text-sm text-brand">{orderCount(group.orders.length)}</span>
+        <span className="rounded-full bg-accent px-3 py-0.5 font-sans text-sm text-brand">{orderCount(count)}</span>
       </h2>
       {group.orders.length ? (
         <ul className="mt-4 space-y-4">
@@ -90,6 +171,14 @@ function OrderGroup({ group, now }: { group: SellerOrderGroup<SellerOrderRow>; n
       ) : (
         <p className="mt-3 text-sm text-muted">Nada pendiente por ahora.</p>
       )}
+      {moreHref ? (
+        <Link
+          className="tap mt-4 inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-5 text-sm font-semibold text-brand hover:border-brand"
+          href={moreHref}
+        >
+          Ver más pedidos cerrados
+        </Link>
+      ) : null}
     </section>
   );
 }
@@ -103,13 +192,24 @@ function OrderRow({ order, now }: { order: SellerOrderEntry<SellerOrderRow>; now
     step.owner === "seller" ? SELLER_STEP_TITLES[step.kind] : step.owner === "buyer" ? guidance.title : formatOrderStatus(order.status, order.fulfillment_method);
   const urgencyLabel = URGENCY_LABELS[order.urgency];
 
+  const thumbnail = order.items[0]?.image_url ?? null;
+
   return (
     <Link className="group flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-surface p-5 transition-colors hover:border-brand" href={`/panel/pedidos/${order.id}`}>
+      <div className="grid size-14 shrink-0 place-items-center overflow-hidden rounded-xl bg-background text-brand/35">
+        {thumbnail ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="" className="size-full object-cover" src={thumbnail} />
+        ) : (
+          <ImageIcon aria-hidden="true" className="size-5" />
+        )}
+      </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-semibold text-brand">
+        <p className="line-clamp-2 text-lg font-semibold leading-snug text-ink">{describeOrderItems(order.items)}</p>
+        <p className="mt-0.5 text-sm font-semibold text-brand">
           Pedido #{order.id} · {order.shop.name}
         </p>
-        <p className="mt-1 text-lg font-semibold text-ink">{next}</p>
+        <p className="mt-1 font-semibold text-ink">{next}</p>
         {step.owner === "seller" && guidance.deadline ? (
           <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
             {urgencyLabel ? <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${URGENCY_STYLES[order.urgency]}`}>{urgencyLabel}</span> : null}
