@@ -22,6 +22,11 @@ export function AddToCartForm({
   unitsAvailable: number;
 }) {
   const [state, formAction] = useFormAction(action);
+  // The listing stays up after its last unit is ordered; the conversation
+  // button beside this box is how a buyer asks for more.
+  if (unitsAvailable < 1) {
+    return <div className="mt-7 rounded-2xl border border-line bg-surface px-5 py-4" role="status"><p className="font-display text-xl font-semibold text-ink">Agotado</p><p className="mt-1 text-sm text-muted">Pregúntale a la tienda si volverá a tenerlo.</p></div>;
+  }
   const remaining = unitsAvailable === 1 ? "Queda 1 unidad" : `Quedan ${unitsAvailable} unidades`;
 
   return <form action={formAction} className="mt-7 flex flex-wrap items-end gap-3"><input name="producto" type="hidden" value={productPath} /><label className="space-y-1 text-sm font-semibold text-ink">Cantidad<input className="block min-h-11 w-24 rounded-xl border border-line bg-surface px-3 py-2" defaultValue={state.values?.quantity ?? "1"} max={unitsAvailable} min="1" name="quantity" type="number" /></label><SubmitButton /><p className="text-sm font-medium text-muted">{remaining}</p>{state.message ? <p className="w-full text-sm font-medium text-sale" role="status">{state.message}</p> : null}</form>;
