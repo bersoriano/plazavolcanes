@@ -86,7 +86,7 @@ export default async function ShopCatalogPage({
 
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line py-4">
           <p className="max-w-md text-xs leading-5 text-muted">Las unidades son las disponibles ahora; los pedidos ya hechos conservan las suyas.</p>
-          {counts.vencidos > 0 ? <ReactivateExpiredButton count={counts.vencidos} shopId={shopId} /> : null}
+          <ReactivateExpiredButton count={counts.vencidos} shopId={shopId} />
         </div>
 
         {visible.length ? (
