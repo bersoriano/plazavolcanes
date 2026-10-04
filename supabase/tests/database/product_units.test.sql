@@ -2,7 +2,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(8);
+select plan(11);
 
 select has_column('public', 'products', 'units_available', 'products state how many units are available');
 
@@ -15,8 +15,8 @@ insert into public.shops (owner_id, name, slug, description, country_code, admin
 
 update public.shops set is_publishing_approved = true where slug = 'unidades';
 
-insert into public.products (shop_id, name, description, price_mxn, status, category_id, units_available) values
-  ((select id from public.shops where slug='unidades'), 'Taza limitada', 'Descripción completa de la taza limitada.', 100, 'published', (select id from public.categories where slug='celulares-y-accesorios'), 3);
+insert into public.products (shop_id, name, description, price_mxn, status, category_id, units_available, image_path) values
+  ((select id from public.shops where slug='unidades'), 'Taza limitada', 'Descripción completa de la taza limitada.', 100, 'published', (select id from public.categories where slug='celulares-y-accesorios'), 3, 'dddd4444-dddd-4ddd-8ddd-dddd44444444/taza.webp');
 
 insert into public.products (shop_id, name, description, price_mxn, status) values
   ((select id from public.shops where slug='unidades'), 'Sin unidades declaradas', 'Descripción completa del producto sin unidades.', 100, 'draft');
@@ -28,10 +28,27 @@ select results_eq(
 );
 
 select throws_ok(
-  $$insert into public.products (shop_id, name, description, price_mxn, status, units_available) values ((select id from public.shops where slug='unidades'), 'Demasiadas', 'Descripción completa del producto con exceso.', 100, 'draft', 11)$$,
+  $$insert into public.products (shop_id, name, description, price_mxn, status, units_available) values ((select id from public.shops where slug='unidades'), 'Demasiadas', 'Descripción completa del producto con exceso.', 100, 'draft', 1000)$$,
   '23514',
   null,
-  'a listing may not claim more than ten units'
+  'a listing may not claim more than 999 units'
+);
+
+select lives_ok(
+  $$insert into public.products (shop_id, name, description, price_mxn, status, units_available) values ((select id from public.shops where slug='unidades'), 'Inventario amplio', 'Descripción completa del producto con inventario.', 100, 'draft', 999)$$,
+  'a listing may claim up to 999 units'
+);
+
+select lives_ok(
+  $$insert into public.products (shop_id, name, description, price_mxn, status, units_available) values ((select id from public.shops where slug='unidades'), 'Agotado', 'Descripción completa del producto agotado.', 100, 'draft', 0)$$,
+  'a listing may say it has no units left'
+);
+
+select throws_ok(
+  $$insert into public.products (shop_id, name, description, price_mxn, status, units_available) values ((select id from public.shops where slug='unidades'), 'Negativas', 'Descripción completa del producto negativo.', 100, 'draft', -1)$$,
+  '23514',
+  null,
+  'a listing may not claim negative units'
 );
 
 set local role authenticated;
