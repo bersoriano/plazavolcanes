@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, ChevronRight, ImageIcon, PackageOpen, RotateCw, SearchX } from "lucide-react";
 
+import { signedInContainer } from "@/components/layout/container";
 import { SellerOrdersToolbar } from "@/components/orders/seller-orders-toolbar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency, formatDate } from "@/lib/format";
@@ -50,7 +51,7 @@ export default async function SellerOrdersPage({
   if (!result) return null;
 
   return (
-    <section className="mx-auto max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
+    <section className={`${signedInContainer} py-10 sm:py-14`}>
       <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href="/panel">
         <ArrowLeft aria-hidden="true" className="size-4" />
         Panel

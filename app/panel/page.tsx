@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CircleUserRound, MessageCircle, PackageOpen, RotateCw } from "lucide-react";
 
+import { signedInContainer } from "@/components/layout/container";
 import { ActionQueue } from "@/components/seller-dashboard/action-queue";
 import { FirstSaleChecklist } from "@/components/seller-dashboard/first-sale-checklist";
 import { OngoingTasks } from "@/components/seller-dashboard/ongoing-tasks";
@@ -30,7 +31,7 @@ export default async function PanelPage({
   if (!result) return null;
 
   return (
-    <section className="mx-auto max-w-[1200px] px-5 py-8 sm:px-8 sm:py-12">
+    <section className={`${signedInContainer} py-8 sm:py-12`}>
       <header className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Tu espacio</p>

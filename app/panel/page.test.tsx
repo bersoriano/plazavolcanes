@@ -1,6 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { signedInContainer } from "@/components/layout/container";
 import {
   buildSellerDashboard,
   type DashboardProduct,
@@ -95,6 +96,13 @@ describe("PanelPage", () => {
     expect(within(next).getByRole("link", { name: "Compartir por WhatsApp" }).getAttribute("href")).toContain(
       encodeURIComponent("/tiendas/casa-niebla"),
     );
+  });
+
+  it("lines up with the header's logo and sign-out button", async () => {
+    await renderPanel();
+
+    const page = screen.getByRole("heading", { level: 1, name: "Panel de ventas" }).closest("section");
+    expect(page).toHaveClass(...signedInContainer.split(" "));
   });
 
   it("shows a waiting buyer above the first-sale guide", async () => {

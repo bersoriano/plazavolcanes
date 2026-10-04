@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
+import { signedInContainer } from "@/components/layout/container";
 import { DeliveryPolicyForm } from "@/components/shops/delivery-policy-form";
 import { ShopForm } from "@/components/shops/shop-form";
 import { ShopWorkspaceHeader } from "@/components/shops/shop-workspace-header";
@@ -43,11 +44,9 @@ export default async function ShopSettingsPage({ params }: { params: Promise<{ i
     : (deliveryPolicyUnlocksAt(shop.delivery_policy_updated_at)?.toISOString() ?? null);
 
   return (
-    <section className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
+    <section className={`${signedInContainer} py-10 sm:py-14`}>
       <ShopWorkspaceHeader active="ajustes" isPremium={shop.is_premium === true} shopId={shopId} shopName={shop.name} shopSlug={shop.slug} />
 
-      {/* Narrower than the catalogue on purpose: this is a column of fields to
-          read down, not a list to scan across. */}
       <section aria-labelledby="ajustes-title" className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
         <h2 className="font-display text-2xl font-semibold" id="ajustes-title">Editar tienda</h2>
         <p className="mb-7 mt-2 text-muted">Mantén clara la historia de tu tienda.</p>

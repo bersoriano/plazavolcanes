@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/format";
 import { formatOrderStatus } from "@/lib/order-status";
 import { orderDeliveryLine } from "@/lib/order-summary";
 import { getOrderDetail } from "@/lib/queries/orders.server";
+import { signedInContainer } from "@/components/layout/container";
 import { MessageThread } from "@/components/messages/message-thread";
 import { OrderActions } from "@/components/orders/order-actions";
 import { BuyerTrustCard } from "@/components/orders/buyer-trust-card";
@@ -51,7 +52,7 @@ export default async function SellerOrderDetailPage({ params }: { params: Promis
   const urgencyLabel = guidance.deadline ? URGENCY_LABELS[guidance.deadline.urgency] : null;
 
   return (
-    <section className="mx-auto max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
+    <section className={`${signedInContainer} py-10 sm:py-14`}>
       <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href="/panel/pedidos">
         <ArrowLeft aria-hidden="true" className="size-4" />
         Pedidos
