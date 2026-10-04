@@ -210,6 +210,20 @@ describe("cart purchase request", () => {
     ]);
   });
 
+  it("blocks checkout until the buyer fits each line to the units left", async () => {
+    vi.mocked(getCart).mockResolvedValue({
+      ...cart,
+      items: [{ ...cart.items[0], quantity: 5 }],
+      subtotal: 1200,
+    } as CartDetail);
+
+    render(await CartPage({ params: Promise.resolve({ shopId: "4" }) }));
+
+    expect(screen.getByText("Solo quedan 4")).toBeInTheDocument();
+    expect(screen.getByText("Ajusta las cantidades marcadas antes de continuar.")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Confirmar solicitud" })).not.toBeInTheDocument();
+  });
+
   it("renders the seller, stored shop location and positive trust context without a pickup point", async () => {
     vi.mocked(fetchPickupPoint).mockResolvedValue(null);
     vi.mocked(getPublicShop).mockResolvedValue({

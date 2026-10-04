@@ -35,6 +35,23 @@ function renderCart(items = [item()], subtotal = 960) {
   );
 }
 
+describe("what the cart says about stock", () => {
+  it("tells the buyer when fewer units remain than the line asks for", () => {
+    renderCart([item({ quantity: 3, product: { ...item().product!, units_available: 2 } })]);
+
+    expect(screen.getByText("Solo quedan 2")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Quitar una unidad de Taza de barro" })).toBeEnabled();
+  });
+
+  it("leaves only removal on a line that sold out", () => {
+    renderCart([item({ quantity: 1, product: { ...item().product!, units_available: 0 } })]);
+
+    expect(screen.getByText("Agotado")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Agregar una unidad de Taza de barro" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Quitar Taza de barro del carrito" })).toBeInTheDocument();
+  });
+});
+
 describe("what the cart shows about a line", () => {
   it("shows the picture the buyer picked", () => {
     // The cart is where somebody checks they are buying the right thing, and
