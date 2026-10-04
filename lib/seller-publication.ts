@@ -36,7 +36,8 @@ export type SellerPublicationState = {
   isPublic: boolean;
 };
 
-export function getSellerPublicationState(product: SellerListingFlags): SellerPublicationState {
+/** `now` lets a caller judge expiry at the moment it is describing, not at whatever time it runs. */
+export function getSellerPublicationState(product: SellerListingFlags, now: Date = new Date()): SellerPublicationState {
   // "Borrador privado" rather than a switch the seller flipped: a draft is not
   // a listing turned off, it is one nobody else can see yet.
   if (product.status === "draft") return { kind: "draft", label: "Borrador privado", isPublic: false };
@@ -49,7 +50,7 @@ export function getSellerPublicationState(product: SellerListingFlags): SellerPu
   if (!product.is_admin_enabled) {
     return { kind: "admin_disabled", label: "Deshabilitado por administración", isPublic: false };
   }
-  if (!product.expires_at || new Date(product.expires_at).getTime() <= Date.now()) {
+  if (!product.expires_at || new Date(product.expires_at).getTime() <= now.getTime()) {
     return { kind: "expired", label: "Vencido", isPublic: false };
   }
   return { kind: "published", label: "Publicado", isPublic: true };

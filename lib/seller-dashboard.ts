@@ -180,14 +180,14 @@ export function describeGaps(gaps: ListingGap[]): string {
   return `${labels.slice(0, -1).join(", ")} y ${labels.at(-1)}`;
 }
 
-function isPublic(product: DashboardProduct, shop: DashboardShop) {
+function isPublic(product: DashboardProduct, shop: DashboardShop, now: Date) {
   return getSellerPublicationState({
     status: product.status,
     expires_at: product.expires_at,
     is_admin_enabled: product.is_admin_enabled,
     is_publishing_approved: shop.is_publishing_approved,
     publishing_reviewed_at: shop.publishing_reviewed_at,
-  }).isPublic;
+  }, now).isPublic;
 }
 
 export type ShopProgress = {
@@ -206,7 +206,7 @@ export type ShopProgress = {
   approval: "approved" | "pending" | "disabled";
 };
 
-export function summarizeShop(shop: DashboardShop, products: DashboardProduct[]): ShopProgress {
+export function summarizeShop(shop: DashboardShop, products: DashboardProduct[], now: Date = new Date()): ShopProgress {
   const own = products.filter((product) => product.shop_id === shop.id);
   let readyListingCount = 0;
   let publicListingCount = 0;
@@ -217,7 +217,7 @@ export function summarizeShop(shop: DashboardShop, products: DashboardProduct[])
   const newestFirst = [...own].sort((left, right) => right.updated_at.localeCompare(left.updated_at));
   for (const product of newestFirst) {
     const gaps = listingGaps(product);
-    const visible = isPublic(product, shop);
+    const visible = isPublic(product, shop, now);
     if (visible) publicListingCount += 1;
     if (visible && gaps.length === 0) readyListingCount += 1;
     if (product.status === "expired" || (product.status === "published" && !visible && product.is_admin_enabled && shop.is_publishing_approved)) {
@@ -842,7 +842,7 @@ export type SellerDashboard = {
 
 export function buildSellerDashboard(input: SellerDashboardInput): SellerDashboard {
   const products = input.products.ok ? input.products.value : [];
-  const shops = input.shops.map((shop) => summarizeShop(shop, products));
+  const shops = input.shops.map((shop) => summarizeShop(shop, products, input.now));
   const attention = buildAttention(input);
   const focus = pickFocusShop(shops, input.requestedFocusShopId);
   const ongoing = buildOngoingTasks(shops);
