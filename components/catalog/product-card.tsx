@@ -26,6 +26,8 @@ type ProductCardProps = {
     category_id?: number | null;
     condition: ProductCondition;
     used_condition: UsedCondition | null;
+    /** Zero is a listing that sold out but stays up; unknown counts as available. */
+    units_available?: number;
     shop: {
       name: string;
       country_code: string;
@@ -76,6 +78,11 @@ export function ProductCard({
     </>
   );
   const compact = variant === "compact";
+  // A sold-out listing stays in the plaza; what a buyer needs first is that
+  // they cannot order it, so that takes the condition's place.
+  const soldOut = product.units_available === 0;
+  const pillText = soldOut ? "Agotado" : formatProductCondition(product.condition, product.used_condition);
+  const imageClassName = `size-full object-cover transition-transform duration-500 group-hover:scale-[1.035]${soldOut ? " opacity-60" : ""}`;
 
   function recordSelection() {
     if (!eventId || position == null || !Number.isInteger(position) || position < 1) return;
@@ -97,8 +104,8 @@ export function ProductCard({
           }`}
         >
           <span className="absolute left-2 top-2 z-10 flex max-w-[calc(100%-1rem)] items-start justify-between gap-1.5 sm:inset-x-3 sm:top-3 sm:max-w-none">
-            <span className="flex h-6 items-center truncate rounded-full bg-surface px-2 text-[11px] font-semibold text-ink sm:h-7 sm:px-2.5 sm:text-[12px]">
-              {formatProductCondition(product.condition, product.used_condition)}
+            <span className={`flex h-6 items-center truncate rounded-full px-2 text-[11px] font-semibold sm:h-7 sm:px-2.5 sm:text-[12px] ${soldOut ? "bg-ink text-surface" : "bg-surface text-ink"}`}>
+              {pillText}
             </span>
             {isPremium ? (
               <span className="hidden h-7 shrink-0 items-center gap-1 rounded-full bg-premium-ink px-2.5 text-[12px] font-bold text-premium-gold sm:inline-flex">
@@ -108,7 +115,7 @@ export function ProductCard({
           </span>
           <CatalogImage
             alt={product.name}
-            className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.035]"
+            className={imageClassName}
             fallback={<div className="grid size-full place-items-center text-brand/35"><ImageIcon aria-hidden="true" className="size-10" /></div>}
             src={product.imageUrl}
           />
@@ -134,8 +141,8 @@ export function ProductCard({
           isPremium ? "ring-1 ring-premium-gold ring-offset-2 ring-offset-background" : ""
         }`}
       >
-        <span className="absolute left-2 top-2 z-10 max-w-[calc(100%-1rem)] truncate rounded-full bg-surface/95 px-[9px] py-[5px] text-[11px] font-bold text-brand shadow-sm sm:left-3 sm:top-3 sm:px-3 sm:py-1.5 sm:text-xs">
-          {formatProductCondition(product.condition, product.used_condition)}
+        <span className={`absolute left-2 top-2 z-10 max-w-[calc(100%-1rem)] truncate rounded-full px-[9px] py-[5px] text-[11px] font-bold shadow-sm sm:left-3 sm:top-3 sm:px-3 sm:py-1.5 sm:text-xs ${soldOut ? "bg-ink text-surface" : "bg-surface/95 text-brand"}`}>
+          {pillText}
         </span>
         {isPremium ? (
           // Bottom-left on a phone, where top-right would collide with the
@@ -146,7 +153,7 @@ export function ProductCard({
         ) : null}
         <CatalogImage
           alt={product.name}
-          className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.035]"
+          className={imageClassName}
           fallback={<div className="grid size-full place-items-center text-brand/35"><ImageIcon aria-hidden="true" className="size-10" /></div>}
           src={product.imageUrl}
         />
