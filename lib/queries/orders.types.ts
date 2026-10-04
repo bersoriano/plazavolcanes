@@ -1,4 +1,5 @@
 import type { OrderStatus } from "@/lib/database.types";
+import type { SellerOrderCounts } from "@/lib/seller-orders-filter";
 
 export type CartDetail = {
   id: number;
@@ -45,11 +46,26 @@ export type OrderProgressRow = OrderSummary & {
   handling_time_zone: string;
 };
 
-export type SellerOrderRow = OrderProgressRow;
+/** One line of an order, enough to say what was bought; the picture is resolved by the query. */
+export type SellerOrderItem = { product_name: string; quantity: number; image_url: string | null };
+
+export type SellerOrderRow = OrderProgressRow & { items: SellerOrderItem[] };
 
 export type BuyerOrderRow = OrderProgressRow;
 
-export type SellerOrderQueue = { status: "ready"; now: Date; orders: SellerOrderRow[] } | { status: "error" };
+export type SellerOrderQueue =
+  | {
+      status: "ready";
+      now: Date;
+      /** Open orders in full, then the requested page of closed ones, newest first within each. */
+      orders: SellerOrderRow[];
+      /** The seller's shops, for the shop picker. */
+      shops: { id: number; name: string }[];
+      /** Per tab, for the current shop and search; closed orders counted in full. */
+      counts: SellerOrderCounts;
+      hasMoreClosed: boolean;
+    }
+  | { status: "error" };
 
 export type OrderDetail = OrderSummary & {
   buyer_id: string;
