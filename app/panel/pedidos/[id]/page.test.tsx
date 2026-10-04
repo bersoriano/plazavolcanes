@@ -114,6 +114,40 @@ describe("seller order next step", () => {
     expect(within(next).getByText(/fuera de la plaza/)).toBeInTheDocument();
   });
 
+  it("shows what was ordered and where it goes before the buttons to decide", async () => {
+    await renderOrder({
+      status: "requested",
+      accepted_at: null,
+      ship_by_at: null,
+      items: [
+        { id: 1, product_name: "Florero", unit_price: 200, quantity: 2, line_total: 400 },
+        { id: 2, product_name: "Jarra", unit_price: 150, quantity: 1, line_total: 150 },
+      ],
+      subtotal: 550,
+      address: {
+        recipient: "Ana Ruiz",
+        address_line1: "Calle 1",
+        address_line2: null,
+        locality: "Zapopan",
+        administrative_area: "Jalisco",
+        postal_code: "45010",
+        country_code: "MX",
+        delivery_instructions: null,
+        redacted_at: null,
+      },
+    });
+
+    const next = screen.getByRole("region", { name: "El comprador espera tu decisión" });
+    const summary = within(next).getByRole("list", { name: "Productos del pedido" });
+    expect(within(summary).getAllByRole("listitem").map((item) => item.textContent)).toEqual(["2 × Florero$400.00", "1 × Jarra$150.00"]);
+    expect(within(next).getByText("Envío a Zapopan, Jalisco")).toBeInTheDocument();
+    expect(within(next).queryByText(/Calle 1/)).not.toBeInTheDocument();
+    expect(precedes(summary, within(next).getByRole("button", { name: "Aceptar pedido" }))).toBe(true);
+
+    const details = screen.getByRole("heading", { name: "Casa Niebla" });
+    expect(precedes(details, screen.getByRole("heading", { name: "Confiable · Cierra rápido" }))).toBe(true);
+  });
+
   it("gives the promised date in words and in the shop's time zone, never as a raw timestamp", async () => {
     await renderOrder();
 

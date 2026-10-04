@@ -40,6 +40,17 @@ describe("BuyerTrustCard", () => {
     expect(screen.getByText("Miembro desde enero de 2026")).toBeInTheDocument();
   });
 
+  it("keeps the standing and key facts in view and folds the signals away", () => {
+    const { container } = render(<BuyerTrustCard trust={trust} />);
+
+    expect(screen.getByText("Miembro desde enero de 2026 · 12 compras completadas")).toBeInTheDocument();
+    const fold = container.querySelector("details:has([role=group])");
+    expect(fold).not.toBeNull();
+    expect(fold).not.toHaveAttribute("open");
+    expect(within(fold as HTMLElement).getByText("Ver señales del comprador")).toBeInTheDocument();
+    expect(within(fold as HTMLElement).getByRole("group", { name: "Señales de confianza del comprador" })).toBeInTheDocument();
+  });
+
   it("renders ten compact behavior markers and next-tier guidance", () => {
     render(<BuyerTrustCard trust={trust} />);
     const group = screen.getByRole("group", { name: "Señales de confianza del comprador" });

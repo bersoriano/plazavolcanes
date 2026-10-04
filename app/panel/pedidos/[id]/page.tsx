@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { formatCurrency } from "@/lib/format";
 import { formatOrderStatus } from "@/lib/order-status";
+import { orderDeliveryLine } from "@/lib/order-summary";
 import { getOrderDetail } from "@/lib/queries/orders.server";
 import { MessageThread } from "@/components/messages/message-thread";
 import { OrderActions } from "@/components/orders/order-actions";
@@ -70,6 +71,22 @@ export default async function SellerOrderDetailPage({ params }: { params: Promis
             </time>
           </p>
         ) : null}
+        {/* What is being decided on, right above the buttons that decide it:
+            on a phone the full details sit a screen or more below. */}
+        <div className="mt-5 rounded-2xl bg-background p-4">
+          <ul aria-label="Productos del pedido" className="space-y-1.5">
+            {order.items.map((item) => (
+              <li className="flex justify-between gap-4 text-sm" key={item.id}>
+                <span className="min-w-0 font-semibold text-ink">{item.quantity} × {item.product_name}</span>
+                <span className="shrink-0 tabular-nums">{formatCurrency(item.line_total, order.currency_code)}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 flex flex-wrap justify-between gap-x-4 gap-y-1 border-t border-line pt-3 text-sm">
+            <span className="text-muted">{orderDeliveryLine(order.fulfillment_method, order.address)}</span>
+            <strong className="tabular-nums">{formatCurrency(order.subtotal, order.currency_code)}</strong>
+          </p>
+        </div>
         <div className="mt-5">
           <OrderActions
             actions={{ accept: acceptAction, reject: rejectAction, ship: shipAction, payment: paymentAction, cancelSeller: cancelSellerAction }}
@@ -84,8 +101,6 @@ export default async function SellerOrderDetailPage({ params }: { params: Promis
           Al comprador no le enviamos avisos por correo: ve cada cambio al abrir su compra. Si necesitas avisarle algo, escríbele en la conversación.
         </p>
       </section>
-
-      {buyerTrust ? <div className="mt-7"><BuyerTrustCard trust={buyerTrust} /></div> : null}
 
       <div className="mt-7 rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
         <h2 className="font-display text-2xl font-semibold">{order.shop.name}</h2>
@@ -107,6 +122,8 @@ export default async function SellerOrderDetailPage({ params }: { params: Promis
           <FulfillmentSummary altContact={order.alt_contact} address={order.address} fulfillmentMethod={order.fulfillment_method} pickupPoint={pickupPoint} />
         </div>
       </div>
+
+      {buyerTrust ? <div className="mt-7"><BuyerTrustCard trust={buyerTrust} /></div> : null}
 
       {order.conversation && messageAction ? (
         <div className="mt-7">

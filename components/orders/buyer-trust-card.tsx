@@ -1,4 +1,4 @@
-import { CalendarDays, CheckCircle2, CircleHelp, ShieldCheck, Target } from "lucide-react";
+import { CalendarDays, CheckCircle2, ChevronDown, CircleHelp, ShieldCheck, Target } from "lucide-react";
 
 import {
   formatBuyerSignal,
@@ -88,6 +88,12 @@ function BehaviorMarker({ name, marker }: { name: keyof BuyerTrustOutput["marker
   );
 }
 
+/**
+ * The buyer's standing, short by default. The tier, its summary and the two
+ * facts a seller weighs first stay in view; the ten signals and the reasons
+ * fold behind a native disclosure, because on a new buyer they are mostly
+ * "Sin datos" and on a phone they pushed the order itself off the screen.
+ */
 export function BuyerTrustCard({ trust }: { trust: BuyerTrustOutput }) {
   return (
     <section aria-labelledby="buyer-standing" className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
@@ -99,19 +105,29 @@ export function BuyerTrustCard({ trust }: { trust: BuyerTrustOutput }) {
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Confianza del comprador</p>
           <h2 className="mt-1 font-display text-2xl font-semibold" id="buyer-standing">{getBuyerStanding(trust)}</h2>
           <p className="mt-2 text-sm leading-6 text-muted">{trust.summary}</p>
+          <p className="mt-2 text-sm font-semibold text-ink">
+            {trust.member_since.primary_text} · {trust.markers.total_completed_purchases.primary_text}
+          </p>
         </div>
       </div>
 
-      <div className="mt-5 grid gap-3">
-        <IdentityMarker icon={<CalendarDays aria-hidden="true" className="size-5" />} label="Antigüedad" primary={trust.member_since.primary_text} tooltip={trust.member_since.tooltip} />
-      </div>
+      <details className="group/signals mt-5 rounded-2xl bg-background p-4">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 font-semibold text-brand [&::-webkit-details-marker]:hidden">
+          Ver señales del comprador
+          <ChevronDown aria-hidden="true" className="size-4 transition-transform group-open/signals:rotate-180" />
+        </summary>
 
-      <div aria-label="Señales de confianza del comprador" className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="group">
-        {markerOrder.map((name) => <BehaviorMarker key={name} marker={trust.markers[name]} name={name} />)}
-      </div>
+        <div className="mt-4 grid gap-3">
+          <IdentityMarker icon={<CalendarDays aria-hidden="true" className="size-5" />} label="Antigüedad" primary={trust.member_since.primary_text} tooltip={trust.member_since.tooltip} />
+        </div>
 
-      {trust.reasons.length ? <div className="mt-6"><h3 className="flex items-center gap-2 font-semibold"><CheckCircle2 aria-hidden="true" className="size-4 text-brand" />Por qué tiene este nivel</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-muted">{trust.reasons.map((reason) => <li key={reason}>• {reason}</li>)}</ul></div> : null}
-      {trust.next_tier_requirements.length ? <details className="mt-6 rounded-2xl bg-background p-4"><summary className="flex min-h-11 cursor-pointer items-center gap-2 font-semibold"><Target aria-hidden="true" className="size-4 text-brand" />Cómo llegar al siguiente nivel</summary><ul className="mt-3 space-y-2 text-sm leading-6 text-muted">{trust.next_tier_requirements.map((requirement) => <li key={requirement}>• {requirement}</li>)}</ul></details> : null}
+        <div aria-label="Señales de confianza del comprador" className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="group">
+          {markerOrder.map((name) => <BehaviorMarker key={name} marker={trust.markers[name]} name={name} />)}
+        </div>
+
+        {trust.reasons.length ? <div className="mt-6"><h3 className="flex items-center gap-2 font-semibold"><CheckCircle2 aria-hidden="true" className="size-4 text-brand" />Por qué tiene este nivel</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-muted">{trust.reasons.map((reason) => <li key={reason}>• {reason}</li>)}</ul></div> : null}
+        {trust.next_tier_requirements.length ? <div className="mt-6"><h3 className="flex items-center gap-2 font-semibold"><Target aria-hidden="true" className="size-4 text-brand" />Cómo llegar al siguiente nivel</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-muted">{trust.next_tier_requirements.map((requirement) => <li key={requirement}>• {requirement}</li>)}</ul></div> : null}
+      </details>
     </section>
   );
 }
