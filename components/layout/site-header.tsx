@@ -3,8 +3,8 @@ import { Scale, UsersRound } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { signedInContainer } from "@/components/layout/container";
 import { SignedOutHeaderNav } from "@/components/layout/signed-out-header-nav";
+import { SiteFrame } from "@/components/layout/site-frame";
 import { fetchUnreadCount } from "@/lib/queries/messages.server";
 import { getCurrentUserAdminStatus } from "@/lib/admin-auth.server";
 
@@ -29,11 +29,13 @@ export async function SiteHeader() {
       className={`sticky top-0 z-40 border-b bg-accent/95 backdrop-blur-lg ${signedIn ? "border-brand/10" : "border-brand/10"}`}
       data-site-header
     >
-      <div
+      {/* Signed out, a phone keeps 16px on the right: the menu and the pill
+          need every pixel next to the full wordmark. */}
+      <SiteFrame
         className={
           signedIn
-            ? `${signedInContainer} flex h-[76px] items-center justify-between gap-1 sm:gap-5`
-            : "mx-auto flex h-16 max-w-[1440px] items-center justify-between gap-2 pl-5 pr-4 sm:gap-5 sm:px-8 lg:h-20 lg:px-12 xl:px-20"
+            ? "flex h-[76px] items-center justify-between gap-1 sm:gap-5"
+            : "flex h-16 items-center justify-between gap-2 pr-4 sm:gap-5 lg:h-20"
         }
       >
         {signedIn ? (
@@ -94,7 +96,7 @@ export async function SiteHeader() {
         ) : (
           <SignedOutHeaderNav />
         )}
-      </div>
+      </SiteFrame>
     </header>
   );
 }

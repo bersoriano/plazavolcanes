@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { signedInContainer } from "@/components/layout/container";
+import { pageContainer } from "@/components/layout/container";
 import {
   buildSellerDashboard,
   type DashboardProduct,
@@ -102,7 +102,7 @@ describe("PanelPage", () => {
     await renderPanel();
 
     const page = screen.getByRole("heading", { level: 1, name: "Panel de ventas" }).closest("section");
-    expect(page).toHaveClass(...signedInContainer.split(" "));
+    expect(page).toHaveClass(...pageContainer.split(" "));
   });
 
   it("shows a waiting buyer above the first-sale guide", async () => {

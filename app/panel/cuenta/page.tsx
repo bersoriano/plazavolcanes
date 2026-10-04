@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { DisplayNameForm } from "@/components/account/display-name-form";
 import { EmailNotificationsForm } from "@/components/account/email-notifications-form";
 import { PhoneForm } from "@/components/account/phone-form";
-import { signedInContainer } from "@/components/layout/container";
+import { pageContainer } from "@/components/layout/container";
 import { updateDisplayName, updatePhone } from "@/lib/actions/auth";
 import { updateEmailNotifications } from "@/lib/actions/notifications";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -33,7 +33,7 @@ export default async function AccountPage() {
     .maybeSingle();
 
   return (
-    <section className={`${signedInContainer} py-10 sm:py-14`}>
+    <section className={`${pageContainer} py-10 sm:py-14`}>
       <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href="/panel">
         <ArrowLeft aria-hidden="true" className="size-4" />
         Mi panel

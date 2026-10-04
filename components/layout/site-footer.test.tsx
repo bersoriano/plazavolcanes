@@ -1,12 +1,38 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { pageContainer } from "@/components/layout/container";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { LEGAL_ROUTES } from "@/lib/legal/document-types";
 
-afterEach(cleanup);
+const route = { pathname: "/" };
+
+vi.mock("next/navigation", () => ({ usePathname: () => route.pathname }));
+
+afterEach(() => {
+  cleanup();
+  route.pathname = "/";
+});
 
 describe("SiteFooter", () => {
+  it("lines its content up with the app screen above it", () => {
+    route.pathname = "/compras";
+    render(<SiteFooter />);
+
+    const frame = document.querySelector("[data-site-footer] > div");
+    expect(frame).toHaveClass(...pageContainer.split(" "));
+    expect(frame).not.toHaveClass("xl:px-20");
+  });
+
+  it("widens its gutters to the landing's grid on the landing pages", () => {
+    for (const pathname of ["/", "/vender"]) {
+      route.pathname = pathname;
+      render(<SiteFooter />);
+      expect(document.querySelector("[data-site-footer] > div")).toHaveClass("xl:px-20");
+      cleanup();
+    }
+  });
+
   it("keeps every navigation destination at least 44px tall", () => {
     render(<SiteFooter />);
 
