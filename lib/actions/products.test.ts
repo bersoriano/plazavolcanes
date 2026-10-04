@@ -288,6 +288,7 @@ describe("setProductStatus", () => {
           status: "draft",
           slug: "taza-volcanica",
           is_admin_enabled: isAdminEnabled,
+          units_available: 1,
         },
         error: null,
       }));
@@ -333,6 +334,15 @@ describe("setProductStatus", () => {
     });
   });
 
+  it.each([0, null])("keeps a listing with %s units off the shelf", (units) => {
+    return withProduct({ status: "expired", expires_at: "2020-01-01T00:00:00.000Z", units_available: units }, async () => {
+      const state = await setProductStatus(22, "published");
+
+      expect(state).toEqual({ status: "error", message: "Agrega unidades antes de publicar." });
+      expect(mocks.update).not.toHaveBeenCalled();
+    });
+  });
+
   it("leaves a live window alone when a listing is unpublished", () => {
     return withProduct({ status: "published", expires_at: "2099-01-01T00:00:00.000Z" }, async () => {
       await setProductStatus(22, "draft");
@@ -365,6 +375,7 @@ async function withProduct(
       image_path: "products/seller-1/22/cover.jpg",
       slug: "taza-volcanica",
       is_admin_enabled: true,
+      units_available: 1,
       ...overrides,
     },
     error: null,

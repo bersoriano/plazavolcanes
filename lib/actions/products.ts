@@ -15,7 +15,7 @@ import {
 import { deleteObjects } from "@/lib/media/store";
 import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import { productCreationSchema, productSchema, productStatusSchema } from "@/lib/validation/product";
-import { missingForPublication } from "@/lib/listing-readiness";
+import { MIN_UNITS, missingForPublication } from "@/lib/listing-readiness";
 import { buildSiteUrl } from "@/lib/site-url";
 import { uniqueProductSlug } from "@/lib/slug";
 
@@ -36,6 +36,11 @@ const coverImageRequiredError: ActionState = {
   status: "error",
   message: "Agrega una imagen de portada antes de publicar.",
   errors: { images: ["Agrega una imagen de portada antes de publicar."] },
+};
+
+const unitsRequiredError: ActionState = {
+  status: "error",
+  message: "Agrega unidades antes de publicar.",
 };
 
 function missingPublicationError(input: Parameters<typeof missingForPublication>[0]): ActionState | null {
@@ -323,7 +328,7 @@ export async function setProductStatus(
   const context = await getAuthenticatedContext();
   if (!parsedStatus.success || !context) redirect("/ingresar");
   const { supabase, userId } = context;
-  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, image_path, status, slug, is_admin_enabled, expires_at").eq("id", productId).maybeSingle();
+  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, image_path, status, slug, is_admin_enabled, expires_at, units_available").eq("id", productId).maybeSingle();
   if (productError) throw new Error("No pudimos consultar el producto.");
   // Retiring a listing is one way: it stays out of the catalogue for good.
   if (!product || product.status === "deleted") redirect("/panel");
@@ -331,6 +336,9 @@ export async function setProductStatus(
   if (shopError) throw new Error("No pudimos consultar la tienda.");
   if (!shop) redirect("/panel");
   if (parsedStatus.data === "published" && product.status !== "published" && !product.image_path) return coverImageRequiredError;
+  // A sold-out listing may stay up while it is live, but bringing one back
+  // would spend a listing slot on something nobody can order.
+  if (parsedStatus.data === "published" && (product.units_available ?? 0) < MIN_UNITS) return unitsRequiredError;
   if (parsedStatus.data === "published" && !(await isPublishableCategory(supabase, product.category_id))) {
     redirect(`/panel/productos/${productId}/editar?categoria=requerida=1`);
   }
