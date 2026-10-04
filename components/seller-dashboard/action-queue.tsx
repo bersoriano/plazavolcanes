@@ -115,7 +115,11 @@ export function ActionQueue({
       ))}
 
       <p className="mt-5 text-xs leading-5 text-muted">
-        Aún no enviamos avisos por correo ni notificaciones. Revisa esta lista cuando entres a tu panel.
+        Te avisamos por correo de solicitudes y mensajes nuevos. Puedes desactivarlo en tus{" "}
+        <Link className="font-semibold text-brand underline underline-offset-2" href="/panel/cuenta">
+          ajustes de avisos
+        </Link>
+        .
       </p>
     </section>
   );

@@ -54,13 +54,13 @@ export default async function SellerOrdersPage() {
             ))}
           </div>
           <p className="mt-8 text-xs leading-5 text-muted">
-            Aún no enviamos avisos por correo ni notificaciones. Los pedidos nuevos aparecen aquí y en tu panel.
+            Te avisamos por correo de cada solicitud nueva; también aparecen aquí y en tu panel.
           </p>
         </>
       ) : (
         <div className="mt-8">
           <EmptyState
-            description="Las solicitudes de compradores aparecerán aquí y en tu panel. Aún no enviamos avisos por correo ni notificaciones."
+            description="Las solicitudes de compradores aparecerán aquí y en tu panel, y te avisaremos por correo."
             icon={<PackageOpen aria-hidden="true" className="size-7" />}
             title="Aún no recibes pedidos"
           />
