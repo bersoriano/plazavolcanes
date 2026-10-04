@@ -133,25 +133,44 @@ export async function reactivateExpiredListings(shopId: number): Promise<ActionS
     { publishableCategoryIds: publishable, slotsLeft: Math.max(shop.listing_limit - publishedCount, 0) },
   );
 
-  if (plan.reactivate.length) {
-    // A null date asks set_product_expiry for a fresh window on every row,
-    // including lapsed ones whose status never left "published".
-    const { error } = await supabase
-      .from("products")
-      .update({ status: "published", expires_at: null, updated_at: new Date().toISOString() })
-      .in("id", plan.reactivate.map((listing) => listing.id))
-      .eq("shop_id", shopId);
-    if (isListingLimitDatabaseError(error)) {
-      return { status: "error", message: "Alcanzaste el límite de publicaciones activas de tu tienda." };
+  // One statement per listing: the limit trigger cannot see rows changed
+  // earlier in the same statement, so a batch could slip past the shop's
+  // limit under concurrent use; one at a time, the database counts each one.
+  // Sellers may not write expires_at (guard_product_administration_enablement);
+  // the change of status into "published" is what earns a fresh 30 days. A
+  // lapsed row whose status never left "published" is filed as expired first,
+  // as the hourly sweep would have done.
+  const reactivated: typeof plan.reactivate = [];
+  const skipped = [...plan.skipped];
+  for (const [index, listing] of plan.reactivate.entries()) {
+    const now = new Date().toISOString();
+    let { error } = listing.status === "published"
+      ? await supabase.from("products").update({ status: "expired", updated_at: now }).eq("id", listing.id).eq("shop_id", shopId)
+      : { error: null };
+    if (!error) {
+      ({ error } = await supabase.from("products").update({ status: "published", updated_at: now }).eq("id", listing.id).eq("shop_id", shopId));
     }
-    if (error) return { status: "error", message: "No pudimos reactivar tus productos." };
-
-    revalidatePath("/");
-    revalidatePath("/panel");
-    revalidatePath(`/panel/tiendas/${shopId}`);
-    revalidatePath(`/tiendas/${shop.slug}`);
-    for (const listing of plan.reactivate) revalidatePath(`/productos/${listing.slug}`);
+    if (isListingLimitDatabaseError(error)) {
+      skipped.unshift(...plan.reactivate.slice(index).map((rest) => ({ name: rest.name, reason: "limit" as const })));
+      break;
+    }
+    if (error) {
+      revalidateCatalog(shopId, shop.slug, reactivated);
+      const done = reactivated.length ? `${reactivationMessage(reactivated.length, [])} ` : "";
+      return { status: "error", message: `${done}No pudimos reactivar ${reactivated.length ? "el resto" : "tus productos"}; inténtalo de nuevo.` };
+    }
+    reactivated.push(listing);
   }
 
-  return { status: "success", message: reactivationMessage(plan.reactivate.length, plan.skipped) };
+  revalidateCatalog(shopId, shop.slug, reactivated);
+  return { status: "success", message: reactivationMessage(reactivated.length, skipped) };
+}
+
+function revalidateCatalog(shopId: number, shopSlug: string, reactivated: { slug: string }[]) {
+  if (!reactivated.length) return;
+  revalidatePath("/");
+  revalidatePath("/panel");
+  revalidatePath(`/panel/tiendas/${shopId}`);
+  revalidatePath(`/tiendas/${shopSlug}`);
+  for (const listing of reactivated) revalidatePath(`/productos/${listing.slug}`);
 }

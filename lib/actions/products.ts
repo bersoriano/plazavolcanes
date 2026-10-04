@@ -294,7 +294,7 @@ export async function setProductStatus(
     // The same rule "Reactivar todos" applies: a cover on the way into
     // "published", and a unit to sell, since a sold-out listing brought back
     // would spend a slot on something nobody can order.
-    const blocker = listingPublishBlocker(product, { alreadyPublished: product.status === "published" });
+    const blocker = listingPublishBlocker(product);
     if (blocker === "cover") return coverImageRequiredError;
     if (blocker === "units") return unitsRequiredError;
   }
@@ -306,20 +306,25 @@ export async function setProductStatus(
   }
   // A listing keeps `status = 'published'` until the hourly sweep files it as
   // expired, so for up to an hour the seller is looking at a row the catalogue
-  // already reports as "Vencido". Bringing that row back has to null the stale
-  // date: `set_product_expiry` grants a fresh 30 days when the incoming expiry
-  // is null, and would otherwise leave the lapsed one and republish something
-  // that is expired on arrival. A row the sweep already reached takes the same
-  // fresh window through its status change, so this only closes the gap.
+  // already reports as "Vencido". Sellers may not write the date themselves
+  // (`guard_product_administration_enablement`), so that row is filed as
+  // expired first, exactly as the sweep would, and then published: the status
+  // change is what `set_product_expiry` answers with a fresh 30 days.
   const hasLapsedWindow = product.status === "published"
     && product.expires_at !== null
     && new Date(product.expires_at).getTime() <= Date.now();
   const renewsWindow = parsedStatus.data === "published" && hasLapsedWindow;
 
+  if (renewsWindow) {
+    const { error: fileError } = await supabase.from("products").update({
+      status: "expired",
+      updated_at: new Date().toISOString(),
+    }).eq("id", productId);
+    if (fileError) throw new Error("No pudimos actualizar el estado del producto.");
+  }
   const { error } = await supabase.from("products").update({
     status: parsedStatus.data,
     updated_at: new Date().toISOString(),
-    ...(renewsWindow ? { expires_at: null } : {}),
   }).eq("id", productId);
   if (isListingLimitDatabaseError(error)) redirect(`/panel/productos/${productId}/editar?limite=alcanzado`);
   if (error) throw new Error("No pudimos actualizar el estado del producto.");

@@ -14,15 +14,12 @@ const BLOCKER_LABELS: Record<ReactivationBlocker, string> = {
 };
 
 /**
- * The cover is only demanded on the way into "published": a listing that is
- * still published from before covers were required may renew without one,
- * which is also what the database's publish trigger allows.
+ * Every way back up is a change of status into "published" — a lapsed row is
+ * filed as expired first, because sellers may not write its date — and the
+ * database demands a cover on that change. So a cover is always required.
  */
-export function listingPublishBlocker(
-  listing: { image_path: string | null; units_available: number | null },
-  { alreadyPublished = false }: { alreadyPublished?: boolean } = {},
-): "cover" | "units" | null {
-  if (!alreadyPublished && !listing.image_path) return "cover";
+export function listingPublishBlocker(listing: { image_path: string | null; units_available: number | null }): "cover" | "units" | null {
+  if (!listing.image_path) return "cover";
   if ((listing.units_available ?? 0) < 1) return "units";
   return null;
 }
@@ -47,7 +44,7 @@ export function planReactivation<T extends ReactivationCandidate>(
 
   for (const candidate of candidates) {
     const blocker =
-      listingPublishBlocker(candidate, { alreadyPublished: !candidate.needsSlot }) ??
+      listingPublishBlocker(candidate) ??
       (candidate.category_id === null || !publishableCategoryIds.has(candidate.category_id) ? "category" : null) ??
       (candidate.needsSlot && slots <= 0 ? "limit" : null);
     if (blocker) {

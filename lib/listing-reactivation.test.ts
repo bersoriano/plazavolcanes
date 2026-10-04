@@ -25,8 +25,8 @@ describe("listingPublishBlocker", () => {
     expect(listingPublishBlocker({ image_path: "x.webp", units_available: null })).toBe("units");
   });
 
-  it("keeps a legacy published listing without a cover renewable", () => {
-    expect(listingPublishBlocker({ image_path: null, units_available: 3 }, { alreadyPublished: true })).toBeNull();
+  it("asks a lapsed listing for a cover too, since renewing it is a new publication", () => {
+    expect(listingPublishBlocker({ image_path: null, units_available: 3 })).toBe("cover");
   });
 });
 
@@ -65,7 +65,7 @@ describe("planReactivation", () => {
 
   it("does not spend a slot on a listing that still holds one", () => {
     const plan = planReactivation(
-      [candidate({ id: 1, needsSlot: false, image_path: null }), candidate({ id: 2 })],
+      [candidate({ id: 1, needsSlot: false }), candidate({ id: 2 })],
       { publishableCategoryIds: categories, slotsLeft: 1 },
     );
 

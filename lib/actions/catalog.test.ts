@@ -165,10 +165,16 @@ describe("reactivateExpiredListings", () => {
       status: "success",
       message: "Reactivamos 2 productos. No reactivamos: Vaso (límite de publicaciones), Jarra (sin unidades).",
     });
-    const [update] = updates();
-    expect(update.calls).toContainEqual(["update", expect.objectContaining({ status: "published", expires_at: null })]);
-    expect(update.calls).toContainEqual(["in", "id", [1, 3]]);
-    expect(update.calls).toContainEqual(["eq", "shop_id", 6]);
+    // One statement per listing, so the database's limit trigger counts each
+    // one; and no expires_at, which sellers may not write — the status change
+    // alone earns the fresh window.
+    const published = updates();
+    expect(published).toHaveLength(2);
+    for (const [index, id] of [1, 3].entries()) {
+      expect(published[index].calls).toContainEqual(["update", { status: "published", updated_at: expect.any(String) }]);
+      expect(published[index].calls).toContainEqual(["eq", "id", id]);
+      expect(published[index].calls).toContainEqual(["eq", "shop_id", 6]);
+    }
     expect(revalidatePath).toHaveBeenCalledWith("/panel/tiendas/6");
     expect(revalidatePath).toHaveBeenCalledWith("/productos/florero");
   });
@@ -182,7 +188,11 @@ describe("reactivateExpiredListings", () => {
     const result = await reactivateExpiredListings(6);
 
     expect(result).toEqual({ status: "success", message: "Reactivamos 1 producto." });
-    expect(updates()[0].calls).toContainEqual(["in", "id", [7]]);
+    const [fileAsExpired, publish] = updates();
+    expect(fileAsExpired.calls).toContainEqual(["update", { status: "expired", updated_at: expect.any(String) }]);
+    expect(fileAsExpired.calls).toContainEqual(["eq", "id", 7]);
+    expect(publish.calls).toContainEqual(["update", { status: "published", updated_at: expect.any(String) }]);
+    expect(publish.calls).toContainEqual(["eq", "id", 7]);
   });
 
   it("leaves blocked listings to administration", async () => {
@@ -199,12 +209,29 @@ describe("reactivateExpiredListings", () => {
     expect(updates()).toHaveLength(0);
   });
 
-  it("explains a listing limit the database enforced", async () => {
-    answerWith({ shop, listings: { data: [row({})] }, update: { error: { message: "Límite de publicaciones alcanzado." } } });
+  it("stops at a listing limit the database enforced and says which ones it reached", async () => {
+    answerWith({
+      shop,
+      listings: { data: [row({ id: 1, name: "Florero", updated_at: "2026-09-05T00:00:00.000Z" }), row({ id: 2, name: "Jarra" })] },
+      update: { error: { message: "Límite de publicaciones alcanzado." } },
+    });
+
+    await expect(reactivateExpiredListings(6)).resolves.toEqual({
+      status: "success",
+      message: "No pudimos reactivar ningún producto: Florero (límite de publicaciones), Jarra (límite de publicaciones).",
+    });
+    expect(updates()).toHaveLength(1);
+  });
+
+  it("reports what it managed before an unexpected failure", async () => {
+    let call = 0;
+    answerWith({ shop, listings: { data: [row({ id: 1, updated_at: "2026-09-05T00:00:00.000Z" }), row({ id: 2, name: "Jarra" })] } });
+    const base = state.answer;
+    state.answer = (query) => (has(query, "update") ? (call++ === 0 ? { error: null } : { error: { message: "boom" } }) : base(query));
 
     await expect(reactivateExpiredListings(6)).resolves.toEqual({
       status: "error",
-      message: "Alcanzaste el límite de publicaciones activas de tu tienda.",
+      message: "Reactivamos 1 producto. No pudimos reactivar el resto; inténtalo de nuevo.",
     });
   });
 });
