@@ -2,6 +2,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import PurchasesPage from "@/app/compras/page";
+import { pageContainer } from "@/components/layout/container";
 import { getBuyerOrders, type BuyerOrderRow } from "@/lib/queries/orders.server";
 import { requireSignedIn } from "@/lib/require-signed-in.server";
 
@@ -35,6 +36,12 @@ describe("reaching the purchases page", () => {
     render(await PurchasesPage());
 
     expect(screen.getByText("Todavía no tienes pedidos")).toBeInTheDocument();
+  });
+
+  it("lines up with the header's logo and sign-out button", async () => {
+    render(await PurchasesPage());
+
+    expect(screen.getByRole("heading", { level: 1 }).closest("section")).toHaveClass(...pageContainer.split(" "));
   });
 });
 

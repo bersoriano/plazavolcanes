@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 
 import { ProductCard } from "@/components/catalog/product-card";
 import { ProductGrid } from "@/components/catalog/product-grid";
+import { pageContainer } from "@/components/layout/container";
 import { ShareActions } from "@/components/share/share-actions";
 import { StartConversationButton } from "@/components/messages/start-conversation-button";
 import { FounderBadge } from "@/components/shops/founder-badge";
@@ -45,7 +46,7 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
 
   return (
     <PremiumScope className="pb-4" premium={isPremium}>
-      <section className="mx-auto max-w-[1440px] px-5 py-10 sm:px-8 sm:py-14 lg:px-12">
+      <section className={`${pageContainer} py-10 sm:py-14`}>
         <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href="/">
           <ArrowLeft aria-hidden="true" className="size-4" />
           Volver a la plaza

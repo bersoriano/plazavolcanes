@@ -2,7 +2,7 @@ import Link from "next/link";
 import { PackageOpen, SearchX } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
-import { signedInContainer } from "@/components/layout/container";
+import { pageContainer } from "@/components/layout/container";
 import { CatalogToolbar } from "@/components/products/catalog-toolbar";
 import { ProductRow } from "@/components/products/product-row";
 import { ReactivateExpiredButton } from "@/components/products/reactivate-expired-button";
@@ -74,7 +74,7 @@ export default async function ShopCatalogPage({
   const isFiltered = tab !== "todos" || search.trim() !== "";
 
   return (
-    <section className={`${signedInContainer} py-10 sm:py-14`}>
+    <section className={`${pageContainer} py-10 sm:py-14`}>
       <ShopWorkspaceHeader active="catalogo" isPremium={shop.is_premium === true} shopId={shopId} shopName={shop.name} shopSlug={shop.slug} />
 
       {trustDashboard ? <div className="mb-6"><TrustDashboardCard dashboard={trustDashboard} /></div> : null}

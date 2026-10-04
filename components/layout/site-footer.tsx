@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
+import { SiteFrame } from "@/components/layout/site-frame";
 import { LEGAL_ROUTES } from "@/lib/legal/document-types";
 
 const LINK = "inline-flex min-h-11 items-center whitespace-nowrap text-white transition-colors hover:text-accent";
@@ -15,7 +16,7 @@ const LABEL = "text-[11px] font-bold uppercase tracking-[0.14em] text-accent lg:
 export function SiteFooter() {
   return (
     <footer className="relative overflow-hidden bg-brand text-white" data-site-footer data-surface="dark">
-      <div className="relative mx-auto flex max-w-[1440px] flex-col gap-8 px-5 pb-[190px] pt-14 sm:px-8 lg:gap-12 lg:px-12 lg:pb-60 lg:pt-20 xl:px-20">
+      <SiteFrame className="relative flex flex-col gap-8 pb-[190px] pt-14 lg:gap-12 lg:pb-60 lg:pt-20">
         <div className="flex flex-col gap-8 lg:flex-row lg:justify-between">
           <div className="flex flex-col gap-3.5 lg:max-w-[300px] lg:gap-[18px] xl:max-w-[380px]">
             <p className="flex items-center gap-2.5 lg:gap-3">
@@ -64,7 +65,7 @@ export function SiteFooter() {
           <p>© 2026 Plaza Volcanes</p>
           <p>Hecho en México</p>
         </div>
-      </div>
+      </SiteFrame>
 
       <p
         aria-hidden="true"

@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { signedInContainer } from "@/components/layout/container";
+import { pageContainer } from "@/components/layout/container";
 import { SiteHeader } from "@/components/layout/site-header";
 
 const auth = { admin: false, signedIn: false };
@@ -97,13 +97,29 @@ describe("SiteHeader", () => {
     }
   });
 
-  it("lays its row out in the box the panel pages share", async () => {
-    await renderHeader(true);
+  it("lays its row out in the box every app screen shares", async () => {
+    route.pathname = "/compras";
 
-    // Same classes as every /panel page, so the logo and "Salir" sit exactly
-    // over the edges of the content below them.
-    const row = document.querySelector("[data-site-header] > div");
-    expect(row).toHaveClass(...signedInContainer.split(" "));
+    // Same classes as the page below, signed in or not, so the logo and
+    // "Salir" sit exactly over the content's edges.
+    for (const signedIn of [true, false]) {
+      await renderHeader(signedIn);
+      const row = document.querySelector("[data-site-header] > div");
+      expect(row).toHaveClass(...pageContainer.split(" "));
+      expect(row).not.toHaveClass("xl:px-20");
+      cleanup();
+    }
+  });
+
+  it("widens its gutters to the landing's grid on the landing pages", async () => {
+    for (const pathname of ["/", "/vender"]) {
+      route.pathname = pathname;
+      for (const signedIn of [true, false]) {
+        await renderHeader(signedIn);
+        expect(document.querySelector("[data-site-header] > div")).toHaveClass("xl:px-20");
+        cleanup();
+      }
+    }
   });
 
   it("reveals the full brand separately from signed-in action labels", async () => {

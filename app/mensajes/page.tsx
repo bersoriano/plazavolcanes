@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { ShoppingBag, Store } from "lucide-react";
 import { redirect } from "next/navigation";
 
+import { pageContainer } from "@/components/layout/container";
 import { ConversationList } from "@/components/messages/conversation-list";
 import { startedConversations } from "@/lib/queries/messages";
 import { listConversations } from "@/lib/queries/messages.server";
@@ -38,7 +39,7 @@ export default async function MessagesPage() {
   );
 
   return (
-    <section className="mx-auto max-w-[1280px] px-5 py-10 sm:px-8 sm:py-14">
+    <section className={`${pageContainer} py-10 sm:py-14`}>
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Tu buzón</p>
       <h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em] sm:text-5xl">
         Mensajes

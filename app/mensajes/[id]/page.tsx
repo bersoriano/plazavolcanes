@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import { pageContainer } from "@/components/layout/container";
 import { MessageThread } from "@/components/messages/message-thread";
 import { ThreadContext } from "@/components/messages/thread-context";
 import { sendMessage } from "@/lib/actions/messages";
@@ -25,7 +26,7 @@ export default async function MessageThreadPage({ params }: { params: Promise<{ 
   ]);
 
   return (
-    <section className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
+    <section className={`${pageContainer} py-10 sm:py-14`}>
       <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href="/mensajes">
         <ArrowLeft aria-hidden="true" className="size-4" />
         Mensajes

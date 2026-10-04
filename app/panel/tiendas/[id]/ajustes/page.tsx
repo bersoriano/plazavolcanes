@@ -1,7 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
-import { signedInContainer } from "@/components/layout/container";
+import { pageContainer } from "@/components/layout/container";
 import { DeliveryPolicyForm } from "@/components/shops/delivery-policy-form";
 import { ShopForm } from "@/components/shops/shop-form";
 import { ShopWorkspaceHeader } from "@/components/shops/shop-workspace-header";
@@ -44,7 +44,7 @@ export default async function ShopSettingsPage({ params }: { params: Promise<{ i
     : (deliveryPolicyUnlocksAt(shop.delivery_policy_updated_at)?.toISOString() ?? null);
 
   return (
-    <section className={`${signedInContainer} py-10 sm:py-14`}>
+    <section className={`${pageContainer} py-10 sm:py-14`}>
       <ShopWorkspaceHeader active="ajustes" isPremium={shop.is_premium === true} shopId={shopId} shopName={shop.name} shopSlug={shop.slug} />
 
       <section aria-labelledby="ajustes-title" className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">

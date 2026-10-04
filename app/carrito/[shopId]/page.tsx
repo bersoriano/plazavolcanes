@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowLeft, ShoppingBag } from "lucide-react";
 import { notFound } from "next/navigation";
 
+import { pageContainer } from "@/components/layout/container";
 import { BuyerPanel } from "@/components/orders/buyer-panel";
 import { CartItems } from "@/components/orders/cart-items";
 import { CartThreads, type CartThreadWithActions } from "@/components/orders/cart-thread";
@@ -31,7 +32,7 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
 
   if (!cart?.items.length) {
     return (
-      <section className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
+      <section className={`${pageContainer} py-10 sm:py-14`}>
         <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href={backHref}>
           <ArrowLeft aria-hidden="true" className="size-4" />
           Seguir explorando
@@ -89,7 +90,7 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
   );
 
   return (
-    <section className="mx-auto max-w-[86rem] px-5 py-10 sm:px-8 sm:py-14">
+    <section className={`${pageContainer} py-10 sm:py-14`}>
       <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href={backHref}>
         <ArrowLeft aria-hidden="true" className="size-4" />
         Seguir explorando
