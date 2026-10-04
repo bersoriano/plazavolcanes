@@ -58,7 +58,7 @@ export const NAME_MAX_LENGTH = 120;
 export const DESCRIPTION_MIN_LENGTH = 20;
 export const DESCRIPTION_MAX_LENGTH = 3000;
 export const MIN_UNITS = 1;
-export const MAX_UNITS = 10;
+export const MAX_UNITS = 999;
 export const MIN_HANDLING_DAYS = 1;
 export const MAX_HANDLING_DAYS = 30;
 

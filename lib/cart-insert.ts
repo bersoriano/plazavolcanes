@@ -26,8 +26,16 @@ export async function findAvailableProduct(supabase: CartClient, productId: numb
   return data;
 }
 
+/**
+ * The stock refusals the cart and checkout functions raise, matched whole so
+ * that only those sentences — never arbitrary database text — reach a buyer.
+ */
+const STOCK_MESSAGE =
+  /^(?:«.+» se agotó\.|Este producto se agotó\.|Solo queda 1 unidad de «.+»\.|Solo quedan \d+ unidades de «.+»\.|Solo hay \d+ unidades disponibles\.)$/;
+
 /** Turns a database refusal into something a buyer can act on. */
 export function databaseMessage(message: string | undefined, fallback: string) {
+  if (message && STOCK_MESSAGE.test(message)) return message;
   if (message?.includes("propia tienda")) return "No puedes solicitar productos de tu propia tienda.";
   if (message?.includes("no están disponibles") || message?.includes("no disponible"))
     return "Uno o más productos ya no están disponibles.";

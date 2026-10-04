@@ -9,6 +9,15 @@ const action = async (): Promise<ActionState> => ({ status: "idle", message: "" 
 afterEach(cleanup);
 
 describe("AddToCartForm", () => {
+  it("offers no purchase once the listing sold out", () => {
+    render(<AddToCartForm action={action} productPath="/productos/taza" unitsAvailable={0} />);
+
+    expect(screen.queryByRole("button", { name: /Solicitar compra/ })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Cantidad/)).not.toBeInTheDocument();
+    expect(screen.getByText("Agotado")).toBeInTheDocument();
+    expect(screen.getByText("Pregúntale a la tienda si volverá a tenerlo.")).toBeInTheDocument();
+  });
+
   it("caps the quantity at the units the listing covers", () => {
     render(<AddToCartForm action={action} productPath="/productos/taza" unitsAvailable={3} />);
 

@@ -77,6 +77,11 @@ describe("missingForPublication", () => {
 
     expect(fields).toEqual(["description", "price_mxn", "units_available", "handling_days"]);
   });
+
+  it("publishes a listing with deep inventory but not past the cap", () => {
+    expect(missingForPublication({ ...ready, units_available: 999 })).toEqual([]);
+    expect(missingForPublication({ ...ready, units_available: 1000 }).map((item) => item.field)).toEqual(["units_available"]);
+  });
 });
 
 describe("listingQualityTips", () => {

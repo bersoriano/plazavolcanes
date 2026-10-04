@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { insertCartItem } from "@/lib/cart-insert";
+import { databaseMessage, insertCartItem } from "@/lib/cart-insert";
 
 function clientWith({
   product,
@@ -109,5 +109,17 @@ describe("insertCartItem", () => {
     const result = await insertCartItem(client, 12, 3);
 
     expect(result).toEqual({ status: "error", message: "No pudimos agregar el producto." });
+  });
+});
+
+describe("databaseMessage", () => {
+  it.each([
+    "«Taza volcánica» se agotó.",
+    "Solo quedan 2 unidades de «Taza volcánica».",
+    "Solo queda 1 unidad de «Taza volcánica».",
+    "Este producto se agotó.",
+    "Solo hay 3 unidades disponibles.",
+  ])("tells the buyer about stock in the database's own words: %s", (message) => {
+    expect(databaseMessage(message, "No pudimos crear tu pedido.")).toBe(message);
   });
 });

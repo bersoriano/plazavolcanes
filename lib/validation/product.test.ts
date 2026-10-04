@@ -76,8 +76,14 @@ describe("productDraftSchema", () => {
 
   it("keeps out-of-range promises out of the row", () => {
     expect(productDraftSchema.safeParse({ ...blankForm, handling_days: "31" }).success).toBe(false);
-    expect(productDraftSchema.safeParse({ ...blankForm, units_available: "11" }).success).toBe(false);
+    expect(productDraftSchema.safeParse({ ...blankForm, units_available: "1000" }).success).toBe(false);
+    expect(productDraftSchema.safeParse({ ...blankForm, units_available: "-1" }).success).toBe(false);
     expect(productDraftSchema.safeParse({ ...blankForm, units_available: "2.5" }).success).toBe(false);
+  });
+
+  it("accepts a sold-out listing and real inventory", () => {
+    expect(productDraftSchema.safeParse({ ...blankForm, units_available: "0" }).success).toBe(true);
+    expect(productDraftSchema.safeParse({ ...blankForm, units_available: "999" }).success).toBe(true);
   });
 
   it("carries complete values through untouched", () => {

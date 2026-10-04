@@ -9,6 +9,48 @@ afterEach(() => {
 });
 
 describe("ProductCard", () => {
+  it.each(["default", "compact"] as const)("marks a sold-out listing in the %s card", (variant) => {
+    render(
+      <ProductCard
+        product={{
+          id: 2,
+          slug: "taza-agotada",
+          imageUrl: null,
+          name: "Taza agotada",
+          price_mxn: 349,
+          condition: "new",
+          used_condition: null,
+          units_available: 0,
+          shop: { name: "Casa Niebla", country_code: "MX", administrative_area_codes: ["MX-JAL"], trust_tier: "standard" },
+        }}
+        variant={variant}
+      />,
+    );
+
+    expect(screen.getByText("Agotado")).toBeInTheDocument();
+    expect(screen.queryByText("Nuevo")).not.toBeInTheDocument();
+  });
+
+  it("does not mark a listing that still has units", () => {
+    render(
+      <ProductCard
+        product={{
+          id: 3,
+          slug: "taza-disponible",
+          imageUrl: null,
+          name: "Taza disponible",
+          price_mxn: 349,
+          condition: "new",
+          used_condition: null,
+          units_available: 2,
+          shop: { name: "Casa Niebla", country_code: "MX", administrative_area_codes: ["MX-JAL"], trust_tier: "standard" },
+        }}
+      />,
+    );
+
+    expect(screen.queryByText("Agotado")).not.toBeInTheDocument();
+  });
+
   it("shows Nuevo for a new product", () => {
     render(
       <ProductCard

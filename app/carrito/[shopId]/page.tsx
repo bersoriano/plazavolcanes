@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { checkoutCart, removeCartItem, setCartItemQuantity } from "@/lib/actions/cart";
 import { sendMessage } from "@/lib/actions/messages";
 import { openConversation } from "@/lib/actions/start-conversation";
+import { cartLineStockNotice } from "@/lib/cart-stock";
 import { getPublicShop } from "@/lib/queries/catalog.server";
 import { fetchBuyerProfile, fetchCartThreads, fetchPickupPoint } from "@/lib/queries/checkout.server";
 import { getCart } from "@/lib/queries/orders.server";
@@ -51,6 +52,11 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
     (item): item is typeof item & { product: NonNullable<typeof item.product> } => item.product !== null,
   );
   const hasUnavailableItems = availableItems.length !== cart.items.length;
+  // Checkout would refuse these lines anyway; saying so here keeps the buyer
+  // from filling in delivery details for a request that cannot go through.
+  const hasStockShortfall = availableItems.some(
+    (item) => cartLineStockNotice(item.quantity, item.product.units_available) !== null,
+  );
   const [buyer, pickupPoint, threads, shop] = await Promise.all([
     fetchBuyerProfile(),
     fetchPickupPoint(shopId),
@@ -109,6 +115,10 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
               {hasUnavailableItems ? (
                 <p className="rounded-2xl bg-sale/10 p-4 text-sm font-medium text-sale" role="alert">
                   Quita los productos no disponibles antes de continuar.
+                </p>
+              ) : hasStockShortfall ? (
+                <p className="rounded-2xl bg-sale/10 p-4 text-sm font-medium text-sale" role="alert">
+                  Ajusta las cantidades marcadas antes de continuar.
                 </p>
               ) : (
                 <FulfillmentChoice
