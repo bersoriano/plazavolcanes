@@ -1,6 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { signedInContainer } from "@/components/layout/container";
 import { SiteHeader } from "@/components/layout/site-header";
 
 const auth = { admin: false, signedIn: false };
@@ -94,6 +95,15 @@ describe("SiteHeader", () => {
       expect(link).toHaveClass("tap");
       expect(link).not.toHaveClass("hidden");
     }
+  });
+
+  it("lays its row out in the box the panel pages share", async () => {
+    await renderHeader(true);
+
+    // Same classes as every /panel page, so the logo and "Salir" sit exactly
+    // over the edges of the content below them.
+    const row = document.querySelector("[data-site-header] > div");
+    expect(row).toHaveClass(...signedInContainer.split(" "));
   });
 
   it("reveals the full brand separately from signed-in action labels", async () => {
