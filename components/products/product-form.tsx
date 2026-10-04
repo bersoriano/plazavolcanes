@@ -374,7 +374,9 @@ export function ProductForm({
       ) : null}
 
       <div className="space-y-2">
-        <label className="block text-sm font-semibold text-ink" htmlFor="product-images">Imágenes del producto <span className="font-normal text-muted">(opcional)</span></label>
+        <label className="block text-sm font-semibold text-ink" htmlFor="product-images">Imágenes del producto <span className="font-normal text-muted">(necesarias para publicar)</span></label>
+        {/* A draft may be saved without them (allow_incomplete_product_drafts); the cover trigger refuses to publish without one. */}
+        <p className="text-xs text-muted">Puedes guardar el borrador sin imágenes; para publicar necesitas al menos una, que será la portada.</p>
 
         <StoredImages images={images} onRemove={removeImageAction} />
 

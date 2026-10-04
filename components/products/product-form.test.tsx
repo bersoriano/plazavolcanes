@@ -423,6 +423,15 @@ describe("ProductForm units available", () => {
 });
 
 describe("ProductForm gallery", () => {
+  it("says a cover is needed to publish, not that images are optional", () => {
+    render(<ProductForm shopId={1} action={action} categories={[]} />);
+
+    expect(screen.getByLabelText(/Imágenes del producto/)).toBeInTheDocument();
+    expect(screen.getByText(/^Imágenes del producto/).closest("label")).toHaveTextContent("Imágenes del producto (necesarias para publicar)");
+    expect(screen.queryByText(/opcional/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Puedes guardar el borrador sin imágenes; para publicar necesitas al menos una, que será la portada.")).toBeInTheDocument();
+  });
+
   it("accepts several images at once and states the limits", () => {
     render(<ProductForm shopId={1} action={action} categories={[]} />);
 
