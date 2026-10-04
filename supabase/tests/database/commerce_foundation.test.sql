@@ -4,6 +4,11 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(30);
 
+-- Publishing needs a gallery cover (20260916090000_require_product_cover_to_publish).
+-- These fixtures are not about media, so every listing gets one unless it says
+-- otherwise. The default is rolled back with the rest of the test.
+alter table public.products alter column image_path set default 'tests/cover.webp';
+
 select has_column('public', 'shops', 'trust_tier', 'shops cache trust tier');
 select has_column('public', 'shops', 'listing_limit', 'shops cache listing limit');
 select has_column('public', 'shops', 'time_zone', 'shops store fulfillment time zone');
@@ -75,14 +80,19 @@ where slug = 'comercio-uno';
 insert into public.products (shop_id, name, description, price_mxn, status, category_id, units_available)
 select s.id, 'Producto ' || n, 'Descripción suficientemente larga para producto ' || n, 10 * n, 'draft',
   (select id from public.categories where slug = 'celulares-y-accesorios'), 10
-from public.shops s cross join generate_series(1, 16) n
+from public.shops s cross join generate_series(1, 26) n
 where s.slug = 'comercio-uno';
 
 select results_eq(
   $$select trust_tier || ':' || listing_limit from public.shops where slug = 'comercio-uno'$$,
   array['standard:25'::text],
-  'new shops start Standard with 15 listings'
+  'new shops start Standard with 25 listings'
 );
+
+-- Publishing 8 listings would otherwise earn a founding seat while the
+-- programme is open, and a founder's cap is 50; this test is about the
+-- standard shop's guard, so the programme is closed for its duration.
+update private.founders_program set closes_at = now() - interval '1 second';
 
 set local role authenticated;
 set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000001';
@@ -94,14 +104,14 @@ where id in (
   join public.shops shops on shops.id = products.shop_id
   where shops.slug = 'comercio-uno'
   order by products.id
-  limit 15
+  limit 25
 );
 
 select throws_ok(
-  $$update public.products set status = 'published' where name = 'Producto 16'$$,
+  $$update public.products set status = 'published' where name = 'Producto 26'$$,
   'P0001',
   'Límite de publicaciones alcanzado.',
-  'transactional guard blocks the sixteenth publication'
+  'transactional guard blocks the publication past the limit'
 );
 
 select throws_ok(

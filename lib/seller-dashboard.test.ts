@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   attentionTiming,
@@ -117,6 +117,23 @@ function input(overrides: Partial<SellerDashboardInput> = {}): SellerDashboardIn
 function stepState(dashboard: ReturnType<typeof buildSellerDashboard>, id: string) {
   return dashboard.checklist.steps.find((step) => step.id === id)?.state;
 }
+
+describe("the dashboard's clock", () => {
+  afterEach(() => vi.useRealTimers());
+
+  it("judges expiry at the time it was built for, not the wall clock", () => {
+    // The listing is live on NOW and lapses a fortnight later; the machine
+    // running the dashboard is already past that date.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-04T12:00:00.000Z"));
+
+    const dashboard = buildSellerDashboard(
+      input({ shops: [shop()], products: { ok: true, value: [product({ expires_at: "2026-10-01T00:00:00.000Z" })] } }),
+    );
+
+    expect(dashboard.shops[0]).toMatchObject({ publicListingCount: 1, expiredCount: 0 });
+  });
+});
 
 describe("listing completeness", () => {
   it("accepts a listing with photo, title, price, condition, units and handling time", () => {

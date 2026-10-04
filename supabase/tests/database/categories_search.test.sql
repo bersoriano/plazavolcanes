@@ -4,6 +4,11 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(88);
 
+-- Publishing needs a gallery cover (20260916090000_require_product_cover_to_publish).
+-- These fixtures are not about media, so every listing gets one unless it says
+-- otherwise. The default is rolled back with the rest of the test.
+alter table public.products alter column image_path set default 'tests/cover.webp';
+
 select has_table('public', 'categories', 'categories table exists');
 select has_table('public', 'category_translations', 'category translations table exists');
 select has_table('public', 'category_aliases', 'category aliases table exists');
@@ -620,8 +625,12 @@ select results_eq(
 );
 
 reset role;
+-- A shop's limit follows the launch policy (20260927090000_add_founding_shops):
+-- zz_apply_launch_policy replaces a direct write to listing_limit on every shop
+-- write. So the policy is raised for this test and the shop touched to take it.
+update private.founders_program set base_listing_limit = 200, founder_listing_limit = 200;
 update public.shops
-set listing_limit = 200
+set updated_at = updated_at
 where slug = 'tecnologia-volcanes';
 
 insert into public.products (shop_id, name, description, price_mxn, status, category_id) values

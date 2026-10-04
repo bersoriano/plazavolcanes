@@ -4,6 +4,11 @@ create extension if not exists pgtap with schema extensions;
 
 select plan(14);
 
+-- Publishing needs a gallery cover (20260916090000_require_product_cover_to_publish).
+-- These fixtures are not about media, so every listing gets one unless it says
+-- otherwise. The default is rolled back with the rest of the test.
+alter table public.products alter column image_path set default 'tests/cover.webp';
+
 insert into auth.users (id, email, created_at) values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', 'buyer@test.local', now()),
   ('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', 'seller@test.local', now());
