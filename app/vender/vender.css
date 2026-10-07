@@ -23,6 +23,15 @@
 @source "../../components/home/landing/crossing-tapes.tsx";
 @source "../../components/home/landing/founders-counter.tsx";
 
+/*
+ * The section bar is the page's one fixed strip: while it is on the page the
+ * header scrolls away above it instead of stacking a second sticky bar. Keyed
+ * to the bar rather than the route, so the rule is inert anywhere it is not.
+ */
+body:has([data-seller-section-nav]) [data-site-header] {
+  position: relative;
+}
+
 /* The FAQ's open and close, where the browser can animate to auto height. */
 @supports (interpolate-size: allow-keywords) {
   .faq-item {
