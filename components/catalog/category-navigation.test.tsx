@@ -175,14 +175,26 @@ describe("SearchBar", () => {
 });
 
 describe("CategoryNavigation overflow guidance", () => {
-  it("describes horizontal category scrolling and hides edge fades from assistive technology", () => {
+  it("describes horizontal category scrolling", () => {
     const { container } = render(<CategoryNavigation tree={tree} />);
 
     const guidance = screen.getByText("Desliza para ver más categorías");
     const scrollers = container.querySelectorAll(`[aria-describedby="${guidance.id}"]`);
 
     expect(scrollers).toHaveLength(1);
-    expect(container.querySelectorAll("[aria-hidden=\"true\"].pointer-events-none")).toHaveLength(1);
+  });
+
+  it("masks the scrollers' trailing edge so the hero photo shows through the fade", () => {
+    const { container } = render(<CategoryNavigation activeCategorySlug="electronica" tree={tree} />);
+
+    const guidance = screen.getByText("Desliza para ver más categorías");
+    const scrollers = container.querySelectorAll(`[aria-describedby="${guidance.id}"]`);
+
+    expect(scrollers).toHaveLength(2);
+    for (const scroller of scrollers) {
+      expect(scroller).toHaveClass("[mask-image:linear-gradient(to_left,transparent,#000_2.5rem)]");
+    }
+    expect(container.querySelectorAll("[aria-hidden=\"true\"].pointer-events-none")).toHaveLength(0);
   });
 
   it("gives an active category's subcategory scroller focus clearance on every clipped edge", () => {
