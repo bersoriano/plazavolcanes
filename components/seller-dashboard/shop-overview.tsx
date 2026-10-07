@@ -52,8 +52,11 @@ export function ShopOverview({
         </p>
       ) : null}
 
+      {/* minmax(0, 1fr): a lone column would otherwise grow to the widest
+          card's content (a long shop name is `truncate`, so nowrap) and push
+          the page sideways on a phone. */}
       {shops.length ? (
-        <ul className="mt-4 grid gap-4 md:grid-cols-2">
+        <ul className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
           {shops.map((entry) => {
             const { shop } = entry;
             const imageUrl = shop.image_path ? (imageUrls.get(shop.image_path) ?? null) : null;
