@@ -191,9 +191,9 @@ function PublicationChecklist({
   return <aside aria-labelledby="publication-readiness" className="rounded-2xl border border-line bg-background p-4">
     <h2 className="font-display text-xl font-semibold" id="publication-readiness">Antes de publicar</h2>
     <p className="mt-1 text-sm text-muted">Completa estos requisitos; se revisan otra vez al guardar.</p>
-    <ul className="mt-3 space-y-2 text-sm">{missing.map((item) => <li key={item.field}><a className="font-medium text-brand underline underline-offset-2" href={`#${item.target}`}>{item.label}</a></li>)}</ul>
+    <ul className="mt-2 text-sm">{missing.map((item) => <li key={item.field}><a className="flex min-h-11 items-center font-medium text-brand underline underline-offset-2" href={`#${item.target}`}>{item.label}</a></li>)}</ul>
     <h3 className="mt-4 text-sm font-semibold">Sugerencias para vender mejor</h3>
-    {tips.length ? <ul className="mt-2 space-y-2 text-sm text-muted">{tips.map((item) => <li key={item.field}><a className="underline underline-offset-2" href={`#${item.target}`}>{item.label}</a></li>)}</ul> : <p className="mt-2 text-sm text-muted">Tu publicación ya tiene una buena base.</p>}
+    {tips.length ? <ul className="mt-1 text-sm text-muted">{tips.map((item) => <li key={item.field}><a className="flex min-h-11 items-center underline underline-offset-2" href={`#${item.target}`}>{item.label}</a></li>)}</ul> : <p className="mt-2 text-sm text-muted">Tu publicación ya tiene una buena base.</p>}
   </aside>;
 }
 

@@ -116,7 +116,7 @@ export function ActionQueue({
 
       <p className="mt-5 text-xs leading-5 text-muted">
         Te avisamos por correo de solicitudes y mensajes nuevos. Puedes desactivarlo en tus{" "}
-        <Link className="font-semibold text-brand underline underline-offset-2" href="/panel/cuenta">
+        <Link className="tap-halo font-semibold text-brand underline underline-offset-2" href="/panel/cuenta">
           ajustes de avisos
         </Link>
         .

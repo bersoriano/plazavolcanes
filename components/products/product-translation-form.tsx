@@ -31,7 +31,9 @@ export function ProductTranslationForm({ action, translation }: ProductTranslati
   return (
     <section className="mt-8 border-t border-line pt-8">
       <details>
-        <summary className="cursor-pointer font-display text-2xl font-semibold tracking-[-0.03em] text-ink">
+        {/* One 32px line on most phones: the padding makes it a 44px target and
+            the negative margin keeps the layout where it was. */}
+        <summary className="-my-1.5 cursor-pointer py-1.5 font-display text-2xl font-semibold tracking-[-0.03em] text-ink">
           Agregar versión en inglés
         </summary>
         <p className="mt-2 text-sm leading-6 text-muted">
