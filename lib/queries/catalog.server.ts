@@ -48,6 +48,22 @@ export type CatalogProduct = Pick<
 
 export type CatalogShop = Shop & { imageUrl: string | null };
 
+/**
+ * A catalogue read that fails is an outage, not an empty plaza. Swallowing
+ * the error once let a missing column show "no products" everywhere, so the
+ * reads a page stands on throw instead: the error boundary answers and the
+ * failure reaches the logs.
+ */
+function readOrThrow<R extends { data: unknown; error?: { code?: string; message: string } | null }>(
+  result: R,
+  read: string,
+): R["data"] {
+  if (result.error) {
+    throw new Error(`${read} failed (${result.error.code ?? "unknown"}): ${result.error.message}`);
+  }
+  return result.data;
+}
+
 const productSelection =
   "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, is_admin_enabled, expires_at, shops!inner(id, owner_id, name, slug, country_code, administrative_area_codes, trust_tier, is_publishing_approved, is_premium, founder_since), product_translations(locale, name, description, review_status)";
 
@@ -197,7 +213,7 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
       const rankedIds = rankedRows.map((item) => item.product_id);
 
       if (rankedIds.length) {
-        const { data } = await supabase
+        const result = await supabase
           .from("products")
           .select(productSelection)
           .eq("status", "published")
@@ -206,6 +222,7 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
           .not("expires_at", "is", null)
           .gt("expires_at", new Date().toISOString())
           .in("id", rankedIds);
+        const data = readOrThrow(result, "Catalogue products");
         const rankById = new Map(rankedIds.map((id, index) => [id, index]));
         productRows = ((data ?? []) as unknown as ProductQueryRow[]).sort(
           (left, right) =>
@@ -246,12 +263,12 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
           fallbackQuery = fallbackQuery.in("category_id", fallbackLeafIds);
         }
 
-        const { data } = await fallbackQuery;
+        const data = readOrThrow(await fallbackQuery, "Catalogue products");
         productRows = (data ?? []) as unknown as ProductQueryRow[];
       }
     }
   } else {
-    const { data } = await supabase
+    const result = await supabase
       .from("products")
       .select(productSelection)
       .eq("status", "published")
@@ -262,7 +279,7 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
       .eq("shops.country_code", normalizedFilters.countryCode)
       .order("created_at", { ascending: false })
       .limit(24);
-    productRows = (data ?? []) as unknown as ProductQueryRow[];
+    productRows = (readOrThrow(result, "Catalogue products") ?? []) as unknown as ProductQueryRow[];
   }
 
   // A category page gives founders in their 90 days the featured slot.
@@ -296,8 +313,7 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
     }
   }
 
-  const shopsResult = await shopsQuery;
-  const shopRows = shopsResult.data ?? [];
+  const shopRows = readOrThrow(await shopsQuery, "Catalogue shops") ?? [];
   const imageUrls = mediaUrls(
     [
       ...productRows.map((product) => product.image_path),
@@ -407,11 +423,14 @@ export async function getPublicShop(
 ) {
   if (!isSupabaseConfigured()) return null;
   const supabase = await createServerSupabaseClient();
-  const { data: shop } = await supabase.from("shops").select("*").eq("slug", slug).maybeSingle();
+  const shop = readOrThrow(
+    await supabase.from("shops").select("*").eq("slug", slug).maybeSingle(),
+    "Public shop",
+  );
   if (!shop) return null;
 
   const [
-    { data: products },
+    productsResult,
     { data: trustProfile },
     { data: sellerDisplayName },
     trustMetrics,
@@ -434,7 +453,7 @@ export async function getPublicShop(
     supabase.rpc("shop_seller_display_name", { p_shop_id: shop.id }),
     getPublicTrustMetrics(shop.id),
   ]);
-  const productRows = (products ?? []) as unknown as ProductQueryRow[];
+  const productRows = (readOrThrow(productsResult, "Public shop products") ?? []) as unknown as ProductQueryRow[];
   const imageUrls = mediaUrls(productRows.map((product) => product.image_path), MEDIA_VARIANTS.card);
   const shopImageUrls = mediaUrls([shop.image_path], MEDIA_VARIANTS.hero);
 
@@ -463,7 +482,7 @@ export const getPublicProduct = cache(async function getPublicProduct(
 ) {
   if (!isSupabaseConfigured()) return null;
   const supabase = await createServerSupabaseClient();
-  const { data } = await supabase
+  const result = await supabase
     .from("products")
     .select(productSelection)
     .eq("slug", slug)
@@ -473,6 +492,7 @@ export const getPublicProduct = cache(async function getPublicProduct(
     .not("expires_at", "is", null)
     .gt("expires_at", new Date().toISOString())
     .maybeSingle();
+  const data = readOrThrow(result, "Public product");
   if (!data) return null;
 
   const row = data as unknown as ProductQueryRow;

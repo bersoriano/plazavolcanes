@@ -449,3 +449,82 @@ describe("getPublicProduct", () => {
     expect(productQuery.gt).toHaveBeenCalledWith("expires_at", expect.any(String));
   });
 });
+
+describe("catalog read failures", () => {
+  // What the hosted database answered when shops.founder_since was missing.
+  const drift = { code: "42703", message: "column shops_1.founder_since does not exist" };
+
+  function chain(result: unknown, last: string) {
+    const query: Record<string, unknown> = {};
+    for (const method of ["select", "eq", "not", "gt", "order", "in", "limit", "overlaps", "maybeSingle"]) {
+      query[method] = method === last ? vi.fn().mockResolvedValue(result) : vi.fn().mockReturnValue(query);
+    }
+    return query;
+  }
+
+  it("throws instead of showing an empty plaza when the products read fails", async () => {
+    const productsQuery = chain({ data: null, error: drift }, "limit");
+    const shopsQuery = chain({ data: [], error: null }, "limit");
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      from: vi.fn((table: string) => (table === "products" ? productsQuery : shopsQuery)),
+    } as never);
+    vi.mocked(getProductCategoryTree).mockResolvedValue([]);
+
+    await expect(getHomeCatalog()).rejects.toThrow("42703");
+  });
+
+  it("throws instead of showing no shops when the shops read fails", async () => {
+    const productsQuery = chain({ data: [], error: null }, "limit");
+    const shopsQuery = chain({ data: null, error: drift }, "limit");
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      from: vi.fn((table: string) => (table === "products" ? productsQuery : shopsQuery)),
+    } as never);
+    vi.mocked(getProductCategoryTree).mockResolvedValue([]);
+
+    await expect(getHomeCatalog()).rejects.toThrow("42703");
+  });
+
+  it("throws when the products behind a ranked search cannot be read", async () => {
+    const productsQuery = chain({ data: null, error: drift }, "in");
+    const shopsQuery = chain({ data: [], error: null }, "limit");
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      from: vi.fn((table: string) => (table === "products" ? productsQuery : shopsQuery)),
+      rpc: vi.fn().mockResolvedValue({ data: [{ product_id: 7, rank: 1 }], error: null }),
+    } as never);
+    vi.mocked(getProductCategoryTree).mockResolvedValue([]);
+
+    await expect(
+      getHomeCatalog({
+        query: "taza",
+        locale: "es-MX",
+        countryCode: "MX",
+        invalidCategorySelection: false,
+        invalidAreaSelection: false,
+      }),
+    ).rejects.toThrow("42703");
+  });
+
+  it("throws instead of answering not found when a product read fails", async () => {
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      from: vi.fn(() => chain({ data: null, error: drift }, "maybeSingle")),
+    } as never);
+
+    await expect(getPublicProduct("taza")).rejects.toThrow("42703");
+  });
+
+  it("throws instead of showing a shop as empty when its products read fails", async () => {
+    const shopQuery = chain({ data: { id: 4, owner_id: "seller-1", image_path: null }, error: null }, "maybeSingle");
+    const productsQuery = chain({ data: null, error: drift }, "order");
+    const trustProfileQuery = chain({ data: null, error: null }, "maybeSingle");
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      from: vi.fn((table: string) => {
+        if (table === "shops") return shopQuery;
+        if (table === "products") return productsQuery;
+        return trustProfileQuery;
+      }),
+      rpc: vi.fn().mockResolvedValue({ data: null, error: null }),
+    } as never);
+
+    await expect(getPublicShop("casa-niebla")).rejects.toThrow("42703");
+  });
+});
