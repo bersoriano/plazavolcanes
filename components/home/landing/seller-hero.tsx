@@ -12,13 +12,11 @@ import type { CatalogLocale } from "@/lib/catalog-locale";
  * collage keeping its desktop composition down to sm.
  */
 export function SellerHero({
-  tiles,
   latest,
   locale,
   promoActive = true,
   spotsTaken = null,
 }: {
-  tiles: [CollageProduct | null, CollageProduct | null];
   latest: CollageProduct | null;
   locale?: CatalogLocale;
   /** False once the founders promotion has ended: the card leaves the hero. */
@@ -69,7 +67,7 @@ export function SellerHero({
           {promoActive ? <FoundersCounter spotsTaken={spotsTaken} /> : null}
         </div>
 
-        <HeroCollage latest={latest} locale={locale} tiles={tiles} />
+        <HeroCollage latest={latest} locale={locale} />
       </div>
     </section>
   );
