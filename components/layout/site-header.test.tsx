@@ -74,14 +74,35 @@ describe("SiteHeader", () => {
     const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
 
     // The bar carries these on a phone, so the header only shows them once
-    // there is room for words instead of a row of unlabelled glyphs.
-    for (const name of ["Mi panel", "Mis compras", "Mensajes"]) {
+    // there is room for words instead of a row of unlabelled glyphs. At md
+    // they sit closer together, which is what keeps the row inside 768px.
+    for (const name of ["Explorar", "Mi panel", "Mis compras", "Mensajes"]) {
       expect(within(navigation).getByRole("link", { name })).toHaveClass(
         "hidden",
         "min-h-11",
         "md:inline-flex",
+        "px-3",
+        "lg:px-4",
       );
     }
+  });
+
+  it("lets a signed-in visitor browse the plaza from the header", async () => {
+    await renderHeader(true);
+
+    const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
+    const links = within(navigation).getAllByRole("link");
+    expect(links[0]).toHaveTextContent("Explorar");
+    expect(links[0]).toHaveAttribute("href", "/explorar");
+  });
+
+  it("marks the signed-in destination the visitor is on", async () => {
+    route.pathname = "/compras/42";
+    await renderHeader(true);
+
+    const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
+    expect(within(navigation).getByRole("link", { name: "Mis compras" })).toHaveAttribute("aria-current", "page");
+    expect(within(navigation).getByRole("link", { name: "Mi panel" })).not.toHaveAttribute("aria-current");
   });
 
   it("keeps administration reachable from the header at every width", async () => {
@@ -131,87 +152,100 @@ describe("SiteHeader", () => {
   it("keeps signed-out access named without relying on its visible label", async () => {
     await renderHeader(false);
 
+    expect(screen.getAllByRole("link", { name: "Ingresar" })[0]).toHaveAttribute("aria-label", "Ingresar");
+  });
+
+  it("links the same destinations on every page for a signed-out visitor", async () => {
+    for (const pathname of ["/", "/explorar", "/vender", "/compras"]) {
+      route.pathname = pathname;
+      await renderHeader(false);
+
+      const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
+      expect(within(navigation).getAllByRole("link").map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
+        ["Explorar", "/explorar"],
+        ["Cómo comprar", "/como-comprar"],
+        ["Vender", "/vender?desde=header"],
+      ]);
+      cleanup();
+    }
+  });
+
+  it("marks the signed-out destination the visitor is on", async () => {
+    route.pathname = "/vender";
+    await renderHeader(false);
+
     const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
-    expect(within(navigation).getByRole("link", { name: "Ingresar" })).toHaveAttribute(
-      "aria-label",
-      "Ingresar",
-    );
+    expect(within(navigation).getByRole("link", { name: "Vender" })).toHaveAttribute("aria-current", "page");
+    expect(within(navigation).getByRole("link", { name: "Explorar" })).not.toHaveAttribute("aria-current");
   });
 
-  it("sends a signed-out visitor to the seller landing, not straight to signup", async () => {
+  it("marks nothing on the landing, which is home rather than a destination", async () => {
     await renderHeader(false);
 
-    expect(screen.getByRole("link", { name: "Vender" })).toHaveAttribute(
-      "href",
-      "/vender?desde=header",
-    );
+    const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
+    for (const link of within(navigation).getAllByRole("link")) {
+      expect(link).not.toHaveAttribute("aria-current");
+    }
   });
 
-  it("keeps the phone's selling pill at least 44px high and hands wider screens the full button", async () => {
+  it("offers to create a store, straight to signup, from every page", async () => {
+    for (const pathname of ["/", "/explorar", "/vender"]) {
+      route.pathname = pathname;
+      await renderHeader(false);
+
+      const pills = screen.getAllByRole("link", { name: "Crear mi tienda" });
+      for (const pill of pills) {
+        expect(pill).toHaveAttribute("href", "/registro?vender=1&desde=header");
+      }
+      cleanup();
+    }
+  });
+
+  it("leaves a phone's header to the brand and the menu", async () => {
     await renderHeader(false);
 
-    expect(screen.getByRole("link", { name: "Vender" })).toHaveClass("inline-flex", "min-h-11", "sm:hidden");
-    const open = screen.getByRole("link", { name: "Abrir mi tienda" });
-    expect(open).toHaveAttribute("href", "/vender?desde=header");
-    expect(open).toHaveClass("hidden", "h-12", "sm:inline-flex");
+    // The closed sheet is out of the accessibility tree, so these are the
+    // header's own. The quick access bar holds Explorar, Vender and Ingresar
+    // on a phone.
+    const signIn = screen.getAllByRole("link", { name: "Ingresar" });
+    const pill = screen.getAllByRole("link", { name: "Crear mi tienda" });
+    expect(signIn).toHaveLength(1);
+    expect(signIn[0]).toHaveClass("hidden", "sm:inline-flex");
+    expect(pill).toHaveLength(1);
+    expect(pill[0]).toHaveClass("hidden", "h-12", "sm:inline-flex");
+    expect(screen.getByRole("navigation", { name: "Navegación principal" })).toHaveClass("hidden", "lg:flex");
   });
 
-  it("links the home page's sections from any page for a signed-out visitor", async () => {
-    await renderHeader(false);
-
-    const sections = screen.getByRole("navigation", { name: "Secciones de la plaza" });
-    expect(within(sections).getAllByRole("link").map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
-      ["Explorar", "/#explorar"],
-      ["Tiendas", "/#tiendas"],
-      ["Cómo funciona", "/#pasos"],
-      ["Para vender", "/#vender"],
-    ]);
-  });
-
-  it("opens the same sections from a named menu button below xl", async () => {
+  it("opens the destinations, Ingresar and the pill from a named menu button below lg", async () => {
+    route.pathname = "/explorar";
     await renderHeader(false);
 
     const button = screen.getByRole("button", { name: "Abrir menú" });
     expect(button).toHaveAttribute("popovertarget", "menu-principal");
-    expect(button).toHaveClass("tap", "xl:hidden");
-  });
+    expect(button).toHaveClass("tap", "lg:hidden");
 
-  it("leaves the signed-in header without the landing's section links or menu", async () => {
-    await renderHeader(true);
-
-    expect(screen.queryByRole("navigation", { name: "Secciones de la plaza" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Abrir menú" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Abrir mi tienda" })).not.toBeInTheDocument();
-  });
-
-  it("gives /vender its own sections and sends its pill straight to signup", async () => {
-    route.pathname = "/vender";
-    await renderHeader(false);
-
-    const sections = screen.getByRole("navigation", { name: "Secciones de la plaza" });
-    expect(within(sections).getAllByRole("link").map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
+    // Closed until the button opens it, so it is queried as hidden.
+    const sheet = screen.getByRole("dialog", { hidden: true });
+    expect(sheet).toHaveAttribute("aria-label", "Menú");
+    expect(within(sheet).getAllByRole("link", { hidden: true }).map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
       ["Explorar", "/explorar"],
-      ["Tiendas fundadoras", "#fundadoras"],
-      ["Cómo funciona", "#pasos"],
-      ["Niveles", "#niveles"],
-      ["Preguntas", "#preguntas"],
+      ["Cómo comprar", "/como-comprar"],
+      ["Vender", "/vender?desde=header"],
+      ["Ingresar", "/ingresar"],
+      ["Crear mi tienda", "/registro?vender=1&desde=header"],
     ]);
-    expect(screen.getByRole("link", { name: "Crear mi tienda" })).toHaveAttribute(
-      "href",
-      "/registro?vender=1&desde=header",
-    );
-    // A phone keeps Ingresar beside the menu rather than a second selling pill.
-    expect(screen.queryByRole("link", { name: "Vender" })).not.toBeInTheDocument();
-    const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
-    expect(within(navigation).getByRole("link", { name: "Ingresar" })).toHaveClass("inline-flex");
+    expect(within(sheet).getByRole("link", { hidden: true, name: "Explorar" })).toHaveAttribute("aria-current", "page");
   });
 
-  it("keeps the signed-in header the same on /vender", async () => {
-    route.pathname = "/vender";
-    await renderHeader(true);
+  it("leaves the signed-in header without the menu or the selling pill, on any page", async () => {
+    for (const pathname of ["/", "/vender"]) {
+      route.pathname = pathname;
+      await renderHeader(true);
 
-    expect(screen.queryByRole("navigation", { name: "Secciones de la plaza" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "Crear mi tienda" })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Salir" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Abrir menú" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: "Crear mi tienda" })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "Salir" })).toBeInTheDocument();
+      cleanup();
+    }
   });
 });
