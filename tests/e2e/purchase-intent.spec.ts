@@ -46,6 +46,39 @@ async function expectCartQuantity(page: Page, productName: string, quantity: num
   );
 }
 
+/** A 1×1 PNG: publishing needs a cover, and any image will do. */
+const onePixelPng = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=",
+  "base64",
+);
+
+/**
+ * Lists a mug from the seller's shop page: saved as a draft with its cover,
+ * then published from the edit page, whose form answers with its own message
+ * (the catalogue's quick toggle says "Producto publicado." instead). The edit
+ * page also reports the cover in a status of its own, so the answer is picked
+ * out by its text.
+ */
+async function publishProduct(sellerPage: Page, productName: string) {
+  await sellerPage.getByRole("link", { name: /nuevo producto|agregar producto/i }).first().click();
+  await expect(sellerPage).toHaveURL(/\/productos\/nuevo/);
+  await sellerPage.getByLabel("Categoría", { exact: true }).selectOption({ index: 1 });
+  await sellerPage.getByLabel("Subcategoría").selectOption({ index: 1 });
+  await sellerPage.getByLabel("Nombre del producto").fill(productName);
+  await sellerPage.getByLabel("Descripción").fill("Pieza de prueba para la compra de un visitante.");
+  await sellerPage.getByLabel("Precio en MXN").fill("250");
+  await sellerPage.getByLabel("Unidades disponibles").fill("5");
+  await sellerPage.locator("#product-images").setInputFiles({
+    buffer: onePixelPng,
+    mimeType: "image/png",
+    name: "portada.png",
+  });
+  await sellerPage.getByRole("button", { name: "Guardar producto" }).click();
+  await expect(sellerPage).toHaveURL(/\/panel\/productos\/\d+\/editar/);
+  await sellerPage.getByRole("button", { name: "Publicar producto" }).click();
+  await expect(sellerPage.getByRole("status").filter({ hasText: "Tu producto ya está publicado." })).toBeVisible();
+}
+
 function approveShopForPublication(slug: string) {
   execFileSync(
     "npx",
@@ -87,18 +120,7 @@ test("a signed-out shopper keeps their purchase through sign-in", async ({ brows
 
   // A published product for the visitor to want.
   const productName = `Taza de barro ${stamp}`;
-  await sellerPage.getByRole("link", { name: /nuevo producto|agregar producto/i }).first().click();
-  await expect(sellerPage).toHaveURL(/\/productos\/nuevo/);
-  await sellerPage.getByLabel("Categoría", { exact: true }).selectOption({ index: 1 });
-  await sellerPage.getByLabel("Subcategoría").selectOption({ index: 1 });
-  await sellerPage.getByLabel("Nombre del producto").fill(productName);
-  await sellerPage.getByLabel("Descripción").fill("Pieza de prueba para la compra de un visitante.");
-  await sellerPage.getByLabel("Precio en MXN").fill("250");
-  await sellerPage.getByLabel("Unidades disponibles").fill("5");
-  await sellerPage.getByRole("button", { name: "Guardar producto" }).click();
-  await expect(sellerPage).toHaveURL(/\/panel\/productos\/\d+\/editar/);
-  await sellerPage.getByRole("button", { name: "Publicar producto" }).click();
-  await expect(sellerPage.getByRole("status")).toHaveText("Producto publicado.");
+  await publishProduct(sellerPage, productName);
 
   // The buyer's account exists, but the browser doing the buying is a stranger.
   const registrationContext = await browser.newContext();
@@ -194,18 +216,7 @@ test("a buyer must choose how they receive the item", async ({ browser }) => {
 
   // A published product for the visitor to want.
   const productName = `Taza de barro ${stamp2}`;
-  await sellerPage.getByRole("link", { name: /nuevo producto|agregar producto/i }).first().click();
-  await expect(sellerPage).toHaveURL(/\/productos\/nuevo/);
-  await sellerPage.getByLabel("Categoría", { exact: true }).selectOption({ index: 1 });
-  await sellerPage.getByLabel("Subcategoría").selectOption({ index: 1 });
-  await sellerPage.getByLabel("Nombre del producto").fill(productName);
-  await sellerPage.getByLabel("Descripción").fill("Pieza de prueba para la compra de un visitante.");
-  await sellerPage.getByLabel("Precio en MXN").fill("250");
-  await sellerPage.getByLabel("Unidades disponibles").fill("5");
-  await sellerPage.getByRole("button", { name: "Guardar producto" }).click();
-  await expect(sellerPage).toHaveURL(/\/panel\/productos\/\d+\/editar/);
-  await sellerPage.getByRole("button", { name: "Publicar producto" }).click();
-  await expect(sellerPage.getByRole("status")).toHaveText("Producto publicado.");
+  await publishProduct(sellerPage, productName);
 
   const buyerContext = await browser.newContext();
   const buyerPage = await buyerContext.newPage();
@@ -268,18 +279,7 @@ test("choosing shipping asks for an address and creates a shipped order", async 
 
   // A published product for the visitor to want.
   const productName = `Taza de barro ${stamp3}`;
-  await sellerPage.getByRole("link", { name: /nuevo producto|agregar producto/i }).first().click();
-  await expect(sellerPage).toHaveURL(/\/productos\/nuevo/);
-  await sellerPage.getByLabel("Categoría", { exact: true }).selectOption({ index: 1 });
-  await sellerPage.getByLabel("Subcategoría").selectOption({ index: 1 });
-  await sellerPage.getByLabel("Nombre del producto").fill(productName);
-  await sellerPage.getByLabel("Descripción").fill("Pieza de prueba para la compra de un visitante.");
-  await sellerPage.getByLabel("Precio en MXN").fill("250");
-  await sellerPage.getByLabel("Unidades disponibles").fill("5");
-  await sellerPage.getByRole("button", { name: "Guardar producto" }).click();
-  await expect(sellerPage).toHaveURL(/\/panel\/productos\/\d+\/editar/);
-  await sellerPage.getByRole("button", { name: "Publicar producto" }).click();
-  await expect(sellerPage.getByRole("status")).toHaveText("Producto publicado.");
+  await publishProduct(sellerPage, productName);
 
   const buyerContext = await browser.newContext();
   const buyerPage = await buyerContext.newPage();

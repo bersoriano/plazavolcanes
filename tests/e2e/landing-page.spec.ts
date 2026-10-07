@@ -94,10 +94,12 @@ async function createPublishedListing(browser: Browser) {
       name: `portada-${runId}.png`,
     });
     // A new product is saved as a draft, then published from its edit page.
+    // That form answers with its own message, beside a status of its own for
+    // the cover, so the answer is picked out by its text.
     await page.getByRole("button", { name: "Guardar producto" }).click();
     await expect(page).toHaveURL(/\/panel\/productos\/\d+\/editar\?creado=1/);
     await page.getByRole("button", { name: "Publicar producto" }).click();
-    await expect(page.getByRole("status")).toHaveText("Producto publicado.");
+    await expect(page.getByRole("status").filter({ hasText: "Tu producto ya está publicado." })).toBeVisible();
 
     sellerStorageState = await context.storageState();
   } finally {
