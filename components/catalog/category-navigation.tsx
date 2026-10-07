@@ -64,7 +64,7 @@ export function CategoryNavigation({
           className={
             panel
               ? "flex gap-2 overflow-x-auto px-4 py-1 pr-16 [scrollbar-width:thin] sm:gap-2.5 sm:px-1 sm:pr-24"
-              : "flex gap-2 overflow-x-auto p-2 pr-10 [scrollbar-width:thin]"
+              : "flex gap-2 overflow-x-auto p-2 pr-10 [scrollbar-width:thin] [mask-image:linear-gradient(to_left,transparent,#000_2.5rem)]"
           }
         >
           <Link
@@ -95,19 +95,17 @@ export function CategoryNavigation({
             );
           })}
         </div>
-        <span
-          aria-hidden="true"
-          className={
-            panel
-              ? "pointer-events-none absolute inset-y-0 right-0 w-[72px] bg-linear-to-l from-surface from-15% to-surface/0 sm:w-[120px] sm:from-20%"
-              : "pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent"
-          }
-        />
+        {panel ? (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-y-0 right-0 w-[72px] bg-linear-to-l from-surface from-15% to-surface/0 sm:w-[120px] sm:from-20%"
+          />
+        ) : null}
       </div>
 
       {activeCategory?.children.length ? (
         <div className="relative mt-3">
-          <div aria-describedby={scrollGuidanceId} aria-label={`Subcategorías de ${activeCategory.name}`} className="flex gap-2 overflow-x-auto p-2 pr-10">
+          <div aria-describedby={scrollGuidanceId} aria-label={`Subcategorías de ${activeCategory.name}`} className="flex gap-2 overflow-x-auto p-2 pr-10 [mask-image:linear-gradient(to_left,transparent,#000_2.5rem)]">
             {activeCategory.children.map((subcategory) => {
               const isActive = subcategory.slug === activeSubcategorySlug;
 
@@ -134,7 +132,6 @@ export function CategoryNavigation({
               );
             })}
           </div>
-          <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-background to-transparent" />
         </div>
       ) : null}
     </nav>
