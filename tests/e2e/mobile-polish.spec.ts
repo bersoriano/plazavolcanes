@@ -65,6 +65,16 @@ type Undersized = {
  * skipped: they are 1px on purpose and are driven by a visible label elsewhere,
  * so growing them would put an invisible target under the user's thumb.
  */
+/**
+ * Opens a route and waits for it to finish arriving. `goto` returns at the load
+ * event, but the panel's pages keep streaming content in after it, and a sweep
+ * that ran then measured whatever had arrived: it passed or failed by timing.
+ */
+async function visit(page: Page, route: string) {
+  await page.goto(route);
+  await page.waitForLoadState("networkidle");
+}
+
 async function undersizedTapTargets(page: Page): Promise<Undersized[]> {
   return page.evaluate((minimum) => {
     const interactive =
@@ -117,10 +127,10 @@ async function undersizedTapTargets(page: Page): Promise<Undersized[]> {
   }, MINIMUM_TAP);
 }
 
-async function expectNoDocumentOverflow(page: Page, route?: string) {
+async function expectNoDocumentOverflow(page: Page, route?: string, { soft = false } = {}) {
   const width = page.viewportSize()?.width;
 
-  await expect
+  await (soft ? expect.configure({ soft: true }) : expect)
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth), { message: `horizontal overflow on ${route ?? page.url()}` })
     .toBe(width);
 }
@@ -217,10 +227,11 @@ test.describe("mobile polish", () => {
       const page = await context.newPage();
 
       try {
+        // Soft, so one run names every route that falls short.
         for (const route of signedOutRoutes) {
-          await page.goto(route);
-          await expectNoDocumentOverflow(page);
-          expect(await undersizedTapTargets(page), `${route} at ${width}px`).toEqual([]);
+          await visit(page, route);
+          await expectNoDocumentOverflow(page, route, { soft: true });
+          expect.soft(await undersizedTapTargets(page), `${route} at ${width}px`).toEqual([]);
         }
       } finally {
         await context.close();
@@ -237,10 +248,11 @@ test.describe("mobile polish", () => {
       const page = await context.newPage();
 
       try {
+        // Soft, so one run names every route that falls short.
         for (const route of [...signedInRoutes, shopRoute, newProductRoute, editProductRoute]) {
-          await page.goto(route);
-          await expectNoDocumentOverflow(page, route);
-          expect(await undersizedTapTargets(page), `${route} at ${width}px`).toEqual([]);
+          await visit(page, route);
+          await expectNoDocumentOverflow(page, route, { soft: true });
+          expect.soft(await undersizedTapTargets(page), `${route} at ${width}px`).toEqual([]);
         }
       } finally {
         await context.close();
