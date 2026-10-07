@@ -208,16 +208,16 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   return (
     <>
       <section className="relative overflow-hidden border-b border-line bg-surface">
-        <Image
-          alt=""
+        {/* The photo is a tall portrait: it stands at the hero's right edge at
+            full height, its empty left half faded into the surface. Below xl
+            the copy runs over it, so a veil keeps the copy legible. */}
+        <div
           aria-hidden="true"
-          className="object-cover object-center"
-          fill
-          preload
-          sizes="100vw"
-          src="/hero1.jpg"
-        />
-        <div aria-hidden="true" className="absolute inset-0 bg-surface/45" />
+          className="absolute inset-y-0 right-0 aspect-[768/1402] [mask-image:linear-gradient(to_right,transparent,#000_45%)]"
+        >
+          <Image alt="" className="object-cover" fill preload sizes="(min-width: 640px) 420px, 100vw" src="/mexican-woman.jpg" />
+        </div>
+        <div aria-hidden="true" className="absolute inset-0 bg-surface/60 xl:hidden" />
         <div className="relative z-10 mx-auto max-w-[1440px] px-5 pb-8 pt-14 sm:px-8 sm:pb-10 sm:pt-20 lg:px-12">
           <div className="relative mx-auto max-w-4xl text-center">
             <div className="mb-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-brand-hover">
