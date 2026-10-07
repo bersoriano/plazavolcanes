@@ -265,7 +265,7 @@ test.describe("mobile polish", () => {
 
       // The reason the bar exists: /compras had no link at all below 640px.
       for (const [name, href] of [
-        ["Explorar", "/"],
+        ["Explorar", "/explorar"],
         ["Mensajes", "/mensajes"],
         ["Compras", "/compras"],
         ["Panel", "/panel"],
@@ -306,6 +306,40 @@ test.describe("mobile polish", () => {
       await expect(page.getByRole("navigation", { name: "Navegación rápida" })).toBeHidden();
     } finally {
       await context.close();
+    }
+  });
+
+  test("lets /vender's section bar be the one fixed strip, and only there", async ({ browser }) => {
+    for (const viewport of [
+      { height: 844, width: 390 },
+      { height: 900, width: 1280 },
+    ]) {
+      const context = await browser.newContext({ reducedMotion: "reduce", viewport });
+      const page = await context.newPage();
+
+      try {
+        const stripTops = async () =>
+          page.evaluate(() => ({
+            bar: document.querySelector("[data-seller-section-nav]")?.getBoundingClientRect().top ?? null,
+            header: document.querySelector("[data-site-header]")!.getBoundingClientRect().bottom,
+          }));
+
+        await page.goto("/vender");
+        await page.locator("#preguntas").scrollIntoViewIfNeeded();
+        await expect.poll(stripTops).toEqual({ bar: 0, header: expect.any(Number) });
+        // The header scrolled away above the bar instead of stacking over it.
+        expect((await stripTops()).header).toBeLessThanOrEqual(0);
+
+        // Anywhere else the header still sticks.
+        await page.goto("/");
+        await page.mouse.wheel(0, 1500);
+        await expect
+          .poll(async () => page.evaluate(() => document.querySelector("[data-site-header]")!.getBoundingClientRect().top))
+          .toBe(0);
+        expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+      } finally {
+        await context.close();
+      }
     }
   });
 

@@ -1,18 +1,19 @@
 "use client";
 
-import Link from "next/link";
 import { useRef } from "react";
-import { Menu, X } from "lucide-react";
+import { ArrowRight, Menu, X } from "lucide-react";
+
+import { NavLink } from "@/components/layout/nav-link";
 
 export type HeaderMenuLink = { href: string; label: string };
 
 /**
- * The signed-out header's sheet below xl, built on the Popover API: the
+ * The signed-out header's sheet below lg, built on the Popover API: the
  * browser owns opening, light dismiss, Escape and the top layer. The only
- * script here closes the sheet when a link inside it is followed, because an
- * in-page anchor never leaves the page that would otherwise take it away.
+ * script here closes the sheet when a link inside it is followed, because a
+ * client-side navigation keeps the page, and the open sheet, in place.
  */
-export function HeaderMenu({ links }: { links: HeaderMenuLink[] }) {
+export function HeaderMenu({ cta, links }: { cta: HeaderMenuLink; links: HeaderMenuLink[] }) {
   const sheet = useRef<HTMLDivElement>(null);
   const close = () => sheet.current?.hidePopover();
 
@@ -20,7 +21,7 @@ export function HeaderMenu({ links }: { links: HeaderMenuLink[] }) {
     <>
       <button
         aria-label="Abrir menú"
-        className="tap grid place-items-center rounded-full text-brand transition-colors hover:bg-background xl:hidden"
+        className="tap grid place-items-center rounded-full text-brand transition-colors hover:bg-background lg:hidden"
         popoverTarget="menu-principal"
         type="button"
       >
@@ -46,17 +47,25 @@ export function HeaderMenu({ links }: { links: HeaderMenuLink[] }) {
             <X aria-hidden="true" className="size-6" />
           </button>
         </div>
-        <nav aria-label="Secciones" className="flex flex-col px-4 pb-6 sm:px-8">
+        <nav aria-label="Menú principal" className="flex flex-col px-4 pb-6 sm:px-8">
           {links.map((link) => (
-            <Link
-              className="flex min-h-14 items-center border-t border-brand/10 font-display text-[22px] font-semibold tracking-[-0.02em]"
+            <NavLink
+              className="flex min-h-14 items-center border-t border-brand/10 font-display text-[22px] font-semibold tracking-[-0.02em] decoration-2 underline-offset-8 aria-[current=page]:underline"
               href={link.href}
               key={link.href}
               onClick={close}
             >
               {link.label}
-            </Link>
+            </NavLink>
           ))}
+          <NavLink
+            className="mt-4 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-brand px-6 text-[15px] font-semibold text-white transition-colors hover:bg-brand-hover"
+            href={cta.href}
+            onClick={close}
+          >
+            {cta.label}
+            <ArrowRight aria-hidden="true" className="size-[18px] text-accent" strokeWidth={2.2} />
+          </NavLink>
         </nav>
       </div>
     </>

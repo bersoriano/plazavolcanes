@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { CircleUserRound, LayoutDashboard, MessageCircle, Search, ShoppingBag, Store } from "lucide-react";
 
+import { isCurrent } from "@/components/layout/nav-link";
+
 const icons = {
   account: CircleUserRound,
   explore: Search,
@@ -19,19 +21,6 @@ export type BottomNavItem = {
   icon: keyof typeof icons;
   label: string;
 };
-
-/**
- * Marks the destination the reader is already at. `/` would otherwise prefix
- * every route, so the home entry only matches itself.
- *
- * Compared on the path alone: an entry may carry a query string to say where
- * the visit came from, and `usePathname` never returns one, so matching the
- * whole href would quietly stop marking that entry as current.
- */
-function isCurrent(pathname: string, href: string) {
-  const path = href.split(/[?#]/)[0];
-  return path === "/" ? pathname === "/" : pathname === path || pathname.startsWith(`${path}/`);
-}
 
 export function BottomNavLinks({ items }: { items: BottomNavItem[] }) {
   const pathname = usePathname();

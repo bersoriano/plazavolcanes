@@ -37,6 +37,17 @@ describe("SellerProgram", () => {
     expect(catalog).toHaveAttribute("id", "catalogo");
   });
 
+  it("opens with the bar that leads to each of its sections", () => {
+    const { container } = render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
+
+    const bar = screen.getByRole("navigation", { name: "Secciones de Vender" });
+    expect(container.firstElementChild).toBe(bar);
+    // Every section the bar names is on the page.
+    for (const link of within(bar).getAllByRole("link")) {
+      expect(container.querySelector(link.getAttribute("href")!)).not.toBeNull();
+    }
+  });
+
   it("numbers the ordered steps to opening a store", () => {
     render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 

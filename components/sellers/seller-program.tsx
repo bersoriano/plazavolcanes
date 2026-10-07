@@ -5,6 +5,7 @@ import { SellerFaq } from "@/components/sellers/seller-faq";
 import { SellerComparison } from "@/components/sellers/seller-comparison";
 import { SellerCatalog } from "@/components/sellers/seller-catalog";
 import { SellerHero } from "@/components/sellers/seller-hero";
+import { SellerSectionNav } from "@/components/sellers/seller-section-nav";
 import { SellerSteps } from "@/components/sellers/seller-steps";
 import { SellerTapes } from "@/components/sellers/seller-tapes";
 import { StickyCta } from "@/components/sellers/sticky-cta";
@@ -35,6 +36,7 @@ export function SellerProgram({
 
   return (
     <>
+      <SellerSectionNav promoActive={promoActive} />
       <SellerHero isFounder={isFounder} promoActive={promoActive} spotsTaken={spotsTaken} viewer={viewer} />
       <SellerTapes promoActive={promoActive} />
       {promoActive ? <FoundersPackage /> : null}

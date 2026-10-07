@@ -5,7 +5,7 @@ import { BottomNav } from "@/components/layout/bottom-nav";
 
 const auth = { signedIn: false, unread: 0 };
 
-vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
+vi.mock("next/navigation", () => ({ usePathname: () => "/explorar" }));
 vi.mock("@/lib/admin-auth.server", () => ({
   getCurrentUserAdminStatus: vi.fn(async () => ({ isAdmin: false, signedIn: auth.signedIn })),
 }));
@@ -29,7 +29,7 @@ describe("BottomNav", () => {
 
     // /compras had no link at all below the small breakpoint before the bar.
     for (const [name, href] of [
-      ["Explorar", "/"],
+      ["Explorar", "/explorar"],
       ["Mensajes", "/mensajes"],
       ["Compras", "/compras"],
       ["Panel", "/panel"],
@@ -45,6 +45,9 @@ describe("BottomNav", () => {
     await renderBar(false);
 
     const bar = screen.getByRole("navigation", { name: "Navegación rápida" });
+
+    // The catalogue, not "/": the home page is the seller landing.
+    expect(within(bar).getByRole("link", { name: "Explorar" })).toHaveAttribute("href", "/explorar");
 
     expect(within(bar).getByRole("link", { name: "Vender" })).toHaveAttribute(
       "href",
