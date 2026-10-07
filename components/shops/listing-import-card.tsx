@@ -19,7 +19,7 @@ export function ListingImportCard({
 }) {
   return (
     <details className="group rounded-[2rem] border border-line bg-surface px-6 py-5 sm:px-8">
-      <summary className="flex cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
         <Import aria-hidden="true" className="size-4 text-brand" />
         <span className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Trae tus productos</span>
       </summary>

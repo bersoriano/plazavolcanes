@@ -12,7 +12,7 @@ import { getSellerDashboard } from "@/lib/queries/seller-dashboard.server";
 import { buildSiteUrl } from "@/lib/site-url";
 
 const secondaryLink =
-  "tap inline-flex min-h-10 items-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-brand transition-colors hover:border-brand";
+  "tap inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-brand transition-colors hover:border-brand";
 
 function parseShopId(value: string | string[] | undefined) {
   const id = typeof value === "string" ? Number(value) : NaN;

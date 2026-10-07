@@ -24,7 +24,7 @@ export function ProductUnitsForm({
         Unidades de {productName}
       </label>
       <input
-        className="h-9 w-20 rounded-xl border border-line bg-surface px-3 text-sm tabular-nums text-ink focus:border-brand focus:outline-none"
+        className="h-11 w-20 rounded-xl border border-line bg-surface px-3 text-sm tabular-nums text-ink focus:border-brand focus:outline-none"
         defaultValue={state.values?.units_available ?? units ?? undefined}
         id={fieldId}
         inputMode="numeric"
