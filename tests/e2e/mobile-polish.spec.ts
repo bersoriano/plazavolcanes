@@ -265,7 +265,7 @@ test.describe("mobile polish", () => {
 
       // The reason the bar exists: /compras had no link at all below 640px.
       for (const [name, href] of [
-        ["Explorar", "/"],
+        ["Explorar", "/explorar"],
         ["Mensajes", "/mensajes"],
         ["Compras", "/compras"],
         ["Panel", "/panel"],

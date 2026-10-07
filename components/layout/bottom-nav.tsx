@@ -8,6 +8,8 @@ import { fetchUnreadCount } from "@/lib/queries/messages.server";
  * breakpoint; the bar carries the destinations instead, and the header keeps
  * the brand and the account. Above `md` the header has the room again and the
  * bar steps aside.
+ *
+ * "Explorar" opens the catalogue, not "/": the home page is the seller landing.
  */
 export async function BottomNav() {
   const { signedIn } = await getCurrentUserAdminStatus();
@@ -15,13 +17,13 @@ export async function BottomNav() {
 
   const items: BottomNavItem[] = signedIn
     ? [
-        { href: "/", icon: "explore", label: "Explorar" },
+        { href: "/explorar", icon: "explore", label: "Explorar" },
         { badge: unread, href: "/mensajes", icon: "messages", label: "Mensajes" },
         { href: "/compras", icon: "orders", label: "Compras" },
         { href: "/panel", icon: "panel", label: "Panel" },
       ]
     : [
-        { href: "/", icon: "explore", label: "Explorar" },
+        { href: "/explorar", icon: "explore", label: "Explorar" },
         { href: "/vender?desde=nav", icon: "sell", label: "Vender" },
         { href: "/ingresar", icon: "account", label: "Ingresar" },
       ];
