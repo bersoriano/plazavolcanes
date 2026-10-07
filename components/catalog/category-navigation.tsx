@@ -57,13 +57,15 @@ export function CategoryNavigation({
     <nav aria-label="Categorías de productos">
       <span className="sr-only" id={scrollGuidanceId}>Desliza para ver más categorías</span>
       {/* On a phone the panel row runs to the card's edges, so the chips
-          scroll out under the fade instead of stopping at the padding. */}
+          scroll out under the fade instead of stopping at the padding. The
+          scroller clips, so it pads 8px above and below for the 6px focus
+          ring and gives the extra 4px back with negative margins. */}
       <div className={panel ? "relative -mx-4 sm:mx-0" : "relative"}>
         <div
           aria-describedby={scrollGuidanceId}
           className={
             panel
-              ? "flex gap-2 overflow-x-auto px-4 py-1 pr-16 [scrollbar-width:thin] sm:gap-2.5 sm:px-1 sm:pr-24"
+              ? "-my-1 flex gap-2 overflow-x-auto px-4 py-2 pr-16 [scrollbar-width:thin] sm:gap-2.5 sm:px-1 sm:pr-24"
               : "flex gap-2 overflow-x-auto p-2 pr-10 [scrollbar-width:thin] [mask-image:linear-gradient(to_left,transparent,#000_2.5rem)]"
           }
         >
