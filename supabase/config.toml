@@ -163,6 +163,8 @@ site_url = "http://127.0.0.1:3000"
 additional_redirect_urls = [
   "http://127.0.0.1:3000/auth/confirm",
   "http://localhost:3000/auth/confirm",
+  "http://127.0.0.1:3000/auth/confirm\\?**",
+  "http://localhost:3000/auth/confirm\\?**",
   "http://127.0.0.1:3000/auth/recuperar",
   "http://localhost:3000/auth/recuperar",
 ]
@@ -247,6 +249,10 @@ otp_expiry = 3600
 # pass = "env(SENDGRID_API_KEY)"
 # admin_email = "admin@email.com"
 # sender_name = "Admin"
+
+[auth.email.template.confirmation]
+subject = "Confirma tu correo en Plaza Volcanes"
+content_path = "./supabase/templates/confirmation.html"
 
 # Uncomment to customize email template
 # [auth.email.template.invite]
