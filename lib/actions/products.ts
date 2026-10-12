@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/lib/action-state";
-import { isListingLimitDatabaseError, isPublishableCategory, shopHasListingCapacity } from "@/lib/listing-publication.server";
+import { isListingLimitDatabaseError, isPublishableCategory, publicationReadinessError, shopHasListingCapacity } from "@/lib/listing-publication.server";
 import { listingPublishBlocker } from "@/lib/listing-reactivation";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -43,16 +43,6 @@ const unitsRequiredError: ActionState = {
   status: "error",
   message: "Agrega unidades antes de publicar.",
 };
-
-function missingPublicationError(input: Parameters<typeof missingForPublication>[0]): ActionState | null {
-  const missing = missingForPublication(input);
-  if (!missing.length) return null;
-  const first = missing[0]!;
-  const message = first.field === "images"
-    ? "Agrega al menos una foto del producto antes de publicar."
-    : "Completa los requisitos antes de publicar.";
-  return { status: "error", message, errors: { [first.field]: [message] } };
-}
 
 /**
  * The browser uploads the pictures itself and submits only where they landed,
@@ -184,28 +174,29 @@ export async function updateProduct(
   if (!existing || existing.status === "deleted") return { status: "error", message: "No encontramos ese producto." };
   const { data: shop } = await supabase.from("shops").select("slug, listing_limit, is_publishing_approved").eq("id", existing.shop_id).eq("owner_id", userId).maybeSingle();
   if (!shop) return { status: "error", message: "No puedes editar este producto." };
-  if (parsed.data.status === "published") {
-    try {
-      if (!(await isPublishableCategory(supabase, parsed.data.category_id))) return invalidCategoryError;
-      if (existing.status !== "published" && !(await shopHasListingCapacity(supabase, existing.shop_id, shop.listing_limit))) return listingLimitError;
-    } catch {
-      return { status: "error", message: "No pudimos validar esta publicación." };
-    }
-  }
-
   const alreadyStored = await countProductImages(supabase, productId);
   if (alreadyStored + imageKeys.length > MAX_PRODUCT_IMAGES) {
     const message = `Puedes subir hasta ${MAX_PRODUCT_IMAGES} imágenes.`;
     return { status: "error", message, errors: { images: [message] } };
   }
-  // Only a listing on its way out the door is measured against the checklist.
-  // One already published predates it and may have been filed before any of
-  // these fields existed; PR #29 made the same allowance for a missing gallery
-  // cover, and holding an old listing hostage to a new rule would lock its
-  // seller out of editing it at all.
-  if (parsed.data.status === "published" && existing.status !== "published") {
-    const readiness = missingPublicationError({ ...parsed.data, imageCount: alreadyStored + imageKeys.length });
-    if (readiness) return readiness;
+  if (parsed.data.status === "published") {
+    try {
+      if (existing.status !== "published") {
+        const readiness = await publicationReadinessError(supabase, {
+          ...parsed.data,
+          imageCount: (existing.image_path ? Math.max(1, alreadyStored) : 0) + imageKeys.length,
+        });
+        if (readiness) return readiness;
+        if (!(await shopHasListingCapacity(supabase, existing.shop_id, shop.listing_limit))) return listingLimitError;
+      } else {
+        // Legacy compatibility: editing an already-published row may preserve
+        // incomplete older fields, sold-out stock, and a missing cover (PR #29).
+        // This is not first publication: drafts cannot use this exception.
+        if (!(await isPublishableCategory(supabase, parsed.data.category_id))) return invalidCategoryError;
+      }
+    } catch {
+      return { status: "error", message: "No pudimos validar esta publicación." };
+    }
   }
 
   // A newly selected image does not have a gallery row yet. Store and verify it
@@ -283,22 +274,33 @@ export async function setProductStatus(
   const context = await getAuthenticatedContext();
   if (!parsedStatus.success || !context) redirect("/ingresar");
   const { supabase, userId } = context;
-  const { data: product, error: productError } = await supabase.from("products").select("shop_id, category_id, image_path, status, slug, is_admin_enabled, expires_at, units_available").eq("id", productId).maybeSingle();
+  const { data: product, error: productError } = await supabase.from("products").select("shop_id, name, description, price_mxn, condition, used_condition, handling_days, category_id, image_path, status, slug, is_admin_enabled, expires_at, units_available").eq("id", productId).maybeSingle();
   if (productError) throw new Error("No pudimos consultar el producto.");
   // Retiring a listing is one way: it stays out of the catalogue for good.
   if (!product || product.status === "deleted") redirect("/panel");
   const { data: shop, error: shopError } = await supabase.from("shops").select("slug, listing_limit, is_publishing_approved").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
   if (shopError) throw new Error("No pudimos consultar la tienda.");
   if (!shop) redirect("/panel");
-  if (parsedStatus.data === "published") {
-    // The same rule "Reactivar todos" applies: a cover on the way into
-    // "published", and a unit to sell, since a sold-out listing brought back
-    // would spend a slot on something nobody can order.
+  if (parsedStatus.data === "published" && product.status === "draft") {
+    try {
+      const readiness = await publicationReadinessError(supabase, {
+        ...product,
+        imageCount: product.image_path ? 1 : 0,
+      });
+      if (readiness) return readiness;
+    } catch {
+      return { status: "error", message: "No pudimos validar esta publicación." };
+    }
+  } else if (parsedStatus.data === "published") {
+    // Legacy renewal, matching "Reactivar todos": expired/lapsed products
+    // were already published. Keep cover, stock, category and capacity checks
+    // without imposing newly introduced fields. Drafts always use full readiness.
+    // A sold-out listing brought back would spend a slot nobody can order from.
     const blocker = listingPublishBlocker(product);
     if (blocker === "cover") return coverImageRequiredError;
     if (blocker === "units") return unitsRequiredError;
   }
-  if (parsedStatus.data === "published" && !(await isPublishableCategory(supabase, product.category_id))) {
+  if (parsedStatus.data === "published" && product.status !== "draft" && !(await isPublishableCategory(supabase, product.category_id))) {
     redirect(`/panel/productos/${productId}/editar?categoria=requerida=1`);
   }
   if (parsedStatus.data === "published" && product.status !== "published" && !(await shopHasListingCapacity(supabase, product.shop_id, shop.listing_limit))) {

@@ -120,6 +120,24 @@ describe("ProductRow", () => {
       "Producto guardado. Está pendiente de aprobación de administración.",
     );
   });
+
+  it("lists missing publication requirements and links to the editor", async () => {
+    setProductStatus.mockResolvedValueOnce({
+      status: "error",
+      message: "Completa los requisitos antes de publicar.",
+      errors: {
+        description: ["Describe tu producto en al menos 20 caracteres."],
+        price_mxn: ["Ponle precio en pesos."],
+      },
+    });
+    render(<ProductRow product={product({ status: "draft", expires_at: null })} />);
+    fireEvent.click(screen.getByRole("button", { name: "Publicar" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("Completa los requisitos antes de publicar.");
+    expect(screen.getByText("Describe tu producto en al menos 20 caracteres.")).toBeVisible();
+    expect(screen.getByText("Ponle precio en pesos.")).toBeVisible();
+    expect(screen.getByRole("link", { name: "Completar producto" })).toHaveAttribute("href", "/panel/productos/1/editar");
+    expect(screen.getByText("Borrador privado")).toBeVisible();
+  });
 });
 
 function inDays(days: number): string {

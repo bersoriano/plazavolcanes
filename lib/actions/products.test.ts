@@ -64,6 +64,9 @@ function sellerForm(overrides: Record<string, string> = {}) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // Schema rejection can return before consuming a queued database read.
+  mocks.productsSelect.mockReset();
+  mocks.productImagesSelect.mockReset();
   mocks.configured.mockReturnValue(true);
   mocks.getClaims.mockResolvedValue({ data: { claims: { sub: "seller-1" } } });
 
@@ -167,8 +170,21 @@ describe("updateProduct", () => {
     expect(state).toEqual({
       status: "error",
       message: "Agrega al menos una foto del producto antes de publicar.",
-      errors: { images: ["Agrega al menos una foto del producto antes de publicar."] },
+      errors: { images: ["Agrega al menos una foto del producto."] },
     });
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("rejects an unverified uploaded cover before writing publication", async () => {
+    mocks.productsSelect.mockImplementationOnce(() => query({
+      data: { shop_id: 7, image_path: null, status: "draft", slug: "taza-anterior", is_admin_enabled: true },
+      error: null,
+    }));
+    mocks.productImagesSelect.mockReturnValueOnce(query({ count: 0, error: null }));
+    const form = sellerForm();
+    form.append("image_keys", "products/another-seller/cover.jpg");
+
+    expect(await updateProduct(22, idle, form)).toEqual({ status: "error", message: "No pudimos guardar las imágenes." });
     expect(mocks.update).not.toHaveBeenCalled();
   });
 
@@ -184,7 +200,9 @@ describe("updateProduct", () => {
       error: null,
     }));
 
-    await expect(updateProduct(22, idle, sellerForm())).resolves.toMatchObject({ status: "success" });
+    await expect(updateProduct(22, idle, sellerForm({
+      description: "", price_mxn: "", condition: "", handling_days: "", units_available: "0",
+    }))).resolves.toMatchObject({ status: "success" });
     expect(mocks.update).toHaveBeenCalled();
   });
 
@@ -262,13 +280,19 @@ describe("updateProduct", () => {
       error: null,
     }));
 
-    const state = await updateProduct(22, idle, sellerForm({ status: "draft" }));
+    const state = await updateProduct(22, idle, sellerForm({
+      status: "draft", description: "", price_mxn: "", condition: "", category_id: "", handling_days: "", units_available: "",
+    }));
 
     expect(state).toEqual({
       status: "success",
       message: "Borrador guardado",
       values: { next_requirement: "Agrega al menos una foto del producto." },
     });
+    expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({
+      status: "draft", description: null, price_mxn: null, condition: null,
+      category_id: null, handling_days: null, units_available: null,
+    }));
   });
 });
 
@@ -283,6 +307,12 @@ describe("setProductStatus", () => {
       mocks.productsSelect.mockImplementationOnce(() => query({
         data: {
           shop_id: 7,
+          name: "Taza volcánica",
+          description: "Taza hecha a mano con barro de alta temperatura.",
+          price_mxn: 349,
+          condition: "new",
+          used_condition: null,
+          handling_days: 3,
           category_id: 11,
           image_path: "products/seller-1/22/cover.jpg",
           status: "draft",
@@ -334,6 +364,16 @@ describe("setProductStatus", () => {
       expect(mocks.update).toHaveBeenCalledWith(
         expect.objectContaining({ status: "published" }),
       );
+    });
+  });
+
+  it("preserves legacy renewal for expired listings with older incomplete fields", () => {
+    return withProduct({
+      status: "expired", expires_at: "2020-01-01T00:00:00.000Z",
+      description: null, price_mxn: null, condition: null, handling_days: null,
+    }, async () => {
+      expect(await setProductStatus(22, "published")).toMatchObject({ status: "success" });
+      expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ status: "published" }));
     });
   });
 
@@ -390,3 +430,130 @@ async function withProduct(
 
   await assert();
 }
+
+describe.each(["editor", "catalog"] as const)("%s draft publication readiness", (path) => {
+  const complete = {
+    shop_id: 7,
+    name: "Taza volcánica",
+    description: "Taza hecha a mano con barro de alta temperatura.",
+    price_mxn: 349,
+    condition: "new",
+    used_condition: null,
+    handling_days: 3,
+    units_available: 2,
+    category_id: 11,
+    image_path: "products/seller-1/22/cover.jpg",
+    status: "draft",
+    slug: "taza-volcanica",
+    is_admin_enabled: true,
+    expires_at: null,
+  };
+
+  function prepare(overrides: Record<string, unknown> = {}) {
+    const stored = { ...complete, ...overrides };
+    mocks.productsSelect.mockImplementationOnce(() => query({ data: stored, error: null }));
+    mocks.update.mockImplementation((payload) => ({
+      eq: vi.fn(async () => {
+        Object.assign(stored, payload);
+        return { error: null };
+      }),
+    }));
+    return stored;
+  }
+
+  const publish = (formOverrides: Record<string, string> = {}) => path === "editor"
+    ? updateProduct(22, idle, sellerForm(formOverrides))
+    : setProductStatus(22, "published");
+
+  it.each([
+    ["name", { name: "" }, { name: "" }],
+    ["name", { name: "ab" }, { name: "ab" }],
+    ["description", { description: null }, { description: "" }],
+    ["description", { description: "Muy corta." }, { description: "Muy corta." }],
+    ["price_mxn", { price_mxn: null }, { price_mxn: "" }],
+    ["price_mxn", { price_mxn: 0 }, { price_mxn: "0" }],
+    ["condition", { condition: null }, { condition: "" }],
+    ["used_condition", { condition: "used", used_condition: null }, { condition: "used", used_condition: "" }],
+    ["handling_days", { handling_days: null }, { handling_days: "" }],
+    ["units_available", { units_available: null }, { units_available: "" }],
+    ["units_available", { units_available: 0 }, { units_available: "0" }],
+    ["category_id", { category_id: null }, { category_id: "" }],
+    ["images", { image_path: null }, {}],
+  ] as const)("rejects missing or invalid %s before any product write", async (field, storedOverride, formOverride) => {
+    const stored = prepare(storedOverride);
+    const before = { ...stored };
+    if (field === "images") mocks.productImagesSelect.mockReturnValueOnce(query({ count: 0, error: null }));
+
+    const state = await publish(formOverride);
+
+    expect(state.status).toBe("error");
+    expect(state.errors?.[field]?.length).toBeGreaterThan(0);
+    // Status drives expiry and slot usage in database triggers. No UPDATE
+    // means neither trigger runs; every saved draft value survives rejection.
+    expect(mocks.update).not.toHaveBeenCalled();
+    expect(stored).toEqual(before);
+    expect(stored.status).toBe("draft");
+    expect(stored.expires_at).toBeNull();
+  });
+
+  it.each(["subcategory", "parent"])("rejects an inactive %s before any write", async (inactive) => {
+    prepare();
+    const originalFrom = mocks.from.getMockImplementation()!;
+    const categoryQuery = query({ data: null, error: null });
+    if (inactive === "parent") categoryQuery.maybeSingle.mockResolvedValueOnce({ data: { parent_id: 1 }, error: null });
+    mocks.from.mockImplementation((table: string) => table === "categories"
+      ? { select: () => categoryQuery }
+      : originalFrom(table));
+    const state = await publish();
+    expect(state.status).toBe("error");
+    expect(state.errors?.category_id).toBeDefined();
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("requires a stored cover even when gallery rows exist", async () => {
+    prepare({ image_path: null });
+    mocks.productImagesSelect.mockReturnValueOnce(query({ count: 1, error: null }));
+    expect(await publish()).toMatchObject({ status: "error", errors: { images: expect.any(Array) } });
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("explains all missing requirements together", async () => {
+    prepare({ description: null, price_mxn: null });
+    const state = await publish({ description: "", price_mxn: "" });
+    expect(state.errors).toMatchObject({
+      description: ["Describe tu producto en al menos 20 caracteres."],
+      price_mxn: ["Ponle precio en pesos."],
+    });
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it.each([false, true])("publishes a complete draft with shop approval %s", async (approved) => {
+    const stored = prepare();
+    mocks.shop.mockResolvedValueOnce({ data: { slug: "barro-volcanico", listing_limit: 10, is_publishing_approved: approved }, error: null });
+    const state = await publish();
+    expect(state.status).toBe("success");
+    expect(stored.status).toBe("published");
+    expect(state.message).toContain(approved ? "publicado" : "pendiente de aprobación");
+    expect(mocks.update.mock.calls[0][0]).not.toHaveProperty("is_publishing_approved");
+    expect(mocks.update.mock.calls[0][0]).not.toHaveProperty("is_admin_enabled");
+  });
+
+  it("keeps capacity enforcement after readiness passes", async () => {
+    prepare();
+    mocks.shop.mockResolvedValueOnce({ data: { slug: "barro-volcanico", listing_limit: 0, is_publishing_approved: false }, error: null });
+    if (path === "catalog") {
+      await expect(publish()).rejects.toThrow("NEXT_REDIRECT:/panel/productos/22/editar?limite=alcanzado");
+    } else {
+      expect(await publish()).toMatchObject({ status: "error", message: "Alcanzaste el límite de publicaciones activas de tu tienda." });
+    }
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+
+  it("refuses publication by another shop owner", async () => {
+    prepare();
+    mocks.shop.mockResolvedValueOnce({ data: null, error: null });
+    if (path === "catalog") await expect(publish()).rejects.toThrow("NEXT_REDIRECT:/panel");
+    else expect(await publish()).toMatchObject({ status: "error", message: "No puedes editar este producto." });
+    expect(mocks.update).not.toHaveBeenCalled();
+  });
+});
