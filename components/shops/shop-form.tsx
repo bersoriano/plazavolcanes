@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { ImagePlus } from "lucide-react";
 
@@ -48,6 +48,7 @@ function SaveButton({ blocked, busy, editing }: { blocked: boolean; busy: boolea
 
 export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
   const [state, formAction] = useFormAction(action);
+  const formRef = useRef<HTMLFormElement>(null);
   const [preview, setPreview] = useState(shop?.imageUrl ?? null);
   const [uploading, setUploading] = useState(false);
   const [imageKey, setImageKey] = useState<string | null>(null);
@@ -94,13 +95,25 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
   const [offersPickup, setOffersPickup] = useState(Boolean(pickupPoint));
 
   useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    // React's action reset also runs after validation errors, desynchronizing
+    // controlled selects and the pickup checkbox. A native listener works even
+    // while React suppresses its event handlers during the commit. Keep this
+    // editor's values; successful creation navigates away.
+    const preserveValues = (event: Event) => event.preventDefault();
+    form.addEventListener("reset", preserveValues);
+    return () => form.removeEventListener("reset", preserveValues);
+  }, []);
+
+  useEffect(() => {
     return () => {
       if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
     };
   }, [preview]);
 
   return (
-    <form action={formAction} className="space-y-6" noValidate>
+    <form action={formAction} className="space-y-6" noValidate ref={formRef}>
       <Field
         defaultValue={state.values?.name ?? shop?.name}
         error={state.errors?.name?.[0]}

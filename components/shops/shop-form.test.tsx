@@ -3,6 +3,8 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { ShopForm } from "@/components/shops/shop-form";
 import type { ActionState } from "@/lib/action-state";
+import { pickupPointFrom, pickupValidationError } from "@/lib/actions/shop-pickup-point";
+import { shopSchema } from "@/lib/validation/shop";
 
 const action = async (): Promise<ActionState> => ({ status: "idle", message: "" });
 
@@ -181,5 +183,121 @@ describe("ShopForm", () => {
     );
 
     expect(screen.queryByLabelText(/Política de entregas/)).not.toBeInTheDocument();
+  });
+});
+
+describe.each(["create", "edit"] as const)("ShopForm %s submissions", (mode) => {
+  function setup() {
+    const submissions: FormData[] = [];
+    const resetEvents: Event[] = [];
+    const validate = async (_state: ActionState, data: FormData): Promise<ActionState> => {
+      submissions.push(data);
+      const shop = shopSchema.safeParse({
+        name: data.get("name"),
+        description: data.get("description"),
+        country_code: data.get("country_code"),
+        administrative_area_codes: data.getAll("administrative_area_codes").filter(Boolean),
+      });
+      if (!shop.success) {
+        return { status: "error", message: "Revisa los campos marcados.", errors: shop.error.flatten().fieldErrors };
+      }
+      const pickup = pickupPointFrom(data);
+      if (pickup.offered && !pickup.parsed?.success) return pickupValidationError(pickup.parsed);
+      return { status: "success", message: "Guardado." };
+    };
+    const { container } = render(
+      <ShopForm
+        action={validate}
+        shop={mode === "edit" ? {
+          name: "Tienda anterior",
+          description: "Descripción anterior de la tienda.",
+          imageUrl: null,
+          countryCode: "MX",
+          administrativeAreaCodes: ["MX-PUE", "MX-OAX"],
+        } : undefined}
+      />,
+    );
+    // Observe React's actual native reset, without mocking reset() or the hook.
+    container.querySelector("form")!.addEventListener("reset", (event) => resetEvents.push(event));
+    for (const [label, value] of Object.entries({
+      "Nombre de la tienda": "Casa Niebla",
+      "Descripción": "Objetos de barro hechos a mano en México.",
+      "Estado principal": "MX-CMX",
+      "Segundo estado (opcional)": "MX-MEX",
+    })) fireEvent.change(screen.getByLabelText(label), { target: { value } });
+    fireEvent.click(screen.getByLabelText("Ofrezco recolección en tienda"));
+    for (const [label, value] of Object.entries({
+      "Calle y número de recolección": "Calle Niebla 12",
+      "Ciudad de recolección": "Coyoacán",
+      "Estado de recolección": "MX-CMX",
+      "Código postal de recolección": "12",
+      "Referencias para llegar": "Portón verde",
+    })) fireEvent.change(screen.getByLabelText(label), { target: { value } });
+    return { submissions, resetEvents };
+  }
+
+  async function submit() {
+    fireEvent.click(screen.getByRole("button", { name: mode === "edit" ? "Guardar cambios" : "Crear tienda" }));
+  }
+
+  function expectSelections() {
+    expect(screen.getByLabelText("Estado principal")).toHaveValue("MX-CMX");
+    expect(screen.getByLabelText("Segundo estado (opcional)")).toHaveValue("MX-MEX");
+    expect(screen.getByLabelText("Ofrezco recolección en tienda")).toBeChecked();
+    expect(screen.getByLabelText("Calle y número de recolección")).toBeVisible();
+  }
+
+  it("preserves choices and pickup details through a rejected action reset and correction", async () => {
+    const { submissions, resetEvents } = setup();
+    await submit();
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Revisa los datos de recolección."));
+    expect(resetEvents).toHaveLength(1);
+    expectSelections();
+    expect(screen.getByLabelText("Nombre de la tienda")).toHaveValue("Casa Niebla");
+    expect(screen.getByLabelText("Descripción")).toHaveValue("Objetos de barro hechos a mano en México.");
+    expect(screen.getByLabelText("Calle y número de recolección")).toHaveValue("Calle Niebla 12");
+    expect(screen.getByLabelText("Ciudad de recolección")).toHaveValue("Coyoacán");
+    expect(screen.getByLabelText("Estado de recolección")).toHaveValue("MX-CMX");
+    expect(screen.getByLabelText("Código postal de recolección")).toHaveValue("12");
+    expect(screen.getByLabelText("Referencias para llegar")).toHaveValue("Portón verde");
+
+    fireEvent.change(screen.getByLabelText("Código postal de recolección"), { target: { value: "04100" } });
+    await submit();
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Guardado."));
+    expect(submissions).toHaveLength(2);
+    expect(submissions[1].getAll("administrative_area_codes")).toEqual(["MX-CMX", "MX-MEX"]);
+    expect(submissions[1].get("offers_pickup")).toBe("on");
+    expect(submissions[1].get("pickup_postal_code")).toBe("04100");
+    expectSelections();
+  });
+
+  it("preserves choices after ordinary shop validation errors", async () => {
+    setup();
+    fireEvent.change(screen.getByLabelText("Nombre de la tienda"), { target: { value: "X" } });
+    fireEvent.change(screen.getByLabelText("Descripción"), { target: { value: "Corta" } });
+    await submit();
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Revisa los campos marcados."));
+    expectSelections();
+    expect(screen.getByLabelText("Nombre de la tienda")).toHaveValue("X");
+    expect(screen.getByLabelText("Descripción")).toHaveValue("Corta");
+  });
+
+  it("can disable pickup and still prevents duplicate states after an error", async () => {
+    const { submissions } = setup();
+    await submit();
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Revisa los datos de recolección."));
+    fireEvent.click(screen.getByLabelText("Ofrezco recolección en tienda"));
+    expect(screen.getByLabelText("Ofrezco recolección en tienda")).not.toBeChecked();
+    expect(screen.queryByLabelText("Calle y número de recolección")).not.toBeInTheDocument();
+    const secondary = screen.getByLabelText("Segundo estado (opcional)");
+    expect(within(secondary).queryByRole("option", { name: "Ciudad de México" })).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Estado principal"), { target: { value: "MX-MEX" } });
+    expect(secondary).toHaveValue("");
+    await submit();
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Guardado."));
+    expect(submissions[1].has("offers_pickup")).toBe(false);
+    expect(submissions[1].has("pickup_address_line1")).toBe(false);
+    expect(submissions[1].getAll("administrative_area_codes")).toEqual(["MX-MEX", ""]);
+    expect(screen.queryByLabelText("Calle y número de recolección")).not.toBeInTheDocument();
   });
 });
