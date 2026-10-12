@@ -43,9 +43,8 @@ export function getSellerPublicationState(product: SellerListingFlags, now: Date
   if (product.status === "draft") return { kind: "draft", label: "Borrador privado", isPublic: false };
   if (product.status === "expired") return { kind: "expired", label: "Vencido", isPublic: false };
   if (!product.is_publishing_approved) {
-    return product.publishing_reviewed_at
-      ? { kind: "shop_disabled", label: "Tienda deshabilitada por administración", isPublic: false }
-      : { kind: "awaiting_approval", label: "Esperando aprobación de administración", isPublic: false };
+    const approval = getShopPublicationApproval(product);
+    if (approval.kind !== "approved") return { ...approval, isPublic: false };
   }
   if (!product.is_admin_enabled) {
     return { kind: "admin_disabled", label: "Deshabilitado por administración", isPublic: false };
@@ -54,4 +53,12 @@ export function getSellerPublicationState(product: SellerListingFlags, now: Date
     return { kind: "expired", label: "Vencido", isPublic: false };
   }
   return { kind: "published", label: "Publicado", isPublic: true };
+}
+
+/** Shop approval is independent of a listing's draft, expiry, or moderation state. */
+export function getShopPublicationApproval(shop: Pick<SellerListingFlags, "is_publishing_approved" | "publishing_reviewed_at">) {
+  if (shop.is_publishing_approved) return { kind: "approved", label: "Publicación de productos aprobada" } as const;
+  return shop.publishing_reviewed_at
+    ? { kind: "shop_disabled", label: "Tienda deshabilitada por administración" } as const
+    : { kind: "awaiting_approval", label: "Esperando aprobación de administración" } as const;
 }
