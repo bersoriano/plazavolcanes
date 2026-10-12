@@ -16,6 +16,7 @@ function metric(value: number | null, suffix = "%") {
  * hides the explanation, never the state.
  */
 export function TrustDashboardCard({ dashboard }: { dashboard: TrustDashboard }) {
+  const evaluated = Boolean(dashboard.evaluatedAt && dashboard.metrics);
   const marker = getTrustTierMarker(dashboard.tier);
   const usage = Math.min(100, Math.round((dashboard.publishedCount / dashboard.listingLimit) * 100));
 
@@ -48,13 +49,13 @@ export function TrustDashboardCard({ dashboard }: { dashboard: TrustDashboard })
       </summary>
 
       <div className="mt-6 border-t border-line pt-6">
-        <p className="text-sm leading-6 text-muted">{dashboard.summary}</p>
+        <p className="text-sm leading-6 text-muted">{evaluated ? dashboard.summary : "Estamos reuniendo evidencia para la primera evaluación de confianza."}</p>
         {dashboard.evaluatedAt ? <p className="mt-2 text-xs text-muted">Última evaluación: {formatDate(dashboard.evaluatedAt)}</p> : null}
 
         {dashboard.metrics ? <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3"><Metric label="Respuesta" value={metric(dashboard.metrics.responseRate)} /><Metric label="Tiempo de respuesta" value={metric(dashboard.metrics.averageReplyTimeMinutes, " min")} /><Metric label="Precisión" value={metric(dashboard.metrics.descriptionAccuracy)} /><Metric label="Envíos puntuales" value={metric(dashboard.metrics.onTimeShippingRate)} /><Metric label="Pedidos completados" value={metric(dashboard.metrics.orderCompletionRate)} /><Metric label="Disputas" value={metric(dashboard.metrics.disputeRate)} /></div> : null}
 
         {dashboard.reasons.length ? <div className="mt-6"><h3 className="flex items-center gap-2 font-semibold"><CheckCircle2 aria-hidden="true" className="size-4 text-brand" />Resultado</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-muted">{dashboard.reasons.map((reason) => <li key={reason}>• {reason}</li>)}</ul></div> : null}
-        {dashboard.nextRequirements.length ? <div className="mt-6 rounded-2xl bg-background p-4"><h3 className="flex items-center gap-2 font-semibold"><Target aria-hidden="true" className="size-4 text-brand" />Cómo subir de nivel</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-muted">{dashboard.nextRequirements.map((requirement) => <li key={requirement}>• {requirement}</li>)}</ul></div> : <p className="mt-6 flex items-center gap-2 text-sm font-semibold text-brand"><BarChart3 aria-hidden="true" className="size-4" />Cumples el nivel máximo.</p>}
+        {evaluated && dashboard.nextRequirements.length ? <div className="mt-6 rounded-2xl bg-background p-4"><h3 className="flex items-center gap-2 font-semibold"><Target aria-hidden="true" className="size-4 text-brand" />Cómo subir de nivel</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-muted">{dashboard.nextRequirements.map((requirement) => <li key={requirement}>• {requirement}</li>)}</ul></div> : evaluated && dashboard.tier === "top_rated" ? <p className="mt-6 flex items-center gap-2 text-sm font-semibold text-brand"><BarChart3 aria-hidden="true" className="size-4" />Cumples el nivel máximo.</p> : evaluated ? <p className="mt-6 text-sm leading-6 text-muted">No hay requisitos de avance disponibles en esta evaluación. Revisa aquí la orientación de tu próxima evaluación.</p> : null}
       </div>
     </details>
   );
