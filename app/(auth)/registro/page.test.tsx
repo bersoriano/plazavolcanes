@@ -7,8 +7,9 @@ vi.mock("@/lib/actions/auth", () => ({ signIn: vi.fn(), signUp: vi.fn() }));
 vi.mock("@/lib/purchase-intent.server", () => ({ readPurchaseIntent }));
 
 const { default: SignUpPage } = await import("@/app/(auth)/registro/page");
+const { default: SignInPage } = await import("@/app/(auth)/ingresar/page");
 
-type Params = { continuar?: string; paso?: string; vender?: string };
+type Params = { continuar?: string; paso?: string; vender?: string; intent?: string };
 
 async function renderPage(params: Params = {}) {
   render(await SignUpPage({ searchParams: Promise.resolve(params) }));
@@ -16,6 +17,13 @@ async function renderPage(params: Params = {}) {
 
 function link(name: string) {
   return screen.getByRole("link", { name });
+}
+
+async function followLink(name: string) {
+  const url = new URL(link(name).getAttribute("href")!, "https://plazavolcanes.com");
+  cleanup();
+  const searchParams = Promise.resolve(Object.fromEntries(url.searchParams));
+  render(await (url.pathname === "/ingresar" ? SignInPage : SignUpPage)({ searchParams }));
 }
 
 beforeEach(() => {
@@ -26,8 +34,8 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("Registration onboarding", () => {
-  it("opens the seller form directly when the seller entry carries intent", async () => {
-    await renderPage({ vender: "1" });
+  it.each([{ vender: "1" }, { intent: "vender" }])("opens the seller form directly for %j", async (params) => {
+    await renderPage(params);
 
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Abre tu cuenta");
     expect(screen.queryByRole("heading", { name: "Así se vende" })).not.toBeInTheDocument();
@@ -44,7 +52,7 @@ describe("Registration onboarding", () => {
     );
     expect(link("Quiero vender")).toHaveAttribute(
       "href",
-      "/registro?paso=vender",
+      "/registro?paso=vender&intent=vender",
     );
     expect(link("Quiero vender")).toHaveAccessibleDescription("Abre tu tienda y recibe solicitudes de pedido.");
     expect(link("Saltar e ir al registro")).toHaveAttribute("href", "/registro?paso=formulario");
@@ -68,7 +76,7 @@ describe("Registration onboarding", () => {
       "Confirma y reseña",
     ]);
     expect(link("Volver")).toHaveAttribute("href", "/registro?paso=inicio");
-    expect(link("Ver cómo se vende")).toHaveAttribute("href", "/registro?paso=vender");
+    expect(link("Ver cómo se vende")).toHaveAttribute("href", "/registro?paso=vender&intent=vender");
     expect(link("Crear mi cuenta")).toHaveAttribute("href", "/registro?paso=formulario");
     expect(link("Saltar e ir al registro")).toHaveAttribute("href", "/registro?paso=formulario");
   });
@@ -84,9 +92,9 @@ describe("Registration onboarding", () => {
       "Recibe solicitudes",
     ]);
     expect(screen.getByText(/no procesa ni retiene fondos/)).toBeInTheDocument();
-    expect(link("Volver")).toHaveAttribute("href", "/registro?paso=inicio");
-    expect(link("Ver cómo se compra")).toHaveAttribute("href", "/registro?paso=comprar");
-    expect(link("Crear mi cuenta")).toHaveAttribute("href", "/registro?paso=formulario");
+    expect(link("Volver")).toHaveAttribute("href", "/registro?paso=inicio&intent=vender");
+    expect(link("Ver cómo se compra")).toHaveAttribute("href", "/registro?paso=comprar&intent=vender");
+    expect(link("Crear mi cuenta")).toHaveAttribute("href", "/registro?paso=formulario&intent=vender");
   });
 
   it("shows the form when asked for it, with a way back to the guide", async () => {
@@ -136,16 +144,67 @@ describe("Registration in the middle of a purchase", () => {
     cleanup();
     await renderPage({ continuar: "/mensajes", paso: "vender" });
 
-    expect(link("Volver")).toHaveAttribute("href", "/registro?paso=inicio&continuar=%2Fmensajes");
+    expect(link("Volver")).toHaveAttribute("href", "/registro?paso=inicio&continuar=%2Fmensajes&intent=vender");
     expect(link("Crear mi cuenta")).toHaveAttribute(
       "href",
-      "/registro?paso=formulario&continuar=%2Fmensajes",
+      "/registro?paso=formulario&continuar=%2Fmensajes&intent=vender",
     );
   });
 
   it("drops a continuation that is not an internal path", async () => {
     await renderPage({ continuar: "https://example.com", paso: "vender" });
 
-    expect(link("Volver")).toHaveAttribute("href", "/registro?paso=inicio");
+    expect(link("Volver")).toHaveAttribute("href", "/registro?paso=inicio&intent=vender");
+  });
+});
+
+describe("Seller intent across onboarding navigation", () => {
+  it.each(["Crear mi cuenta", "Saltar e ir al registro"])("keeps seller intent from the entry through the guide via %s", async (accountLink) => {
+    await renderPage({ vender: "1" });
+    await followLink("Ver cómo funciona");
+    await followLink("Quiero vender");
+    await followLink(accountLink);
+    expect(document.querySelector('input[name="intent"]')).toHaveValue("vender");
+  });
+
+  it("starts seller intent when an ordinary visitor chooses the seller guide", async () => {
+    await renderPage();
+    await followLink("Quiero vender");
+    await followLink("Crear mi cuenta");
+    expect(document.querySelector('input[name="intent"]')).toHaveValue("vender");
+  });
+
+  it("keeps seller intent through guide back, skip and sign-in links", async () => {
+    await renderPage({ paso: "vender", continuar: "/mensajes" });
+    await followLink("Volver");
+    expect(link("Ingresa")).toHaveAttribute("href", "/ingresar?continuar=%2Fmensajes&intent=vender");
+    await followLink("Saltar e ir al registro");
+    expect(document.querySelector('input[name="intent"]')).toHaveValue("vender");
+    expect(document.querySelector('input[name="continuar"]')).toHaveValue("/mensajes");
+  });
+
+  it("keeps seller intent while viewing the buyer guide", async () => {
+    await renderPage({ paso: "vender" });
+    await followLink("Ver cómo se compra");
+    await followLink("Crear mi cuenta");
+    expect(document.querySelector('input[name="intent"]')).toHaveValue("vender");
+  });
+
+  it.each([{ intent: "vender" }, { vender: "1" }])("keeps seller intent through sign-in → signup → sign-in for %j", async (params) => {
+    render(await SignInPage({ searchParams: Promise.resolve({ ...params, continuar: "/mensajes" }) }));
+    await followLink("Regístrate");
+    expect(document.querySelector('input[name="intent"]')).toHaveValue("vender");
+    await followLink("Ingresa");
+    expect(document.querySelector('input[name="intent"]')).toHaveValue("vender");
+    expect(document.querySelector('input[name="continuar"]')).toHaveValue("/mensajes");
+  });
+
+  it("leaves buyer guide → signup → sign-in without seller intent", async () => {
+    await renderPage();
+    await followLink("Quiero comprar");
+    await followLink("Crear mi cuenta");
+    expect(document.querySelector('input[name="intent"]')).toBeNull();
+    await followLink("Ingresa");
+    expect(document.querySelector('input[name="intent"]')).toBeNull();
   });
 });

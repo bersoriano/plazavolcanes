@@ -46,18 +46,22 @@ const flows = {
 } as const;
 
 type FlowStep = keyof typeof flows;
+type SignupContext = { continuar?: string; intent?: "vender" };
 
-function SkipLink({ continuar }: { continuar?: string }) {
+function SkipLink({ continuar, intent }: SignupContext) {
   return (
-    <Link className={quietLink} href={signupStepHref("formulario", continuar)}>
+    <Link className={quietLink} href={signupStepHref("formulario", continuar, intent)}>
       Saltar e ir al registro
     </Link>
   );
 }
 
 /** The first screen: somebody says which side of the plaza they came for. */
-export function SignupChoice({ continuar }: { continuar?: string }) {
-  const signInHref = continuar ? `/ingresar?continuar=${encodeURIComponent(continuar)}` : "/ingresar";
+export function SignupChoice({ continuar, intent }: SignupContext) {
+  const params = new URLSearchParams();
+  if (continuar) params.set("continuar", continuar);
+  if (intent) params.set("intent", intent);
+  const signInHref = params.size ? `/ingresar?${params}` : "/ingresar";
 
   return (
     <>
@@ -71,12 +75,12 @@ export function SignupChoice({ continuar }: { continuar?: string }) {
 
       <div className="mt-8 space-y-3">
         {choices.map((choice) => (
-          <ChoiceCard continuar={continuar} key={choice.step} {...choice} />
+          <ChoiceCard continuar={continuar} intent={intent} key={choice.step} {...choice} />
         ))}
       </div>
 
       <div className="mt-6 flex flex-wrap items-center justify-between gap-x-4 border-t border-line pt-4">
-        <SkipLink continuar={continuar} />
+        <SkipLink continuar={continuar} intent={intent} />
         <p className="text-sm text-muted">
           ¿Ya tienes cuenta?{" "}
           <Link className={textLink} href={signInHref}>
@@ -90,12 +94,14 @@ export function SignupChoice({ continuar }: { continuar?: string }) {
 
 function ChoiceCard({
   continuar,
+  intent,
   description,
   icon: Icon,
   step,
   title,
 }: {
   continuar?: string;
+  intent?: "vender";
   description: string;
   icon: LucideIcon;
   step: FlowStep;
@@ -109,7 +115,7 @@ function ChoiceCard({
       aria-describedby={descriptionId}
       aria-labelledby={titleId}
       className="group flex items-center gap-4 rounded-[1.5rem] border border-line bg-background p-5 transition-colors hover:border-brand focus-visible:border-brand"
-      href={signupStepHref(step, continuar)}
+      href={signupStepHref(step, continuar, intent)}
     >
       <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-brand text-accent">
         <Icon aria-hidden="true" className="size-6" />
@@ -131,17 +137,17 @@ function ChoiceCard({
 }
 
 /** One side of the plaza, step by step, with a way back and a way across. */
-export function SignupFlow({ continuar, flow }: { continuar?: string; flow: FlowStep }) {
+export function SignupFlow({ continuar, flow, intent }: SignupContext & { flow: FlowStep }) {
   const { eyebrow, intro, note, other, steps, title } = flows[flow];
 
   return (
     <>
       <div className="-mt-2 flex items-center justify-between gap-4">
-        <Link className={quietLink} href={signupStepHref("inicio", continuar)}>
+        <Link className={quietLink} href={signupStepHref("inicio", continuar, intent)}>
           <ArrowLeft aria-hidden="true" className="size-4" />
           Volver
         </Link>
-        <SkipLink continuar={continuar} />
+        <SkipLink continuar={continuar} intent={intent} />
       </div>
 
       <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-brand">{eyebrow}</p>
@@ -170,13 +176,13 @@ export function SignupFlow({ continuar, flow }: { continuar?: string; flow: Flow
 
       <Link
         className="mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-colors hover:bg-brand-hover"
-        href={signupStepHref("formulario", continuar)}
+        href={signupStepHref("formulario", continuar, intent)}
       >
         Crear mi cuenta
         <ArrowRight aria-hidden="true" className="size-4" />
       </Link>
       <p className="mt-3 text-center">
-        <Link className={textLink} href={signupStepHref(other.step, continuar)}>
+        <Link className={textLink} href={signupStepHref(other.step, continuar, intent)}>
           {other.label}
         </Link>
       </p>

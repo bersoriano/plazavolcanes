@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { resolveAuthIntent } from "@/lib/auth-intent";
 import { resumePurchaseIntent } from "@/lib/purchase-intent.server";
 import { safeContinuation } from "@/lib/safe-continuation";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -7,12 +8,13 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  const intent = resolveAuthIntent(url.searchParams.get("intent"), url.searchParams.get("vender"));
 
   function recovery(reason: string) {
     const params = new URLSearchParams({ error: reason });
     const continuation = safeContinuation(url.searchParams.get("continuar"));
     if (continuation) params.set("continuar", continuation);
-    if (url.searchParams.get("intent") === "vender") params.set("intent", "vender");
+    if (intent) params.set("intent", intent);
     // Never forward tokens, codes, provider messages or email addresses.
     return NextResponse.redirect(new URL(`/ingresar?${params}`, url));
   }
@@ -31,7 +33,7 @@ export async function GET(request: Request) {
   async function confirmed() {
     const destination = (await resumePurchaseIntent(supabase))
       ?? safeContinuation(url.searchParams.get("continuar"))
-      ?? (url.searchParams.get("intent") === "vender" ? "/panel/tiendas/nueva" : "/panel");
+      ?? (intent ? "/panel/tiendas/nueva" : "/panel");
     return NextResponse.redirect(new URL(destination, url));
   }
 
