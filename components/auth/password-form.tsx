@@ -3,16 +3,16 @@
 import Link from "next/link";
 import { useFormStatus } from "react-dom";
 
-import { requestPasswordReset, updatePassword } from "@/lib/actions/auth";
+import { requestPasswordReset, resendConfirmation, updatePassword } from "@/lib/actions/auth";
 import { useFormAction } from "@/lib/use-form-action";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 
-type PasswordFormMode = "request" | "update";
+type PasswordFormMode = "request" | "update" | "confirmation";
 
 function SubmitButton({ mode }: { mode: PasswordFormMode }) {
   const { pending } = useFormStatus();
-  const label = mode === "request" ? "Enviar enlace" : "Guardar contraseña";
+  const label = mode === "confirmation" ? "Reenviar confirmación" : mode === "request" ? "Enviar enlace" : "Guardar contraseña";
 
   return (
     <Button className="w-full" disabled={pending} type="submit">
@@ -21,13 +21,18 @@ function SubmitButton({ mode }: { mode: PasswordFormMode }) {
   );
 }
 
-export function PasswordForm({ mode }: { mode: PasswordFormMode }) {
-  const action = mode === "request" ? requestPasswordReset : updatePassword;
+export function PasswordForm({ mode, continuar, intent }: { mode: PasswordFormMode; continuar?: string; intent?: "vender" }) {
+  const action = mode === "confirmation" ? resendConfirmation : mode === "request" ? requestPasswordReset : updatePassword;
   const [state, formAction] = useFormAction(action);
-  const requesting = mode === "request";
+  const requesting = mode !== "update";
+  const params = new URLSearchParams();
+  if (continuar) params.set("continuar", continuar);
+  if (intent) params.set("intent", intent);
 
   return (
     <form action={formAction} className="space-y-5" noValidate>
+      {continuar ? <input name="continuar" type="hidden" value={continuar} /> : null}
+      {intent ? <input name="intent" type="hidden" value={intent} /> : null}
       {requesting ? (
         <Field
           autoComplete="email"
@@ -83,7 +88,7 @@ export function PasswordForm({ mode }: { mode: PasswordFormMode }) {
         <p className="text-center text-sm text-muted">
           <Link
             className="inline-flex min-h-11 items-center font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
-            href="/ingresar"
+            href={`/ingresar${params.size ? `?${params}` : ""}`}
           >
             Volver a ingresar
           </Link>

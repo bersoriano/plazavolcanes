@@ -1,4 +1,3 @@
-import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 import { resumePurchaseIntent } from "@/lib/purchase-intent.server";
@@ -9,14 +8,23 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const url = new URL(request.url);
 
+  function recovery(reason: string) {
+    const params = new URLSearchParams({ error: reason });
+    const continuation = safeContinuation(url.searchParams.get("continuar"));
+    if (continuation) params.set("continuar", continuation);
+    if (url.searchParams.get("intent") === "vender") params.set("intent", "vender");
+    // Never forward tokens, codes, provider messages or email addresses.
+    return NextResponse.redirect(new URL(`/ingresar?${params}`, url));
+  }
+
   if (!isSupabaseConfigured()) {
-    return NextResponse.redirect(new URL("/ingresar?error=configuracion", url));
+    return recovery("configuracion");
   }
 
   const code = url.searchParams.get("code");
   const tokenHash = url.searchParams.get("token_hash");
-  const type = url.searchParams.get("type") as EmailOtpType | null;
-  const supabase = await createServerSupabaseClient();
+  const type = url.searchParams.get("type");
+  const supabase = await createServerSupabaseClient({ strictCookies: true });
 
   // Someone may have been buying when registration sent them to their inbox, so
   // a confirmed account lands on its cart rather than on the panel.
@@ -28,14 +36,31 @@ export async function GET(request: Request) {
   }
 
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return confirmed();
+    try {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+      // A code or an existing browser session is not proof that this link's
+      // account is confirmed. Use the Auth server's exchange result only.
+      if (error) return recovery("sesion_confirmacion");
+      if (!data?.user?.email_confirmed_at) return recovery("confirmacion");
+      if (!data.session) return recovery("sesion_confirmacion");
+    } catch {
+      return recovery("sesion_confirmacion");
+    }
+    return confirmed();
   }
 
-  if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
-    if (!error) return confirmed();
+  if (tokenHash && (type === "signup" || type === "email")) {
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+      if (error || !data?.user?.email_confirmed_at) return recovery("confirmacion");
+      if (!data.session) return recovery("sesion_confirmacion");
+    } catch {
+      // Verification may have completed before session persistence failed.
+      // Without a result we cannot assert either email state.
+      return recovery("sesion_confirmacion");
+    }
+    return confirmed();
   }
 
-  return NextResponse.redirect(new URL("/ingresar?error=confirmacion", url));
+  return recovery("confirmacion");
 }

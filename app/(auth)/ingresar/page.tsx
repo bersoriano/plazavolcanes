@@ -10,7 +10,8 @@ export const metadata: Metadata = { title: "Ingresar" };
 // looks like the sign-in page reloading itself for no reason.
 const NOTICES: Record<string, string> = {
   recuperacion: "Ese enlace ya no sirve. Pide uno nuevo para crear tu contraseña.",
-  confirmacion: "No pudimos confirmar tu cuenta con ese enlace. Inténtalo de nuevo.",
+  confirmacion: "No pudimos verificar este enlace. Puede haber expirado o ya haberse usado. Si ya confirmaste tu correo, ingresa con tu contraseña. Si el acceso pide confirmar el correo, usa Reenviar correo de confirmación para pedir un enlace nuevo.",
+  sesion_confirmacion: "No pudimos iniciar sesión automáticamente desde este enlace. Tu correo puede haber quedado confirmado, aunque no se abrió la sesión en este navegador. Ingresa con el correo y la contraseña que elegiste al registrarte. Si el acceso pide confirmar el correo, usa Reenviar correo de confirmación.",
   configuracion: "El acceso no está configurado todavía. Inténtalo más tarde.",
 };
 
@@ -23,11 +24,7 @@ export default async function SignInPage({ searchParams }: { searchParams: SignI
   // A pending purchase is the reason most signed-out buyers arrive here, and it
   // outranks whatever a redirect put in the query string.
   const pendingPurchase = await readPurchaseIntent();
-  const notice = pendingPurchase
-    ? PURCHASE_NOTICE
-    : typeof error === "string"
-      ? NOTICES[error]
-      : undefined;
+  const notice = typeof error === "string" ? NOTICES[error] : undefined;
   const destination = safeContinuation(continuar) ?? undefined;
 
   return (
@@ -37,12 +34,15 @@ export default async function SignInPage({ searchParams }: { searchParams: SignI
       <p className="mb-8 mt-3 leading-7 text-muted">Administra tus tiendas y mantén tus productos al día.</p>
       {notice ? (
         <p
-          className={`mb-6 rounded-2xl px-4 py-3 text-sm font-medium ${
-            pendingPurchase ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"
-          }`}
+          className="mb-6 rounded-2xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale"
           role="status"
         >
           {notice}
+        </p>
+      ) : null}
+      {pendingPurchase ? (
+        <p className="mb-6 rounded-2xl bg-accent/45 px-4 py-3 text-sm font-medium text-brand-hover" role="status">
+          {PURCHASE_NOTICE}
         </p>
       ) : null}
       <AuthForm continuar={destination} intent={intent === "vender" ? "vender" : undefined} mode="signin" />

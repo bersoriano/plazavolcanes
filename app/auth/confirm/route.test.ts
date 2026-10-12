@@ -20,8 +20,9 @@ function requestFor(query: string) {
 beforeEach(() => {
   vi.clearAllMocks();
   configured.value = true;
-  exchangeCodeForSession.mockResolvedValue({ error: null });
-  verifyOtp.mockResolvedValue({ error: null });
+  const data = { user: { id: "user-1", email_confirmed_at: "2026-10-11T00:00:00Z" }, session: { access_token: "token" } };
+  exchangeCodeForSession.mockResolvedValue({ data, error: null });
+  verifyOtp.mockResolvedValue({ data, error: null });
   resumePurchaseIntent.mockResolvedValue(null);
 });
 
@@ -53,7 +54,75 @@ describe("GET /auth/confirm", () => {
 
     expect(resumePurchaseIntent).not.toHaveBeenCalled();
     expect(response.headers.get("location")).toBe(
-      "https://plazavolcanes.com/ingresar?error=confirmacion",
+      "https://plazavolcanes.com/ingresar?error=sesion_confirmacion",
     );
+  });
+
+  it("preserves seller and validated continuation when browser PKCE exchange fails", async () => {
+    exchangeCodeForSession.mockResolvedValue({ data: null, error: { code: "pkce_code_verifier_not_found" } });
+    const response = await GET(requestFor("?code=abc&intent=vender&continuar=%2Fmensajes%3Ftienda%3D4"));
+    expect(response.headers.get("location")).toBe("https://plazavolcanes.com/ingresar?error=sesion_confirmacion&continuar=%2Fmensajes%3Ftienda%3D4&intent=vender");
+    expect(resumePurchaseIntent).not.toHaveBeenCalled();
+  });
+
+  it.each(["otp_expired", "token_already_used"])("offers recovery for %s without claiming confirmation", async (code) => {
+    verifyOtp.mockResolvedValue({ data: null, error: { code } });
+    const response = await GET(requestFor("?token_hash=spent&type=signup&intent=vender"));
+    expect(response.headers.get("location")).toBe("https://plazavolcanes.com/ingresar?error=confirmacion&intent=vender");
+    expect(resumePurchaseIntent).not.toHaveBeenCalled();
+  });
+
+  it("does not treat an error-free response without a session as signed in", async () => {
+    verifyOtp.mockResolvedValue({ data: { user: { email_confirmed_at: "2026-10-11" }, session: null }, error: null });
+    const response = await GET(requestFor("?token_hash=hash&type=signup"));
+    expect(response.headers.get("location")).toContain("/ingresar?error=sesion_confirmacion");
+    expect(resumePurchaseIntent).not.toHaveBeenCalled();
+  });
+
+  it("requires authoritative confirmed-email evidence before continuing", async () => {
+    exchangeCodeForSession.mockResolvedValue({ data: { user: { email_confirmed_at: null }, session: { access_token: "token" } }, error: null });
+    const response = await GET(requestFor("?code=abc"));
+    expect(response.headers.get("location")).toContain("/ingresar?error=confirmacion");
+    expect(resumePurchaseIntent).not.toHaveBeenCalled();
+  });
+
+  it("handles thrown session failures with an actionable recovery destination", async () => {
+    exchangeCodeForSession.mockRejectedValue(new Error("cookie write failed"));
+    const response = await GET(requestFor("?code=abc&intent=vender"));
+    expect(response.headers.get("location")).toBe("https://plazavolcanes.com/ingresar?error=sesion_confirmacion&intent=vender");
+  });
+
+  it.each(["recovery", "email_change", "invite", "sms", "unknown"])("does not accept %s tokens at signup confirmation", async (type) => {
+    const response = await GET(requestFor(`?token_hash=hash&type=${type}`));
+    expect(verifyOtp).not.toHaveBeenCalled();
+    expect(response.headers.get("location")).toContain("/ingresar?error=confirmacion");
+  });
+
+  it("keeps legacy email-token confirmation working", async () => {
+    const response = await GET(requestFor("?token_hash=hash&type=email&intent=vender"));
+    expect(response.headers.get("location")).toBe("https://plazavolcanes.com/panel/tiendas/nueva");
+  });
+
+  it("lets purchase resumption win over both seller intent and continuation", async () => {
+    resumePurchaseIntent.mockResolvedValue("/carrito/4");
+    const response = await GET(requestFor("?code=abc&intent=vender&continuar=%2Fmensajes"));
+    expect(response.headers.get("location")).toBe("https://plazavolcanes.com/carrito/4");
+  });
+
+  it("preserves safe continuation on success before seller destination", async () => {
+    const response = await GET(requestFor("?code=abc&intent=vender&continuar=%2Fmensajes"));
+    expect(response.headers.get("location")).toBe("https://plazavolcanes.com/mensajes");
+  });
+
+  it("drops unsafe continuation and secrets from recovery redirects", async () => {
+    exchangeCodeForSession.mockResolvedValue({ error: { code: "bad_code" } });
+    const response = await GET(requestFor("?code=secret&continuar=https://evil.example&email=ana@correo.com&intent=vender"));
+    expect(response.headers.get("location")).toBe("https://plazavolcanes.com/ingresar?error=sesion_confirmacion&intent=vender");
+  });
+
+  it("keeps missing-token links in recovery even if another account is signed in", async () => {
+    const response = await GET(requestFor("?intent=vender"));
+    expect(response.headers.get("location")).toBe("https://plazavolcanes.com/ingresar?error=confirmacion&intent=vender");
+    expect(resumePurchaseIntent).not.toHaveBeenCalled();
   });
 });
