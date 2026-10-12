@@ -17,6 +17,7 @@ import { getShopImportRequests } from "@/lib/queries/listing-import.server";
 import { getShopAnalytics } from "@/lib/queries/shop-analytics.server";
 import { getOwnedShop } from "@/lib/queries/shops.server";
 import { getShopTrustDashboard } from "@/lib/queries/trust.server";
+import { getShopPublicationApproval } from "@/lib/seller-publication";
 import { organizeCatalog, parseCatalogTab } from "@/lib/seller-catalog";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -38,6 +39,8 @@ export default async function ShopCatalogPage({
   if (!shop) notFound();
 
   const query = await searchParams;
+  const created = query.creada === "1";
+  const approval = getShopPublicationApproval(shop);
   const tab = parseCatalogTab(query.estado);
   const search = typeof query.buscar === "string" ? query.buscar : "";
 
@@ -76,6 +79,24 @@ export default async function ShopCatalogPage({
   return (
     <section className={`${pageContainer} py-10 sm:py-14`}>
       <ShopWorkspaceHeader active="catalogo" isPremium={shop.is_premium === true} shopId={shopId} shopName={shop.name} shopSlug={shop.slug} />
+
+      {created ? (
+        <section className="mb-6 rounded-[2rem] border border-brand/25 bg-accent/45 p-6 sm:p-8" aria-labelledby="shop-created-title">
+          <h2 id="shop-created-title" className="font-display text-2xl font-semibold" role="status">Tu tienda se creó correctamente.</h2>
+          <p className="mt-3 text-sm leading-6 text-muted">La página pública de tu tienda ya está disponible. Crear la tienda no equivale a tener permiso para publicar productos.</p>
+          <Link className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-on-brand hover:bg-brand-hover" href={`/panel/tiendas/${shopId}/productos/nuevo`}>Agregar mi primer producto</Link>
+        </section>
+      ) : null}
+      <section aria-labelledby="publication-approval-title" className="mb-6 rounded-[2rem] border border-line bg-surface p-6 sm:px-8">
+        <h2 id="publication-approval-title" className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Permiso para publicar productos</h2>
+        <p className={`mt-3 inline-flex rounded-full px-3 py-1 text-sm font-bold ${approval.kind === "approved" ? "bg-accent text-brand-hover" : "bg-background text-muted"}`}>{approval.label}</p>
+        <p className="mt-3 text-sm leading-6 text-muted">{approval.kind === "approved"
+          ? "Puedes publicar productos que cumplan los requisitos. Los borradores permanecen privados hasta que los publiques."
+          : approval.kind === "awaiting_approval"
+            ? "Puedes preparar productos como borradores privados mientras administración revisa tu permiso para publicar. Tus productos podrán aparecer en la plaza cuando se apruebe ese permiso y los publiques."
+            : "Puedes seguir preparando borradores privados. La publicación de productos está deshabilitada por administración; tus productos no aparecen en la plaza."}</p>
+        {!created ? <p className="mt-2 text-xs leading-5 text-muted">La página pública de tu tienda es independiente del permiso para publicar productos.</p> : null}
+      </section>
 
       {trustDashboard ? <div className="mb-6"><TrustDashboardCard dashboard={trustDashboard} /></div> : null}
       {isFounder && !analytics ? null : <div className="mb-6"><ShopAnalyticsCard analytics={analytics} isFounder={isFounder} /></div>}

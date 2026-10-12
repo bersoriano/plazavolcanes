@@ -197,3 +197,31 @@ describe("catalogue upkeep", () => {
     expect(screen.getByText("Las unidades son las disponibles ahora; los pedidos ya hechos conservan las suyas.")).toBeInTheDocument();
   });
 });
+
+
+describe("creation and publication feedback", () => {
+  it("confirms creation and offers the first product prominently", async () => {
+    mockCatalogue([]);
+    render(await renderCatalog({ creada: "1" }));
+    expect(screen.getByRole("status")).toHaveTextContent("Tu tienda se creó correctamente");
+    expect(screen.getByRole("link", { name: "Agregar mi primer producto" })).toHaveAttribute("href", "/panel/tiendas/4/productos/nuevo");
+    expect(screen.getByText(/La página pública de tu tienda ya está disponible/)).toBeInTheDocument();
+  });
+
+  it("does not repeat creation feedback on ordinary visits", async () => {
+    render(await renderCatalog({ creada: "0" }));
+    expect(screen.queryByText("Tu tienda se creó correctamente.")).not.toBeInTheDocument();
+  });
+
+  it.each([
+    [false, null, "Esperando aprobación de administración", "Puedes preparar productos como borradores privados"],
+    [false, "2026-09-01", "Tienda deshabilitada por administración", "Puedes seguir preparando borradores privados"],
+    [true, null, "Publicación de productos aprobada", "Puedes publicar productos que cumplan los requisitos"],
+  ])("reads actual publication approval (%s, %s)", async (approved, reviewedAt, label, detail) => {
+    mockCatalogue([]);
+    vi.mocked(getOwnedShop).mockResolvedValue({ ...SHOP, is_publishing_approved: approved, publishing_reviewed_at: reviewedAt } as never);
+    render(await renderCatalog({ creada: "1" }));
+    expect(screen.getByText(label)).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(detail))).toBeInTheDocument();
+  });
+});

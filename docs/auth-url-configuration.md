@@ -69,7 +69,9 @@ These changes were prepared locally, not applied to production.
    preview/local origins to their corresponding environment. Do not use an
    unrestricted production origin wildcard.
 4. In **Email Templates → Confirm signup**, use the prepared
-   `supabase/templates/confirmation.html`, especially this link:
+   `supabase/templates/confirmation.html`. Set the subject to
+   **Confirma tu correo en Plaza Volcanes**. Paste the complete HTML, preserving
+   `{{ .Email }}` and especially this link:
 
    ```html
    <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}">Confirmar mi correo</a>
@@ -86,7 +88,10 @@ These changes were prepared locally, not applied to production.
    those forms lose context or construct an invalid callback. `type=signup`
    is a token purpose, not a claim that verification succeeded. Keep password
    recovery templates targeting `/auth/recuperar` unchanged.
-5. Verify custom SMTP delivery and disable provider link tracking. Inspect a
+5. In **Authentication → Email → SMTP Settings**, use your verified sender
+   address and set **Sender name** to **Plaza Volcanes**. Keep the existing
+   confirmation requirements and rate limits. Verify custom SMTP delivery and
+   disable provider link tracking. Inspect a
    newly delivered signup **and resend** email: callback host, query context and
    `token_hash` must survive template rendering. Email scanners may consume
    one-time links; this recovery does not prevent scanning. If template editing
@@ -162,3 +167,23 @@ Hosted mail delivery, deployed template rendering, redirects across canonical
 hosts, real mailbox scanners, production logs, and actual timed expiration need
 separate verification on the intended hosted configuration. Do not declare a
 production cause or complete production resolution from local tests alone.
+
+
+## Signup completion and resend feedback
+
+Completed signup replaces credential fields with a confirmation screen. Only
+its destination email is returned in action state; no password, user ID, or
+provider account status is stored there. Restart registration and sign-in retain
+seller intent and validated continuation. Resend keeps identical responses for
+pending, confirmed, missing, and rate-limited addresses. Every settled resend
+with a valid email gets the same 60-second UI cooldown, including transport
+failures. Email syntax errors permit immediate correction and retry. The provider
+still enforces its configured limits; the cooldown is not a security boundary.
+The neutral response does not promise delivery and tells users to check spam,
+wait, or sign in if already confirmed.
+
+The Spanish subject and branded HTML are prepared in the repository only.
+Hosted template, sender identity, SMTP delivery, and redirect allowlist still
+require the review above. Do not change production authentication settings as
+part of this fix or declare hosted templates updated without inspecting a newly
+delivered signup and resend email in that environment.

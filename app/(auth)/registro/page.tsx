@@ -34,11 +34,6 @@ export default async function SignUpPage({ searchParams }: { searchParams: SignU
         <ArrowLeft aria-hidden="true" className="size-4" />
         Ver cómo funciona
       </Link>
-      <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-brand">Tu lugar empieza aquí</p>
-      <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink">Abre tu cuenta</h1>
-      <p className="mb-8 mt-3 leading-7 text-muted">
-        Crea tu cuenta con correo, contraseña, tu nombre y teléfono. Usamos tu teléfono para contactarte sobre pedidos y no es público.
-      </p>
       {pendingPurchase ? (
         <p
           className="mb-6 rounded-2xl bg-accent/45 px-4 py-3 text-sm font-medium text-brand-hover"

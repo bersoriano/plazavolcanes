@@ -265,6 +265,8 @@ describe("signUp destinations", () => {
     const state = await signUp(idle, formOf(registration));
 
     expect(state.message).toBe("Revisa tu correo para confirmar tu cuenta.");
+    expect(state.confirmationEmail).toBe(credentials.email);
+    expect(JSON.stringify(state)).not.toContain(credentials.password);
   });
 
   it("builds a query-bearing template target preserving seller continuation", async () => {

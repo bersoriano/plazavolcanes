@@ -85,3 +85,22 @@ describe("trust dashboard disclosure", () => {
     expect(screen.getByText("Cumples el nivel máximo.")).toBeInTheDocument();
   });
 });
+
+
+describe("trust evaluation states", () => {
+  it.each(["standard", "reliable", "top_rated"] as const)("does not claim maximum for unevaluated %s", (tier) => {
+    render(<TrustDashboardCard dashboard={dashboard({ tier, evaluatedAt: null, metrics: null, nextRequirements: [], summary: "Estamos reuniendo evidencia para la primera evaluación de confianza." })} />);
+    expect(screen.getByText(/Estamos reuniendo evidencia/)).toBeInTheDocument();
+    expect(screen.queryByText("Cumples el nivel máximo.")).not.toBeInTheDocument();
+  });
+  it.each(["standard", "reliable"] as const)("distinguishes evaluated %s with no guidance from maximum", (tier) => {
+    render(<TrustDashboardCard dashboard={dashboard({ tier, nextRequirements: [] })} />);
+    expect(screen.queryByText("Cumples el nivel máximo.")).not.toBeInTheDocument();
+    expect(screen.getByText(/No hay requisitos de avance disponibles/)).toBeInTheDocument();
+  });
+  it("preserves evaluated advancement guidance", () => {
+    render(<TrustDashboardCard dashboard={dashboard()} />);
+    expect(screen.getByText("Cómo subir de nivel")).toBeInTheDocument();
+    expect(screen.getByText(/Mantén el nivel tres meses/)).toBeInTheDocument();
+  });
+});

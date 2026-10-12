@@ -198,3 +198,80 @@ async function signInWithUnconfirmedEmail(page: Page, email: string) {
   await page.getByRole("button", { name: "Ingresar", exact: true }).click();
   await expect(page.getByText(/Confirma tu correo antes de ingresar/)).toBeVisible();
 }
+
+
+test("completed signup offers destination, resend and contextual recovery without credentials", async ({ page, browser }) => {
+  const account = await register(page, true, "/panel/cuenta");
+  const first = await emailLink(account.mailbox);
+  await expect(page.getByRole("heading", { name: "Confirma tu correo", exact: true })).toBeVisible();
+  await expect(page.getByText(account.email, { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Contraseña", { exact: true })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "Abre tu cuenta", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("link", { name: "Corregir correo o empezar de nuevo" })).toHaveAttribute("href", "/registro?paso=formulario&continuar=%2Fpanel%2Fcuenta&intent=vender");
+  await expect(page.getByRole("link", { name: "Volver a ingresar" })).toHaveAttribute("href", "/ingresar?continuar=%2Fpanel%2Fcuenta&intent=vender");
+  expect(new URL(page.url()).searchParams.has("password")).toBe(false);
+  expect(await page.evaluate(() => Object.keys(sessionStorage).concat(Object.keys(localStorage)).some((key) => /password|confirmation/i.test(key)))).toBe(false);
+  await page.screenshot({ path: "output/playwright/signup-confirmation.png", fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  const headingBounds = await page.getByRole("heading", { name: "Confirma tu correo", exact: true }).boundingBox();
+  const headerBounds = await page.getByRole("banner").boundingBox();
+  expect(headingBounds!.y).toBeGreaterThanOrEqual(headerBounds!.y + headerBounds!.height);
+  await page.screenshot({ path: "output/playwright/signup-confirmation-mobile.png", fullPage: true });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+
+  const resendReadyAt = Date.now() + 1100;
+  await expect.poll(() => Date.now()).toBeGreaterThan(resendReadyAt);
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => { release = resolve; });
+  await page.route("**/registro?**", async (route) => {
+    if (route.request().method() === "POST") await gate;
+    await route.continue();
+  });
+  try {
+    await page.getByRole("button", { name: "Reenviar confirmación", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Procesando…", exact: true })).toBeDisabled();
+    await expect(page.getByRole("status").filter({ hasText: "Enviando solicitud de confirmación…" })).toBeVisible();
+    await page.screenshot({ path: "output/playwright/signup-resend-loading-mobile.png", fullPage: true });
+  } finally { release(); }
+  await expect(page.getByRole("status").filter({ hasText: "Si ese correo" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Espera .* s/ })).toBeDisabled();
+  await page.screenshot({ path: "output/playwright/signup-resend-cooldown-mobile.png", fullPage: true });
+  await page.unroute("**/registro?**");
+  const fresh = await emailLink(account.mailbox, first.messageId);
+  const mail = await (await fetch(`${inboxUrl}/api/v1/message/${fresh.messageId}`)).json();
+  expect(mail.Subject).toBe("Confirma tu correo en Plaza Volcanes");
+  expect(mail.HTML).toContain("PLAZA VOLCANES");
+  expect(mail.HTML).toContain(account.email);
+  const emailContext = await browser.newContext();
+  try {
+    const renderedEmail = await emailContext.newPage();
+    await renderedEmail.setContent(mail.HTML);
+    await renderedEmail.screenshot({ path: "output/playwright/confirmation-email-spanish.png", fullPage: true });
+  } finally { await emailContext.close(); }
+
+  await page.getByRole("link", { name: "Corregir correo o empezar de nuevo" }).click();
+  await expect(page.getByRole("heading", { name: "Abre tu cuenta", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Correo electrónico")).toHaveValue("");
+  await expect(page.getByLabel("Contraseña", { exact: true })).toHaveValue("");
+  await expect(page.locator('input[name="intent"]')).toHaveValue("vender");
+  await expect(page.locator('input[name="continuar"]')).toHaveValue("/panel/cuenta");
+  await page.getByRole("link", { name: "Ingresa", exact: true }).click();
+  await expect(page).toHaveURL(/\/ingresar\?continuar=%2Fpanel%2Fcuenta&intent=vender$/);
+  await page.goto(fresh.href);
+  await expect(page).toHaveURL(/\/panel\/cuenta$/);
+});
+
+
+test("invalid resend address can be corrected immediately with seller context", async ({ page }) => {
+  await page.goto("/confirmar-correo?intent=vender&continuar=%2Fpanel%2Fcuenta");
+  await page.getByLabel("Correo electrónico").fill("bad");
+  await page.getByRole("button", { name: "Reenviar confirmación", exact: true }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Revisa los campos marcados." })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Reenviar confirmación", exact: true })).toBeEnabled();
+  await page.screenshot({ path: "output/playwright/resend-invalid-email.png", fullPage: true });
+  await page.getByLabel("Correo electrónico").fill(`unknown-${crypto.randomUUID()}@test.local`);
+  await page.getByRole("button", { name: "Reenviar confirmación", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("Si ese correo");
+  await expect(page.getByRole("button", { name: /Espera .* s/ })).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Volver a ingresar" })).toHaveAttribute("href", "/ingresar?continuar=%2Fpanel%2Fcuenta&intent=vender");
+});

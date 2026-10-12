@@ -151,6 +151,7 @@ export async function signUp(
 
   return {
     status: "success",
+    confirmationEmail: email,
     message: pending
       ? "Revisa tu correo para confirmar tu cuenta y continuar tu compra."
       : "Revisa tu correo para confirmar tu cuenta.",
