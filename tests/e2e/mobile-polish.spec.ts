@@ -207,7 +207,7 @@ test.describe("mobile polish", () => {
       await page.getByLabel("Precio en MXN").fill("1899");
       await page.getByLabel("Unidades disponibles").fill("2");
       newProductRoute = new URL(page.url()).pathname;
-      await page.getByRole("button", { name: "Guardar producto" }).click();
+      await page.getByRole("button", { name: "Guardar borrador" }).click();
       await expect(page).toHaveURL(/\/panel\/productos\/\d+\/editar/);
       editProductRoute = new URL(page.url()).pathname;
 
