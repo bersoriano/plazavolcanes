@@ -1,11 +1,13 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { resendConfirmation } from "@/lib/actions/auth";
 import { PasswordForm } from "@/components/auth/password-form";
 
 vi.mock("@/lib/actions/auth", () => ({
   requestPasswordReset: vi.fn(),
   updatePassword: vi.fn(),
+  resendConfirmation: vi.fn(),
 }));
 
 afterEach(cleanup);
@@ -38,4 +40,19 @@ describe("PasswordForm", () => {
       "/ingresar",
     );
   });
+});
+
+
+it("allows immediate corrected submission after an email validation error", async () => {
+  vi.mocked(resendConfirmation).mockResolvedValueOnce({ status: "error", message: "Revisa los campos marcados.", errors: { email: ["Escribe un correo válido."] } }).mockResolvedValueOnce({ status: "success", message: "Si ese correo tiene cuenta pendiente, recibirás un enlace." });
+  render(<PasswordForm mode="confirmation" intent="vender" continuar="/panel/cuenta" />);
+  fireEvent.change(screen.getByLabelText("Correo electrónico"), { target: { value: "bad" } });
+  fireEvent.click(screen.getByRole("button", { name: "Reenviar confirmación" }));
+  await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Revisa los campos marcados."));
+  expect(screen.getByRole("button", { name: "Reenviar confirmación" })).toBeEnabled();
+  fireEvent.change(screen.getByLabelText("Correo electrónico"), { target: { value: "ana@correo.com" } });
+  fireEvent.click(screen.getByRole("button", { name: "Reenviar confirmación" }));
+  await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("Si ese correo"));
+  expect(resendConfirmation).toHaveBeenCalledTimes(2);
+  expect(screen.getByRole("button", { name: /Espera .* s/ })).toBeDisabled();
 });
