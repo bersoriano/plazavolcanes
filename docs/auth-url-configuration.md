@@ -1,197 +1,164 @@
-# Auth URL configuration checklist
+# Confirmation recovery and email configuration
 
-Confirmation and password-reset emails depend on four settings that live in four
-different places. Every one of them fails **silently** — no error, no log, just a
-link pointing somewhere wrong. This is the list to walk when auth email links
-misbehave, and after any domain change.
+Production failure reported: opening a signup email showed a confirmation error,
+but subsequent password sign-in succeeded. This proves that account could sign
+in; it does not identify the original callback error. No production Auth logs,
+email body or dashboard settings were supplied or changed during this fix.
 
-The production domain is `https://plazavolcanes.com`. The Vercel-assigned
-`*.vercel.app` URL still resolves, and preview deployments always will, which is
-why the allowlist below keeps entries for both.
+## What the application now guarantees
 
-## How the pieces fit
+- `/auth/confirm` distinguishes a failed PKCE session exchange from a token that
+  could not be verified. Neither failure asserts that an account is confirmed.
+- Automatic continuation requires a successful Auth response containing both a
+  session and `user.email_confirmed_at`. An unrelated existing browser session,
+  a query parameter, or user metadata is not confirmation evidence.
+- Callback cookie-write failures use recovery instead of silently reporting
+  successful sign-in. Read-only Server Components retain proxy refresh behavior.
+- Recovery sign-in and resend retain `intent=vender` and validated `continuar`.
+  Successful authentication resumes a pending purchase cookie first, then a safe
+  continuation, then seller shop creation at `/panel/tiendas/nueva` or `/panel`.
+- Purchase context is browser-local. Opening email elsewhere cannot transfer a
+  purchase cookie. Return to the shopping browser to resume that purchase.
+- Expired, missing and already-used links offer password sign-in plus
+  `/confirmar-correo`. Resend uses `auth.resend({ type: "signup" })`, never an
+  account lookup, account creation, or administrator credentials. Missing,
+  confirmed, pending and rate-limited addresses receive the same response.
+- Provider email confirmation, expiry, one-time tokens and rate limits remain
+  enforced. Resend acceptance is not a guarantee of email delivery.
 
-`lib/site-url.ts` resolves the origin once:
+## Why different-browser and overlapping signups matter
 
-```ts
-const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-if (!configured) return "http://localhost:3000";
+Installed `@supabase/ssr` uses PKCE. The stock `ConfirmationURL` first verifies
+email at Supabase, then redirects to the application with a code. Session
+exchange needs the verifier saved in the signup browser. Another browser lacks
+it; a later signup in the same browser can overwrite it. Thus email verification
+can succeed while automatic sign-in fails. Those mechanisms match the report,
+but neither is established as its production cause.
+
+The application supports existing PKCE emails and direct `token_hash` signup
+emails. The latter verify and establish a session through the Auth server without
+using the signup browser's verifier. Recovery remains necessary for old, expired,
+already-used, or pre-consumed emails.
+
+References: [PKCE flow](https://supabase.com/docs/guides/auth/sessions/pkce-flow),
+[email templates](https://supabase.com/docs/guides/auth/auth-email-templates),
+[redirect URLs](https://supabase.com/docs/guides/auth/redirect-urls).
+
+## Required hosted configuration review before release
+
+Code alone does not replace the hosted email template or redirect allowlist.
+These changes were prepared locally, not applied to production.
+
+1. Keep **Authentication → Email → Confirm email** enabled. Never turn it off
+   to work around confirmation recovery.
+2. Verify `NEXT_PUBLIC_SITE_URL=https://plazavolcanes.com` in the deployed app and
+   **Authentication → URL Configuration → Site URL** matches that origin.
+   Public environment variables are build-time values; changes require a future
+   build/release. Use the canonical origin.
+3. Check **Redirect URLs** accepts the complete callback including its query.
+   Retain the legacy URL and add the query pattern below (backslash is literal
+   in the dashboard, not doubled):
+
+   ```text
+   https://plazavolcanes.com/auth/confirm
+   https://plazavolcanes.com/auth/confirm\?**
+   ```
+
+   The escaped `\?` matches a literal question mark; `**` permits encoded
+   continuation values. This keeps the callback path fixed. Add only intended
+   preview/local origins to their corresponding environment. Do not use an
+   unrestricted production origin wildcard.
+4. In **Email Templates → Confirm signup**, use the prepared
+   `supabase/templates/confirmation.html`, especially this link:
+
+   ```html
+   <a href="{{ .RedirectTo }}&amp;token_hash={{ .TokenHash }}">Confirmar mi correo</a>
+   ```
+
+   Signup and resend always pass a full target such as:
+
+   ```text
+   https://plazavolcanes.com/auth/confirm?type=signup&intent=vender
+   ```
+
+   `RedirectTo` already contains `/auth/confirm` and its query. Do not append
+   `/auth/confirm` again, add a second `?`, or replace it with `SiteURL`:
+   those forms lose context or construct an invalid callback. `type=signup`
+   is a token purpose, not a claim that verification succeeded. Keep password
+   recovery templates targeting `/auth/recuperar` unchanged.
+5. Verify custom SMTP delivery and disable provider link tracking. Inspect a
+   newly delivered signup **and resend** email: callback host, query context and
+   `token_hash` must survive template rendering. Email scanners may consume
+   one-time links; this recovery does not prevent scanning. If template editing
+   or real-user delivery is unavailable, configure supported SMTP instead of
+   disabling confirmation. Retaining the stock template keeps browser-bound
+   automatic sign-in; code recovery still provides password sign-in.
+
+## Local configuration and testing
+
+`supabase/config.toml` references the prepared template and permits its callback
+query at the existing local origins. Existing local auto-confirm behavior was
+not changed; production settings cannot be inferred from it. For confirmation
+browser tests, use a dedicated local Auth service with confirmations enabled,
+that template, a loopback redirect allowlist and the local inbox.
+
+Do not run `supabase config push`: this file contains local URLs and would
+replace hosted configuration.
+
+Run `npm test`, `npm run typecheck`, and `npm run lint`. Opt-in browser coverage
+is `tests/e2e/confirmation-recovery.spec.ts`, gated by `CONFIRMATION_E2E=1`.
+It refuses non-loopback Auth/inbox URLs and requires `mailer_autoconfirm=false`.
+Run it against the dedicated local confirmation setup; the ordinary
+`npm run test:e2e` suites expect auto-confirming local signup.
+
+For a dedicated local stack, set `auth.email.enable_confirmations=true`,
+`auth.email.otp_expiry=15` and `auth.email.max_frequency="1s"`, then restart
+that local service. Never push these test settings to a hosted project. Start
+the app on `localhost:3000` with the **local** URL and publishable key reported
+by `supabase status`; do not let `.env.local` select a hosted project. Keep
+`NEXT_PUBLIC_SITE_URL=http://localhost:3000` and browser origin consistent.
+With that app already running, invoke:
+
+```sh
+CONFIRMATION_E2E=1 CONFIRMATION_OTP_EXP_SECONDS=15 \
+PLAYWRIGHT_BASE_URL=http://localhost:3000 \
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321 \
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=REPLACE_WITH_LOCAL_PUBLISHABLE_KEY \
+npx playwright test tests/e2e/confirmation-recovery.spec.ts --workers=1
 ```
 
-`lib/actions/auth.ts` builds the link target from it:
+Use the local key value in place of the placeholder. The suite expects the
+installed local Mailpit inbox at `http://127.0.0.1:54324`; use
+`CONFIRMATION_INBOX_URL` for a different local port. Without the short-expiry
+environment value, the timed-expiry scenario is explicitly skipped.
 
-```ts
-emailRedirectTo: buildSiteUrl("/auth/confirm")
-```
+During this fix, all nine Chromium scenarios passed against a temporary local
+Auth service with confirmation enabled, 15-second expiry, the prepared template,
+the escaped-query allowlist pattern and local Mailpit. This reproduced the
+missing-verifier and overwritten-verifier failures, and verified password
+recovery to seller shop creation. The original local auto-confirm service was
+left running unchanged; the temporary service was removed. The combined
+confirmation-plus-purchase database browser flow was not exercised; purchase
+precedence and failure preservation have unit coverage.
 
-Supabase then checks that URL against an allowlist. If it is not on the list,
-Auth **discards it and falls back to the project's Site URL** without
-complaining. `app/auth/confirm/route.ts` handles both the `code` and
-`token_hash` flows, so a misrouted link still *works* — it just works on the
-wrong host, which is why this breaks quietly.
+Browser acceptance checks:
 
-`NEXT_PUBLIC_SITE_URL` is also what `metadataBase`, `app/robots.ts` and
-`app/sitemap.ts` build absolute URLs from, so a wrong value there leaks into
-canonical URLs and the sitemap as well as into email.
+1. Register through `/registro?vender=1`. Open the direct email in a fresh
+   browser and reach `/panel/tiendas/nueva`; reload to prove cookies persisted.
+2. Open a stock PKCE link in the signup browser and then, with another account,
+   in a fresh browser. The latter must offer recovery sign-in without claiming
+   confirmation; correct credentials must reach shop creation.
+3. Start two signups in one browser before opening either email. The earlier
+   stock PKCE link must recover through sign-in. Direct token-hash links must
+   work without the browser verifier.
+4. Reopen a consumed direct link signed out. Sign-in must still work and retain
+   seller intent. For a pending account, follow an invalid/expired link, resend,
+   then use the new email. A controlled actual time-expiry check is separate
+   from the invalid-token test.
+5. Verify safe continuation outranks seller intent. Unit regressions also prove
+   pending purchase resumption outranks both and failure never consumes it.
 
-## The four checks
-
-### 1. Vercel has `NEXT_PUBLIC_SITE_URL`
-
-Vercel → Settings → Environment Variables:
-
-```
-NEXT_PUBLIC_SITE_URL = https://plazavolcanes.com
-```
-
-`.env.local` is matched by `.env*` in `.gitignore` and never reaches Vercel. If
-this is unset in production, the fallback above makes every production
-confirmation email point at `http://localhost:3000`.
-
-`NEXT_PUBLIC_*` values are inlined at build time. Changing this variable does
-nothing until the next deploy — **redeploy after saving it**.
-
-Include the scheme. `plazavolcanes.com/auth/confirm` with no `https://` is not a
-valid absolute URL; `getSiteUrl()` assumes `https://` for a bare host, but
-nothing repairs a typo in the host itself.
-
-Point it at whichever host Vercel serves as canonical — apex or `www`, not both.
-Vercel 308-redirects the other one, and a redirect in the middle of the auth
-callback can drop the `code` or `token_hash` query parameter.
-
-### 2. Site URL in the Supabase dashboard
-
-Authentication → URL Configuration → **Site URL**:
-
-```
-https://plazavolcanes.com
-```
-
-This is the default target when no `redirectTo` is passed, and it fills
-`{{ .SiteURL }}` in email templates. If it still says `localhost`, that is where
-users land whenever check 3 fails.
-
-### 3. The redirect allowlist
-
-Authentication → URL Configuration → **Redirect URLs**:
-
-```
-https://plazavolcanes.com/auth/confirm
-```
-
-Add wildcard entries for local work and Vercel previews, which get a unique URL
-per deployment that would otherwise never match:
-
-```
-http://localhost:3000/**
-http://127.0.0.1:3000/**
-https://*-brilliantai.vercel.app/**
-```
-
-The wildcard matches the Vercel **team** slug, not the project name: previews
-are served from `plazavolcanes-<hash>-brilliantai.vercel.app`. An entry built
-from the project name matches nothing, and previews then fall back to the
-production Site URL.
-
-Keep the production `*.vercel.app` entry too if anyone still reaches the site
-that way:
-
-```
-https://plazavolcanes.vercel.app/auth/confirm
-```
-
-Wildcard semantics: `*` does not cross `.` or `/`; `**` does. So
-`http://localhost:3000/*` matches `/foo` but not `/foo/bar`. Prefer the exact
-path for the production entry and keep wildcards for previews.
-
-### 4. The email template resolves the redirect
-
-Authentication → Email Templates → Confirm signup.
-
-On the built-in mailer this page is **read-only** — Supabase gates template
-editing behind custom SMTP, because a shared sender plus editable markup is a
-phishing vector. Locked is the safe state: the stock template links
-
-```html
-<a href="{{ .ConfirmationURL }}">Confirm your mail</a>
-```
-
-and `{{ .ConfirmationURL }}` expands to
-`{project}.supabase.co/auth/v1/verify?token=...&type=signup&redirect_to=<the
-value the code passed>`. It honours `emailRedirectTo`, as long as check 3 put
-that URL on the allowlist.
-
-The failure mode only appears once somebody edits the template:
-
-```html
-<!-- Ignores emailRedirectTo entirely -->
-<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">
-
-<!-- Honours it -->
-<a href="{{ .RedirectTo }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">
-```
-
-`{{ .SiteURL }}` is the project setting, not the value the code passed, so a
-hand-edited template silently overrides everything checks 1-3 achieve.
-
-## The built-in mailer does not reach real users
-
-Two limits come with Supabase's shared SMTP, and neither raises an error:
-
-- roughly **two emails an hour**, project-wide;
-- delivery **only to addresses belonging to the project's team members**. A
-  stranger who registers gets nothing.
-
-So confirmation email is not something to switch on and walk away from. Either:
-
-- leave **Authentication → Sign In / Providers → Email → Confirm email** off,
-  which is how this project runs today — `/auth/confirm` still accepts both
-  flows, so turning it on later needs no code change; or
-- configure custom SMTP first (Project Settings → Authentication → SMTP
-  Settings) with a provider whose domain you verify through DNS. That lifts both
-  limits and unlocks template editing at the same time.
-
-Checks 1-3 matter either way: password recovery, magic links and any future
-email all resolve their redirect the same way.
-
-## Do not run `supabase config push`
-
-`supabase/config.toml` holds the **local** values:
-
-```toml
-site_url = "http://127.0.0.1:3000"
-additional_redirect_urls = [
-  "http://127.0.0.1:3000/auth/confirm",
-  "http://localhost:3000/auth/confirm",
-]
-```
-
-Those are correct for local development. `supabase config push` writes this file
-to the **linked remote project**, which would set production's Site URL to
-localhost and replace the allowlist with two localhost entries. Every
-confirmation email in production would then point at a machine that is not the
-user's.
-
-The CLI has no matching read command, so production values can only be inspected
-in the dashboard. Nothing in this repository reflects them.
-
-## Verifying
-
-There is no way to check this from code — the allowlist is not exposed through
-the Management API or the CLI.
-
-While email confirmation is off, registration never sends mail, so checks 2-4
-have nothing to exercise them. Verify them when you turn confirmation on:
-
-1. Register an address that belongs to a project team member, or a real address
-   once custom SMTP is configured.
-2. Read the confirmation email and check the link's **host** before clicking.
-3. Click it and confirm you land on `/panel` signed in.
-
-A link pointing at `localhost` means check 1 or 2. A link on the right host that
-lands signed-out means the token flow, not the URL configuration. No email at
-all is the shared-mailer limit above, not a URL problem.
-
-`https://plazavolcanes.com/robots.txt` is a quicker smoke test for check 1: its
-`Sitemap:` line prints whatever `NEXT_PUBLIC_SITE_URL` resolved to in the build
-that is live.
+Hosted mail delivery, deployed template rendering, redirects across canonical
+hosts, real mailbox scanners, production logs, and actual timed expiration need
+separate verification on the intended hosted configuration. Do not declare a
+production cause or complete production resolution from local tests alone.

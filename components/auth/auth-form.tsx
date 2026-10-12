@@ -132,6 +132,17 @@ export function AuthForm({
 
       <SubmitButton mode={mode} />
 
+      {signingIn ? (
+        <p className="text-center text-sm">
+          <Link
+            className="inline-flex min-h-11 items-center font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4"
+            href={`/confirmar-correo${alternativeParams.size ? `?${alternativeParams}` : ""}`}
+          >
+            Reenviar correo de confirmación
+          </Link>
+        </p>
+      ) : null}
+
       <p className="text-center text-sm text-muted">
         {signingIn ? "¿Aún no tienes cuenta?" : "¿Ya tienes cuenta?"}{" "}
         <Link

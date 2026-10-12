@@ -51,7 +51,9 @@ async function destinationAfterAuth(
 }
 
 function confirmationRedirect(formData: FormData) {
-  const params = new URLSearchParams();
+  // Always include a query so the email template can append &token_hash=...
+  // without losing seller intent or a validated continuation.
+  const params = new URLSearchParams({ type: "signup" });
   const continuation = safeContinuation(formData.get("continuar"));
   if (continuation) params.set("continuar", continuation);
   if (formData.get("intent") === "vender") params.set("intent", "vender");
@@ -82,7 +84,9 @@ export async function signIn(
   if (error) {
     return {
       status: "error",
-      message: "Correo o contraseña incorrectos.",
+      message: error.code === "email_not_confirmed"
+        ? "Confirma tu correo antes de ingresar. Usa Reenviar correo de confirmación para pedir un enlace nuevo."
+        : "Correo o contraseña incorrectos.",
     };
   }
 
@@ -148,6 +152,39 @@ export async function signUp(
     message: pending
       ? "Revisa tu correo para confirmar tu cuenta y continuar tu compra."
       : "Revisa tu correo para confirmar tu cuenta.",
+  };
+}
+
+export async function resendConfirmation(
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = emailSchema.safeParse({ email: formData.get("email") });
+  if (!parsed.success) {
+    return {
+      status: "error",
+      message: "Revisa los campos marcados.",
+      errors: parsed.error.flatten().fieldErrors,
+    };
+  }
+  if (!isSupabaseConfigured()) return setupError;
+
+  // No account lookup or provider details: missing, confirmed, rate-limited
+  // and pending addresses all receive the same response. Provider limits stay
+  // in force; resend never creates an account or bypasses confirmation.
+  try {
+    const supabase = await createServerSupabaseClient();
+    await supabase.auth.resend({
+      type: "signup",
+      email: parsed.data.email,
+      options: { emailRedirectTo: confirmationRedirect(formData) },
+    });
+  } catch {
+    // A transport failure must not turn this into an account-discovery tool.
+  }
+  return {
+    status: "success",
+    message: "Si ese correo tiene una cuenta pendiente de confirmación, recibirás un enlace nuevo. Revisa también spam y espera unos minutos antes de pedir otro. Si ya confirmaste tu correo, vuelve a ingresar con tu contraseña.",
   };
 }
 

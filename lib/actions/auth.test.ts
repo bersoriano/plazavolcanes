@@ -7,6 +7,7 @@ const resumePurchaseIntent = vi.fn();
 const readPurchaseIntent = vi.fn();
 const updateUser = vi.fn();
 const getClaims = vi.fn();
+const resend = vi.fn();
 const redirect = vi.hoisted(() => vi.fn());
 const configured = vi.hoisted(() => ({ value: true }));
 
@@ -18,6 +19,7 @@ vi.mock("@/lib/supabase/server", () => ({
       getClaims,
       signInWithPassword,
       signUp: signUpWithPassword,
+      resend,
     },
   }),
 }));
@@ -26,7 +28,7 @@ vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: () => configured
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/navigation", () => ({ redirect }));
 
-const { requestPasswordReset, signIn, signUp, updatePassword } = await import(
+const { requestPasswordReset, resendConfirmation, signIn, signUp, updatePassword } = await import(
   "@/lib/actions/auth"
 );
 
@@ -49,6 +51,7 @@ beforeEach(() => {
   signUpWithPassword.mockResolvedValue({ data: { session: { user: {} } }, error: null });
   resumePurchaseIntent.mockResolvedValue(null);
   readPurchaseIntent.mockResolvedValue(null);
+  resend.mockResolvedValue({ error: null });
 });
 
 describe("requestPasswordReset", () => {
@@ -182,6 +185,20 @@ describe("signIn destinations", () => {
     expect(resumePurchaseIntent).not.toHaveBeenCalled();
     expect(redirect).not.toHaveBeenCalled();
   });
+
+  it("guides a correct-password user whose email is still unconfirmed", async () => {
+    signInWithPassword.mockResolvedValue({ error: { code: "email_not_confirmed" } });
+    const state = await signIn(idle, formOf(credentials));
+    expect(state.message).toMatch(/confirma tu correo/i);
+    expect(state.message).toMatch(/reenviar/i);
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it("resumes a purchase before seller recovery intent", async () => {
+    resumePurchaseIntent.mockResolvedValue("/carrito/4");
+    await signIn(idle, formOf({ ...credentials, intent: "vender", continuar: "/mensajes" }));
+    expect(redirect).toHaveBeenCalledWith("/carrito/4");
+  });
 });
 
 describe("signUp destinations", () => {
@@ -216,5 +233,44 @@ describe("signUp destinations", () => {
     const state = await signUp(idle, formOf(registration));
 
     expect(state.message).toBe("Revisa tu correo para confirmar tu cuenta.");
+  });
+
+  it("builds a query-bearing template target preserving seller continuation", async () => {
+    signUpWithPassword.mockResolvedValue({ data: { session: null }, error: null });
+    await signUp(idle, formOf({ ...registration, intent: "vender", continuar: "/mensajes?tienda=4" }));
+    expect(signUpWithPassword.mock.calls[0][0].options.emailRedirectTo).toBe("https://plazavolcanes.com/auth/confirm?type=signup&continuar=%2Fmensajes%3Ftienda%3D4&intent=vender");
+  });
+});
+
+describe("resendConfirmation", () => {
+  it("resends signup confirmation with validated seller context", async () => {
+    const state = await resendConfirmation(idle, formOf({ email: "ana@correo.com", intent: "vender", continuar: "/mensajes" }));
+    expect(state.status).toBe("success");
+    expect(resend).toHaveBeenCalledWith({ type: "signup", email: "ana@correo.com", options: { emailRedirectTo: "https://plazavolcanes.com/auth/confirm?type=signup&continuar=%2Fmensajes&intent=vender" } });
+  });
+
+  it.each(["user_not_found", "email_already_confirmed", "over_email_send_rate_limit"])("does not expose %s", async (code) => {
+    const accepted = await resendConfirmation(idle, formOf({ email: "ana@correo.com" }));
+    resend.mockResolvedValue({ error: { code, message: "private provider detail" } });
+    const rejected = await resendConfirmation(idle, formOf({ email: "nadie@correo.com" }));
+    expect(rejected).toEqual(accepted);
+    expect(rejected.message).toMatch(/^Si /);
+  });
+
+  it("keeps thrown provider failures private", async () => {
+    const accepted = await resendConfirmation(idle, formOf({ email: "ana@correo.com" }));
+    resend.mockRejectedValue(new Error("network failure"));
+    expect(await resendConfirmation(idle, formOf({ email: "nadie@correo.com" }))).toEqual(accepted);
+  });
+
+  it("rejects malformed emails before contacting the provider", async () => {
+    const state = await resendConfirmation(idle, formOf({ email: "bad" }));
+    expect(state.errors?.email).toBeDefined();
+    expect(resend).not.toHaveBeenCalled();
+  });
+
+  it("drops unsafe continuation from new links", async () => {
+    await resendConfirmation(idle, formOf({ email: "ana@correo.com", continuar: "//evil.example", intent: "vender" }));
+    expect(resend.mock.calls[0][0].options.emailRedirectTo).toBe("https://plazavolcanes.com/auth/confirm?type=signup&intent=vender");
   });
 });
