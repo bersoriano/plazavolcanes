@@ -6,6 +6,7 @@ import { CATALOG_TABS, type CatalogCounts, type CatalogTab } from "@/lib/seller-
 const TAB_LABELS: Record<CatalogTab, string> = {
   todos: "Todos",
   publicados: "Publicados",
+  pendientes: "Pendientes de aprobación",
   borradores: "Borradores",
   vencidos: "Vencidos",
   bloqueados: "Bloqueados",

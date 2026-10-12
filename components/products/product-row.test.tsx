@@ -209,3 +209,9 @@ describe("bringing a lapsed listing back", () => {
     expect(screen.getByRole("button", { name: "Despublicar" })).toBeInTheDocument();
   });
 });
+
+ it("offers pending withdrawal rather than unpublishing a hidden product", () => {
+  render(<ProductRow product={product({ is_publishing_approved: false, publishing_reviewed_at: null, expires_at: null })} />);
+  expect(screen.getByRole("button", { name: "Retirar de pendientes" })).toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: "Despublicar" })).not.toBeInTheDocument();
+ });

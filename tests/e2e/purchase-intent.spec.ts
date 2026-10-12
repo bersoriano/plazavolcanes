@@ -73,7 +73,7 @@ async function publishProduct(sellerPage: Page, productName: string) {
     mimeType: "image/png",
     name: "portada.png",
   });
-  await sellerPage.getByRole("button", { name: "Guardar producto" }).click();
+  await sellerPage.getByRole("button", { name: "Guardar borrador" }).click();
   await expect(sellerPage).toHaveURL(/\/panel\/productos\/\d+\/editar/);
   await sellerPage.getByRole("button", { name: "Publicar producto" }).click();
   await expect(sellerPage.getByRole("status").filter({ hasText: "Tu producto ya está publicado." })).toBeVisible();

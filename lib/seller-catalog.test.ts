@@ -78,15 +78,14 @@ describe("catalogue counts", () => {
     expect(counts.borradores).toBe(1);
   });
 
-  it("blocks a live listing while the shop waits for approval", () => {
+  it("separates pending approval from administration blocks", () => {
     const { counts } = organizeCatalog(
       [listing()],
       { is_publishing_approved: false, publishing_reviewed_at: null },
       {},
     );
 
-    expect(counts.bloqueados).toBe(1);
-    expect(counts.publicados).toBe(0);
+    expect(counts).toMatchObject({ pendientes: 1, bloqueados: 0, publicados: 0 });
   });
 
   it("leaves a draft in drafts even while the shop waits for approval", () => {

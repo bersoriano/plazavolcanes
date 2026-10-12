@@ -4,11 +4,11 @@ import {
 } from "@/lib/seller-publication";
 
 /**
- * The catalogue is sorted into the four answers a seller acts on, plus the one
- * they can only wait out. The tabs carry these names in the query string, so
+ * The catalogue distinguishes private drafts, pending approval, public listings,
+ * expiry and administration blocks. The tabs carry these names in the query string, so
  * they are Spanish and they are part of the URL contract.
  */
-export const CATALOG_TABS = ["todos", "publicados", "borradores", "vencidos", "bloqueados"] as const;
+export const CATALOG_TABS = ["todos", "publicados", "pendientes", "borradores", "vencidos", "bloqueados"] as const;
 
 export type CatalogTab = (typeof CATALOG_TABS)[number];
 
@@ -45,6 +45,7 @@ export function getCatalogBucket(
   if (kind === "published") return "publicados";
   if (kind === "draft") return "borradores";
   if (kind === "expired") return "vencidos";
+  if (kind === "awaiting_approval") return "pendientes";
   return "bloqueados";
 }
 
@@ -61,6 +62,7 @@ export function organizeCatalog<T extends CatalogListing>(
   const counts: CatalogCounts = {
     todos: listings.length,
     publicados: 0,
+    pendientes: 0,
     borradores: 0,
     vencidos: 0,
     bloqueados: 0,

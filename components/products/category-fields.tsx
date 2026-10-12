@@ -8,9 +8,10 @@ type CategoryFieldsProps = {
   categories: CategoryTree[];
   selectedLeafId?: number | null;
   error?: string;
+  onSelectionChange?: (leafId: number | null) => void;
 };
 
-export function CategoryFields({ categories, selectedLeafId, error }: CategoryFieldsProps) {
+export function CategoryFields({ categories, selectedLeafId, error, onSelectionChange }: CategoryFieldsProps) {
   const initialSelection = findCategorySelection(categories, selectedLeafId);
   const [parentId, setParentId] = useState<number | null>(initialSelection.parentId);
   const [leafId, setLeafId] = useState<number | null>(initialSelection.leafId);
@@ -36,6 +37,7 @@ export function CategoryFields({ categories, selectedLeafId, error }: CategoryFi
             onChange={(event) => {
               setParentId(event.currentTarget.value ? Number(event.currentTarget.value) : null);
               setLeafId(null);
+              onSelectionChange?.(null);
             }}
             value={parentId ?? ""}
           >
@@ -56,7 +58,11 @@ export function CategoryFields({ categories, selectedLeafId, error }: CategoryFi
             disabled={!selectedParent}
             id="category-leaf"
             name="category_id"
-            onChange={(event) => setLeafId(event.currentTarget.value ? Number(event.currentTarget.value) : null)}
+            onChange={(event) => {
+              const selected = event.currentTarget.value ? Number(event.currentTarget.value) : null;
+              setLeafId(selected);
+              onSelectionChange?.(selected);
+            }}
             value={leafId ?? ""}
           >
             <option value="">Selecciona una subcategoría</option>

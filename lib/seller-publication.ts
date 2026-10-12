@@ -42,12 +42,12 @@ export function getSellerPublicationState(product: SellerListingFlags, now: Date
   // a listing turned off, it is one nobody else can see yet.
   if (product.status === "draft") return { kind: "draft", label: "Borrador privado", isPublic: false };
   if (product.status === "expired") return { kind: "expired", label: "Vencido", isPublic: false };
+  if (!product.is_admin_enabled) {
+    return { kind: "admin_disabled", label: "Deshabilitado por administración", isPublic: false };
+  }
   if (!product.is_publishing_approved) {
     const approval = getShopPublicationApproval(product);
     if (approval.kind !== "approved") return { ...approval, isPublic: false };
-  }
-  if (!product.is_admin_enabled) {
-    return { kind: "admin_disabled", label: "Deshabilitado por administración", isPublic: false };
   }
   if (!product.expires_at || new Date(product.expires_at).getTime() <= now.getTime()) {
     return { kind: "expired", label: "Vencido", isPublic: false };
@@ -61,4 +61,18 @@ export function getShopPublicationApproval(shop: Pick<SellerListingFlags, "is_pu
   return shop.publishing_reviewed_at
     ? { kind: "shop_disabled", label: "Tienda deshabilitada por administración" } as const
     : { kind: "awaiting_approval", label: "Esperando aprobación de administración" } as const;
+}
+
+/** Pending publication is queued by status; approval starts its visibility window. */
+export function getShopPublicationGuidance(shop: Pick<SellerListingFlags, "is_publishing_approved" | "publishing_reviewed_at">): string {
+  const { kind } = getShopPublicationApproval(shop);
+  if (kind === "approved") return "Puedes publicar productos que cumplan los requisitos. Los borradores permanecen privados hasta que los publiques.";
+  if (kind === "shop_disabled") return "Puedes seguir preparando borradores privados. La publicación de productos está deshabilitada por administración; tus productos no aparecen en la plaza.";
+  return "Puedes guardar borradores privados o dejar productos completos pendientes de aprobación. Los pendientes aparecerán automáticamente cuando administración apruebe el permiso de tu tienda, si no están deshabilitados. No necesitas publicarlos otra vez. Cada pendiente ocupa un espacio del límite de publicaciones; los borradores no. Los borradores seguirán privados hasta que los publiques.";
+}
+
+export function getNonPublicSaveMessage(flags: Pick<SellerListingFlags, "is_admin_enabled" | "is_publishing_approved" | "publishing_reviewed_at">): string {
+  if (!flags.is_admin_enabled) return "Producto guardado. Está deshabilitado por administración.";
+  if (getShopPublicationApproval(flags).kind === "shop_disabled") return "Producto guardado. La publicación de tu tienda está deshabilitada por administración.";
+  return "Producto guardado. Está pendiente de aprobación de administración.";
 }
