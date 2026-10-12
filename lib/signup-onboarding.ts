@@ -1,3 +1,5 @@
+import { resolveAuthIntent } from "@/lib/auth-intent";
+
 export const SIGNUP_STEPS = ["inicio", "comprar", "vender", "formulario"] as const;
 
 export type SignupStep = (typeof SIGNUP_STEPS)[number];
@@ -16,9 +18,11 @@ export function resolveSignupStep(paso: unknown, resumingTask: boolean): SignupS
   return resumingTask ? "formulario" : "inicio";
 }
 
-/** A link to one onboarding screen that keeps an already validated continuation. */
-export function signupStepHref(step: SignupStep, continuar?: string) {
+/** Keep validated continuation and seller intent across every guide screen. */
+export function signupStepHref(step: SignupStep, continuar?: string, intent?: "vender") {
   const params = new URLSearchParams({ paso: step });
   if (continuar) params.set("continuar", continuar);
+  const sellerIntent = resolveAuthIntent(step === "vender" ? "vender" : intent);
+  if (sellerIntent) params.set("intent", sellerIntent);
   return `/registro?${params}`;
 }

@@ -27,6 +27,22 @@ beforeEach(() => {
 });
 
 describe("GET /auth/confirm", () => {
+  it.each(["?code=abc&vender=1", "?token_hash=hash&type=signup&vender=1", "?token_hash=hash&type=signup&intent=vender"])("sends confirmed sellers to store creation for %s", async (query) => {
+    const response = await GET(requestFor(query));
+    expect(response.headers.get("location")).toBe("https://plazavolcanes.com/panel/tiendas/nueva");
+  });
+
+  it("normalizes legacy seller intent when confirmation fails", async () => {
+    const response = await GET(requestFor("?vender=1&continuar=%2Fmensajes"));
+    expect(response.headers.get("location")).toBe("https://plazavolcanes.com/ingresar?error=confirmacion&continuar=%2Fmensajes&intent=vender");
+  });
+
+  it.each(["https://evil.example", "//evil.example", "/%2fevil.example", "/\\evil.example", "/%5cevil.example"])("rejects unsafe confirmation continuation %s", async (continuar) => {
+    const params = new URLSearchParams({ token_hash: "hash", type: "signup", intent: "vender", continuar });
+    const response = await GET(requestFor(`?${params}`));
+    expect(response.headers.get("location")).toBe("https://plazavolcanes.com/panel/tiendas/nueva");
+  });
+
   it("sends a confirmed account to the panel", async () => {
     const response = await GET(requestFor("?code=abc"));
 

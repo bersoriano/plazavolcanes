@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { AuthForm } from "@/components/auth/auth-form";
+import { resolveAuthIntent } from "@/lib/auth-intent";
 import { readPurchaseIntent } from "@/lib/purchase-intent.server";
 import { safeContinuation } from "@/lib/safe-continuation";
 
@@ -17,10 +18,10 @@ const NOTICES: Record<string, string> = {
 
 const PURCHASE_NOTICE = "Ingresa o crea tu cuenta para continuar tu compra.";
 
-type SignInSearchParams = Promise<{ error?: string | string[]; continuar?: string | string[]; intent?: string | string[] }>;
+type SignInSearchParams = Promise<{ error?: string | string[]; continuar?: string | string[]; intent?: string | string[]; vender?: string | string[] }>;
 
 export default async function SignInPage({ searchParams }: { searchParams: SignInSearchParams }) {
-  const { error, continuar, intent } = await searchParams;
+  const { error, continuar, intent, vender } = await searchParams;
   // A pending purchase is the reason most signed-out buyers arrive here, and it
   // outranks whatever a redirect put in the query string.
   const pendingPurchase = await readPurchaseIntent();
@@ -45,7 +46,7 @@ export default async function SignInPage({ searchParams }: { searchParams: SignI
           {PURCHASE_NOTICE}
         </p>
       ) : null}
-      <AuthForm continuar={destination} intent={intent === "vender" ? "vender" : undefined} mode="signin" />
+      <AuthForm continuar={destination} intent={resolveAuthIntent(intent, vender)} mode="signin" />
     </>
   );
 }

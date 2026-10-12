@@ -6,8 +6,8 @@ vi.mock("@/lib/actions/auth", () => ({ requestPasswordReset: vi.fn(), updatePass
 const { default: ConfirmationPage } = await import("./page");
 afterEach(cleanup);
 
-it("offers resend and sign-in while preserving seller continuation", async () => {
-  render(await ConfirmationPage({ searchParams: Promise.resolve({ intent: "vender", continuar: "/mensajes" }) }));
+it.each([{ intent: "vender" }, { vender: "1" }])("offers resend and sign-in while preserving seller continuation for %j", async (intent) => {
+  render(await ConfirmationPage({ searchParams: Promise.resolve({ ...intent, continuar: "/mensajes" }) }));
   expect(screen.getByRole("textbox", { name: "Correo electrónico" })).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Reenviar confirmación" })).toBeInTheDocument();
   expect(document.querySelector('input[name="intent"]')).toHaveValue("vender");

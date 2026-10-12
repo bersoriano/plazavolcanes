@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import type { ActionState } from "@/lib/action-state";
+import { resolveAuthIntent } from "@/lib/auth-intent";
 import { readPurchaseIntent, resumePurchaseIntent } from "@/lib/purchase-intent.server";
 import { safeContinuation } from "@/lib/safe-continuation";
 import { buildSiteUrl } from "@/lib/site-url";
@@ -47,7 +48,7 @@ async function destinationAfterAuth(
   if (resumed) return resumed;
   const continuation = safeContinuation(formData.get("continuar"));
   if (continuation) return continuation;
-  return formData.get("intent") === "vender" ? "/panel/tiendas/nueva" : "/panel";
+  return resolveAuthIntent(formData.get("intent"), formData.get("vender")) ? "/panel/tiendas/nueva" : "/panel";
 }
 
 function confirmationRedirect(formData: FormData) {
@@ -56,7 +57,8 @@ function confirmationRedirect(formData: FormData) {
   const params = new URLSearchParams({ type: "signup" });
   const continuation = safeContinuation(formData.get("continuar"));
   if (continuation) params.set("continuar", continuation);
-  if (formData.get("intent") === "vender") params.set("intent", "vender");
+  const intent = resolveAuthIntent(formData.get("intent"), formData.get("vender"));
+  if (intent) params.set("intent", intent);
   return buildSiteUrl(`/auth/confirm${params.size ? `?${params}` : ""}`);
 }
 

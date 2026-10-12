@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 
 import { PasswordForm } from "@/components/auth/password-form";
+import { resolveAuthIntent } from "@/lib/auth-intent";
 import { safeContinuation } from "@/lib/safe-continuation";
 
 export const metadata: Metadata = { title: "Reenviar confirmación" };
 
-type SearchParams = Promise<{ continuar?: string | string[]; intent?: string | string[] }>;
+type SearchParams = Promise<{ continuar?: string | string[]; intent?: string | string[]; vender?: string | string[] }>;
 
 export default async function ConfirmationPage({ searchParams }: { searchParams: SearchParams }) {
-  const { continuar, intent } = await searchParams;
+  const { continuar, intent, vender } = await searchParams;
   return (
     <>
       <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink">Confirma tu correo</h1>
@@ -18,7 +19,7 @@ export default async function ConfirmationPage({ searchParams }: { searchParams:
       </p>
       <PasswordForm
         continuar={safeContinuation(continuar) ?? undefined}
-        intent={intent === "vender" ? "vender" : undefined}
+        intent={resolveAuthIntent(intent, vender)}
         mode="confirmation"
       />
     </>

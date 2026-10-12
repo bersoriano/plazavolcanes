@@ -145,6 +145,10 @@ test("a signed-out shopper keeps their purchase through sign-in", async ({ brows
   );
   await expect(guestPage.getByText(/sesión terminó/)).toHaveCount(0);
 
+  // A detour through seller sign-in must still recover the purchase first.
+  await guestPage.goto("/ingresar?intent=vender&continuar=%2Fpanel%2Fcuenta");
+  await expect(guestPage.locator('input[name="intent"]')).toHaveValue("vender");
+
   await guestPage.getByLabel("Correo electrónico").fill(buyer.email);
   await guestPage.getByLabel("Contraseña").fill(buyer.password);
   await guestPage.getByRole("button", { name: "Ingresar" }).click();
@@ -176,7 +180,7 @@ test("a signed-out shopper keeps their purchase through sign-in", async ({ brows
   await plainPage.getByLabel("Correo electrónico").fill(buyer.email);
   await plainPage.getByLabel("Contraseña").fill(buyer.password);
   await plainPage.getByRole("button", { name: "Ingresar" }).click();
-  await expect(plainPage).toHaveURL(/\/panel/);
+  await expect(plainPage).toHaveURL(/\/panel$/);
 
   expect(productUrl).toContain("/productos/");
 });

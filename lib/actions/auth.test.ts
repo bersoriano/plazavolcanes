@@ -34,9 +34,11 @@ const { requestPasswordReset, resendConfirmation, signIn, signUp, updatePassword
 
 const idle = { status: "idle" as const, message: "" };
 
-function formOf(entries: Record<string, string>) {
+function formOf(entries: Record<string, string | undefined>) {
   const formData = new FormData();
-  for (const [key, value] of Object.entries(entries)) formData.set(key, value);
+  for (const [key, value] of Object.entries(entries)) {
+    if (value !== undefined) formData.set(key, value);
+  }
   return formData;
 }
 
@@ -134,6 +136,36 @@ describe("updatePassword", () => {
 });
 
 const credentials = { email: "ana@correo.com", password: "volcanes2026" };
+
+describe.each([signIn, signUp])("authentication destination precedence (%#)", (authenticate) => {
+  const account = { ...credentials, phone: "3312345678", display_name: "Ana Ruiz" };
+
+  it.each([{ intent: "vender" }, { vender: "1" }])("sends %j to store creation", async (intent) => {
+    await authenticate(idle, formOf({ ...account, ...intent }));
+    expect(redirect).toHaveBeenCalledWith("/panel/tiendas/nueva");
+  });
+
+  it("lets a purchase win over continuation and seller intent", async () => {
+    resumePurchaseIntent.mockResolvedValue("/carrito/4");
+    await authenticate(idle, formOf({ ...account, continuar: "/mensajes", intent: "vender" }));
+    expect(redirect).toHaveBeenCalledWith("/carrito/4");
+  });
+
+  it("lets a validated continuation win over seller intent", async () => {
+    await authenticate(idle, formOf({ ...account, continuar: "/mensajes?tienda=4", intent: "vender" }));
+    expect(redirect).toHaveBeenCalledWith("/mensajes?tienda=4");
+  });
+
+  it.each(["https://evil.example", "//evil.example", "/%2fevil.example", "/\\evil.example", "/%5cevil.example"])("rejects unsafe continuation %s and uses seller destination", async (continuar) => {
+    await authenticate(idle, formOf({ ...account, continuar, intent: "vender" }));
+    expect(redirect).toHaveBeenCalledWith("/panel/tiendas/nueva");
+  });
+
+  it("keeps ordinary buyers on the panel", async () => {
+    await authenticate(idle, formOf(account));
+    expect(redirect).toHaveBeenCalledWith("/panel");
+  });
+});
 
 describe("signIn destinations", () => {
   it("finishes an interrupted purchase and opens that shop's cart", async () => {
@@ -243,6 +275,12 @@ describe("signUp destinations", () => {
 });
 
 describe("resendConfirmation", () => {
+  it.each([signUp, resendConfirmation])("normalizes legacy seller intent in confirmation links (%#)", async (action) => {
+    await action(idle, formOf({ ...credentials, phone: "3312345678", display_name: "Ana Ruiz", vender: "1" }));
+    const call = action === signUp ? signUpWithPassword.mock.calls[0][0] : resend.mock.calls[0][0];
+    expect(call.options.emailRedirectTo).toBe("https://plazavolcanes.com/auth/confirm?type=signup&intent=vender");
+  });
+
   it("resends signup confirmation with validated seller context", async () => {
     const state = await resendConfirmation(idle, formOf({ email: "ana@correo.com", intent: "vender", continuar: "/mensajes" }));
     expect(state.status).toBe("success");
