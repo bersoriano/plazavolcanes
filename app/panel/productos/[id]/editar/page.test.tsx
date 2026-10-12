@@ -119,3 +119,10 @@ describe("EditProductPage", () => {
     expect(screen.queryByRole("link", { name: "Ver publicación" })).not.toBeInTheDocument();
   });
 });
+
+ it("keeps pending approval instructions visible without claiming immediate visibility", async () => {
+  await renderEditProduct({ status: "draft" });
+  expect(screen.queryByText("Los cambios publicados aparecerán inmediatamente en la plaza.")).not.toBeInTheDocument();
+  expect(screen.getByText(/automáticamente/)).toBeInTheDocument();
+  expect(screen.getByText(/espacio/)).toBeInTheDocument();
+ });

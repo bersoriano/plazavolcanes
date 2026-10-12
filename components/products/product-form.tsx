@@ -21,6 +21,7 @@ import {
   missingForPublication,
   type ListingReadinessInput,
 } from "@/lib/listing-readiness";
+import { getShopPublicationApproval, type SellerListingFlags } from "@/lib/seller-publication";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
 import { useFormDraft } from "@/lib/form-draft";
@@ -47,6 +48,9 @@ type ProductFormProps = {
     imageUrl: string | null;
   };
   images?: ProductImage[];
+  shopPublication?: Pick<SellerListingFlags, "is_publishing_approved" | "publishing_reviewed_at">;
+  isAdminEnabled?: boolean;
+  draftSaved?: boolean;
   /** Needed to authorise an upload before the product row exists. */
   shopId: number;
   productId?: number;
@@ -157,7 +161,7 @@ function StoredImages({
  * server action refuses with the first unmet requirement. One rule, stated
  * once, enforced where it counts.
  */
-function ProductActions({ blocked, busy, status }: { blocked: boolean; busy: boolean; status?: "draft" | "published" }) {
+function ProductActions({ blocked, busy, status, publishLabel, withdrawLabel }: { blocked: boolean; busy: boolean; status?: "draft" | "published"; publishLabel: string; withdrawLabel: string }) {
   const { pending } = useFormStatus();
   const disabled = pending || busy || blocked;
   if (!status) {
@@ -165,7 +169,7 @@ function ProductActions({ blocked, busy, status }: { blocked: boolean; busy: boo
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="max-w-md text-sm leading-6 text-muted">Tu producto se guardará oculto como borrador. Podrás publicarlo cuando esté listo.</p>
         <Button disabled={disabled} type="submit">
-          {pending ? "Guardando…" : busy ? "Subiendo imágenes…" : "Guardar producto"}
+          {pending ? "Guardando…" : busy ? "Subiendo imágenes…" : "Guardar borrador"}
         </Button>
       </div>
     );
@@ -173,10 +177,10 @@ function ProductActions({ blocked, busy, status }: { blocked: boolean; busy: boo
   return (
     <div className="flex flex-wrap justify-end gap-3">
       <Button disabled={disabled} name="status" type="submit" value="draft" variant="secondary">
-        {status === "published" ? "Despublicar" : "Guardar borrador"}
+        {status === "published" ? withdrawLabel : "Guardar borrador"}
       </Button>
       <Button disabled={disabled} name="status" type="submit" value="published">
-        {pending ? "Guardando…" : busy ? "Subiendo imágenes…" : status === "published" ? "Guardar cambios" : "Publicar producto"}
+        {pending ? "Guardando…" : busy ? "Subiendo imágenes…" : status === "published" ? "Guardar cambios" : publishLabel}
       </Button>
     </div>
   );
@@ -231,18 +235,52 @@ export function ProductForm({
   shopId,
   productId,
   removeImageAction,
+  shopPublication = { is_publishing_approved: true, publishing_reviewed_at: null },
+  isAdminEnabled = true,
+  draftSaved = false,
 }: ProductFormProps) {
-  const [state, formAction] = useFormAction(action);
+  const [uploadedKeys, setUploadedKeys] = useState<string[]>([]);
+  const [state, formAction] = useFormAction(async (previous, formData) => {
+    try {
+      const result = await action(previous, formData);
+      // Successful uploads now belong to the stored gallery. Errors retain keys
+      // so the seller can retry without uploading photos again.
+      if (result.status === "success") setUploadedKeys([]);
+      return result;
+    } catch (cause) {
+      unstable_rethrow(cause);
+      return { status: "error", message: "No pudimos guardar el producto. Intenta de nuevo." };
+    }
+  });
+  const approval = getShopPublicationApproval(shopPublication);
+  const publishLabel = !isAdminEnabled || approval.kind === "shop_disabled" ? "Guardar para publicar" : approval.kind === "awaiting_approval" ? "Dejar pendiente de aprobación" : "Publicar producto";
+  const withdrawLabel = approval.kind === "awaiting_approval" && isAdminEnabled ? "Retirar de pendientes" : approval.kind !== "approved" || !isAdminEnabled ? "Guardar como borrador" : "Despublicar";
+  const [showDraftSaved] = useState(draftSaved);
+  useEffect(() => {
+    if (!draftSaved) return;
+    const url = new URL(window.location.href);
+    url.searchParams.delete("creado");
+    // Consume only the creation flag; keep other feedback, filters and anchors.
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }, [draftSaved]);
   const [preview, setPreview] = useState(product?.imageUrl ?? null);
   const [condition, setCondition] = useState<ProductCondition>(product?.condition ?? "new");
   const [uploading, setUploading] = useState(false);
-  const [uploadedKeys, setUploadedKeys] = useState<string[]>([]);
   const [imageError, setImageError] = useState<string | null>(null);
   const [recovered, setRecovered] = useState(false);
   const onRestored = useCallback(() => setRecovered(true), []);
   // Scoped per form, so a draft never leaks between products or shops.
   const draftKey = `producto:${product ? `editar:${product.name}` : "nuevo"}`;
   const { clear: clearDraft, formRef, save: saveDraft } = useFormDraft(draftKey, onRestored);
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+    // React queues synthetic reset handlers during commit, after the browser
+    // resets controls. Cancel the native event synchronously to retain this editor.
+    const preserveFields = (event: Event) => event.preventDefault();
+    form.addEventListener("reset", preserveFields);
+    return () => form.removeEventListener("reset", preserveFields);
+  }, [formRef]);
   const [readiness, setReadiness] = useState<ListingReadinessInput>(() => ({
     imageCount: images.length,
     name: product?.name ?? null,
@@ -327,6 +365,12 @@ export function ProductForm({
       saveDraft();
       setReadiness(formReadiness(formRef.current, images.length + uploadedKeys.length));
     }} ref={formRef}>
+      {showDraftSaved && !state.message ? (
+        <div className="rounded-2xl bg-accent/45 px-4 py-3 text-sm text-brand-hover" role="status" aria-live="polite">
+          <p className="font-semibold">Borrador guardado</p>
+          <p>Tu producto sigue privado. Siguiente paso: completa los requisitos y elige «{publishLabel}».</p>
+        </div>
+      ) : null}
       {recovered ? (
         <p className="rounded-2xl bg-accent/45 px-4 py-3 text-sm font-medium text-brand-hover" role="status">
           Recuperamos lo que habías escrito. Vuelve a elegir tus imágenes.
@@ -334,11 +378,12 @@ export function ProductForm({
       ) : null}
       <input name="currency_code" type="hidden" value="MXN" />
       <input name="content_locale" type="hidden" value="es-MX" />
-      <PublicationChecklist {...readiness} />
+      <PublicationChecklist {...readiness} imageCount={images.length + uploadedKeys.length} />
       <CategoryFields
         categories={categories}
         error={state.errors?.category_id?.[0]}
         selectedLeafId={product?.category_id}
+        onSelectionChange={(category_id) => setReadiness((current) => ({ ...current, category_id }))}
       />
       <Field defaultValue={state.values?.name ?? product?.name} error={state.errors?.name?.[0]} label="Nombre del producto" maxLength={120} name="name" placeholder="Taza de barro" required />
       <div className="space-y-2">
@@ -365,7 +410,7 @@ export function ProductForm({
       {condition === "used" ? (
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-ink" htmlFor="used-condition">Estado del producto usado</label>
-          <select aria-describedby={state.errors?.used_condition ? "used-condition-error" : undefined} aria-invalid={Boolean(state.errors?.used_condition)} className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none" defaultValue={state.values?.used_condition ?? product?.used_condition ?? ""} id="used-condition" key={`used-condition-${state.values?.used_condition ?? ""}`} name="used_condition">
+          <select aria-describedby={state.errors?.used_condition ? "used-condition-error" : undefined} aria-invalid={Boolean(state.errors?.used_condition)} className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none" defaultValue={state.values?.used_condition ?? product?.used_condition ?? ""} id="used-condition" name="used_condition">
             <option value="">Sin decidir</option>
             {USED_CONDITION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
@@ -418,7 +463,7 @@ export function ProductForm({
       {uploadedKeys.map((key) => (
         <input key={key} name="image_keys" type="hidden" value={key} />
       ))}
-      <ProductActions blocked={Boolean(imageError)} busy={uploading} status={product?.status} />
+      <ProductActions publishLabel={publishLabel} withdrawLabel={withdrawLabel} blocked={Boolean(imageError)} busy={uploading} status={product?.status} />
     </form>
   );
 }

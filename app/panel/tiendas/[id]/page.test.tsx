@@ -214,7 +214,7 @@ describe("creation and publication feedback", () => {
   });
 
   it.each([
-    [false, null, "Esperando aprobación de administración", "Puedes preparar productos como borradores privados"],
+    [false, null, "Esperando aprobación de administración", "Puedes guardar borradores privados"],
     [false, "2026-09-01", "Tienda deshabilitada por administración", "Puedes seguir preparando borradores privados"],
     [true, null, "Publicación de productos aprobada", "Puedes publicar productos que cumplan los requisitos"],
   ])("reads actual publication approval (%s, %s)", async (approved, reviewedAt, label, detail) => {

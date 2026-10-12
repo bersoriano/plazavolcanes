@@ -60,9 +60,9 @@ describe("ProductForm", () => {
     render(<ProductForm shopId={1} action={action} categories={categories} />);
 
     expect(screen.getAllByRole("button").filter((button) => button.getAttribute("type") === "submit")).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Guardar producto" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Guardar borrador" })).toBeInTheDocument();
     expect(screen.getByText(/se guardará oculto como borrador/i)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Publicar producto|Guardar borrador/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Publicar producto/ })).not.toBeInTheDocument();
   });
 
   it("keeps the publication controls while editing", () => {
@@ -335,7 +335,7 @@ describe("ProductForm", () => {
   it("submits the fixed catalog currency and source locale", () => {
     render(<ProductForm shopId={1} action={action} categories={categories} />);
 
-    const form = screen.getByRole("button", { name: "Guardar producto" }).closest("form");
+    const form = screen.getByRole("button", { name: "Guardar borrador" }).closest("form");
 
     expect(form?.elements.namedItem("currency_code")).toHaveValue("MXN");
     expect(form?.elements.namedItem("content_locale")).toHaveValue("es-MX");

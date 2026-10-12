@@ -17,7 +17,7 @@ import { getShopImportRequests } from "@/lib/queries/listing-import.server";
 import { getShopAnalytics } from "@/lib/queries/shop-analytics.server";
 import { getOwnedShop } from "@/lib/queries/shops.server";
 import { getShopTrustDashboard } from "@/lib/queries/trust.server";
-import { getShopPublicationApproval } from "@/lib/seller-publication";
+import { getShopPublicationApproval, getShopPublicationGuidance } from "@/lib/seller-publication";
 import { organizeCatalog, parseCatalogTab } from "@/lib/seller-catalog";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -90,11 +90,7 @@ export default async function ShopCatalogPage({
       <section aria-labelledby="publication-approval-title" className="mb-6 rounded-[2rem] border border-line bg-surface p-6 sm:px-8">
         <h2 id="publication-approval-title" className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Permiso para publicar productos</h2>
         <p className={`mt-3 inline-flex rounded-full px-3 py-1 text-sm font-bold ${approval.kind === "approved" ? "bg-accent text-brand-hover" : "bg-background text-muted"}`}>{approval.label}</p>
-        <p className="mt-3 text-sm leading-6 text-muted">{approval.kind === "approved"
-          ? "Puedes publicar productos que cumplan los requisitos. Los borradores permanecen privados hasta que los publiques."
-          : approval.kind === "awaiting_approval"
-            ? "Puedes preparar productos como borradores privados mientras administración revisa tu permiso para publicar. Tus productos podrán aparecer en la plaza cuando se apruebe ese permiso y los publiques."
-            : "Puedes seguir preparando borradores privados. La publicación de productos está deshabilitada por administración; tus productos no aparecen en la plaza."}</p>
+        <p className="mt-3 text-sm leading-6 text-muted">{getShopPublicationGuidance(shop)}</p>
         {!created ? <p className="mt-2 text-xs leading-5 text-muted">La página pública de tu tienda es independiente del permiso para publicar productos.</p> : null}
       </section>
 
@@ -104,6 +100,7 @@ export default async function ShopCatalogPage({
 
       <section aria-labelledby="catalogo-title" className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
         <h2 className="sr-only" id="catalogo-title">Productos</h2>
+        <p className="mb-4 text-sm text-muted">Espacios de publicación usados: {listings.filter((product) => product.status === "published").length} de {shop.listing_limit}. Los productos pendientes de aprobación y los bloqueados con publicación guardada también cuentan; los borradores no.</p>
         <CatalogToolbar counts={counts} search={search} shopId={shopId} tab={tab} />
 
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-line py-4">

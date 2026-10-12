@@ -17,6 +17,7 @@ import { deleteObjects } from "@/lib/media/store";
 import { MAX_PRODUCT_IMAGES } from "@/lib/media/validation";
 import { productCreationSchema, productSchema, productStatusSchema } from "@/lib/validation/product";
 import { missingForPublication } from "@/lib/listing-readiness";
+import { getNonPublicSaveMessage } from "@/lib/seller-publication";
 import { buildSiteUrl } from "@/lib/site-url";
 import { uniqueProductSlug } from "@/lib/slug";
 
@@ -172,7 +173,7 @@ export async function updateProduct(
   const { supabase, userId } = context;
   const { data: existing } = await supabase.from("products").select("shop_id, image_path, status, slug, is_admin_enabled").eq("id", productId).maybeSingle();
   if (!existing || existing.status === "deleted") return { status: "error", message: "No encontramos ese producto." };
-  const { data: shop } = await supabase.from("shops").select("slug, listing_limit, is_publishing_approved").eq("id", existing.shop_id).eq("owner_id", userId).maybeSingle();
+  const { data: shop } = await supabase.from("shops").select("slug, listing_limit, is_publishing_approved, publishing_reviewed_at").eq("id", existing.shop_id).eq("owner_id", userId).maybeSingle();
   if (!shop) return { status: "error", message: "No puedes editar este producto." };
   const alreadyStored = await countProductImages(supabase, productId);
   if (alreadyStored + imageKeys.length > MAX_PRODUCT_IMAGES) {
@@ -252,7 +253,7 @@ export async function updateProduct(
       status: "success",
       message: shop.is_publishing_approved && existing.is_admin_enabled
         ? "Tu producto ya está publicado."
-        : "Producto guardado. Está pendiente de aprobación de administración.",
+        : getNonPublicSaveMessage({ ...shop, is_admin_enabled: existing.is_admin_enabled }),
       ...(shop.is_publishing_approved && existing.is_admin_enabled
         ? { values: { public_url: buildSiteUrl(`/productos/${slug}`) } }
         : {}),
@@ -278,7 +279,7 @@ export async function setProductStatus(
   if (productError) throw new Error("No pudimos consultar el producto.");
   // Retiring a listing is one way: it stays out of the catalogue for good.
   if (!product || product.status === "deleted") redirect("/panel");
-  const { data: shop, error: shopError } = await supabase.from("shops").select("slug, listing_limit, is_publishing_approved").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
+  const { data: shop, error: shopError } = await supabase.from("shops").select("slug, listing_limit, is_publishing_approved, publishing_reviewed_at").eq("id", product.shop_id).eq("owner_id", userId).maybeSingle();
   if (shopError) throw new Error("No pudimos consultar la tienda.");
   if (!shop) redirect("/panel");
   if (parsedStatus.data === "published" && product.status === "draft") {
@@ -335,13 +336,13 @@ export async function setProductStatus(
   revalidatePath(`/panel/tiendas/${product.shop_id}`);
   revalidatePath(`/tiendas/${shop.slug}`);
   if (parsedStatus.data === "draft") {
-    return { status: "success", message: "Producto despublicado." };
+    return { status: "success", message: "Borrador guardado. Tu producto sigue privado." };
   }
   return {
     status: "success",
     message: shop.is_publishing_approved && product.is_admin_enabled
       ? "Producto publicado."
-      : "Producto guardado. Está pendiente de aprobación de administración.",
+      : getNonPublicSaveMessage({ ...shop, is_admin_enabled: product.is_admin_enabled }),
   };
 }
 

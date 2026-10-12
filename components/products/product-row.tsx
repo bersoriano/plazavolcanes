@@ -6,7 +6,7 @@ import { ProductUnitsForm } from "@/components/products/product-units-form";
 import type { ListingStatus } from "@/components/ui/status-badge";
 import { deleteProduct } from "@/lib/actions/products";
 import { formatDate, formatMxn } from "@/lib/format";
-import { getSellerPublicationState } from "@/lib/seller-publication";
+import { getSellerPublicationState, getShopPublicationApproval } from "@/lib/seller-publication";
 
 type ProductRowProps = {
   product: {
@@ -64,11 +64,10 @@ export function ProductRow({ product }: ProductRowProps) {
   // the seller to switch off something that has already stopped selling.
   const hasLapsed = publicationState.kind === "expired";
   const nextStatus = product.status === "published" && !hasLapsed ? "draft" : "published";
-  const toggleLabel = hasLapsed
-    ? "Reactivar"
-    : product.status === "published"
-      ? "Despublicar"
-      : "Publicar";
+  const approval = getShopPublicationApproval(product);
+  const toggleLabel = nextStatus === "draft"
+    ? publicationState.kind === "awaiting_approval" ? "Retirar de pendientes" : publicationState.isPublic ? "Despublicar" : "Guardar como borrador"
+    : !product.is_admin_enabled || approval.kind === "shop_disabled" ? "Guardar para publicar" : approval.kind === "awaiting_approval" ? "Dejar pendiente de aprobación" : hasLapsed ? "Reactivar" : "Publicar";
   const expiry = expiryNotice(product);
   const soldOut = product.units_available !== null && product.units_available < 1;
 

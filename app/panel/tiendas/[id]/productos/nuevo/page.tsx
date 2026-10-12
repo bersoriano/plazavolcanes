@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { notFound, redirect } from "next/navigation";
 
 import { pageContainer } from "@/components/layout/container";
+import { PublicationApprovalNotice } from "@/components/products/publication-approval-notice";
 import { ProductForm } from "@/components/products/product-form";
 import { CategorySuggestionForm } from "@/components/products/category-suggestion-form";
 import { createCategorySuggestion } from "@/lib/actions/categories";
@@ -20,11 +21,11 @@ export default async function NewProductPage({ params }: { params: Promise<{ id:
   const supabase = await createServerSupabaseClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   const [{ data: shop }, categories] = await Promise.all([
-    supabase.from("shops").select("id, name").eq("id", shopId).eq("owner_id", claimsData?.claims?.sub ?? "").maybeSingle(),
+    supabase.from("shops").select("id, name, is_publishing_approved, publishing_reviewed_at").eq("id", shopId).eq("owner_id", claimsData?.claims?.sub ?? "").maybeSingle(),
     getProductCategoryTree(DEFAULT_CATALOG_LOCALE),
   ]);
   if (!shop) notFound();
   const action = createProduct.bind(null, shopId);
 
-  return <section className={`${pageContainer} py-10 sm:py-14`}><Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href={`/panel/tiendas/${shopId}`}><ArrowLeft aria-hidden="true" className="size-4" />{shop.name}</Link><div className="mt-7 rounded-[2rem] border border-line bg-surface p-6 sm:p-9"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Nuevo producto</p><h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">Agrega una publicación</h1><p className="mb-8 mt-3 leading-7 text-muted">Guárdala como borrador o publícala cuando esté lista.</p><ProductForm action={action} categories={categories} shopId={shopId} /><CategorySuggestionForm action={createCategorySuggestion} categories={categories} /></div></section>;
+  return <section className={`${pageContainer} py-10 sm:py-14`}><Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href={`/panel/tiendas/${shopId}`}><ArrowLeft aria-hidden="true" className="size-4" />{shop.name}</Link><div className="mt-7 rounded-[2rem] border border-line bg-surface p-6 sm:p-9"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Nuevo producto</p><h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">Agrega una publicación</h1><p className="mb-8 mt-3 leading-7 text-muted">Guarda primero un borrador privado. Después podrás completar los requisitos para publicar.</p><PublicationApprovalNotice shop={shop} /><ProductForm shopPublication={shop} action={action} categories={categories} shopId={shopId} /><CategorySuggestionForm action={createCategorySuggestion} categories={categories} /></div></section>;
 }

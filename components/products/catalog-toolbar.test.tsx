@@ -7,7 +7,7 @@ import type { CatalogCounts } from "@/lib/seller-catalog";
 afterEach(cleanup);
 
 function counts(overrides: Partial<CatalogCounts> = {}): CatalogCounts {
-  return { todos: 12, publicados: 7, borradores: 3, vencidos: 2, bloqueados: 0, ...overrides };
+  return { todos: 12, publicados: 7, pendientes: 0, borradores: 3, vencidos: 2, bloqueados: 0, ...overrides };
 }
 
 function renderToolbar(props: Partial<Parameters<typeof CatalogToolbar>[0]> = {}) {
@@ -119,4 +119,9 @@ describe("adding a product", () => {
     expect(within(toolbar).getByRole("link", { name: "Todos 12" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Agregar producto/ })).toBeInTheDocument();
   });
+});
+
+it("shows pending products in their own linked filter", () => {
+ renderToolbar({ counts: counts({ pendientes: 1 }) });
+ expect(screen.getByRole("link", { name: "Pendientes de aprobación 1" })).toHaveAttribute("href", "/panel/tiendas/4?estado=pendientes");
 });

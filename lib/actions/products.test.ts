@@ -300,7 +300,7 @@ describe("setProductStatus", () => {
   it.each([
     [true, true, "Producto publicado."],
     [false, true, "Producto guardado. Está pendiente de aprobación de administración."],
-    [true, false, "Producto guardado. Está pendiente de aprobación de administración."],
+    [true, false, "Producto guardado. Está deshabilitado por administración."],
   ] as const)(
     "reports gate-aware publication feedback when shop approval is %s and product enablement is %s",
     async (isPublishingApproved, isAdminEnabled, message) => {
@@ -556,4 +556,16 @@ describe.each(["editor", "catalog"] as const)("%s draft publication readiness", 
     else expect(await publish()).toMatchObject({ status: "error", message: "No puedes editar este producto." });
     expect(mocks.update).not.toHaveBeenCalled();
   });
+});
+
+it("reports an administration block instead of pending approval after saving", async () => {
+  mocks.productsSelect.mockImplementationOnce(() => query({ data: { shop_id: 7, image_path: "cover.jpg", status: "published", slug: "taza", is_admin_enabled: false }, error: null }));
+  const state = await updateProduct(22, idle, sellerForm());
+  expect(state.message).toContain("deshabilitado por administración");
+  expect(state.message).not.toContain("pendiente");
+});
+
+it("reports withdrawn pending products as private drafts", async () => {
+  mocks.productsSelect.mockImplementationOnce(() => query({ data: { shop_id: 7, status: "published", slug: "taza", is_admin_enabled: true }, error: null }));
+  expect(await setProductStatus(22, "draft")).toMatchObject({ status: "success", message: "Borrador guardado. Tu producto sigue privado." });
 });
