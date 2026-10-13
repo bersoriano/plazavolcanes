@@ -11,6 +11,8 @@ const base = {
   user_created_at: "2026-08-03T00:00:00.000Z",
   display_name: "María Taller",
   shop_limit: 3,
+  user_is_disabled: false,
+  user_is_admin: false,
   shop_id: 10,
   shop_name: "Taller Volcán",
   shop_slug: "taller-volcan",
@@ -27,6 +29,18 @@ const base = {
 } as AdminMarketplaceRpcRow;
 
 describe("mapAdminMarketplaceUsers", () => {
+  it("carries whether an account is disabled or an administrator", () => {
+    const users = mapAdminMarketplaceUsers([
+      { ...base, user_is_disabled: true },
+      { ...base, user_id: "user-2", user_is_admin: true },
+    ]);
+
+    expect(users.map(({ id, isDisabled, isAdmin }) => ({ id, isDisabled, isAdmin }))).toEqual([
+      { id: "user-1", isDisabled: true, isAdmin: false },
+      { id: "user-2", isDisabled: false, isAdmin: true },
+    ]);
+  });
+
   it("groups repeated flat rows into an exact nested shape", () => {
     const users = mapAdminMarketplaceUsers([
       base,
@@ -47,6 +61,8 @@ describe("mapAdminMarketplaceUsers", () => {
         displayName: "María Taller",
         createdAt: "2026-08-03T00:00:00.000Z",
         shopLimit: 3,
+        isDisabled: false,
+        isAdmin: false,
         shops: [
           {
             id: 10,
@@ -165,6 +181,8 @@ describe("mapAdminMarketplaceUsers", () => {
       displayName: "María Taller",
       createdAt: "2026-08-03T00:00:00.000Z",
       shopLimit: 3,
+      isDisabled: false,
+      isAdmin: false,
       shops: [],
     });
     expect(users[1]?.shops[0]?.products).toEqual([]);

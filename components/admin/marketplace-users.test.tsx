@@ -44,6 +44,8 @@ describe("MarketplaceUsers", () => {
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
             shopLimit: 3,
+            isDisabled: false,
+            isAdmin: false,
             shops: [
               {
                 id: 1,
@@ -94,6 +96,8 @@ describe("MarketplaceUsers", () => {
             displayName: null,
             createdAt: "2026-08-08T00:00:00.000Z",
             shopLimit: 1,
+            isDisabled: false,
+            isAdmin: false,
             shops: [],
           },
         ]}
@@ -139,6 +143,8 @@ describe("MarketplaceUsers", () => {
           displayName: "Lucía Martínez",
           createdAt: "2026-08-01T00:00:00.000Z",
           shopLimit: 1,
+          isDisabled: false,
+          isAdmin: false,
           shops: [],
         }]}
       />,
@@ -173,6 +179,8 @@ describe("MarketplaceUsers", () => {
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
             shopLimit: 1,
+            isDisabled: false,
+            isAdmin: false,
             shops: [
               {
                 id: 1,
@@ -216,6 +224,8 @@ describe("MarketplaceUsers", () => {
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
             shopLimit: 1,
+            isDisabled: false,
+            isAdmin: false,
             shops: [
               {
                 id: 1,
@@ -254,6 +264,8 @@ describe("MarketplaceUsers", () => {
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
             shopLimit: 1,
+            isDisabled: false,
+            isAdmin: false,
             shops: [
               {
                 id: 1,
@@ -293,6 +305,8 @@ describe("MarketplaceUsers", () => {
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
             shopLimit: 1,
+            isDisabled: false,
+            isAdmin: false,
             shops: [
               {
                 id: 1,
@@ -329,6 +343,8 @@ describe("MarketplaceUsers", () => {
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
             shopLimit: 1,
+            isDisabled: false,
+            isAdmin: false,
             shops: [
               {
                 id: 1,
@@ -391,6 +407,8 @@ describe("MarketplaceUsers", () => {
           displayName: "Lucía Martínez",
           createdAt: "2026-08-01T00:00:00.000Z",
           shopLimit: 1,
+          isDisabled: false,
+          isAdmin: false,
           shops: [{
             id: 1,
             name: "Taller Volcán",
@@ -427,6 +445,8 @@ describe("MarketplaceUsers", () => {
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
             shopLimit: 3,
+            isDisabled: false,
+            isAdmin: false,
             shops: [
               {
                 id: 1,
@@ -461,6 +481,8 @@ describe("MarketplaceUsers", () => {
             displayName: "Lucía Martínez",
             createdAt: "2026-08-01T00:00:00.000Z",
             shopLimit: 3,
+            isDisabled: false,
+            isAdmin: false,
             shops: [
               {
                 id: 1,

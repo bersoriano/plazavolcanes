@@ -12,6 +12,8 @@ export type AdminMarketplaceRpcRow = {
   user_created_at: string;
   display_name: string | null;
   shop_limit: number;
+  user_is_disabled: boolean;
+  user_is_admin: boolean;
   shop_id: number | null;
   shop_name: string | null;
   shop_slug: string | null;
@@ -70,6 +72,8 @@ export type AdminMarketplaceUser = {
   displayName: string | null;
   createdAt: string;
   shopLimit: number;
+  isDisabled: boolean;
+  isAdmin: boolean;
   shops: AdminMarketplaceShop[];
 };
 
@@ -90,6 +94,8 @@ export function mapAdminMarketplaceUsers(
         displayName: row.display_name,
         createdAt: row.user_created_at,
         shopLimit: row.shop_limit,
+        isDisabled: row.user_is_disabled,
+        isAdmin: row.user_is_admin,
         shops: [],
       };
       usersById.set(row.user_id, user);
