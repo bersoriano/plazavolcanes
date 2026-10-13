@@ -226,6 +226,13 @@ describe("signIn destinations", () => {
     expect(redirect).not.toHaveBeenCalled();
   });
 
+  it("tells a person whose account administration disabled why they cannot sign in", async () => {
+    signInWithPassword.mockResolvedValue({ error: { code: "user_banned" } });
+    const state = await signIn(idle, formOf(credentials));
+    expect(state.message).toBe("Tu cuenta fue deshabilitada por administración.");
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
   it("resumes a purchase before seller recovery intent", async () => {
     resumePurchaseIntent.mockResolvedValue("/carrito/4");
     await signIn(idle, formOf({ ...credentials, intent: "vender", continuar: "/mensajes" }));
