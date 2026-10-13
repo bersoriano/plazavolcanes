@@ -261,13 +261,13 @@ export function InboxShell({
           {entries.length ? (
             <div
               aria-label="Filtrar conversaciones"
-              className="-mx-5 mt-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:px-0 lg:mt-4 xl:flex-col xl:overflow-visible"
+              className="-mx-5 mt-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:px-0 lg:mt-4 lg:flex-wrap lg:overflow-visible xl:flex-col xl:flex-nowrap xl:gap-1"
               role="group"
             >
               {filters.map((item) => (
                 <button
                   aria-pressed={filter === item.id}
-                  className="inline-flex min-h-11 shrink-0 items-center justify-between gap-2 rounded-full border border-line px-4 text-sm font-semibold text-muted transition-colors aria-pressed:border-brand aria-pressed:bg-brand aria-pressed:text-white"
+                  className="inline-flex min-h-11 shrink-0 items-center justify-between gap-2 rounded-full border border-line px-4 text-sm font-semibold text-muted transition-colors aria-pressed:border-brand aria-pressed:bg-brand aria-pressed:text-white xl:border-transparent"
                   key={item.id}
                   onClick={() => setFilter(item.id)}
                   type="button"

@@ -40,15 +40,25 @@ export function ThreadConversation({
     refreshOnRead: true,
   });
   const timeZone = useViewerTimeZone();
+  const logRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLTextAreaElement>(null);
 
   // Keyed on the newest message, so a refresh that brings nothing new leaves
   // somebody reading further up where they are.
   useEffect(() => {
-    if (latestId === null) return;
+    const log = logRef.current;
+    if (latestId === null || !log) return;
 
-    // Absent in jsdom, and in any environment without a layout engine.
+    // Inside the frame the log is its own scroller, and only it may move:
+    // bringing the message into view through the page would drag the frame
+    // under the site header.
+    if (getComputedStyle(log).overflowY === "auto") {
+      log.scrollTop = log.scrollHeight;
+      return;
+    }
+
+    // On a phone the page is the scroller. Absent in jsdom.
     endRef.current?.scrollIntoView?.({ block: "end" });
   }, [latestId]);
 
@@ -62,6 +72,7 @@ export function ThreadConversation({
       <div
         aria-label="Conversación"
         className="flex-1 space-y-3 px-4 py-5 sm:px-6 lg:overflow-y-auto lg:overscroll-contain"
+        ref={logRef}
         role="log"
       >
         {shown.length ? (

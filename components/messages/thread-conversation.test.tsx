@@ -181,3 +181,21 @@ test("has nothing to tell the inbox when the newest message is the reader's own"
   await waitFor(() => expect(markConversationRead).toHaveBeenCalledWith(7, 1));
   expect(refresh).not.toHaveBeenCalled();
 });
+
+test("moves only the conversation when it scrolls inside the inbox frame", async () => {
+  renderConversation();
+  await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1));
+
+  // From `lg` the log is its own scroller. Bringing a message into view through
+  // the page would drag the whole frame under the site header.
+  log().style.overflowY = "auto";
+  Object.defineProperty(log(), "scrollHeight", { configurable: true, value: 900 });
+
+  const { onInsert } = vi.mocked(subscribeToMessageInserts).mock.calls[0][0];
+  act(() => {
+    onInsert({ id: 3, sender_id: "them", body: "Te la aparto", created_at: "2026-10-12T18:00:00Z" });
+  });
+
+  await waitFor(() => expect(log().scrollTop).toBe(900));
+  expect(scrollIntoView).toHaveBeenCalledTimes(1);
+});

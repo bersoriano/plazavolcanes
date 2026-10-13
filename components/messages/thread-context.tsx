@@ -105,7 +105,7 @@ export function ThreadContext({
       Consulta general{shopSlug ? " ·" : ""}
       {shopSlug ? (
         <Link
-          className="inline-flex min-h-11 items-center font-semibold text-brand"
+          className="tap inline-flex items-center font-semibold text-brand"
           href={`/tiendas/${shopSlug}`}
         >
           {shopName}

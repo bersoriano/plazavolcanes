@@ -21,6 +21,11 @@ const stamp = Date.now();
 const seller = { email: `seller-${stamp}@test.local`, password: "plaza-volcanes-1", name: "Vendedor Prueba" };
 const buyer = { email: `buyer-${stamp}@test.local`, password: "plaza-volcanes-1", name: "Ana Ruiz" };
 
+/** The inbox previews each thread's last message, so a message is looked for where it was said. */
+const conversation = (page: Page) => page.getByRole("log", { name: "Conversación" });
+const inboxRows = (page: Page) =>
+  page.getByRole("list", { name: "Conversaciones" }).getByRole("link");
+
 async function register(page: Page, account: { email: string; password: string; name: string }) {
   await page.goto("/registro?paso=formulario");
   await page.getByLabel("Tu nombre").fill(account.name);
@@ -63,21 +68,35 @@ test("a shopper asks a question and the shop answers", async ({ browser }) => {
 
   await buyerPage.getByLabel("Mensaje", { exact: true }).fill("¿Tienes talla 8?");
   await buyerPage.getByRole("button", { name: "Enviar mensaje" }).click();
-  await expect(buyerPage.getByText("¿Tienes talla 8?")).toBeVisible();
+  await expect(conversation(buyerPage).getByText("¿Tienes talla 8?")).toBeVisible();
+
+  // The list beside the thread picks it up as soon as it carries a message.
+  await expect(inboxRows(buyerPage)).toHaveCount(1);
+  await expect(inboxRows(buyerPage)).toContainText("Tú: ¿Tienes talla 8?");
 
   // The seller sees it waiting, under the name the buyer chose.
   await sellerPage.goto("/mensajes");
   await expect(sellerPage.getByLabel(/mensajes sin leer/i).first()).toBeVisible();
   await sellerPage.getByRole("link", { name: new RegExp(buyer.name, "i") }).click();
   await expect(sellerPage).toHaveURL(/\/mensajes\/\d+/);
+  // The seller's row says which side of the thread they are on.
+  await expect(inboxRows(sellerPage)).toContainText(/Venta/i);
 
   await sellerPage.getByLabel("Mensaje", { exact: true }).fill("Sí, tenemos");
   await sellerPage.getByRole("button", { name: "Enviar mensaje" }).click();
 
   // The buyer's thread is still open, so the answer arrives without a reload.
-  await expect(buyerPage.getByText("Sí, tenemos")).toBeVisible({ timeout: 15_000 });
+  await expect(conversation(buyerPage).getByText("Sí, tenemos")).toBeVisible({ timeout: 15_000 });
+  // And the list beside it follows, without the buyer doing anything.
+  await expect(inboxRows(buyerPage)).toContainText("Sí, tenemos", { timeout: 15_000 });
 
   // Opening the thread cleared the seller's badge.
   await sellerPage.goto("/mensajes");
   await expect(sellerPage.getByLabel(/mensajes sin leer/i)).toHaveCount(0);
+});
+
+test("a signed-out visitor is asked to sign in before reading a conversation", async ({ page }) => {
+  await page.goto("/mensajes/1");
+
+  await expect(page).toHaveURL(/\/ingresar\?continuar=\/mensajes/);
 });
