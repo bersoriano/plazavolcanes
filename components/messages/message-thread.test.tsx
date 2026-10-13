@@ -16,9 +16,12 @@ vi.mock("@/lib/supabase/client", () => ({
 }));
 vi.mock("@/lib/actions/messages", () => ({ markConversationRead: vi.fn() }));
 const refresh = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh }) }));
+// One router for the life of the page, as the real hook hands out.
+const router = { refresh };
+vi.mock("next/navigation", () => ({ useRouter: () => router }));
 
 import { MessageThread } from "@/components/messages/message-thread";
+import { markConversationRead } from "@/lib/actions/messages";
 
 const messages = [
   { id: 1, sender_id: "me", body: "Hola", created_at: "2026-08-23T10:00:00Z" },
@@ -31,6 +34,7 @@ beforeEach(() => {
   removeChannel.mockClear();
   setAuth.mockClear();
   refresh.mockClear();
+  vi.mocked(markConversationRead).mockClear();
 });
 
 /** The subscription is set up after an await, so tests wait for it to land. */
@@ -146,4 +150,43 @@ test("keeps asking the server while the subscription is settling", async () => {
   } finally {
     vi.useRealTimers();
   }
+});
+
+test("marks the thread read up to its newest message", async () => {
+  renderThread();
+
+  await vi.waitFor(() => expect(markConversationRead).toHaveBeenCalledWith(7, 2));
+});
+
+test("does not mark it again when the server sends the same history", async () => {
+  const { rerender } = renderThread();
+  await vi.waitFor(() => expect(markConversationRead).toHaveBeenCalledTimes(1));
+
+  // A refresh hands over a new array holding the same messages.
+  rerender(
+    <MessageThread action={vi.fn()} conversationId={7} currentUserId="me" messages={[...messages]} />,
+  );
+  await subscribed();
+
+  expect(markConversationRead).toHaveBeenCalledTimes(1);
+});
+
+test("marks it again once a newer message arrives", async () => {
+  renderThread();
+  await subscribed();
+
+  const handler = channel.on.mock.calls[0][2];
+  await act(async () => {
+    handler({ new: { id: 3, sender_id: "them", body: "Sí, hay", created_at: "2026-08-23T12:00:00Z" } });
+  });
+
+  await vi.waitFor(() => expect(markConversationRead).toHaveBeenLastCalledWith(7, 3));
+});
+
+test("leaves the router alone after reading: only the inbox asks for that", async () => {
+  renderThread();
+  await vi.waitFor(() => expect(markConversationRead).toHaveBeenCalled());
+  await subscribed();
+
+  expect(refresh).not.toHaveBeenCalled();
 });

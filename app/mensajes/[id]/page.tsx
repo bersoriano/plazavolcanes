@@ -1,10 +1,7 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 
-import { pageContainer } from "@/components/layout/container";
-import { MessageThread } from "@/components/messages/message-thread";
-import { ThreadContext } from "@/components/messages/thread-context";
+import { ThreadConversation } from "@/components/messages/thread-conversation";
+import { ThreadHeader } from "@/components/messages/thread-header";
 import { sendMessage } from "@/lib/actions/messages";
 import { fetchThread } from "@/lib/queries/messages.server";
 
@@ -26,35 +23,17 @@ export default async function MessageThreadPage({ params }: { params: Promise<{ 
   ]);
 
   return (
-    <section className={`${pageContainer} py-10 sm:py-14`}>
-      <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href="/mensajes">
-        <ArrowLeft aria-hidden="true" className="size-4" />
-        Mensajes
-      </Link>
-
-      <h1 className="mt-5 font-display text-3xl font-semibold">{thread.counterpart_label}</h1>
-      <ThreadContext
-        orderHref={
-          thread.order_id
-            ? thread.viewer_role === "seller"
-              ? `/panel/pedidos/${thread.order_id}`
-              : `/compras/${thread.order_id}`
-            : null
-        }
-        orderId={thread.order_id}
-        product={thread.product}
-        shopName={thread.shop_name}
-        shopSlug={thread.shop_slug}
+    <>
+      <ThreadHeader thread={thread} />
+      {/* Keyed, so nothing typed or received in one thread follows into the next. */}
+      <ThreadConversation
+        action={action}
+        conversationId={thread.id}
+        currentUserId={thread.current_user_id}
+        key={thread.id}
+        messages={thread.messages}
+        now={new Date().toISOString()}
       />
-
-      <div className="mt-7">
-        <MessageThread
-          action={action}
-          conversationId={thread.id}
-          currentUserId={thread.current_user_id}
-          messages={thread.messages}
-        />
-      </div>
-    </section>
+    </>
   );
 }

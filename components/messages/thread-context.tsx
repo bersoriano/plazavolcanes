@@ -1,27 +1,33 @@
 import Link from "next/link";
-import { ImageIcon } from "lucide-react";
+import { ImageIcon, Package } from "lucide-react";
 
 import { formatCurrency } from "@/lib/format";
-import type { ConversationProduct } from "@/lib/queries/messages";
+import {
+  orderItemLabel,
+  type ConversationOrderItem,
+  type ConversationProduct,
+} from "@/lib/queries/messages";
 
 const CARD =
-  "mt-4 flex items-center gap-4 rounded-2xl border border-line bg-surface p-4 transition-colors";
+  "mt-3 flex items-center gap-3 rounded-2xl border border-line bg-background p-3 transition-colors";
+const PICTURE =
+  "grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-photo-backdrop";
 
 function ProductCardBody({ product }: { product: ConversationProduct }) {
   return (
     <>
-      <span className="grid size-16 shrink-0 place-items-center overflow-hidden rounded-xl bg-photo-backdrop">
+      <span className={PICTURE}>
         {product.image_url ? (
           /* eslint-disable-next-line @next/next/no-img-element */
           <img alt={product.name} className="size-full object-cover" src={product.image_url} />
         ) : (
-          <ImageIcon aria-hidden="true" className="size-7 text-brand/30" />
+          <ImageIcon aria-hidden="true" className="size-6 text-brand/30" />
         )}
       </span>
 
       <span className="min-w-0 flex-1">
         <span className="block truncate font-semibold text-ink">{product.name}</span>
-        <span className="mt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+        <span className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-1">
           <span className="text-sm font-semibold text-brand">
             {formatCurrency(product.price, product.currency_code)}
           </span>
@@ -39,26 +45,43 @@ function ProductCardBody({ product }: { product: ConversationProduct }) {
 }
 
 /**
- * What the conversation is about, above the messages: the listing as it stands
- * now, the shop for a general enquiry, or the order for an order thread.
+ * What the conversation is about, above the messages: the order and what it
+ * holds, the listing as it stands now, or the shop for a general enquiry.
  */
 export function ThreadContext({
   orderHref,
   orderId,
+  orderItem,
   product,
   shopName,
   shopSlug,
 }: {
   orderHref: string | null;
   orderId: number | null;
+  orderItem: ConversationOrderItem | null;
   product: ConversationProduct | null;
   shopName: string;
   shopSlug: string;
 }) {
   if (orderId && orderHref) {
     return (
-      <Link className="mt-2 inline-flex text-sm font-semibold text-brand" href={orderHref}>
-        Ver el pedido #{orderId}
+      <Link className={`${CARD} hover:border-brand`} href={orderHref}>
+        <span className={PICTURE}>
+          {orderItem?.image_url ? (
+            // The line beside it already names what was bought.
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img alt="" className="size-full object-cover" src={orderItem.image_url} />
+          ) : (
+            <Package aria-hidden="true" className="size-6 text-brand/30" />
+          )}
+        </span>
+
+        <span className="min-w-0 flex-1">
+          {orderItem ? (
+            <span className="block truncate font-semibold text-ink">{orderItemLabel(orderItem)}</span>
+          ) : null}
+          <span className="block text-sm font-semibold text-brand">Ver el pedido #{orderId}</span>
+        </span>
       </Link>
     );
   }
@@ -78,10 +101,13 @@ export function ThreadContext({
   }
 
   return (
-    <p className="mt-2 text-sm text-muted">
-      Consulta general{shopSlug ? " · " : ""}
+    <p className="flex flex-wrap items-center gap-x-1 text-sm text-muted">
+      Consulta general{shopSlug ? " ·" : ""}
       {shopSlug ? (
-        <Link className="font-semibold text-brand" href={`/tiendas/${shopSlug}`}>
+        <Link
+          className="tap inline-flex items-center font-semibold text-brand"
+          href={`/tiendas/${shopSlug}`}
+        >
           {shopName}
         </Link>
       ) : null}

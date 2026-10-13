@@ -1,9 +1,13 @@
 import { expect, test } from "vitest";
 
 import {
+  filterInbox,
   mapConversationRows,
+  mergeInbox,
   oldestFirst,
+  orderItemLabel,
   startedConversations,
+  unreadTotals,
   type ConversationRow,
 } from "@/lib/queries/messages";
 
@@ -28,6 +32,9 @@ const row: ConversationRow = {
   last_message_at: "2026-08-23T10:00:00Z",
   last_message_sender_id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   unread_count: 2,
+  order_item_name: null,
+  order_item_image_path: null,
+  order_item_count: null,
 };
 
 test("carries the row through with its unread count", () => {
@@ -178,4 +185,162 @@ test("leaves the threads that have messages in the order they arrived", () => {
   ]);
 
   expect(startedConversations(conversations).map((entry) => entry.id)).toEqual([7, 9]);
+});
+
+const orderRow: ConversationRow = {
+  ...row,
+  conversation_id: 9,
+  type: "order",
+  order_id: 41,
+  order_item_name: "Reloj de cuerda",
+  order_item_image_path: "tienda/reloj.jpg",
+  order_item_count: 3,
+};
+
+test("carries what an order thread's order holds", () => {
+  const [summary] = mapConversationRows(
+    [orderRow],
+    new Map([["tienda/reloj.jpg", "https://cdn.test/reloj.jpg"]]),
+  );
+
+  expect(summary.order_item).toEqual({
+    name: "Reloj de cuerda",
+    image_url: "https://cdn.test/reloj.jpg",
+    more: 2,
+  });
+});
+
+test("keeps the name of an order line whose listing is gone", () => {
+  const [summary] = mapConversationRows([
+    { ...orderRow, order_item_image_path: null, order_item_count: 1 },
+  ]);
+
+  expect(summary.order_item).toEqual({ name: "Reloj de cuerda", image_url: null, more: 0 });
+});
+
+test("leaves a thread that is not about an order without an order line", () => {
+  const [summary] = mapConversationRows([row]);
+
+  expect(summary.order_item).toBeNull();
+});
+
+const at = (hour: number) => ({
+  last_message_body: "Hola",
+  last_message_at: `2026-08-23T${String(hour).padStart(2, "0")}:00:00+00:00`,
+  last_message_sender_id: "them",
+});
+
+test("merges buying and selling threads, newest first, each with its role", () => {
+  const buying = mapConversationRows([
+    { ...row, conversation_id: 1, ...at(9) },
+    { ...row, conversation_id: 2, ...at(15) },
+  ]);
+  const selling = mapConversationRows([{ ...row, conversation_id: 3, ...at(12) }]);
+
+  expect(mergeInbox(buying, selling).map((entry) => [entry.id, entry.role])).toEqual([
+    [2, "buyer"],
+    [3, "seller"],
+    [1, "buyer"],
+  ]);
+});
+
+test("orders threads by instant, whatever precision the timestamps carry", () => {
+  const buying = mapConversationRows([
+    { ...row, conversation_id: 1, ...at(9), last_message_at: "2026-08-23T09:00:00.5+00:00" },
+    { ...row, conversation_id: 2, ...at(9), last_message_at: "2026-08-23T09:00:00.123456+00:00" },
+  ]);
+
+  expect(mergeInbox(buying, []).map((entry) => entry.id)).toEqual([1, 2]);
+});
+
+test("leaves a silent order out of the merged inbox", () => {
+  const selling = mapConversationRows([
+    { ...orderRow, last_message_body: null, last_message_at: null, last_message_sender_id: null },
+    { ...row, conversation_id: 3 },
+  ]);
+
+  expect(mergeInbox([], selling).map((entry) => entry.id)).toEqual([3]);
+});
+
+test("lists a thread once even if both sides return it", () => {
+  const both = mapConversationRows([row]);
+
+  expect(mergeInbox(both, both)).toHaveLength(1);
+});
+
+const inbox = mergeInbox(
+  mapConversationRows([
+    {
+      ...productRow,
+      conversation_id: 1,
+      counterpart_label: "Casa Niebla",
+      shop_name: "Casa Niebla",
+      unread_count: 0,
+      ...at(9),
+      last_message_body: "Gracias por la atención",
+    },
+    { ...orderRow, conversation_id: 2, counterpart_label: "Taller Volcán", unread_count: 1, ...at(8) },
+  ]),
+  mapConversationRows([
+    { ...row, conversation_id: 3, counterpart_label: "José Peña", unread_count: 4, ...at(7) },
+  ]),
+);
+
+test("filters the inbox by side and by unread", () => {
+  expect(filterInbox(inbox, "all").map((entry) => entry.id)).toEqual([1, 2, 3]);
+  expect(filterInbox(inbox, "buying").map((entry) => entry.id)).toEqual([1, 2]);
+  expect(filterInbox(inbox, "selling").map((entry) => entry.id)).toEqual([3]);
+  expect(filterInbox(inbox, "unread").map((entry) => entry.id)).toEqual([2, 3]);
+});
+
+test("searches people, products, order lines, order numbers and the last message", () => {
+  expect(filterInbox(inbox, "all", "niebla").map((entry) => entry.id)).toEqual([1]);
+  expect(filterInbox(inbox, "all", "taza").map((entry) => entry.id)).toEqual([1]);
+  expect(filterInbox(inbox, "all", "reloj").map((entry) => entry.id)).toEqual([2]);
+  expect(filterInbox(inbox, "all", "pedido 41").map((entry) => entry.id)).toEqual([2]);
+  expect(filterInbox(inbox, "all", "#41").map((entry) => entry.id)).toEqual([2]);
+  expect(filterInbox(inbox, "all", "gracias").map((entry) => entry.id)).toEqual([1]);
+});
+
+test("searches without minding accents, capitals or stray spaces", () => {
+  expect(filterInbox(inbox, "all", "  JOSE pena ").map((entry) => entry.id)).toEqual([3]);
+  expect(filterInbox(inbox, "all", "atencion").map((entry) => entry.id)).toEqual([1]);
+});
+
+test("searches inside the chosen filter", () => {
+  expect(filterInbox(inbox, "selling", "niebla")).toEqual([]);
+});
+
+test("adds up unread messages for each side", () => {
+  expect(unreadTotals(inbox)).toEqual({ all: 5, buying: 1, selling: 4 });
+});
+
+test("keeps the open thread under unread while it is being read", () => {
+  // Opening a thread reads it. Dropping it from the list that very moment would
+  // pull the row out from under the reader.
+  const read = inbox.map((entry) => (entry.id === 2 ? { ...entry, unread_count: 0 } : entry));
+
+  expect(filterInbox(read, "unread", "", 2).map((entry) => entry.id)).toEqual([2, 3]);
+  expect(filterInbox(read, "unread").map((entry) => entry.id)).toEqual([3]);
+});
+
+test("names an order by its first line and how many came with it", () => {
+  expect(orderItemLabel({ name: "Reloj de cuerda", image_url: null, more: 2 })).toBe(
+    "Reloj de cuerda y 2 más",
+  );
+  expect(orderItemLabel({ name: "Reloj de cuerda", image_url: null, more: 0 })).toBe(
+    "Reloj de cuerda",
+  );
+});
+
+test("reads an order row from before its line was returned as having none", () => {
+  // The interface can reach a database that has not been given the columns yet.
+  const older = { ...orderRow } as Partial<ConversationRow>;
+  delete older.order_item_name;
+  delete older.order_item_image_path;
+  delete older.order_item_count;
+
+  const [summary] = mapConversationRows([older as ConversationRow]);
+
+  expect(summary.order_item).toBeNull();
 });

@@ -21,6 +21,7 @@ function renderContext(overrides: Partial<Parameters<typeof ThreadContext>[0]> =
     <ThreadContext
       orderHref={null}
       orderId={null}
+      orderItem={null}
       product={null}
       shopName="Tienda Prueba"
       shopSlug="tienda-prueba"
@@ -71,4 +72,35 @@ test("shows the seller's own link to an order thread", () => {
     "href",
     "/panel/pedidos/12",
   );
+});
+
+test("shows what an order thread's order holds", () => {
+  renderContext({
+    orderHref: "/compras/12",
+    orderId: 12,
+    orderItem: { name: "Reloj de cuerda", image_url: "https://cdn.test/reloj.jpg", more: 2 },
+  });
+
+  const link = screen.getByRole("link", { name: /Ver el pedido #12/ });
+  expect(link).toHaveAttribute("href", "/compras/12");
+  expect(link).toHaveTextContent("Reloj de cuerda y 2 más");
+  expect(link.querySelector("img")).toHaveAttribute("src", "https://cdn.test/reloj.jpg");
+});
+
+test("names an order's only line without counting further ones", () => {
+  renderContext({
+    orderHref: "/compras/12",
+    orderId: 12,
+    orderItem: { name: "Reloj de cuerda", image_url: null, more: 0 },
+  });
+
+  expect(screen.getByText("Reloj de cuerda")).toBeInTheDocument();
+  expect(screen.queryByText(/más/)).not.toBeInTheDocument();
+  expect(screen.queryByRole("img")).not.toBeInTheDocument();
+});
+
+test("keeps an order thread to its link when nothing is known about the order", () => {
+  renderContext({ orderHref: "/compras/12", orderId: 12 });
+
+  expect(screen.getByRole("link", { name: "Ver el pedido #12" })).toBeInTheDocument();
 });
