@@ -135,7 +135,8 @@ export function mapConversationOrderItem(
   row: ConversationRow,
   imageUrls: ReadonlyMap<string, string> = new Map(),
 ): ConversationOrderItem | null {
-  if (row.type !== "order" || row.order_item_name === null) return null;
+  // Falsy rather than null: a database that predates the columns sends none at all.
+  if (row.type !== "order" || !row.order_item_name) return null;
 
   return {
     name: row.order_item_name,

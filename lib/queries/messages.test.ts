@@ -332,3 +332,15 @@ test("names an order by its first line and how many came with it", () => {
     "Reloj de cuerda",
   );
 });
+
+test("reads an order row from before its line was returned as having none", () => {
+  // The interface can reach a database that has not been given the columns yet.
+  const older = { ...orderRow } as Partial<ConversationRow>;
+  delete older.order_item_name;
+  delete older.order_item_image_path;
+  delete older.order_item_count;
+
+  const [summary] = mapConversationRows([older as ConversationRow]);
+
+  expect(summary.order_item).toBeNull();
+});

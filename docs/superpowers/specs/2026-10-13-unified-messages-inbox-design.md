@@ -66,7 +66,7 @@ All three are `null` for a conversation that is not about an order. Both parties
 
 ### Mapping
 
-- `ConversationRow` gains the three columns. `ConversationSummary` gains `order_item: { name: string; image_url: string | null; more: number } | null`, where `more` is the number of further lines.
+- `ConversationRow` gains the three columns. A row without them, from a database not yet migrated, maps to no order item. `ConversationSummary` gains `order_item: { name: string; image_url: string | null; more: number } | null`, where `more` is the number of further lines.
 - `Thread` gains `order_item` so the context card can show it.
 - `InboxEntry` is a `ConversationSummary` with a `role: "buyer" | "seller"`.
 - `mergeInbox(buying, selling)` keeps started conversations only, tags each with its role, drops a duplicate id, and sorts by last message, newest first.
@@ -91,6 +91,8 @@ Message times are shown in the viewer's own time zone. `useViewerTimeZone` retur
 
 A group of buttons with `aria-pressed`. `Sin leer`, `Compras`, and `Ventas` carry their unread message total when it is above zero. `Ventas` appears only when the viewer owns a shop or has a selling conversation. Filters and search are not rendered for an inbox with no conversations.
 
+The open thread stays listed under `Sin leer` while it is open, although opening it reads it: the row is not pulled out from under the reader.
+
 ### List row
 
 Each row is one link to `/mensajes/{id}`, marked `aria-current="page"` when open:
@@ -111,8 +113,9 @@ Empty states: no conversations at all (with a link to `/explorar`), and no conve
 - Header: back link below `lg`, counterpart name, and `Compra` or `Venta · {shop}`
 - Context card: an order shows its first item and `Ver el pedido #n` (to `/compras/{id}` for a buyer, `/panel/pedidos/{id}` for a seller); a product enquiry shows the listing with price and availability, linked while it is public; a general enquiry names the shop
 - Messages in a `role="log"` region named `Conversación`, grouped under day separators, the viewer's on the right in the brand colour, the counterpart's on the left. Long words and links wrap.
-- Composer: a labelled `Mensaje` text area that grows with its content and a round `Enviar mensaje` button. Errors show above it; a sent message is confirmed by appearing.
-- The message area scrolls itself to the newest message; it does not scroll the document.
+- Composer: a labelled `Mensaje` text area that grows with its content and a round `Enviar mensaje` button. Errors show above it; a sent message is confirmed by appearing, and focus returns to the text area.
+- From `lg` the message area scrolls itself to the newest message and never scrolls the document. Below `lg` the document is the scroller: the thread header sticks under the site header and the composer sticks above the quick-access bar.
+- Scrolling to the newest message happens when the newest message changes, not on every refresh.
 
 ## Keeping the list current
 
