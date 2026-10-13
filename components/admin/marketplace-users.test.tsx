@@ -15,6 +15,11 @@ vi.mock("@/lib/actions/admin-publication", () => ({
   setUserShopLimit,
 }));
 
+vi.mock("@/lib/actions/admin-users", () => ({
+  deleteUser: vi.fn(),
+  setUserDisabled: vi.fn(),
+}));
+
 afterEach(cleanup);
 
 beforeEach(() => {
@@ -34,6 +39,46 @@ function deferred<T>() {
 }
 
 describe("MarketplaceUsers", () => {
+  it("marks a disabled account and offers to enable it", () => {
+    render(
+      <MarketplaceUsers
+        users={[
+          {
+            id: "persona-1",
+            email: "lucia@tallervolcan.mx",
+            displayName: "Lucía Martínez",
+            createdAt: "2026-08-01T00:00:00.000Z",
+            shopLimit: 1,
+            isDisabled: true,
+            isAdmin: false,
+            shops: [],
+          },
+          {
+            id: "persona-2",
+            email: "mario@tallervolcan.mx",
+            displayName: "Mario Ruiz",
+            createdAt: "2026-08-02T00:00:00.000Z",
+            shopLimit: 1,
+            isDisabled: false,
+            isAdmin: false,
+            shops: [],
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getAllByText("Cuenta deshabilitada")).toHaveLength(1);
+    expect(
+      screen.getByRole("button", { name: "Habilitar cuenta de Lucía Martínez" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Deshabilitar cuenta de Mario Ruiz" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Eliminar cuenta de Mario Ruiz" }),
+    ).toBeInTheDocument();
+  });
+
   it("shows each registered person with their shops and product visibility", () => {
     render(
       <MarketplaceUsers
