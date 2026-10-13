@@ -84,12 +84,17 @@ export async function signIn(
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
 
   if (error) {
-    return {
-      status: "error",
-      message: error.code === "email_not_confirmed"
+    // The auth server answers `user_banned` whatever password was sent, to
+    // anyone calling it with the public key, so repeating it here discloses
+    // nothing it does not already.
+    const message =
+      error.code === "email_not_confirmed"
         ? "Confirma tu correo antes de ingresar. Usa Reenviar correo de confirmación para pedir un enlace nuevo."
-        : "Correo o contraseña incorrectos.",
-    };
+        : error.code === "user_banned"
+          ? "Tu cuenta fue deshabilitada por administración."
+          : "Correo o contraseña incorrectos.";
+
+    return { status: "error", message };
   }
 
   revalidatePath("/", "layout");

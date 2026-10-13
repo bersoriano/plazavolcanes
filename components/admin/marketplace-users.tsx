@@ -4,6 +4,7 @@ import Link from "next/link";
 import { UsersRound } from "lucide-react";
 import { useState } from "react";
 
+import { UserAccountControls } from "@/components/admin/user-account-controls";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   setShopPremium,
@@ -172,12 +173,20 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
       </p>
       {users.map((user) => (
         <article className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8" key={user.id}>
-          <h2 className="font-display text-2xl font-semibold">
-            {user.displayName ?? user.email ?? "Cuenta sin nombre"}
-          </h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="font-display text-2xl font-semibold">
+              {user.displayName ?? user.email ?? "Cuenta sin nombre"}
+            </h2>
+            {user.isDisabled ? (
+              <span className="inline-flex rounded-full bg-sale/15 px-3 py-1 text-xs font-bold text-sale">
+                Cuenta deshabilitada
+              </span>
+            ) : null}
+          </div>
           <p className="mt-1 text-sm text-muted">{user.email ?? "Sin correo registrado"}</p>
           <p className="mt-1 text-sm text-muted">Registro: {formatDate(user.createdAt)}</p>
           <UserShopLimit user={user} />
+          <UserAccountControls key={`account:${user.id}:${user.isDisabled}`} user={user} />
           {user.shops.length ? (
             <div className="mt-6 space-y-4">
               {user.shops.map((shop) => (

@@ -39,6 +39,8 @@ const grouped: AdminMarketplaceUser[] = [{
   displayName: "Elena",
   createdAt: "2026-08-01T00:00:00.000Z",
   shopLimit: 2,
+  isDisabled: false,
+  isAdmin: false,
   shops: [],
 }];
 

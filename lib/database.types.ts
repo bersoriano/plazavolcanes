@@ -722,6 +722,24 @@ export type Database = {
         Args: { p_shop_limit: number; p_user_id: string };
         Returns: number;
       };
+      set_user_disabled: {
+        Args: { p_user_id: string; p_disabled: boolean };
+        Returns: {
+          user_id: string;
+          is_disabled: boolean;
+          shop_slugs: string[];
+          product_slugs: string[];
+        }[];
+      };
+      admin_delete_user: {
+        Args: { p_user_id: string };
+        Returns: {
+          user_id: string;
+          shop_slugs: string[];
+          product_slugs: string[];
+          image_keys: string[];
+        }[];
+      };
       list_admin_marketplace_users: {
         Args: Record<never, never>;
         Returns: {
@@ -730,6 +748,8 @@ export type Database = {
           user_created_at: string;
           display_name: string | null;
           shop_limit: number;
+          user_is_disabled: boolean;
+          user_is_admin: boolean;
           shop_id: number | null;
           shop_name: string | null;
           shop_slug: string | null;
