@@ -22,6 +22,7 @@ const thread = {
   shop_name: "Taller Volcán",
   shop_slug: "taller-volcan",
   product: null,
+  order_item: null,
   current_user_id: "user-id",
   messages: [],
 };

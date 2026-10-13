@@ -24,6 +24,7 @@ const sellerConversation: ConversationSummary = {
   shop_slug: "taller-volcan",
   counterpart_label: "Ana Ruiz",
   product: null,
+  order_item: null,
   unread_count: 2,
   last_message: {
     body: "¿Sigue disponible?",

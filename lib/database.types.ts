@@ -868,6 +868,9 @@ export type Database = {
           last_message_at: string | null;
           last_message_sender_id: string | null;
           unread_count: number;
+          order_item_name: string | null;
+          order_item_image_path: string | null;
+          order_item_count: number | null;
         }[];
       };
       admin_conversation_for_order: { Args: { p_order_id: number }; Returns: number | null };

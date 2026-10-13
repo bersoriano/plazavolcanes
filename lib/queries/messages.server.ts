@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import {
   mapConversationRows,
   oldestFirst,
@@ -20,17 +22,24 @@ type ThreadRow = {
   messages: ThreadMessage[];
 };
 
-export async function listConversations(role: InboxRole): Promise<ConversationSummary[]> {
+/**
+ * `cache()`d because one render asks more than once: the inbox lists both sides,
+ * and the open thread reads its label and context from the same rows.
+ */
+export const listConversations = cache(async (role: InboxRole): Promise<ConversationSummary[]> => {
   if (!isSupabaseConfigured()) return [];
 
   const supabase = await createServerSupabaseClient();
   const { data, error } = await supabase.rpc("list_conversations", { p_role: role });
   if (error || !data) return [];
-  // A conversation shows the product at the size of a stamp.
-  const imageUrls = mediaUrls(data.map((row) => row.product_image_path), MEDIA_VARIANTS.thumbnail);
+  // A conversation shows the product, or the order's first line, at the size of a stamp.
+  const imageUrls = mediaUrls(
+    data.flatMap((row) => [row.product_image_path, row.order_item_image_path]),
+    MEDIA_VARIANTS.thumbnail,
+  );
 
   return mapConversationRows(data, imageUrls);
-}
+});
 
 export async function fetchUnreadCount(): Promise<number> {
   if (!isSupabaseConfigured()) return 0;
@@ -83,6 +92,7 @@ export async function fetchThread(conversationId: number): Promise<Thread | null
     // published, so reading it through an embed here would blank out exactly the
     // thread that needs to say the listing is gone.
     product: summary?.product ?? null,
+    order_item: summary?.order_item ?? null,
     current_user_id: userId,
     messages: oldestFirst(data.messages),
   };

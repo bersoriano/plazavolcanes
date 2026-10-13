@@ -28,6 +28,9 @@ export type ConversationRow = {
   last_message_at: string | null;
   last_message_sender_id: string | null;
   unread_count: number;
+  order_item_name: string | null;
+  order_item_image_path: string | null;
+  order_item_count: number | null;
 };
 
 /**
@@ -46,6 +49,17 @@ export type ConversationProduct = {
   href: string | null;
 };
 
+/**
+ * What an order thread's order holds: its first line, named as it was bought, and
+ * how many more lines came with it. The picture is the product's current cover,
+ * and goes when the listing does.
+ */
+export type ConversationOrderItem = {
+  name: string;
+  image_url: string | null;
+  more: number;
+};
+
 export type ConversationSummary = {
   id: number;
   type: ConversationType;
@@ -55,9 +69,15 @@ export type ConversationSummary = {
   shop_slug: string;
   counterpart_label: string;
   product: ConversationProduct | null;
+  order_item: ConversationOrderItem | null;
   unread_count: number;
   last_message: { body: string; created_at: string; sender_id: string } | null;
 };
+
+/** A thread in the one inbox, which holds what you buy and what you sell together. */
+export type InboxEntry = ConversationSummary & { role: InboxRole };
+
+export type InboxFilter = "all" | "unread" | "buying" | "selling";
 
 export type ThreadMessage = {
   id: number;
@@ -75,6 +95,7 @@ export type Thread = {
   shop_name: string;
   shop_slug: string;
   product: ConversationProduct | null;
+  order_item: ConversationOrderItem | null;
   current_user_id: string;
   messages: ThreadMessage[];
 };
@@ -110,6 +131,21 @@ export function mapConversationProduct(
   };
 }
 
+export function mapConversationOrderItem(
+  row: ConversationRow,
+  imageUrls: ReadonlyMap<string, string> = new Map(),
+): ConversationOrderItem | null {
+  if (row.type !== "order" || row.order_item_name === null) return null;
+
+  return {
+    name: row.order_item_name,
+    image_url: row.order_item_image_path
+      ? (imageUrls.get(row.order_item_image_path) ?? null)
+      : null,
+    more: Math.max(0, (row.order_item_count ?? 1) - 1),
+  };
+}
+
 export function mapConversationRows(
   rows: ConversationRow[],
   imageUrls: ReadonlyMap<string, string> = new Map(),
@@ -123,6 +159,7 @@ export function mapConversationRows(
     shop_slug: row.shop_slug,
     counterpart_label: row.counterpart_label,
     product: mapConversationProduct(row, imageUrls),
+    order_item: mapConversationOrderItem(row, imageUrls),
     unread_count: row.unread_count,
     // A thread opened but never written in has no message to preview.
     last_message:
@@ -147,4 +184,81 @@ export function mapConversationRows(
  */
 export function startedConversations(conversations: ConversationSummary[]) {
   return conversations.filter((conversation) => conversation.last_message !== null);
+}
+
+function sentAt(conversation: ConversationSummary) {
+  return conversation.last_message ? Date.parse(conversation.last_message.created_at) : 0;
+}
+
+/**
+ * One inbox out of the two lists the database keeps: the threads somebody has
+ * written in, each marked with the side the reader is on, newest first.
+ */
+export function mergeInbox(
+  buying: ConversationSummary[],
+  selling: ConversationSummary[],
+): InboxEntry[] {
+  const seen = new Set<number>();
+  const entries: InboxEntry[] = [];
+
+  for (const [role, conversations] of [
+    ["buyer", buying],
+    ["seller", selling],
+  ] as const) {
+    for (const conversation of startedConversations(conversations)) {
+      if (seen.has(conversation.id)) continue;
+      seen.add(conversation.id);
+      entries.push({ ...conversation, role });
+    }
+  }
+
+  return entries.sort((left, right) => sentAt(right) - sentAt(left) || right.id - left.id);
+}
+
+/** "José Peña" is found by "jose pena": nobody types accents into a search box. */
+function fold(text: string) {
+  return text
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase();
+}
+
+/** Everything a row shows, which is everything a search of the inbox can find. */
+function searchableText(entry: InboxEntry) {
+  return fold(
+    [
+      entry.counterpart_label,
+      entry.shop_name,
+      entry.product?.name,
+      entry.order_item?.name,
+      entry.order_id ? `pedido #${entry.order_id} pedido ${entry.order_id}` : null,
+      entry.last_message?.body,
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  );
+}
+
+export function filterInbox(entries: InboxEntry[], filter: InboxFilter, query = "") {
+  const needle = fold(query.trim());
+
+  return entries.filter((entry) => {
+    if (filter === "unread" && entry.unread_count === 0) return false;
+    if (filter === "buying" && entry.role !== "buyer") return false;
+    if (filter === "selling" && entry.role !== "seller") return false;
+
+    return needle ? searchableText(entry).includes(needle) : true;
+  });
+}
+
+/** Unread messages, in all and on each side, as the header's badge counts them. */
+export function unreadTotals(entries: InboxEntry[]) {
+  const totals = { all: 0, buying: 0, selling: 0 };
+
+  for (const entry of entries) {
+    totals.all += entry.unread_count;
+    totals[entry.role === "buyer" ? "buying" : "selling"] += entry.unread_count;
+  }
+
+  return totals;
 }
