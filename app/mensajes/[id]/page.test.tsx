@@ -10,7 +10,11 @@ vi.mock("next/navigation", () => ({
     throw new Error("NOT_FOUND");
   }),
 }));
-vi.mock("@/components/messages/message-thread", () => ({ MessageThread: () => null }));
+vi.mock("@/components/messages/thread-conversation", () => ({
+  ThreadConversation: ({ conversationId }: { conversationId: number }) => (
+    <p>conversación {conversationId}</p>
+  ),
+}));
 vi.mock("@/lib/actions/messages", () => ({ sendMessage: vi.fn() }));
 vi.mock("@/lib/queries/messages.server", () => ({ fetchThread: vi.fn() }));
 
@@ -73,5 +77,29 @@ describe("unified message thread", () => {
       "href",
       "/compras/41",
     );
+  });
+});
+
+describe("unified message thread pane", () => {
+  it("heads the pane with the counterpart and shows the conversation", async () => {
+    render(await MessageThreadPage({ params: Promise.resolve({ id: "7" }) }));
+
+    expect(screen.getByRole("heading", { level: 1, name: "Ana Ruiz" })).toBeInTheDocument();
+    expect(screen.getByText("conversación 7")).toBeInTheDocument();
+  });
+
+  it("reads a thread the caller is not part of as missing", async () => {
+    vi.mocked(fetchThread).mockResolvedValue(null);
+
+    await expect(MessageThreadPage({ params: Promise.resolve({ id: "7" }) })).rejects.toThrow(
+      "NOT_FOUND",
+    );
+  });
+
+  it("reads an address that is not a conversation number as missing", async () => {
+    await expect(MessageThreadPage({ params: Promise.resolve({ id: "abc" }) })).rejects.toThrow(
+      "NOT_FOUND",
+    );
+    expect(fetchThread).not.toHaveBeenCalled();
   });
 });

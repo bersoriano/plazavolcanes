@@ -146,6 +146,11 @@ export function mapConversationOrderItem(
   };
 }
 
+/** "Reloj de cuerda y 2 más": an order by its first line and how many came with it. */
+export function orderItemLabel(item: ConversationOrderItem) {
+  return item.more > 0 ? `${item.name} y ${item.more} más` : item.name;
+}
+
 export function mapConversationRows(
   rows: ConversationRow[],
   imageUrls: ReadonlyMap<string, string> = new Map(),
@@ -239,11 +244,20 @@ function searchableText(entry: InboxEntry) {
   );
 }
 
-export function filterInbox(entries: InboxEntry[], filter: InboxFilter, query = "") {
+/**
+ * `openId` is the thread on screen. Opening a thread reads it, and it stays
+ * under "unread" while it is open rather than vanishing from under the reader.
+ */
+export function filterInbox(
+  entries: InboxEntry[],
+  filter: InboxFilter,
+  query = "",
+  openId: number | null = null,
+) {
   const needle = fold(query.trim());
 
   return entries.filter((entry) => {
-    if (filter === "unread" && entry.unread_count === 0) return false;
+    if (filter === "unread" && entry.unread_count === 0 && entry.id !== openId) return false;
     if (filter === "buying" && entry.role !== "buyer") return false;
     if (filter === "selling" && entry.role !== "seller") return false;
 

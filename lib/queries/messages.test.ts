@@ -5,6 +5,7 @@ import {
   mapConversationRows,
   mergeInbox,
   oldestFirst,
+  orderItemLabel,
   startedConversations,
   unreadTotals,
   type ConversationRow,
@@ -312,4 +313,22 @@ test("searches inside the chosen filter", () => {
 
 test("adds up unread messages for each side", () => {
   expect(unreadTotals(inbox)).toEqual({ all: 5, buying: 1, selling: 4 });
+});
+
+test("keeps the open thread under unread while it is being read", () => {
+  // Opening a thread reads it. Dropping it from the list that very moment would
+  // pull the row out from under the reader.
+  const read = inbox.map((entry) => (entry.id === 2 ? { ...entry, unread_count: 0 } : entry));
+
+  expect(filterInbox(read, "unread", "", 2).map((entry) => entry.id)).toEqual([2, 3]);
+  expect(filterInbox(read, "unread").map((entry) => entry.id)).toEqual([3]);
+});
+
+test("names an order by its first line and how many came with it", () => {
+  expect(orderItemLabel({ name: "Reloj de cuerda", image_url: null, more: 2 })).toBe(
+    "Reloj de cuerda y 2 más",
+  );
+  expect(orderItemLabel({ name: "Reloj de cuerda", image_url: null, more: 0 })).toBe(
+    "Reloj de cuerda",
+  );
 });
