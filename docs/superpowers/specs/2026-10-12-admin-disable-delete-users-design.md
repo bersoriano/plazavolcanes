@@ -109,6 +109,10 @@ Both revalidate `/`, `/admin/usuarios`, `/sitemap.xml`, and each returned `/tien
 - `Eliminar cuenta` does not submit. It reveals an inline confirmation that states the deletion is permanent and asks the administrator to type the account's email (or `ELIMINAR` when the account has no email). `Eliminar definitivamente` stays disabled until the text matches; `Cancelar` closes the confirmation. No browser dialog is used.
 - Action messages render in a `role="status"` line, as the existing admin forms do.
 
+## Sign-in
+
+The sign-in action maps the auth server's `user_banned` error to `Tu cuenta fue deshabilitada por administración.` instead of the wrong-credentials message. The auth server returns that code whatever password was sent, to anyone calling it with the public key, so the application message discloses nothing new.
+
 ## Testing
 
 ### Database (`supabase/tests/database/admin_user_accounts.test.sql`)
@@ -126,9 +130,14 @@ Both revalidate `/`, `/admin/usuarios`, `/sitemap.xml`, and each returned `/tien
 ### Unit and component (Vitest)
 
 - Mapper carries `isDisabled` and `isAdmin`
+- Sign-in maps `user_banned` to the disabled-account message
 - Each action: malformed input short-circuits, missing claim, non-administrator, exact RPC arguments, coded errors map to their messages without leaking database text, success revalidates the listed paths, and `deleteUser` hands returned keys to the media store
 - Controls: badge, administrator accounts have no controls, toggle submits the opposite state, delete requires the typed email before it can submit, cancel closes the confirmation
 
+### End to end (`tests/e2e/admin-user-accounts.spec.ts`)
+
+Against the local stack and through the real interface: an administrator sees no actions on administrator accounts, disables an account, the disabled person is told why sign-in is refused, the administrator re-enables it and the person signs in, and the administrator deletes it after typing its email.
+
 ### Verification gates
 
-Focused Vitest files, `supabase test db`, `npm run typecheck`, `npm run lint`, full `npm test`.
+Focused Vitest files, `supabase test db`, `npm run typecheck`, `npm run lint`, full `npm test`, and the end-to-end spec.
