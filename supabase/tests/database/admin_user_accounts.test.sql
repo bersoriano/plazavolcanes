@@ -86,6 +86,8 @@ select lives_ok(
   'fixture shop is approved before the account is disabled'
 );
 
+-- Audit assertions below are scoped to this test's administrator: the events
+-- of accounts that were deleted outside it stay in the table by design.
 -- Authorization
 set local request.jwt.claims =
   '{"sub":"30000000-0000-4000-8000-000000000004","role":"authenticated"}';
@@ -209,7 +211,8 @@ select results_eq(
 );
 select results_eq(
   $$select actor_id, target_user_id, metadata -> 'shop_ids'
-    from private.admin_audit_events where action = 'user_disabled'$$,
+    from private.admin_audit_events where action = 'user_disabled'
+      and actor_id = '30000000-0000-4000-8000-000000000001'$$,
   $$values ('30000000-0000-4000-8000-000000000001'::uuid,
             '30000000-0000-4000-8000-000000000003'::uuid, '[9301]'::jsonb)$$,
   'disabling is audited with the affected shops'
@@ -225,7 +228,9 @@ select results_eq(
 
 set local role postgres;
 select is(
-  (select count(*)::integer from private.admin_audit_events where action = 'user_disabled'),
+  (select count(*)::integer from private.admin_audit_events
+   where action = 'user_disabled'
+     and actor_id = '30000000-0000-4000-8000-000000000001'),
   1, 'repeating a disable writes no second audit event'
 );
 
@@ -255,7 +260,8 @@ select is(
 );
 select results_eq(
   $$select actor_id, target_user_id
-    from private.admin_audit_events where action = 'user_enabled'$$,
+    from private.admin_audit_events where action = 'user_enabled'
+      and actor_id = '30000000-0000-4000-8000-000000000001'$$,
   $$values ('30000000-0000-4000-8000-000000000001'::uuid,
             '30000000-0000-4000-8000-000000000003'::uuid)$$,
   'enabling is audited once'
@@ -288,7 +294,9 @@ select is(
   1, 'a refused deletion leaves the shop in place'
 );
 select is(
-  (select count(*)::integer from private.admin_audit_events where action = 'user_deleted'),
+  (select count(*)::integer from private.admin_audit_events
+   where action = 'user_deleted'
+     and actor_id = '30000000-0000-4000-8000-000000000001'),
   0, 'a refused deletion is not audited as a deletion'
 );
 
@@ -351,7 +359,8 @@ select is(
 select results_eq(
   $$select actor_id, target_user_id, metadata ->> 'user_id', metadata ->> 'email',
            (metadata ->> 'shop_count')::integer
-    from private.admin_audit_events where action = 'user_deleted'$$,
+    from private.admin_audit_events where action = 'user_deleted'
+      and actor_id = '30000000-0000-4000-8000-000000000001'$$,
   $$values ('30000000-0000-4000-8000-000000000001'::uuid, null::uuid,
             '30000000-0000-4000-8000-000000000003', 'clean-seller@test.local', 1)$$,
   'deleting is audited with a snapshot of the removed account'
