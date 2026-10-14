@@ -32,7 +32,7 @@ describe("BottomNav", () => {
       ["Explorar", "/explorar"],
       ["Mensajes", "/mensajes"],
       ["Compras", "/compras"],
-      ["Panel", "/panel"],
+      ["Ventas", "/panel"],
     ] as const) {
       expect(within(bar).getByRole("link", { name: new RegExp(name) })).toHaveAttribute(
         "href",
@@ -94,6 +94,6 @@ describe("BottomNav", () => {
       "aria-current",
       "page",
     );
-    expect(within(bar).getByRole("link", { name: /Panel/ })).not.toHaveAttribute("aria-current");
+    expect(within(bar).getByRole("link", { name: /Ventas/ })).not.toHaveAttribute("aria-current");
   });
 });

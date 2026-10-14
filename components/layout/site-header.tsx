@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Scale, UsersRound } from "lucide-react";
+import { UsersRound } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { SignOutButton } from "@/components/auth/sign-out-button";
@@ -64,7 +64,7 @@ export async function SiteHeader() {
                 Explorar
               </NavLink>
               <NavLink className={SIGNED_IN_LINK} href="/panel">
-                Mi panel
+                Mis ventas
               </NavLink>
               <NavLink className={SIGNED_IN_LINK} href="/compras">
                 Mis compras
@@ -83,16 +83,13 @@ export async function SiteHeader() {
               {isAdmin ? (
                 <>
                   {/*
-                    Administration has no slot in the quick access bar, so these
-                    stay reachable from the header at every width.
+                    Administration has no slot in the quick access bar, so its
+                    entry stays reachable from the header at every width. The
+                    rest (Centro de Resoluciones, Importaciones…) lives in /admin's own nav.
                   */}
                   <NavLink aria-label="Usuarios" className="tap grid place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background aria-[current=page]:bg-background md:inline-flex md:min-w-0 md:px-4 md:py-2.5" href="/admin/usuarios">
                     <UsersRound aria-hidden="true" className="size-5 md:hidden" />
                     <span className="hidden md:inline">Usuarios</span>
-                  </NavLink>
-                  <NavLink aria-label="Disputas" className="tap grid place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background aria-[current=page]:bg-background md:inline-flex md:min-w-0 md:px-4 md:py-2.5" href="/admin/disputas">
-                    <Scale aria-hidden="true" className="size-5 md:hidden" />
-                    <span className="hidden md:inline">Disputas</span>
                   </NavLink>
                 </>
               ) : null}

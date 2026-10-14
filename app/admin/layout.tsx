@@ -13,7 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           Usuarios
         </Link>
         <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/disputas">
-          Disputas
+          Centro de Resoluciones
         </Link>
         <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/importaciones">
           Importaciones

@@ -38,10 +38,13 @@ describe("SiteHeader", () => {
       "href",
       "/admin/usuarios",
     );
-    expect(within(navigation).getByRole("link", { name: "Disputas" })).toHaveAttribute(
-      "href",
-      "/admin/disputas",
-    );
+  });
+
+  it("leaves Disputas to the administration's own navigation", async () => {
+    await renderHeader(true, true);
+
+    const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
+    expect(within(navigation).queryByRole("link", { name: "Disputas" })).not.toBeInTheDocument();
   });
 
   it("hides protected admin routes from non-administrators", async () => {
@@ -49,7 +52,6 @@ describe("SiteHeader", () => {
 
     const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
     expect(within(navigation).queryByRole("link", { name: "Usuarios" })).not.toBeInTheDocument();
-    expect(within(navigation).queryByRole("link", { name: "Disputas" })).not.toBeInTheDocument();
   });
 
   it("keeps the compact home control at least 44px in both dimensions", async () => {
@@ -76,7 +78,7 @@ describe("SiteHeader", () => {
     // The bar carries these on a phone, so the header only shows them once
     // there is room for words instead of a row of unlabelled glyphs. At md
     // they sit closer together, which is what keeps the row inside 768px.
-    for (const name of ["Explorar", "Mi panel", "Mis compras", "Mensajes"]) {
+    for (const name of ["Explorar", "Mis ventas", "Mis compras", "Mensajes"]) {
       expect(within(navigation).getByRole("link", { name })).toHaveClass(
         "hidden",
         "min-h-11",
@@ -102,7 +104,7 @@ describe("SiteHeader", () => {
 
     const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
     expect(within(navigation).getByRole("link", { name: "Mis compras" })).toHaveAttribute("aria-current", "page");
-    expect(within(navigation).getByRole("link", { name: "Mi panel" })).not.toHaveAttribute("aria-current");
+    expect(within(navigation).getByRole("link", { name: "Mis ventas" })).not.toHaveAttribute("aria-current");
   });
 
   it("keeps administration reachable from the header at every width", async () => {
@@ -110,12 +112,10 @@ describe("SiteHeader", () => {
 
     const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
 
-    // Nothing in the quick access bar points at /admin, so these may not hide.
-    for (const name of ["Usuarios", "Disputas"]) {
-      const link = within(navigation).getByRole("link", { name });
-      expect(link).toHaveClass("tap");
-      expect(link).not.toHaveClass("hidden");
-    }
+    // Nothing in the quick access bar points at /admin, so this may not hide.
+    const link = within(navigation).getByRole("link", { name: "Usuarios" });
+    expect(link).toHaveClass("tap");
+    expect(link).not.toHaveClass("hidden");
   });
 
   it("lays its row out in the box every app screen shares", async () => {

@@ -281,7 +281,7 @@ test.describe("mobile polish", () => {
         ["Explorar", "/explorar"],
         ["Mensajes", "/mensajes"],
         ["Compras", "/compras"],
-        ["Panel", "/panel"],
+        ["Ventas", "/panel"],
       ] as const) {
         const link = bar.getByRole("link", { name });
         await expect(link).toHaveAttribute("href", href);

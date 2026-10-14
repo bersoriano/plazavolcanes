@@ -20,7 +20,7 @@ export async function BottomNav() {
         { href: "/explorar", icon: "explore", label: "Explorar" },
         { badge: unread, href: "/mensajes", icon: "messages", label: "Mensajes" },
         { href: "/compras", icon: "orders", label: "Compras" },
-        { href: "/panel", icon: "panel", label: "Panel" },
+        { href: "/panel", icon: "panel", label: "Ventas" },
       ]
     : [
         { href: "/explorar", icon: "explore", label: "Explorar" },
