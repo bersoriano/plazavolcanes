@@ -70,9 +70,10 @@ export function EarnedSignals({
     >
       {earned.map((badge, index) => (
         <li className="inline-flex items-center gap-2" key={badge.key} title={badge.explanation}>
-          {index ? <span aria-hidden="true">·</span> : null}
           {/* A number needs its label; a phrase like "Sin disputas" says it all. */}
           {/^\d/.test(badge.value) ? `${badge.label} ${badge.value}` : badge.value}
+          {/* Trailing, so a wrapped line never opens on a stray dot. */}
+          {index < earned.length - 1 ? <span aria-hidden="true">·</span> : null}
         </li>
       ))}
     </ul>
