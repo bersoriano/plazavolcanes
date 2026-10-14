@@ -16,9 +16,12 @@ export function PremiumBadge({
   showDetails?: boolean;
 }) {
   return (
+    // Static on a phone: the badge can sit mid-row there, and a tooltip hung
+    // from it would run past the screen's edge. Its tooltip then hangs from
+    // the nearest positioned ancestor, which the row it joins provides.
     <div
       aria-label="Tienda Premium"
-      className={`group relative inline-flex items-center gap-2 rounded-full border border-premium-gold bg-premium-ink px-3 py-2 text-sm font-bold text-premium-gold ${className}`.trim()}
+      className={`group static sm:relative inline-flex items-center gap-2 rounded-full border border-premium-gold bg-premium-ink px-3 py-2 text-sm font-bold text-premium-gold ${className}`.trim()}
       role="group"
     >
       <Sparkles aria-hidden="true" className="size-4" />
