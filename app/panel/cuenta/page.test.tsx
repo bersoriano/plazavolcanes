@@ -37,3 +37,11 @@ describe("AccountPage email notifications", () => {
     expect(screen.getByRole("checkbox", { name: /Avísame por correo/ })).not.toBeChecked();
   });
 });
+
+describe("AccountPage navigation", () => {
+  it("leaves the way around the panel to the panel's bar", async () => {
+    render(await AccountPage());
+
+    expect(screen.queryByRole("link", { name: /panel/i })).toBeNull();
+  });
+});

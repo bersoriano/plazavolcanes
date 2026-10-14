@@ -206,6 +206,23 @@ export type ShopProgress = {
   approval: "approved" | "pending" | "disabled";
 };
 
+/**
+ * What a shop's card draws. A slice of ShopProgress, so the dashboard's rows
+ * fit as they are and the list of shops can be read without the rest.
+ */
+export type ShopCard = {
+  shop: Pick<DashboardShop, "id" | "name" | "slug" | "image_path" | "is_premium" | "listing_limit" | "trust_tier">;
+  publishedQuotaCount: number;
+  approval: ShopProgress["approval"];
+};
+
+/** Never reviewed is waiting; reviewed and still not approved was switched off. */
+export function shopApproval(
+  shop: Pick<DashboardShop, "is_publishing_approved" | "publishing_reviewed_at">,
+): ShopProgress["approval"] {
+  return shop.is_publishing_approved ? "approved" : shop.publishing_reviewed_at ? "disabled" : "pending";
+}
+
 export function summarizeShop(shop: DashboardShop, products: DashboardProduct[], now: Date = new Date()): ShopProgress {
   const own = products.filter((product) => product.shop_id === shop.id);
   let readyListingCount = 0;
@@ -243,7 +260,7 @@ export function summarizeShop(shop: DashboardShop, products: DashboardProduct[],
     soldOutCount,
     unfinished,
     hasDeliveryPolicy: Boolean(shop.delivery_policy?.trim()),
-    approval: shop.is_publishing_approved ? "approved" : shop.publishing_reviewed_at ? "disabled" : "pending",
+    approval: shopApproval(shop),
   };
 }
 

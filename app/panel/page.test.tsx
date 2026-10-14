@@ -186,15 +186,24 @@ describe("PanelPage", () => {
     expect(screen.getByRole("navigation", { name: "Tienda que sigue la guía" })).toBeInTheDocument();
   });
 
-  it("keeps the catalogue, settings, public shop, orders and account reachable", async () => {
+  it("keeps the catalogue, settings and public shop reachable", async () => {
     await renderPanel();
 
     expect(screen.getByRole("link", { name: "Catálogo" })).toHaveAttribute("href", "/panel/tiendas/1");
     expect(screen.getByRole("link", { name: "Ajustes" })).toHaveAttribute("href", "/panel/tiendas/1/ajustes");
     expect(screen.getByRole("link", { name: "Tienda pública" })).toHaveAttribute("href", "/tiendas/casa-niebla");
-    expect(screen.getByRole("link", { name: "Pedidos" })).toHaveAttribute("href", "/panel/pedidos");
-    expect(screen.getByRole("link", { name: "Mi cuenta" })).toHaveAttribute("href", "/panel/cuenta");
     expect(screen.getByText("1 de 10 publicaciones · Nivel Estándar")).toBeInTheDocument();
+  });
+
+  it("leaves orders, the account and messages to the navigation around it", async () => {
+    // The panel's bar holds the panel's areas and the header holds messages;
+    // a third set of the same links on this page is what the bar replaced.
+    await renderPanel();
+
+    expect(screen.queryByRole("navigation", { name: "Accesos del panel" })).toBeNull();
+    for (const name of ["Pedidos", "Mi cuenta", "Mensajes"]) {
+      expect(screen.queryByRole("link", { name })).toBeNull();
+    }
   });
 
   it("passes only a well-formed shop id through to the dashboard", async () => {

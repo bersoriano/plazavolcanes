@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ExternalLink, Plus, Settings, Store } from "lucide-react";
 
 import { PremiumBadge } from "@/components/shops/premium-badge";
-import type { ShopProgress } from "@/lib/seller-dashboard";
+import type { ShopCard } from "@/lib/seller-dashboard";
 import { getTrustTierMarker } from "@/lib/trust-tiers";
 
 /**
@@ -11,6 +11,9 @@ import { getTrustTierMarker } from "@/lib/trust-tiers";
  * This is where the panel used to start. It now sits below the work, quieter,
  * but nothing that was reachable from here went away — and the publication
  * quota and trust level ride along as plain text rather than as a headline.
+ *
+ * It is also the whole of /panel/tiendas, where its title is the page's own:
+ * `headingLevel` says which of the two it is.
  */
 export function ShopOverview({
   shops,
@@ -18,21 +21,31 @@ export function ShopOverview({
   canCreateShop,
   shopLimit,
   listingsLoaded,
+  headingLevel = 2,
 }: {
-  shops: ShopProgress[];
+  shops: ShopCard[];
   imageUrls: ReadonlyMap<string, string>;
   canCreateShop: boolean;
   shopLimit: number;
   listingsLoaded: boolean;
+  headingLevel?: 1 | 2;
 }) {
+  const Heading = headingLevel === 1 ? "h1" : "h2";
   const limitLabel = `${shopLimit} ${shopLimit === 1 ? "tienda" : "tiendas"}`;
 
   return (
     <section aria-labelledby="shops-title">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="font-display text-2xl font-semibold tracking-[-0.02em]" id="shops-title">
+        <Heading
+          className={
+            headingLevel === 1
+              ? "font-display text-4xl font-semibold tracking-[-0.04em]"
+              : "font-display text-2xl font-semibold tracking-[-0.02em]"
+          }
+          id="shops-title"
+        >
           Mis tiendas
-        </h2>
+        </Heading>
         {canCreateShop && shops.length ? (
           <Link
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line bg-surface px-5 py-2.5 text-sm font-semibold text-brand transition-colors hover:border-brand"

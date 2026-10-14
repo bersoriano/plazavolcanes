@@ -98,6 +98,13 @@ async function renderEditProduct({
 }
 
 describe("EditProductPage", () => {
+  it("keeps the way back to the shop's catalogue", async () => {
+    // The panel's bar opens the list of shops; only this link knows which one.
+    await renderEditProduct();
+
+    expect(screen.getByRole("link", { name: "Casa Niebla" })).toHaveAttribute("href", "/panel/tiendas/4");
+  });
+
   it("does not offer the public link for a seller-published product awaiting shop approval", async () => {
     const { shopQuery } = await renderEditProduct();
 

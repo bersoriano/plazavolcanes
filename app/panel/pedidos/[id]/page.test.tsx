@@ -200,4 +200,11 @@ describe("seller order next step", () => {
 
     expect(bind).toHaveBeenCalledWith(null, 9, expect.arrayContaining(["/panel", "/panel/pedidos/41", "/mensajes"]));
   });
+
+  it("keeps the way back to the order list", async () => {
+    // The list is this page's parent; the panel's bar covers everything else.
+    await renderOrder();
+
+    expect(screen.getByRole("link", { name: "Pedidos" })).toHaveAttribute("href", "/panel/pedidos");
+  });
 });
