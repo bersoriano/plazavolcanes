@@ -2,25 +2,29 @@ import { act, cleanup, fireEvent, render, screen, within } from "@testing-librar
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { InboxShell } from "@/components/messages/inbox-shell";
-import type { InboxEntry } from "@/lib/queries/messages";
-import { subscribeToMessageInserts } from "@/lib/realtime-messages";
+import type { ConversationEntry, NoticeEntry } from "@/lib/queries/messages";
+import { subscribeToInserts } from "@/lib/realtime-messages";
 
 const refresh = vi.fn();
 // One router for the life of the page, as the real hook hands out.
 const router = { refresh };
-let segment: string | null = null;
+/** The route below /mensajes: nothing, a conversation ("7"), or a notice ("avisos", "12"). */
+let segments: string[] = [];
 
 vi.mock("next/navigation", () => ({
   useRouter: () => router,
-  useSelectedLayoutSegment: () => segment,
+  useSelectedLayoutSegments: () => segments,
 }));
-vi.mock("@/lib/realtime-messages", () => ({ subscribeToMessageInserts: vi.fn(() => vi.fn()) }));
+vi.mock("@/lib/realtime-messages", () => ({ subscribeToInserts: vi.fn(() => vi.fn()) }));
 vi.mock("@/lib/use-viewer-time-zone", () => ({ useViewerTimeZone: () => "America/Mexico_City" }));
 
 const NOW = "2026-10-12T23:00:00Z";
 
-const buying: InboxEntry = {
+const buying: ConversationEntry = {
   id: 1,
+  key: "c-1",
+  href: "/mensajes/1",
+  sent_at: "2026-10-12T16:42:00Z",
   role: "buyer",
   type: "pre_sale",
   order_id: null,
@@ -43,8 +47,11 @@ const buying: InboxEntry = {
   last_message: { body: "Gracias", created_at: "2026-10-12T16:42:00Z", sender_id: "me" },
 };
 
-const sellingOrder: InboxEntry = {
+const sellingOrder: ConversationEntry = {
   id: 2,
+  key: "c-2",
+  href: "/mensajes/2",
+  sent_at: "2026-10-11T18:00:00Z",
   role: "seller",
   type: "order",
   order_id: 41,
@@ -62,9 +69,12 @@ const sellingOrder: InboxEntry = {
   },
 };
 
-const sellingEnquiry: InboxEntry = {
+const sellingEnquiry: ConversationEntry = {
   ...sellingOrder,
   id: 3,
+  key: "c-3",
+  href: "/mensajes/3",
+  sent_at: "2026-10-10T18:00:00Z",
   type: "pre_sale",
   order_id: null,
   counterpart_label: "José Peña",
@@ -74,6 +84,39 @@ const sellingEnquiry: InboxEntry = {
 };
 
 const entries = [buying, sellingOrder, sellingEnquiry];
+
+// Numbered 2 on purpose, like the selling order above: the two come from
+// different tables and must never be taken for one another.
+const announcement: NoticeEntry = {
+  id: 2,
+  key: "n-2",
+  href: "/mensajes/avisos/2",
+  sent_at: "2026-10-12T20:00:00Z",
+  role: "platform",
+  kind: "announcement",
+  title: "Mantenimiento el sábado",
+  body: "La plaza estará en pausa de 11 p.m. a 1 a.m.",
+  action: null,
+  created_at: "2026-10-12T20:00:00Z",
+  read_at: null,
+  unread_count: 1,
+};
+
+const directNotice: NoticeEntry = {
+  ...announcement,
+  id: 9,
+  key: "n-9",
+  href: "/mensajes/avisos/9",
+  kind: "direct",
+  title: "Tu tienda necesita portada",
+  body: "Agrega una foto de portada.",
+  sent_at: "2026-10-09T18:00:00Z",
+  created_at: "2026-10-09T18:00:00Z",
+  read_at: "2026-10-09T19:00:00Z",
+  unread_count: 0,
+};
+
+const withNotices = [announcement, buying, sellingOrder, sellingEnquiry, directNotice];
 
 function renderShell(overrides: Partial<Parameters<typeof InboxShell>[0]> = {}) {
   return render(
@@ -90,7 +133,7 @@ const rowIds = () =>
     .map((link) => link.getAttribute("href"));
 
 beforeEach(() => {
-  segment = null;
+  segments = [];
 });
 
 afterEach(() => {
@@ -232,7 +275,7 @@ describe("inbox search", () => {
 
 describe("inbox with a thread open", () => {
   beforeEach(() => {
-    segment = "2";
+    segments = ["2"];
   });
 
   it("marks the open thread's row", () => {
@@ -290,7 +333,7 @@ describe("empty inbox", () => {
 
   it("still shows a thread that has no message yet", () => {
     // Asking a shop a question lands here before the first message is written.
-    segment = "9";
+    segments = ["9"];
     renderShell({ entries: [] });
 
     expect(screen.getByText("panel de la conversación")).toBeInTheDocument();
@@ -302,12 +345,33 @@ describe("inbox freshness", () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  const subscription = () => vi.mocked(subscribeToMessageInserts).mock.calls[0][0];
+  const subscriptions = () => vi.mocked(subscribeToInserts).mock.calls.map(([options]) => options);
+  const subscription = () => subscriptions().find((options) => options.table === "messages")!;
 
   it("listens for messages in every conversation the reader is part of", () => {
     renderShell();
 
     expect(subscription().conversationId).toBeUndefined();
+  });
+
+  it("listens for notices from the plaza too", () => {
+    renderShell();
+
+    expect(subscriptions().map((options) => options.table).sort()).toEqual([
+      "messages",
+      "platform_notices",
+    ]);
+  });
+
+  it("asks the server again when a notice arrives", () => {
+    renderShell();
+
+    act(() => {
+      subscriptions().find((options) => options.table === "platform_notices")!.onInsert({ id: 1 });
+      vi.advanceTimersByTime(1_000);
+    });
+
+    expect(refresh).toHaveBeenCalledTimes(1);
   });
 
   it("asks the server again when a message arrives, once per burst", () => {
@@ -339,10 +403,127 @@ describe("inbox freshness", () => {
 
   it("stops listening when the inbox closes", () => {
     const { unmount } = renderShell();
-    const unsubscribe = vi.mocked(subscribeToMessageInserts).mock.results[0].value;
+    const stops = vi.mocked(subscribeToInserts).mock.results.map((result) => result.value);
 
     unmount();
 
-    expect(unsubscribe).toHaveBeenCalled();
+    expect(stops).toHaveLength(2);
+    for (const stop of stops) expect(stop).toHaveBeenCalled();
+  });
+});
+
+describe("notices from the plaza", () => {
+  const notice = (name: RegExp) => screen.getByRole("link", { name });
+
+  it("lists a notice among the conversations, by when it arrived", () => {
+    renderShell({ entries: withNotices });
+
+    expect(rowIds()).toEqual([
+      "/mensajes/avisos/2",
+      "/mensajes/1",
+      "/mensajes/2",
+      "/mensajes/3",
+      "/mensajes/avisos/9",
+    ]);
+  });
+
+  it("signs every notice as Plaza Volcanes, with what it is and what it says", () => {
+    renderShell({ entries: withNotices });
+
+    const row = notice(/Mantenimiento el sábado/);
+    expect(within(row).getByText("Plaza Volcanes")).toBeInTheDocument();
+    expect(within(row).getByText("Anuncio")).toBeInTheDocument();
+    expect(within(row).getByText("La plaza estará en pausa de 11 p.m. a 1 a.m.")).toBeInTheDocument();
+    expect(within(notice(/Tu tienda necesita portada/)).getByText("Aviso")).toBeInTheDocument();
+  });
+
+  it("gives a notice the plaza's mark, and neither a product picture nor a side", () => {
+    renderShell({ entries: withNotices });
+
+    const row = notice(/Mantenimiento el sábado/);
+    expect(row.querySelector("[data-plaza-mark]")).not.toBeNull();
+    expect(row.querySelector("img")).toBeNull();
+    expect(within(row).queryByText(/Compra|Venta/)).not.toBeInTheDocument();
+  });
+
+  it("never lends the plaza's mark to a conversation", () => {
+    renderShell({ entries: withNotices });
+
+    expect(row(/Ana Ruiz/).querySelector("[data-plaza-mark]")).toBeNull();
+  });
+
+  it("marks an unread notice like an unread conversation", () => {
+    renderShell({ entries: withNotices });
+
+    expect(
+      within(notice(/Mantenimiento el sábado/)).getByLabelText("1 mensajes sin leer"),
+    ).toBeInTheDocument();
+    expect(
+      within(notice(/Tu tienda necesita portada/)).queryByLabelText(/sin leer/),
+    ).not.toBeInTheDocument();
+  });
+
+  it("offers a filter for what the plaza sent, with what is unread in it", () => {
+    renderShell({ entries: withNotices });
+
+    const filter = screen.getByRole("button", { name: /^Plaza Volcanes/ });
+    expect(within(filter).getByText("1")).toBeInTheDocument();
+
+    fireEvent.click(filter);
+    expect(rowIds()).toEqual(["/mensajes/avisos/2", "/mensajes/avisos/9"]);
+  });
+
+  it("offers no such filter to somebody the plaza never wrote to", () => {
+    renderShell();
+
+    expect(screen.queryByRole("button", { name: /^Plaza Volcanes/ })).not.toBeInTheDocument();
+  });
+
+  it("counts unread notices under Sin leer", () => {
+    renderShell({ entries: withNotices });
+
+    expect(within(screen.getByRole("button", { name: /^Sin leer/ })).getByText("3")).toBeInTheDocument();
+  });
+
+  it("finds a notice by its words", () => {
+    renderShell({ entries: withNotices });
+
+    fireEvent.change(screen.getByRole("searchbox"), { target: { value: "portada" } });
+
+    expect(rowIds()).toEqual(["/mensajes/avisos/9"]);
+  });
+
+  it("marks the open notice, and not the conversation with the same number", () => {
+    segments = ["avisos", "2"];
+    renderShell({ entries: withNotices });
+
+    expect(notice(/Mantenimiento el sábado/)).toHaveAttribute("aria-current", "page");
+    expect(row(/Ana Ruiz/)).not.toHaveAttribute("aria-current");
+    // Still unread: opening the notice read the notice, not the order thread.
+    expect(within(row(/Ana Ruiz/)).getByLabelText("2 mensajes sin leer")).toBeInTheDocument();
+  });
+
+  it("treats the open notice as read", () => {
+    segments = ["avisos", "2"];
+    renderShell({ entries: withNotices });
+
+    expect(
+      within(notice(/Mantenimiento el sábado/)).queryByLabelText(/sin leer/),
+    ).not.toBeInTheDocument();
+  });
+
+  it("marks the open conversation, and not the notice with the same number", () => {
+    segments = ["2"];
+    renderShell({ entries: withNotices });
+
+    expect(row(/Ana Ruiz/)).toHaveAttribute("aria-current", "page");
+    expect(notice(/Mantenimiento el sábado/)).not.toHaveAttribute("aria-current");
+  });
+
+  it("shows an inbox that holds only notices", () => {
+    renderShell({ entries: [announcement], showSelling: false });
+
+    expect(rowIds()).toEqual(["/mensajes/avisos/2"]);
+    expect(screen.queryByText("Aún no tienes mensajes")).not.toBeInTheDocument();
   });
 });

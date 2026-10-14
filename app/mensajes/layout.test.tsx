@@ -4,10 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import MessagesLayout from "@/app/mensajes/layout";
 import type { ConversationSummary, InboxEntry } from "@/lib/queries/messages";
 import { listConversations } from "@/lib/queries/messages.server";
+import { listPlatformNotices } from "@/lib/queries/platform-notices.server";
 import { viewerOwnsAnyShop } from "@/lib/queries/seller-standing.server";
 import { requireSignedIn } from "@/lib/require-signed-in.server";
 
 vi.mock("@/lib/queries/messages.server", () => ({ listConversations: vi.fn() }));
+vi.mock("@/lib/queries/platform-notices.server", () => ({ listPlatformNotices: vi.fn() }));
 vi.mock("@/lib/queries/seller-standing.server", () => ({ viewerOwnsAnyShop: vi.fn() }));
 vi.mock("@/lib/require-signed-in.server", () => ({ requireSignedIn: vi.fn() }));
 
@@ -63,6 +65,7 @@ const silentOrder: ConversationSummary = {
 beforeEach(() => {
   vi.mocked(requireSignedIn).mockResolvedValue("user-id");
   vi.mocked(viewerOwnsAnyShop).mockResolvedValue(true);
+  vi.mocked(listPlatformNotices).mockResolvedValue([]);
   vi.mocked(listConversations).mockImplementation(async (role) =>
     role === "seller" ? [sellerConversation] : [buyerConversation, silentOrder],
   );
@@ -92,6 +95,29 @@ describe("messages layout", () => {
       [7, "seller"],
     ]);
     expect(shell.currentUserId).toBe("user-id");
+  });
+
+  it("places what the plaza sent among the conversations", async () => {
+    vi.mocked(listPlatformNotices).mockResolvedValue([
+      {
+        id: 7,
+        kind: "announcement",
+        title: "Mantenimiento",
+        body: "El sábado por la noche.",
+        action: null,
+        // Between the two conversations.
+        created_at: "2026-08-23T18:00:00Z",
+        read_at: null,
+      },
+    ]);
+
+    await renderLayout();
+
+    expect(shell.entries.map((entry) => [entry.key, entry.role])).toEqual([
+      ["c-11", "buyer"],
+      ["n-7", "platform"],
+      ["c-7", "seller"],
+    ]);
   });
 
   it("leaves out an order nobody has written in yet", async () => {

@@ -1,28 +1,31 @@
 "use client";
 
-import type { ThreadMessage } from "@/lib/queries/messages";
 import { createBrowserSupabaseClient } from "@/lib/supabase/client";
 
-type MessageSubscription = {
-  /** One conversation. Left out, it is every conversation the reader takes part in. */
+type InsertSubscription<Row> = {
+  /** Both are published for live delivery, each behind its own read policy. */
+  table: "messages" | "platform_notices";
+  /** One conversation, for messages. Left out, it is every row the reader may see. */
   conversationId?: number;
   name: string;
-  onInsert: (message: ThreadMessage) => void;
+  onInsert: (row: Row) => void;
   onStatus?: (status: string) => void;
 };
 
 /**
- * Listens for new messages, and returns the way to stop.
+ * Listens for new rows, and returns the way to stop.
  *
  * Row-level security decides what arrives: a subscriber is only ever delivered
- * messages from conversations it is part of, filtered or not.
+ * messages from conversations it is part of and notices addressed to it,
+ * filtered or not.
  */
-export function subscribeToMessageInserts({
+export function subscribeToInserts<Row = unknown>({
+  table,
   conversationId,
   name,
   onInsert,
   onStatus,
-}: MessageSubscription) {
+}: InsertSubscription<Row>) {
   const supabase = createBrowserSupabaseClient();
   let channel: ReturnType<typeof supabase.channel> | null = null;
   let cancelled = false;
@@ -43,10 +46,11 @@ export function subscribeToMessageInserts({
         {
           event: "INSERT",
           schema: "public",
-          table: "messages",
+          table,
           ...(conversationId === undefined ? {} : { filter: `conversation_id=eq.${conversationId}` }),
         },
-        (payload: { new: ThreadMessage }) => onInsert(payload.new),
+        // The row arrives untyped; the caller names the table and so knows its shape.
+        (payload: { new: unknown }) => onInsert(payload.new as Row),
       )
       .subscribe((status: string) => onStatus?.(status));
   })();

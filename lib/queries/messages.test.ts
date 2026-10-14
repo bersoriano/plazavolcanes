@@ -1,5 +1,6 @@
 import { expect, test } from "vitest";
 
+import type { PlatformNotice } from "@/lib/queries/platform-notices";
 import {
   filterInbox,
   mapConversationRows,
@@ -312,7 +313,7 @@ test("searches inside the chosen filter", () => {
 });
 
 test("adds up unread messages for each side", () => {
-  expect(unreadTotals(inbox)).toEqual({ all: 5, buying: 1, selling: 4 });
+  expect(unreadTotals(inbox)).toEqual({ all: 5, buying: 1, selling: 4, platform: 0 });
 });
 
 test("keeps the open thread under unread while it is being read", () => {
@@ -320,7 +321,7 @@ test("keeps the open thread under unread while it is being read", () => {
   // pull the row out from under the reader.
   const read = inbox.map((entry) => (entry.id === 2 ? { ...entry, unread_count: 0 } : entry));
 
-  expect(filterInbox(read, "unread", "", 2).map((entry) => entry.id)).toEqual([2, 3]);
+  expect(filterInbox(read, "unread", "", "c-2").map((entry) => entry.id)).toEqual([2, 3]);
   expect(filterInbox(read, "unread").map((entry) => entry.id)).toEqual([3]);
 });
 
@@ -343,4 +344,89 @@ test("reads an order row from before its line was returned as having none", () =
   const [summary] = mapConversationRows([older as ConversationRow]);
 
   expect(summary.order_item).toBeNull();
+});
+
+const notice: PlatformNotice = {
+  id: 2,
+  kind: "announcement",
+  title: "Mantenimiento el sábado",
+  body: "La plaza estará en pausa por la noche.",
+  action: null,
+  // Between the two buying threads above: after 08:00, before 09:00.
+  created_at: "2026-08-23T08:30:00+00:00",
+  read_at: null,
+};
+
+const withNotices = mergeInbox(
+  mapConversationRows([
+    { ...productRow, conversation_id: 1, counterpart_label: "Casa Niebla", unread_count: 0, ...at(9) },
+    { ...orderRow, conversation_id: 2, counterpart_label: "Taller Volcán", unread_count: 1, ...at(8) },
+  ]),
+  mapConversationRows([{ ...row, conversation_id: 3, unread_count: 4, ...at(7) }]),
+  [
+    notice,
+    {
+      ...notice,
+      id: 9,
+      kind: "direct",
+      title: "Sobre tu cuenta",
+      body: "Escríbenos cuando puedas.",
+      created_at: "2026-08-23T06:00:00+00:00",
+      read_at: "2026-08-23T06:30:00+00:00",
+    },
+  ],
+);
+
+test("places notices among conversations by when they arrived", () => {
+  expect(withNotices.map((entry) => entry.key)).toEqual(["c-1", "n-2", "c-2", "c-3", "n-9"]);
+});
+
+test("tells a notice from a conversation that carries the same number", () => {
+  // The two ids come from different tables. Only the key and the link tell them apart.
+  const sameNumber = withNotices.filter((entry) => entry.id === 2);
+
+  expect(sameNumber.map((entry) => [entry.role, entry.href])).toEqual([
+    ["platform", "/mensajes/avisos/2"],
+    ["buyer", "/mensajes/2"],
+  ]);
+});
+
+test("counts an unopened notice as one unread, and an opened one as none", () => {
+  const unread = Object.fromEntries(withNotices.map((entry) => [entry.key, entry.unread_count]));
+
+  expect(unread["n-2"]).toBe(1);
+  expect(unread["n-9"]).toBe(0);
+});
+
+test("filters to what the plaza sent", () => {
+  expect(filterInbox(withNotices, "platform").map((entry) => entry.key)).toEqual(["n-2", "n-9"]);
+  expect(filterInbox(withNotices, "buying").map((entry) => entry.key)).toEqual(["c-1", "c-2"]);
+  expect(filterInbox(withNotices, "selling").map((entry) => entry.key)).toEqual(["c-3"]);
+});
+
+test("lists unread notices with unread conversations", () => {
+  expect(filterInbox(withNotices, "unread").map((entry) => entry.key)).toEqual(["n-2", "c-2", "c-3"]);
+});
+
+test("keeps the open notice under unread, and not the conversation with its number", () => {
+  const opened = withNotices.map((entry) => ({ ...entry, unread_count: 0 }));
+
+  expect(filterInbox(opened, "unread", "", "n-2").map((entry) => entry.key)).toEqual(["n-2"]);
+});
+
+test("searches a notice by its title, its body and its sender", () => {
+  expect(filterInbox(withNotices, "all", "sabado").map((entry) => entry.key)).toEqual(["n-2"]);
+  expect(filterInbox(withNotices, "all", "en pausa").map((entry) => entry.key)).toEqual(["n-2"]);
+  expect(filterInbox(withNotices, "all", "plaza volcanes").map((entry) => entry.key)).toEqual([
+    "n-2",
+    "n-9",
+  ]);
+});
+
+test("adds unread notices to the totals", () => {
+  expect(unreadTotals(withNotices)).toEqual({ all: 6, buying: 1, selling: 4, platform: 1 });
+});
+
+test("still merges an inbox that has no notices", () => {
+  expect(mergeInbox([], mapConversationRows([row])).map((entry) => entry.key)).toEqual(["c-7"]);
 });

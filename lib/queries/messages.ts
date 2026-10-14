@@ -1,4 +1,5 @@
 import { DEFAULT_CATALOG_CURRENCY } from "@/lib/catalog-locale";
+import type { PlatformNotice } from "@/lib/queries/platform-notices";
 
 export type InboxRole = "buyer" | "seller";
 
@@ -74,10 +75,26 @@ export type ConversationSummary = {
   last_message: { body: string; created_at: string; sender_id: string } | null;
 };
 
-/** A thread in the one inbox, which holds what you buy and what you sell together. */
-export type InboxEntry = ConversationSummary & { role: InboxRole };
+/**
+ * What every row of the inbox has, whatever it is: enough to order it, link it
+ * and count it. `key` is what tells two rows apart, because a conversation and
+ * a notice come from different tables and can carry the same number.
+ */
+type InboxPlace = { key: string; href: string; sent_at: string; unread_count: number };
 
-export type InboxFilter = "all" | "unread" | "buying" | "selling";
+/** A conversation in the inbox, marked with the side of it the reader is on. */
+export type ConversationEntry = ConversationSummary & InboxPlace & { role: InboxRole };
+
+/** A message from the plaza itself. It has no sides, and nobody can answer it. */
+export type NoticeEntry = PlatformNotice & InboxPlace & { role: "platform" };
+
+/** A row of the one inbox, which holds what you buy, what you sell and what the plaza tells you. */
+export type InboxEntry = ConversationEntry | NoticeEntry;
+
+export type InboxFilter = "all" | "unread" | "buying" | "selling" | "platform";
+
+export const conversationKey = (id: number) => `c-${id}`;
+export const noticeKey = (id: number) => `n-${id}`;
 
 export type ThreadMessage = {
   id: number;
@@ -192,17 +209,15 @@ export function startedConversations(conversations: ConversationSummary[]) {
   return conversations.filter((conversation) => conversation.last_message !== null);
 }
 
-function sentAt(conversation: ConversationSummary) {
-  return conversation.last_message ? Date.parse(conversation.last_message.created_at) : 0;
-}
-
 /**
- * One inbox out of the two lists the database keeps: the threads somebody has
- * written in, each marked with the side the reader is on, newest first.
+ * One inbox out of the lists the database keeps: the threads somebody has
+ * written in, each marked with the side the reader is on, and what the plaza
+ * sent, all together and newest first.
  */
 export function mergeInbox(
   buying: ConversationSummary[],
   selling: ConversationSummary[],
+  notices: PlatformNotice[] = [],
 ): InboxEntry[] {
   const seen = new Set<number>();
   const entries: InboxEntry[] = [];
@@ -214,11 +229,32 @@ export function mergeInbox(
     for (const conversation of startedConversations(conversations)) {
       if (seen.has(conversation.id)) continue;
       seen.add(conversation.id);
-      entries.push({ ...conversation, role });
+      entries.push({
+        ...conversation,
+        role,
+        key: conversationKey(conversation.id),
+        href: `/mensajes/${conversation.id}`,
+        sent_at: conversation.last_message?.created_at ?? "",
+      });
     }
   }
 
-  return entries.sort((left, right) => sentAt(right) - sentAt(left) || right.id - left.id);
+  for (const notice of notices) {
+    entries.push({
+      ...notice,
+      role: "platform",
+      key: noticeKey(notice.id),
+      href: `/mensajes/avisos/${notice.id}`,
+      sent_at: notice.created_at,
+      unread_count: notice.read_at ? 0 : 1,
+    });
+  }
+
+  return entries.sort(
+    (left, right) =>
+      (Date.parse(right.sent_at) || 0) - (Date.parse(left.sent_at) || 0) ||
+      right.key.localeCompare(left.key),
+  );
 }
 
 /** "José Peña" is found by "jose pena": nobody types accents into a search box. */
@@ -229,50 +265,58 @@ function fold(text: string) {
     .toLowerCase();
 }
 
+/** Who a notice is from, as every notice row says it. */
+export const PLATFORM_SENDER = "Plaza Volcanes";
+
 /** Everything a row shows, which is everything a search of the inbox can find. */
 function searchableText(entry: InboxEntry) {
-  return fold(
-    [
-      entry.counterpart_label,
-      entry.shop_name,
-      entry.product?.name,
-      entry.order_item?.name,
-      entry.order_id ? `pedido #${entry.order_id} pedido ${entry.order_id}` : null,
-      entry.last_message?.body,
-    ]
-      .filter(Boolean)
-      .join("\n"),
-  );
+  const shown =
+    entry.role === "platform"
+      ? [PLATFORM_SENDER, entry.title, entry.body]
+      : [
+          entry.counterpart_label,
+          entry.shop_name,
+          entry.product?.name,
+          entry.order_item?.name,
+          entry.order_id ? `pedido #${entry.order_id} pedido ${entry.order_id}` : null,
+          entry.last_message?.body,
+        ];
+
+  return fold(shown.filter(Boolean).join("\n"));
 }
 
 /**
- * `openId` is the thread on screen. Opening a thread reads it, and it stays
- * under "unread" while it is open rather than vanishing from under the reader.
+ * `openKey` is the row on screen. Opening a thread or a notice reads it, and it
+ * stays under "unread" while it is open rather than vanishing from under the
+ * reader.
  */
 export function filterInbox(
   entries: InboxEntry[],
   filter: InboxFilter,
   query = "",
-  openId: number | null = null,
+  openKey: string | null = null,
 ) {
   const needle = fold(query.trim());
 
   return entries.filter((entry) => {
-    if (filter === "unread" && entry.unread_count === 0 && entry.id !== openId) return false;
+    if (filter === "unread" && entry.unread_count === 0 && entry.key !== openKey) return false;
     if (filter === "buying" && entry.role !== "buyer") return false;
     if (filter === "selling" && entry.role !== "seller") return false;
+    if (filter === "platform" && entry.role !== "platform") return false;
 
     return needle ? searchableText(entry).includes(needle) : true;
   });
 }
 
-/** Unread messages, in all and on each side, as the header's badge counts them. */
+const TOTAL_BY_ROLE = { buyer: "buying", seller: "selling", platform: "platform" } as const;
+
+/** What is unread, in all and of each kind, as the header's badge counts it. */
 export function unreadTotals(entries: InboxEntry[]) {
-  const totals = { all: 0, buying: 0, selling: 0 };
+  const totals = { all: 0, buying: 0, selling: 0, platform: 0 };
 
   for (const entry of entries) {
     totals.all += entry.unread_count;
-    totals[entry.role === "buyer" ? "buying" : "selling"] += entry.unread_count;
+    totals[TOTAL_BY_ROLE[entry.role]] += entry.unread_count;
   }
 
   return totals;
