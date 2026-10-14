@@ -111,7 +111,9 @@ build, `/` must still link one stylesheet.
   public shop still linked.
 - Orders, account and new shop pages: no link to `/panel` in the page itself.
 - e2e `panel-navigation.spec.ts`: a seller with one shop walks the bar and the
-  marker follows; "Tiendas" lands in the catalogue. `mobile-polish.spec.ts`
-  sweeps `/panel/pedidos` and `/panel/tiendas` as well.
+  marker follows; "Tiendas" lands in the catalogue, and in the list once a
+  second shop is allowed; no sideways page scroll at 320px.
+  `mobile-polish.spec.ts` sweeps `/panel/pedidos` as well (`/panel/tiendas`
+  redirects to the shop it already sweeps).
 - Manual: 320 / 390 / 768 / 1280 on the dashboard, a shop and an order; no
   sideways page scroll.

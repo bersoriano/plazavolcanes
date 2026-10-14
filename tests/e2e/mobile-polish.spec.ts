@@ -32,6 +32,7 @@ const signedInRoutes = [
   "/mensajes",
   "/panel",
   "/panel/cuenta",
+  "/panel/pedidos",
   "/panel/tiendas/nueva",
   "/terminos",
 ] as const;
