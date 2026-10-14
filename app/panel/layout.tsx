@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { PanelNav } from "@/components/layout/panel-nav";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -28,5 +29,12 @@ export default async function PanelLayout({ children }: { children: React.ReactN
     // Presence is decoration; the panel matters more.
   }
 
-  return <>{children}</>;
+  // Drawn here, once, for every page below. A layout does not render again on
+  // navigation, so the bar asks for nothing and marks its place from the path.
+  return (
+    <>
+      <PanelNav />
+      {children}
+    </>
+  );
 }
