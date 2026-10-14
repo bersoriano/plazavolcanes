@@ -47,6 +47,11 @@ type ProductCardProps = {
    * title and a plum price, without the category or the location.
    */
   variant?: "default" | "compact";
+  /**
+   * Off on a shop's own page, where every card would repeat the same shop
+   * and place.
+   */
+  showShop?: boolean;
 };
 
 export function ProductCard({
@@ -57,6 +62,7 @@ export function ProductCard({
   position,
   locale = DEFAULT_CATALOG_LOCALE,
   variant = "default",
+  showShop = true,
 }: ProductCardProps) {
   const catalogQuery = catalogHref?.includes("?")
     ? catalogHref.slice(catalogHref.indexOf("?"))
@@ -159,19 +165,23 @@ export function ProductCard({
         />
       </div>
       <div className="flex flex-col gap-1 px-0.5 sm:gap-1.5 sm:px-1">
-        <p className="truncate text-[12px] text-muted sm:text-[13px]">
-          <span className={`font-bold ${isPremium ? "text-premium-text" : "text-ink"}`}>{product.shop.name}</span>
-          {categoryName ? <span className="hidden sm:inline"><span aria-hidden="true"> · </span>{categoryName}</span> : null}
-        </p>
+        {showShop ? (
+          <p className="truncate text-[12px] text-muted sm:text-[13px]">
+            <span className={`font-bold ${isPremium ? "text-premium-text" : "text-ink"}`}>{product.shop.name}</span>
+            {categoryName ? <span className="hidden sm:inline"><span aria-hidden="true"> · </span>{categoryName}</span> : null}
+          </p>
+        ) : null}
         <h3 className="line-clamp-2 font-display text-[16px] font-semibold leading-[1.2] tracking-[-0.015em] text-ink sm:text-[20px] sm:tracking-[-0.02em]">{product.name}</h3>
         <p className="flex items-baseline gap-1 sm:gap-1.5">
           <span className="font-display text-[18px] font-bold tracking-[-0.02em] text-ink tabular-nums sm:text-[22px]">{formatCurrency(product.price_mxn, currencyCode, locale)}</span>
           <span className="text-[11px] font-semibold text-muted sm:text-xs">{currencyCode}</span>
         </p>
-        <p className="flex items-start gap-1.5 text-[12px] leading-[1.4] text-muted sm:text-[13px] sm:leading-[1.45]">
-          <MapPin aria-hidden="true" className="mt-0.5 hidden size-3.5 shrink-0 sm:block" />
-          {formatShopLocation(product.shop.country_code, product.shop.administrative_area_codes)}
-        </p>
+        {showShop ? (
+          <p className="flex items-start gap-1.5 text-[12px] leading-[1.4] text-muted sm:text-[13px] sm:leading-[1.45]">
+            <MapPin aria-hidden="true" className="mt-0.5 hidden size-3.5 shrink-0 sm:block" />
+            {formatShopLocation(product.shop.country_code, product.shop.administrative_area_codes)}
+          </p>
+        ) : null}
       </div>
     </Link>
   );
