@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef } from "react";
 
 import { pageContainer } from "@/components/layout/container";
 import { isCurrent } from "@/components/layout/nav-link";
@@ -33,15 +34,31 @@ function isOpen(pathname: string, section: Section) {
  * path. A band rather than tabs or pills: a shop's workspace has underlined
  * tabs and the catalogue has pill filters, and both sit right below it.
  *
- * On a phone the row scrolls sideways if it runs out of room; only the row
- * moves, never the page.
+ * On a phone the row scrolls sideways if it runs out of room, and the open
+ * area is brought into view: at 320px the last link starts out past the edge,
+ * which is exactly where its mark would go unseen. Only the row moves, never
+ * the page.
  */
 export function PanelNav() {
   const pathname = usePathname() ?? "";
+  const row = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const scroller = row.current;
+    const open = scroller?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!scroller || !open) return;
+
+    const frame = scroller.getBoundingClientRect();
+    const mark = open.getBoundingClientRect();
+    if (mark.left >= frame.left && mark.right <= frame.right) return;
+
+    // Centred, so the links on either side of it show there is more row.
+    scroller.scrollTo({ left: scroller.scrollLeft + mark.left - frame.left - (frame.width - mark.width) / 2 });
+  }, [pathname]);
 
   return (
     <nav aria-label="Secciones del panel" className="border-b border-line bg-surface">
-      <div className={`${pageContainer} overflow-x-auto [scrollbar-width:none]`}>
+      <div className={`${pageContainer} overflow-x-auto [scrollbar-width:none]`} ref={row}>
         {/* Pulled left by a link's padding, so the first label sits over the
             page's edge and the mark overhangs it. */}
         <ul className="-ml-3 flex w-max gap-1 py-1">

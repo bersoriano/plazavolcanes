@@ -7,7 +7,10 @@ const route = { pathname: "/panel" };
 
 vi.mock("next/navigation", () => ({ usePathname: () => route.pathname }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
 
 const SECTIONS = ["Resumen", "Pedidos", "Tiendas", "Cuenta"] as const;
 
@@ -73,6 +76,41 @@ describe("PanelNav", () => {
 
   it("marks nothing outside the panel", () => {
     expect(marked(renderAt("/mensajes"))).toEqual([]);
+  });
+
+  describe("on a screen narrower than the row", () => {
+    /**
+     * jsdom lays nothing out, so the boxes are given: a 320px screen, and the
+     * open area's link wherever the test puts it.
+     */
+    function layOut(open: { left: number; right: number }) {
+      const scrollTo = vi.fn();
+      Element.prototype.scrollTo = scrollTo as unknown as typeof Element.prototype.scrollTo;
+      vi.spyOn(Element.prototype, "getBoundingClientRect").mockImplementation(function (this: Element) {
+        const box = this.matches('[aria-current="page"]') ? open : { left: 0, right: 320 };
+        return { ...box, width: box.right - box.left } as DOMRect;
+      });
+      return scrollTo;
+    }
+
+    it("brings the open area into view when it starts out past the edge", () => {
+      // The last area's mark was cut off by the edge of a 320px phone: the one
+      // place the bar could not say where the reader was.
+      const scrollTo = layOut({ left: 260, right: 333 });
+
+      renderAt("/panel/cuenta");
+
+      expect(scrollTo).toHaveBeenCalledTimes(1);
+      expect(scrollTo.mock.calls[0][0].left).toBeGreaterThan(0);
+    });
+
+    it("leaves the row where it is when the open area already shows", () => {
+      const scrollTo = layOut({ left: 98, right: 175 });
+
+      renderAt("/panel/pedidos");
+
+      expect(scrollTo).not.toHaveBeenCalled();
+    });
   });
 
   it("names every area for a thumb", () => {
