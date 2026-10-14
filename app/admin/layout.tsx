@@ -8,7 +8,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <>
-      <nav aria-label="Administración" className={`${pageContainer} flex gap-2 pt-6`}>
+      <nav aria-label="Administración" className={`${pageContainer} flex flex-wrap gap-2 pt-6`}>
         <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/usuarios">
           Usuarios
         </Link>
@@ -17,6 +17,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </Link>
         <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/importaciones">
           Importaciones
+        </Link>
+        <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/avisos">
+          Avisos
         </Link>
       </nav>
       {children}

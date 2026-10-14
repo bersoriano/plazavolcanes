@@ -20,6 +20,8 @@ vi.mock("@/lib/actions/admin-users", () => ({
   setUserDisabled: vi.fn(),
 }));
 
+vi.mock("@/lib/actions/platform-notices", () => ({ sendNotice: vi.fn() }));
+
 afterEach(cleanup);
 
 beforeEach(() => {
@@ -39,6 +41,39 @@ function deferred<T>() {
 }
 
 describe("MarketplaceUsers", () => {
+  it("offers to write to each person, administrators included", () => {
+    render(
+      <MarketplaceUsers
+        users={[
+          {
+            id: "persona-1",
+            email: "lucia@tallervolcan.mx",
+            displayName: "Lucía Martínez",
+            createdAt: "2026-08-01T00:00:00.000Z",
+            shopLimit: 1,
+            isDisabled: false,
+            isAdmin: false,
+            shops: [],
+          },
+          {
+            id: "persona-2",
+            email: "mario@tallervolcan.mx",
+            displayName: "Mario Ruiz",
+            createdAt: "2026-08-02T00:00:00.000Z",
+            shopLimit: 1,
+            isDisabled: false,
+            isAdmin: true,
+            shops: [],
+          },
+        ]}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Enviar aviso a Lucía Martínez" })).toBeInTheDocument();
+    // Writing to a colleague takes nothing from them, unlike disabling their account.
+    expect(screen.getByRole("button", { name: "Enviar aviso a Mario Ruiz" })).toBeInTheDocument();
+  });
+
   it("marks a disabled account and offers to enable it", () => {
     render(
       <MarketplaceUsers
