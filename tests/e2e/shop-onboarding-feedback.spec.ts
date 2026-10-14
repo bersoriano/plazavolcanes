@@ -36,7 +36,7 @@ test("shop creation, approval, storefront and trust states", async ({ page }) =>
   try {
     await expect(page.getByRole("status")).toContainText("Tu tienda se creó correctamente.");
     await expect(page.getByText("Esperando aprobación de administración", { exact: true })).toBeVisible();
-    await expect(page.getByText(/Puedes preparar productos como borradores privados/)).toBeVisible();
+    await expect(page.getByText(/Puedes guardar borradores privados/)).toBeVisible();
     await page.screenshot({ path: "output/playwright/shop-created-pending.png", fullPage: true });
     await page.getByRole("link", { name: "Agregar mi primer producto", exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/panel/tiendas/${shopId}/productos/nuevo$`));
