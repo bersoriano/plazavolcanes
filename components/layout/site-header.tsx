@@ -85,7 +85,7 @@ export async function SiteHeader() {
                   {/*
                     Administration has no slot in the quick access bar, so its
                     entry stays reachable from the header at every width. The
-                    rest (Disputas, Importaciones…) lives in /admin's own nav.
+                    rest (Centro de Resoluciones, Importaciones…) lives in /admin's own nav.
                   */}
                   <NavLink aria-label="Usuarios" className="tap grid place-items-center rounded-full text-sm font-semibold text-brand transition-colors hover:bg-background aria-[current=page]:bg-background md:inline-flex md:min-w-0 md:px-4 md:py-2.5" href="/admin/usuarios">
                     <UsersRound aria-hidden="true" className="size-5 md:hidden" />

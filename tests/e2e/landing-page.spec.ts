@@ -268,7 +268,7 @@ test.describe("landing responsive and accessibility gate", () => {
         // spell them out.
         const quickAccess = page.getByRole("navigation", { name: "Navegación rápida" });
         if (width < 768) {
-          await expect(quickAccess.getByRole("link", { name: /Panel/ })).toBeVisible();
+          await expect(quickAccess.getByRole("link", { name: /Ventas/ })).toBeVisible();
           await expect(quickAccess.getByRole("link", { name: /Compras/ })).toBeVisible();
           await expect(page.getByRole("link", { name: "Mis ventas" })).toBeHidden();
         } else {
