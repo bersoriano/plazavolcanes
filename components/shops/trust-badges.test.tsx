@@ -146,6 +146,18 @@ describe("TrustBadges absence versus achievement", () => {
   });
 });
 
+describe("TrustBadges spacing", () => {
+  it("keeps its top margin unless the block it sits in sets its own", () => {
+    const { rerender } = render(<TrustBadges metrics={null} profile={null} />);
+    const list = () => screen.getByRole("list", { name: "Marcadores de confianza" });
+    expect(list()).toHaveClass("mt-6");
+
+    rerender(<TrustBadges className="mt-0" metrics={null} profile={null} />);
+    expect(list()).toHaveClass("mt-0");
+    expect(list()).not.toHaveClass("mt-6");
+  });
+});
+
 describe("EarnedSignals", () => {
   function signals() {
     const list = screen.getByRole("list", { name: "Señales ganadas" });

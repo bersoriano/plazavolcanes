@@ -82,14 +82,17 @@ export function EarnedSignals({
 export function TrustBadges({
   metrics,
   profile,
+  className = "mt-6",
 }: {
   metrics: PublicTrustMetrics | null;
   profile: TrustProfile | null;
+  /** Outer spacing; a block that spaces its children itself passes its own. */
+  className?: string;
 }) {
   const badges = buildBadges(metrics, profile);
 
   return (
-    <ul aria-label="Marcadores de confianza" className="mt-6 flex flex-wrap gap-2">
+    <ul aria-label="Marcadores de confianza" className={`${className} flex flex-wrap gap-2`.trim()}>
       {badges.map((badge) => (
         <li key={badge.key}>
           <span
