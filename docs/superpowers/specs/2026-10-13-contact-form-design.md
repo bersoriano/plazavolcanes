@@ -60,7 +60,7 @@ The table lives in `private`, like `private.platform_notice_batches`: no browser
 | `attended_at` | `timestamptz` null | |
 | `attended_by` | `uuid` null | `auth.users (id) on delete set null` |
 
-A signed-in sender's row carries a snapshot of their name, email and phone taken when they wrote, so the message still says who to answer after the account is deleted. The check is therefore simple: `email` is never null, and a row without `user_id` also has `name` and `phone`.
+A signed-in sender's row carries a snapshot of their name, email and phone taken when they wrote, so the message still says who to answer after the account is deleted. `email` is never null. That a visitor leaves a name and a phone is the writing function's rule and not a table constraint: an account may have neither, and deleting it leaves a row with no `user_id`.
 
 A signed-in sender may have no phone on file and no display name; those two stay null for them.
 
