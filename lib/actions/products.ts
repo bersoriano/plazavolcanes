@@ -19,7 +19,7 @@ import { productCreationSchema, productSchema, productStatusSchema } from "@/lib
 import { missingForPublication } from "@/lib/listing-readiness";
 import { getNonPublicSaveMessage } from "@/lib/seller-publication";
 import { buildSiteUrl } from "@/lib/site-url";
-import { uniqueProductSlug } from "@/lib/slug";
+import { randomisedSlug, slugBelongsToName, uniqueProductSlug } from "@/lib/slug";
 
 const authError: ActionState = {
   status: "error",
@@ -78,6 +78,44 @@ async function nextProductSlug(
   });
 }
 
+/** The unique index every product slug has to pass, whoever can or cannot see the row holding it. */
+const PRODUCT_SLUG_INDEX = "products_slug_key";
+const SLUG_ATTEMPTS = 3;
+
+type WriteError = { code?: string; message?: string; details?: string | null } | null;
+
+function isSlugCollision(error: WriteError) {
+  return (
+    error?.code === "23505" &&
+    `${error.message ?? ""} ${error.details ?? ""}`.includes(PRODUCT_SLUG_INDEX)
+  );
+}
+
+/**
+ * Writes a product under `slug`, or under a slug nobody else could hold when
+ * the database says that one is taken.
+ *
+ * `nextProductSlug` can only rule out the slugs this seller may read. Another
+ * shop's draft is hidden from them by row-level security and still holds its
+ * slug, and two sellers can be offered the same free slug in the same instant.
+ * Only the unique index knows either, so its refusal is answered by trying
+ * again rather than by telling a seller their product could not be saved.
+ */
+async function writeUnderFreeSlug<Result extends { error: WriteError }>(
+  slug: string,
+  write: (slug: string) => PromiseLike<Result>,
+): Promise<Result & { slug: string }> {
+  let candidate = slug;
+  let result = await write(candidate);
+
+  for (let attempt = 1; attempt < SLUG_ATTEMPTS && isSlugCollision(result.error); attempt += 1) {
+    candidate = randomisedSlug(slug);
+    result = await write(candidate);
+  }
+
+  return { ...result, slug: candidate };
+}
+
 export async function createProduct(
   shopId: number,
   _previousState: ActionState,
@@ -110,26 +148,29 @@ export async function createProduct(
   const { supabase, userId } = context;
   const { data: shop } = await supabase.from("shops").select("slug").eq("id", shopId).eq("owner_id", userId).maybeSingle();
   if (!shop) return { status: "error", message: "No encontramos esa tienda." };
-  const slug = await nextProductSlug(supabase, parsed.data.name);
-  const { data, error } = await supabase
-    .from("products")
-    .insert({
-      name: parsed.data.name,
-      description: parsed.data.description,
-      price_mxn: parsed.data.price_mxn,
-      condition: parsed.data.condition,
-      used_condition: parsed.data.used_condition,
-      category_id: parsed.data.category_id,
-      handling_days: parsed.data.handling_days,
-      units_available: parsed.data.units_available,
-      currency_code: parsed.data.currency_code,
-      content_locale: parsed.data.content_locale,
-      shop_id: shopId,
-      slug,
-      status: "draft",
-    })
-    .select("id")
-    .single();
+  const { data, error } = await writeUnderFreeSlug(
+    await nextProductSlug(supabase, parsed.data.name),
+    (slug) =>
+      supabase
+        .from("products")
+        .insert({
+          name: parsed.data.name,
+          description: parsed.data.description,
+          price_mxn: parsed.data.price_mxn,
+          condition: parsed.data.condition,
+          used_condition: parsed.data.used_condition,
+          category_id: parsed.data.category_id,
+          handling_days: parsed.data.handling_days,
+          units_available: parsed.data.units_available,
+          currency_code: parsed.data.currency_code,
+          content_locale: parsed.data.content_locale,
+          shop_id: shopId,
+          slug,
+          status: "draft",
+        })
+        .select("id")
+        .single(),
+  );
   if (error || !data) {
     if (isListingLimitDatabaseError(error)) return listingLimitError;
     return { status: "error", message: "No pudimos crear el producto." };
@@ -211,28 +252,33 @@ export async function updateProduct(
     attachedBeforePublication = true;
   }
 
-  // A published slug is already out in the world, so only drafts may regenerate one.
-  const slug = existing.status === "published"
-    ? existing.slug
-    : await nextProductSlug(supabase, parsed.data.name);
-  const { error } = await supabase
-    .from("products")
-    .update({
-      name: parsed.data.name,
-      description: parsed.data.description,
-      price_mxn: parsed.data.price_mxn,
-      status: parsed.data.status,
-      condition: parsed.data.condition,
-      used_condition: parsed.data.used_condition,
-      category_id: parsed.data.category_id,
-      handling_days: parsed.data.handling_days,
-      units_available: parsed.data.units_available,
-      currency_code: parsed.data.currency_code,
-      content_locale: parsed.data.content_locale,
-      slug,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", productId);
+  // A published slug is already out in the world, so only drafts may get a new
+  // one, and only when their name no longer matches the one they have. Looking
+  // a draft's own slug up would find the draft itself and move it for nothing.
+  const keepsSlug =
+    existing.status === "published" || slugBelongsToName(existing.slug, parsed.data.name);
+  const { error, slug } = await writeUnderFreeSlug(
+    keepsSlug ? existing.slug : await nextProductSlug(supabase, parsed.data.name),
+    (candidate) =>
+      supabase
+        .from("products")
+        .update({
+          name: parsed.data.name,
+          description: parsed.data.description,
+          price_mxn: parsed.data.price_mxn,
+          status: parsed.data.status,
+          condition: parsed.data.condition,
+          used_condition: parsed.data.used_condition,
+          category_id: parsed.data.category_id,
+          handling_days: parsed.data.handling_days,
+          units_available: parsed.data.units_available,
+          currency_code: parsed.data.currency_code,
+          content_locale: parsed.data.content_locale,
+          slug: candidate,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", productId),
+  );
   if (error) {
     if (isListingLimitDatabaseError(error)) return listingLimitError;
     return { status: "error", message: "No pudimos guardar el producto." };
