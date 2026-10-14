@@ -896,6 +896,29 @@ export type Database = {
         }[];
       };
       mark_platform_notice_read: { Args: { p_notice_id: number }; Returns: undefined };
+      submit_contact_message: {
+        Args: {
+          p_message: string;
+          p_name: string | null;
+          p_email: string | null;
+          p_phone: string | null;
+        };
+        Returns: string;
+      };
+      list_contact_messages: {
+        Args: Record<string, never>;
+        Returns: {
+          id: string;
+          has_account: boolean;
+          name: string | null;
+          email: string;
+          phone: string | null;
+          message: string;
+          created_at: string;
+          attended_at: string | null;
+        }[];
+      };
+      mark_contact_message_attended: { Args: { p_message_id: string }; Returns: undefined };
       list_conversations: {
         Args: { p_role: string };
         Returns: {

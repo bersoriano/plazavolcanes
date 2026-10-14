@@ -21,6 +21,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/avisos">
           Avisos
         </Link>
+        <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/contacto">
+          Contacto
+        </Link>
       </nav>
       {children}
     </>
