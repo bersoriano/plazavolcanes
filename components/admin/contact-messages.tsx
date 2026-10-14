@@ -19,8 +19,8 @@ function Attend({ message, label }: { message: ContactMessage; label: string }) 
         disabled={pending}
         type="submit"
       >
-        {pending ? "Marcando…" : "Marcar como atendido"}
-        <span className="sr-only">: {label}</span>
+        {pending ? "Marcando…" : "Marcar como atendido"}{" "}
+        <span className="sr-only">el mensaje de {label}</span>
       </button>
       <NoticeActionMessage state={state} />
     </form>

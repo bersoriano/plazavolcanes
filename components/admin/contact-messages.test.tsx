@@ -82,7 +82,7 @@ describe("ContactMessages", () => {
     render(<ContactMessages messages={[visitor]} />);
 
     fireEvent.click(
-      within(card("Luis Pérez")).getByRole("button", { name: "Marcar como atendido: Luis Pérez" }),
+      within(card("Luis Pérez")).getByRole("button", { name: "Marcar como atendido el mensaje de Luis Pérez" }),
     );
 
     await waitFor(() => expect(markContactMessageAttended).toHaveBeenCalledTimes(1));
