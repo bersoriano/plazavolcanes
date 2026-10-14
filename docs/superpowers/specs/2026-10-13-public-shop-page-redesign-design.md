@@ -32,7 +32,7 @@ This project excludes:
 ### Banner
 
 - No bordered card around it, and no `Tienda independiente` eyebrow.
-- Rounded corners. Aspect `16/7` on a phone and `5/1` from `sm`; a Premium shop keeps a slightly taller frame (`16/8`, `4/1`).
+- Rounded corners. Aspect `16/7` on a phone, `5/1` from `sm`, `6/1` from `lg`; a Premium shop keeps a slightly taller frame (`16/8`, `4/1`, `5/1`).
 - With a photo: the image fills the frame, a bottom gradient (`from-black/70`) darkens the lower part, and the `h1` sits on it in white. White is fixed rather than a token: the text sits on a photograph in both themes.
 - Without a photo: a solid `bg-brand` band, the `h1` in `text-on-brand`. Both tokens flip under `data-theme="premium"`, so the pair stays legible there.
 
@@ -42,9 +42,9 @@ Two columns from `lg` (info on the left, actions on the right, top-aligned); sta
 
 Left column, in order:
 
-1. Badges and place in one wrapped row: `TrustTierBadge`, `FounderBadge` when `founder_since` is set, `PremiumBadge` when `is_premium`, then the location with its pin.
+1. Badges and place in one wrapped row: `TrustTierBadge`, `FounderBadge` when `founder_since` is set, `PremiumBadge` when `is_premium`, then the location with its pin. The row is `relative`: on a phone the Premium tooltip hangs from the row's left edge, not from the badge, which can sit mid-row and would push a 288px tooltip past the screen.
 2. The description, full, in the seller's words.
-3. Earned signals: the first three *measured* signals, in the order `TrustBadges` already uses (membership first, then `PUBLIC_TRUST_MARKERS`), as `label value` text joined by `·`. Unmeasured signals never appear here. If none is measured, the line is not rendered.
+3. Earned signals: the first three *measured* signals, in the order `TrustBadges` already uses (membership first, then `PUBLIC_TRUST_MARKERS`), as plain text with a trailing `·` between items, so a wrapped line never opens on a dot. A numeric value keeps its label (`Respuesta 98%`); a phrase stands alone (`Sin disputas`, `Miembro desde agosto de 2026`). Unmeasured signals never appear here. If none is measured, the line is not rendered.
 4. A `<details>`, closed by default. Its summary reads `Entregas y señales de confianza` when the shop has a delivery policy, `Señales de confianza` when it has none. Opened, it shows:
    - the delivery policy section exactly as today (`h2` `Política de entregas`, the seller's text with its line breaks), only when there is one;
    - the full `TrustBadges` list, measured and unmeasured;
@@ -69,9 +69,10 @@ A banner block, two short info lines, then the four-card grid, with the new spac
 | --- | --- |
 | `app/tiendas/[slug]/page.tsx` | New layout above |
 | `app/tiendas/[slug]/loading.tsx` | New skeleton |
-| `components/shops/trust-badges.tsx` | Export the badge builder so the page can pick the earned signals from the same list the disclosure shows |
+| `components/shops/trust-badges.tsx` | New `EarnedSignals`, built from the same badge list the disclosure shows; `className` prop on `TrustBadges`, default `mt-6` |
 | `components/shops/trust-tier-badge.tsx` | `className` prop, default `mt-4`, so other screens are unchanged |
 | `components/catalog/product-card.tsx` | `showShop` prop, default `true`, applied to the default variant |
+| `components/shops/premium-badge.tsx` | `static` below `sm`, `relative` from `sm`, so its tooltip can hang from the row on a phone. Only the shop page shows that tooltip. |
 
 ## Testing
 
