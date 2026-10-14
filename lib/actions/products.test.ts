@@ -45,6 +45,38 @@ function query(result: unknown) {
   return chain;
 }
 
+/** What the database answers when a second row asks for a slug that is taken. */
+const slugTaken = {
+  code: "23505",
+  message: 'duplicate key value violates unique constraint "products_slug_key"',
+  details: "Key (slug)=(taza-volcanica) already exists.",
+};
+
+/**
+ * A slug lookup that answers by the slug it was asked about. Row-level security
+ * decides what a seller can see, so `visible` is only ever what they may read.
+ */
+function slugLookup(visible: (slug: string) => boolean) {
+  let asked = "";
+  const chain = {
+    eq: vi.fn((column: string, value: string) => {
+      if (column === "slug") asked = value;
+      return chain;
+    }),
+    maybeSingle: vi.fn(async () => ({ data: visible(asked) ? { id: 99 } : null, error: null })),
+  };
+  return chain;
+}
+
+const insertAnswering = (result: unknown) => ({
+  select: vi.fn(() => ({ single: vi.fn().mockResolvedValue(result) })),
+});
+const updateAnswering = (result: unknown) => ({ eq: vi.fn().mockResolvedValue(result) });
+const draft = (slug: string) => query({
+  data: { shop_id: 7, image_path: "products/seller-1/22/cover.jpg", status: "draft", slug, is_admin_enabled: true },
+  error: null,
+});
+
 function sellerForm(overrides: Record<string, string> = {}) {
   return formOf({
     name: "Taza volcánica",
@@ -148,6 +180,141 @@ describe("createProduct", () => {
       slug: "taza-volcanica",
       status: "draft",
     });
+  });
+});
+
+describe("createProduct with a slug somebody else holds", () => {
+  it("creates the product under another slug when a listing it cannot see holds the first", async () => {
+    // Another shop's draft is hidden by row-level security, so the lookup said
+    // the slug was free. Only the unique index knows better.
+    mocks.insert
+      .mockReturnValueOnce(insertAnswering({ data: null, error: slugTaken }))
+      .mockReturnValueOnce(insertAnswering({ data: { id: 22 }, error: null }));
+
+    await expect(createProduct(7, idle, sellerForm())).rejects.toThrow(
+      "NEXT_REDIRECT:/panel/productos/22/editar?creado=1",
+    );
+
+    expect(mocks.insert).toHaveBeenCalledTimes(2);
+    const [first, second] = mocks.insert.mock.calls.map(([row]) => row);
+    expect(first.slug).toBe("taza-volcanica");
+    expect(second.slug).toMatch(/^taza-volcanica-[0-9a-f]{6}$/);
+    expect({ ...second, slug: first.slug }).toEqual(first);
+  });
+
+  it("stops after three refusals instead of trying forever", async () => {
+    mocks.insert.mockReturnValue(insertAnswering({ data: null, error: slugTaken }));
+
+    await expect(createProduct(7, idle, sellerForm())).resolves.toEqual({
+      status: "error",
+      message: "No pudimos crear el producto.",
+    });
+    expect(mocks.insert).toHaveBeenCalledTimes(3);
+  });
+
+  it("does not try again when the refusal is not about the slug", async () => {
+    mocks.insert.mockReturnValue(
+      insertAnswering({ data: null, error: { code: "23514", message: "check constraint" } }),
+    );
+
+    await expect(createProduct(7, idle, sellerForm())).resolves.toMatchObject({ status: "error" });
+    expect(mocks.insert).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not take another uniqueness rule for the slug's", async () => {
+    mocks.insert.mockReturnValue(
+      insertAnswering({
+        data: null,
+        error: { code: "23505", message: 'duplicate key value violates unique constraint "products_pkey"' },
+      }),
+    );
+
+    await expect(createProduct(7, idle, sellerForm())).resolves.toMatchObject({ status: "error" });
+    expect(mocks.insert).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("updateProduct and the slug of a draft", () => {
+  const savedSlug = () => mocks.update.mock.calls.at(-1)?.[0].slug;
+
+  it("leaves a draft's slug alone while its name still matches it", async () => {
+    // The draft's own row is the one holding the slug. Looking it up used to
+    // find that row and move the draft to "-2", and back again on the next save.
+    const lookup = slugLookup((slug) => slug === "taza-volcanica");
+    mocks.productsSelect
+      .mockImplementationOnce(() => draft("taza-volcanica"))
+      .mockImplementation((_columns: string, options?: { head?: boolean }) =>
+        options?.head ? query({ count: 0, error: null }) : lookup,
+      );
+
+    await expect(updateProduct(22, idle, sellerForm({ status: "draft" }))).resolves.toMatchObject({
+      status: "success",
+    });
+
+    expect(savedSlug()).toBe("taza-volcanica");
+    expect(lookup.maybeSingle).not.toHaveBeenCalled();
+  });
+
+  it("keeps the suffix a draft was given when its first slug was taken", async () => {
+    mocks.productsSelect.mockImplementationOnce(() => draft("taza-volcanica-3f9a1c"));
+
+    await updateProduct(22, idle, sellerForm({ status: "draft" }));
+
+    expect(savedSlug()).toBe("taza-volcanica-3f9a1c");
+  });
+
+  it("gives a renamed draft a slug from its new name", async () => {
+    mocks.productsSelect.mockImplementationOnce(() => draft("taza-anterior"));
+
+    await updateProduct(22, idle, sellerForm({ status: "draft" }));
+
+    expect(savedSlug()).toBe("taza-volcanica");
+  });
+
+  it("saves a renamed draft under another slug when a listing it cannot see holds the first", async () => {
+    mocks.productsSelect.mockImplementationOnce(() => draft("taza-anterior"));
+    mocks.update
+      .mockReturnValueOnce(updateAnswering({ error: slugTaken }))
+      .mockReturnValueOnce(updateAnswering({ error: null }));
+
+    await expect(updateProduct(22, idle, sellerForm({ status: "draft" }))).resolves.toMatchObject({
+      status: "success",
+      message: "Borrador guardado",
+    });
+
+    expect(mocks.update).toHaveBeenCalledTimes(2);
+    expect(mocks.update.mock.calls[0][0].slug).toBe("taza-volcanica");
+    expect(savedSlug()).toMatch(/^taza-volcanica-[0-9a-f]{6}$/);
+    // The page that was refreshed is the one the product ended up at.
+    expect(mocks.revalidatePath).toHaveBeenCalledWith(`/productos/${savedSlug()}`);
+  });
+
+  it("stops after three refusals instead of trying forever", async () => {
+    mocks.productsSelect.mockImplementationOnce(() => draft("taza-anterior"));
+    mocks.update.mockReturnValue(updateAnswering({ error: slugTaken }));
+
+    await expect(updateProduct(22, idle, sellerForm({ status: "draft" }))).resolves.toEqual({
+      status: "error",
+      message: "No pudimos guardar el producto.",
+    });
+    expect(mocks.update).toHaveBeenCalledTimes(3);
+  });
+
+  it("never moves a listing that is already published", async () => {
+    mocks.productsSelect.mockImplementationOnce(() => query({
+      data: {
+        shop_id: 7,
+        image_path: "products/seller-1/22/cover.jpg",
+        status: "published",
+        slug: "taza-anterior",
+        is_admin_enabled: true,
+      },
+      error: null,
+    }));
+
+    await updateProduct(22, idle, sellerForm());
+
+    expect(savedSlug()).toBe("taza-anterior");
   });
 });
 
