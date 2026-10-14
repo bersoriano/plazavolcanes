@@ -5,14 +5,17 @@ import { getTrustTierMarker, type TrustTier } from "@/lib/trust-tiers";
 export function TrustTierBadge({
   tier,
   showDetails = true,
+  className = "mt-4",
 }: {
   tier: TrustTier;
   showDetails?: boolean;
+  /** Outer spacing; a row that aligns its badges itself passes its own. */
+  className?: string;
 }) {
   const marker = getTrustTierMarker(tier);
 
   return (
-    <div className="group relative mt-4 inline-flex items-center gap-2 rounded-full border border-brand/20 bg-trust-tier-fill px-3 py-2 text-sm font-bold text-brand-hover">
+    <div className={`group relative ${className} inline-flex items-center gap-2 rounded-full border border-brand/20 bg-trust-tier-fill px-3 py-2 text-sm font-bold text-brand-hover`}>
       <ShieldCheck aria-hidden="true" className="size-4" />
       Nivel {marker.label}
       {showDetails ? <>
