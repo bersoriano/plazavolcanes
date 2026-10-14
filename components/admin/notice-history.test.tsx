@@ -65,6 +65,14 @@ describe("NoticeHistory", () => {
     expect(row.getByText("La plaza estará en pausa.")).toBeInTheDocument();
   });
 
+  it("counts one person in the singular", () => {
+    render(<NoticeHistory batches={[{ ...announcement, recipientCount: 1, readCount: 1 }]} />);
+
+    expect(
+      within(entry("Mantenimiento el sábado")).getByText("Todas las personas · 1 enviado · 1 leído"),
+    ).toBeInTheDocument();
+  });
+
   it("names each audience in words", () => {
     render(
       <NoticeHistory

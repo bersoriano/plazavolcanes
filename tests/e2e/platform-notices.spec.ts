@@ -117,8 +117,8 @@ test.describe("notices from administration", () => {
     await adminPage.goto("/admin/usuarios");
     const card = adminPage.locator("article").filter({ hasText: member.email });
     await card.getByRole("button", { name: `Enviar aviso a ${member.name}` }).click();
-    await card.getByLabel("Título").fill(title);
-    await card.getByLabel("Mensaje").fill("Agrega una foto de portada para poder publicar.");
+    await card.getByLabel("Título", { exact: true }).fill(title);
+    await card.getByLabel("Mensaje", { exact: true }).fill("Agrega una foto de portada para poder publicar.");
     await card.getByLabel(/^Enlace/).fill("/panel");
     await card.getByLabel(/^Texto del botón/).fill("Ir a mi panel");
     await card.getByRole("button", { name: "Enviar aviso", exact: true }).click();
@@ -163,8 +163,8 @@ test.describe("notices from administration", () => {
 
     // An announcement asks before it goes anywhere. It is not sent here: it would
     // land in the inbox of every account the other specs are using at this moment.
-    await adminPage.getByLabel("Título").fill(`Mantenimiento ${stamp}`);
-    await adminPage.getByLabel("Mensaje").fill("La plaza estará en pausa el sábado por la noche.");
+    await adminPage.getByLabel("Título", { exact: true }).fill(`Mantenimiento ${stamp}`);
+    await adminPage.getByLabel("Mensaje", { exact: true }).fill("La plaza estará en pausa el sábado por la noche.");
     await adminPage.getByRole("radio", { name: /Quienes venden/ }).check();
     await adminPage.getByRole("button", { name: "Enviar anuncio" }).click();
     await expect(adminPage.getByText(/Se enviará a \d+ personas?\./)).toBeVisible();

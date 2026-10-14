@@ -134,7 +134,7 @@ One row per recipient. An announcement to 200 people is 200 rows, each with its 
 
 - The content is copied onto every row. A row is everything a reader needs, so reading it is a single-table select under row-level security.
 - `kind` is `direct` for the `person` audience and `announcement` for the others.
-- `action_href` and `action_label` are both set or both null. `action_href` must be a path inside the site: it starts with a single `/` and never with `//` or `/\`.
+- `action_href` and `action_label` are both set or both null. `action_href` must be a path inside the site: a single leading `/` followed only by letters, digits, and `/ _ . ~ % ? = & # -`, and never a second `/` straight after the first. The character set is closed because a browser drops tabs and line breaks from a URL, which would turn `/<tab>/other.site` into a link to another site. The form, the function, and a table constraint all apply the same rule.
 - Deleting an account deletes its notices. They never block `admin_delete_user` the way orders and conversations do.
 - Indexes: `(recipient_id, created_at desc)` for the inbox, `(recipient_id) where read_at is null` for the badge, and `(batch_id)` for retraction and read counts.
 
@@ -425,6 +425,7 @@ Enviados
 - `Enviar anuncio` does not send. It reveals the confirmation with the count for the chosen audience; the second button sends. No browser dialog is used.
 - `Retirar` also asks for confirmation inline.
 - The history shows the newest 100 batches, direct notices included. A direct notice shows the recipient's name and `Leído` or `Sin leer`. A recipient whose account was deleted shows as `Cuenta eliminada`.
+- Sending a notice from a card folds the form away and leaves `Aviso enviado.` in its place; a refusal keeps the form open with what was typed.
 
 ## Server actions
 
@@ -512,7 +513,13 @@ Each of these fits the design without changing it:
 
 ### End to end (`tests/e2e/platform-notices.spec.ts`)
 
-Against the local stack and through the real interface: an administrator sends a notice to one person; that person sees an unread `Plaza Volcanes` row and badge, opens it, finds no way to reply, and the badge clears; the administrator sees it as read, broadcasts to everyone, and both accounts receive it; the administrator retracts it and it is gone from the other inbox.
+Against the local stack and through the real interface: an administrator sends a notice to one person whose inbox is already open; the row arrives there without a reload, signed `Plaza Volcanes` and unread; the person opens it, finds its button and no way to reply, and the badge clears; the administrator sees it as read, then retracts it, and it is gone from the person's inbox and its address reads as not found.
+
+The spec waits for Realtime's own confirmation of the subscription before sending, because a channel reports itself subscribed before the server is listening.
+
+An announcement is taken as far as its confirmation and then cancelled, not sent. The suite runs its specs in parallel against one database, and an announcement would land in the inbox of every account the other specs are using at that moment. Delivery to an audience is covered by the database tests, and sending one through the interface was verified by hand against the local stack.
+
+Two more cases: a signed-out visitor to a notice is sent to sign in, and `/admin/avisos` is closed to anyone who is not an administrator.
 
 ### Verification gates
 

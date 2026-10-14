@@ -19,7 +19,10 @@ function summary(batch: NoticeBatch) {
   if (batch.retractedAt) return `${to} · Retirado el ${formatDate(batch.retractedAt)}`;
   if (batch.audience === "person") return `${to} · ${batch.readCount > 0 ? "Leído" : "Sin leer"}`;
 
-  return `${to} · ${batch.recipientCount} enviados · ${batch.readCount} leídos`;
+  const sent = `${batch.recipientCount} ${batch.recipientCount === 1 ? "enviado" : "enviados"}`;
+  const read = `${batch.readCount} ${batch.readCount === 1 ? "leído" : "leídos"}`;
+
+  return `${to} · ${sent} · ${read}`;
 }
 
 /**
