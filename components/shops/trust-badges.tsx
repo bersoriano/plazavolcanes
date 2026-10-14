@@ -42,17 +42,58 @@ function buildBadges(metrics: PublicTrustMetrics | null, profile: TrustProfile |
   ];
 }
 
-export function TrustBadges({
+/** How many earned signals the shop header names before the full list. */
+const EARNED_SIGNAL_COUNT = 3;
+
+/**
+ * The first few signals a shop has earned, as one quiet line. The full list,
+ * measured and not, stays in `TrustBadges`; this never names a missing one.
+ */
+export function EarnedSignals({
   metrics,
   profile,
+  className = "",
 }: {
   metrics: PublicTrustMetrics | null;
   profile: TrustProfile | null;
+  className?: string;
+}) {
+  const earned = buildBadges(metrics, profile)
+    .filter((badge) => badge.measured)
+    .slice(0, EARNED_SIGNAL_COUNT);
+  if (!earned.length) return null;
+
+  return (
+    <ul
+      aria-label="Señales ganadas"
+      className={`flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted ${className}`.trim()}
+    >
+      {earned.map((badge, index) => (
+        <li className="inline-flex items-center gap-2" key={badge.key} title={badge.explanation}>
+          {/* A number needs its label; a phrase like "Sin disputas" says it all. */}
+          {/^\d/.test(badge.value) ? `${badge.label} ${badge.value}` : badge.value}
+          {/* Trailing, so a wrapped line never opens on a stray dot. */}
+          {index < earned.length - 1 ? <span aria-hidden="true">·</span> : null}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+export function TrustBadges({
+  metrics,
+  profile,
+  className = "mt-6",
+}: {
+  metrics: PublicTrustMetrics | null;
+  profile: TrustProfile | null;
+  /** Outer spacing; a block that spaces its children itself passes its own. */
+  className?: string;
 }) {
   const badges = buildBadges(metrics, profile);
 
   return (
-    <ul aria-label="Marcadores de confianza" className="mt-6 flex flex-wrap gap-2">
+    <ul aria-label="Marcadores de confianza" className={`${className} flex flex-wrap gap-2`.trim()}>
       {badges.map((badge) => (
         <li key={badge.key}>
           <span

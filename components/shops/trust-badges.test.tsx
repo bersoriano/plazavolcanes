@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { TrustBadges } from "@/components/shops/trust-badges";
+import { EarnedSignals, TrustBadges } from "@/components/shops/trust-badges";
 import { PUBLIC_TRUST_MARKERS } from "@/lib/public-trust";
 
 afterEach(cleanup);
@@ -143,5 +143,38 @@ describe("TrustBadges absence versus achievement", () => {
 
     expect(badge).toHaveAttribute("data-state", "measured");
     expect(badge).toHaveTextContent("Sin disputas");
+  });
+});
+
+describe("TrustBadges spacing", () => {
+  it("keeps its top margin unless the block it sits in sets its own", () => {
+    const { rerender } = render(<TrustBadges metrics={null} profile={null} />);
+    const list = () => screen.getByRole("list", { name: "Marcadores de confianza" });
+    expect(list()).toHaveClass("mt-6");
+
+    rerender(<TrustBadges className="mt-0" metrics={null} profile={null} />);
+    expect(list()).toHaveClass("mt-0");
+    expect(list()).not.toHaveClass("mt-6");
+  });
+});
+
+describe("EarnedSignals", () => {
+  function signals() {
+    const list = screen.getByRole("list", { name: "Señales ganadas" });
+    return within(list).getAllByRole("listitem").map((item) => item.textContent?.replace("·", "").trim());
+  }
+
+  it("names the first three earned signals, in the order the badges keep", () => {
+    render(<EarnedSignals metrics={fullMetrics} profile={profile} />);
+
+    expect(signals()).toEqual(["Miembro desde febrero de 2026", "Respuesta 98%", "Tiempo de respuesta 42 min"]);
+  });
+
+  it("never names a signal nothing has measured yet", () => {
+    render(<EarnedSignals metrics={null} profile={null} />);
+
+    // A clean dispute record is earned by default; every other signal waits.
+    expect(signals()).toEqual(["Sin disputas"]);
+    expect(screen.queryByText(/Sin datos/)).not.toBeInTheDocument();
   });
 });

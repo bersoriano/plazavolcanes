@@ -33,4 +33,13 @@ describe("TrustTierBadge", () => {
     expect(fill(tierPill())).not.toEqual(fill(premium));
     expect(tierPill()).not.toHaveClass("bg-premium-ink");
   });
+
+  it("keeps its top margin unless the row it joins sets its own", () => {
+    const { rerender } = render(<TrustTierBadge showDetails={false} tier="standard" />);
+    expect(tierPill()).toHaveClass("mt-4");
+
+    rerender(<TrustTierBadge className="mt-0" showDetails={false} tier="standard" />);
+    expect(tierPill()).toHaveClass("mt-0");
+    expect(tierPill()).not.toHaveClass("mt-4");
+  });
 });

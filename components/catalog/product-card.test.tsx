@@ -31,6 +31,28 @@ describe("ProductCard", () => {
     expect(screen.queryByText("Nuevo")).not.toBeInTheDocument();
   });
 
+  it("leaves out the shop and its location on that shop's own page", () => {
+    const product = {
+      id: 4,
+      slug: "taza-de-barro",
+      imageUrl: null,
+      name: "Taza de barro",
+      price_mxn: 349,
+      condition: "new" as const,
+      used_condition: null,
+      shop: { name: "Casa Niebla", country_code: "MX", administrative_area_codes: ["MX-JAL"], trust_tier: "standard" as const },
+    };
+    const { rerender } = render(<ProductCard product={product} />);
+    expect(screen.getByText("Casa Niebla")).toBeInTheDocument();
+    expect(screen.getByText(/Jalisco/)).toBeInTheDocument();
+
+    rerender(<ProductCard product={product} showShop={false} />);
+
+    expect(screen.queryByText("Casa Niebla")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Jalisco/)).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Taza de barro" })).toBeInTheDocument();
+  });
+
   it("does not mark a listing that still has units", () => {
     render(
       <ProductCard
