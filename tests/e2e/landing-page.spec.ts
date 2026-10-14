@@ -270,9 +270,9 @@ test.describe("landing responsive and accessibility gate", () => {
         if (width < 768) {
           await expect(quickAccess.getByRole("link", { name: /Panel/ })).toBeVisible();
           await expect(quickAccess.getByRole("link", { name: /Compras/ })).toBeVisible();
-          await expect(page.getByRole("link", { name: "Mi panel" })).toBeHidden();
+          await expect(page.getByRole("link", { name: "Mis ventas" })).toBeHidden();
         } else {
-          await expect(page.getByRole("link", { name: "Mi panel" })).toBeVisible();
+          await expect(page.getByRole("link", { name: "Mis ventas" })).toBeVisible();
           await expect(quickAccess).toBeHidden();
         }
         await expectNoDocumentOverflow(page);
@@ -394,7 +394,7 @@ test.describe("landing responsive and accessibility gate", () => {
 
       const home = page.getByRole("link", { name: "Plaza Volcanes, inicio" });
       const search = page.getByRole("searchbox", { name: "Buscar productos" });
-      // The header and the seller hero, in order. "Mi panel" and "Mensajes"
+      // The header and the seller hero, in order. "Mis ventas" and "Mensajes"
       // are display:none at this width: the quick access bar holds them.
       const headerAndHero = [
         home,
@@ -461,7 +461,7 @@ test.describe("landing responsive and accessibility gate", () => {
         const home = page.getByRole("link", { name: "Plaza Volcanes, inicio" });
         const navigation = page.getByRole("navigation", { name: "Navegación principal" });
         const brandLabel = home.getByText("Plaza Volcanes");
-        const panelLabel = navigation.getByText("Mi panel", { exact: true });
+        const panelLabel = navigation.getByText("Mis ventas", { exact: true });
         const messagesLabel = navigation.getByText("Mensajes", { exact: true });
         const signOutLabel = navigation.getByText("Salir", { exact: true });
 
