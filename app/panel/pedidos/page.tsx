@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ChevronRight, ImageIcon, PackageOpen, RotateCw, SearchX } from "lucide-react";
+import { ChevronRight, ImageIcon, PackageOpen, RotateCw, SearchX } from "lucide-react";
 
 import { pageContainer } from "@/components/layout/container";
 import { SellerOrdersToolbar } from "@/components/orders/seller-orders-toolbar";
@@ -52,11 +52,7 @@ export default async function SellerOrdersPage({
 
   return (
     <section className={`${pageContainer} py-10 sm:py-14`}>
-      <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href="/panel">
-        <ArrowLeft aria-hidden="true" className="size-4" />
-        Panel
-      </Link>
-      <p className="mt-5 text-sm font-semibold uppercase tracking-[0.18em] text-brand">Ventas</p>
+      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Ventas</p>
       <h1 className="mt-2 font-display text-4xl font-semibold">Pedidos</h1>
 
       {result.status === "error" ? (

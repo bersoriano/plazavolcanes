@@ -229,4 +229,13 @@ describe("SellerOrdersPage", () => {
     expect(screen.getByRole("link", { name: "Reintentar" })).toHaveAttribute("href", "/panel/pedidos");
     expect(screen.queryByText("Aún no recibes pedidos")).not.toBeInTheDocument();
   });
+
+  it("leaves the way around the panel to the panel's bar", async () => {
+    mocks.getSellerOrderQueue.mockResolvedValue(ready([row({ id: 3 })]));
+
+    render(await SellerOrdersPage());
+
+    const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href"));
+    expect(hrefs).not.toContain("/panel");
+  });
 });

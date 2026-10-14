@@ -1,11 +1,10 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { formatCurrency } from "@/lib/format";
 import { formatOrderStatus } from "@/lib/order-status";
 import { orderDeliveryLine } from "@/lib/order-summary";
 import { getOrderDetail } from "@/lib/queries/orders.server";
+import { BackLink } from "@/components/layout/back-link";
 import { pageContainer } from "@/components/layout/container";
 import { MessageThread } from "@/components/messages/message-thread";
 import { OrderActions } from "@/components/orders/order-actions";
@@ -53,10 +52,7 @@ export default async function SellerOrderDetailPage({ params }: { params: Promis
 
   return (
     <section className={`${pageContainer} py-10 sm:py-14`}>
-      <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href="/panel/pedidos">
-        <ArrowLeft aria-hidden="true" className="size-4" />
-        Pedidos
-      </Link>
+      <BackLink href="/panel/pedidos">Pedidos</BackLink>
 
       <section aria-labelledby="order-next-step" className="mt-7 rounded-[2rem] border border-brand/30 bg-surface p-6 sm:p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Pedido #{order.id} · Siguiente paso</p>

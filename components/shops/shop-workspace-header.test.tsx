@@ -49,18 +49,16 @@ describe("shop workspace header", () => {
     );
   });
 
-  it("offers the way back to every shop", () => {
+  it("leaves the way around the panel to the panel's bar", () => {
+    // The shops and the orders are one tap away in the bar the layout draws
+    // above this header; repeating them here made two sets of the same links.
     renderHeader();
 
-    expect(screen.getByRole("link", { name: /Mis tiendas/ })).toHaveAttribute("href", "/panel");
-  });
-
-  it("reaches orders without a detour through the panel", () => {
-    // A sale arrives while the seller is editing listings. Sending them back to
-    // /panel first is the kind of detour that gets an order answered late.
-    renderHeader();
-
-    expect(screen.getByRole("link", { name: /Pedidos/ })).toHaveAttribute("href", "/panel/pedidos");
+    expect(screen.getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual([
+      "/tiendas/casa-niebla",
+      "/panel/tiendas/4",
+      "/panel/tiendas/4/ajustes",
+    ]);
   });
 
   it("tells a distinguished seller their shop carries the distinction", () => {

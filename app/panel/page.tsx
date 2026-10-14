@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CircleUserRound, MessageCircle, PackageOpen, RotateCw } from "lucide-react";
+import { RotateCw } from "lucide-react";
 
 import { pageContainer } from "@/components/layout/container";
 import { ActionQueue } from "@/components/seller-dashboard/action-queue";
@@ -10,9 +10,6 @@ import { SellerResults } from "@/components/seller-dashboard/seller-results";
 import { ShopOverview } from "@/components/seller-dashboard/shop-overview";
 import { getSellerDashboard } from "@/lib/queries/seller-dashboard.server";
 import { buildSiteUrl } from "@/lib/site-url";
-
-const secondaryLink =
-  "tap inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 text-sm font-semibold text-brand transition-colors hover:border-brand";
 
 function parseShopId(value: string | string[] | undefined) {
   const id = typeof value === "string" ? Number(value) : NaN;
@@ -32,25 +29,11 @@ export default async function PanelPage({
 
   return (
     <section className={`${pageContainer} py-8 sm:py-12`}>
-      <header className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Tu espacio</p>
-          <h1 className="mt-1 font-display text-3xl font-semibold tracking-[-0.04em] sm:text-5xl">Panel de ventas</h1>
-        </div>
-        <nav aria-label="Accesos del panel" className="flex flex-wrap gap-2">
-          <Link className={secondaryLink} href="/mensajes">
-            <MessageCircle aria-hidden="true" className="size-4" />
-            Mensajes
-          </Link>
-          <Link className={secondaryLink} href="/panel/pedidos">
-            <PackageOpen aria-hidden="true" className="size-4" />
-            Pedidos
-          </Link>
-          <Link className={secondaryLink} href="/panel/cuenta">
-            <CircleUserRound aria-hidden="true" className="size-4" />
-            Mi cuenta
-          </Link>
-        </nav>
+      {/* Orders, the shops and the account are in the bar the layout draws
+          above this page, and messages are in the header. */}
+      <header className="mb-6 sm:mb-8">
+        <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Tu espacio</p>
+        <h1 className="mt-1 font-display text-3xl font-semibold tracking-[-0.04em] sm:text-5xl">Panel de ventas</h1>
       </header>
 
       {result.status === "error" ? <DashboardError /> : <Dashboard result={result} />}

@@ -1,6 +1,3 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-
 import { DisplayNameForm } from "@/components/account/display-name-form";
 import { EmailNotificationsForm } from "@/components/account/email-notifications-form";
 import { PhoneForm } from "@/components/account/phone-form";
@@ -34,12 +31,7 @@ export default async function AccountPage() {
 
   return (
     <section className={`${pageContainer} py-10 sm:py-14`}>
-      <Link className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand" href="/panel">
-        <ArrowLeft aria-hidden="true" className="size-4" />
-        Mi panel
-      </Link>
-
-      <div className="mt-7 rounded-[2rem] border border-line bg-surface p-6 sm:p-9">
+      <div className="rounded-[2rem] border border-line bg-surface p-6 sm:p-9">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Tu cuenta</p>
         <h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">Datos de contacto</h1>
         {email ? <p className="mb-8 mt-3 leading-7 text-muted">Tu cuenta usa {email}.</p> : null}

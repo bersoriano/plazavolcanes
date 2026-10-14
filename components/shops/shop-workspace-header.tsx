@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, PackageOpen } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 
 import { PremiumBadge } from "@/components/shops/premium-badge";
 
@@ -15,7 +15,10 @@ const VIEWS: { id: WorkspaceView; label: string; segment: string }[] = [
  *
  * The catalogue and the settings are separate routes so neither crowds the
  * other, and this header is what keeps them feeling like one place: same name,
- * same two tabs, same way out to the public shop and to the day's orders.
+ * same two tabs, same way out to the public shop.
+ *
+ * The other shops and the day's orders are not here: they are areas of the
+ * panel, and the panel's bar sits right above this header (see PanelNav).
  */
 export function ShopWorkspaceHeader({
   active,
@@ -32,27 +35,16 @@ export function ShopWorkspaceHeader({
 }) {
   return (
     <header className="mb-7">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-        <Link className="tap inline-flex items-center gap-2 text-sm font-semibold text-brand" href="/panel">
-          <ArrowLeft aria-hidden="true" className="size-4" />
-          Mis tiendas
-        </Link>
-        <div className="flex flex-wrap items-center gap-x-4">
-          <Link className="tap inline-flex items-center gap-2 text-sm font-semibold text-brand" href="/panel/pedidos">
-            <PackageOpen aria-hidden="true" className="size-4" />
-            Pedidos
-          </Link>
-          <Link className="tap inline-flex items-center gap-2 text-sm font-semibold text-brand" href={`/tiendas/${shopSlug}`}>
-            <ExternalLink aria-hidden="true" className="size-4" />
-            Ver tienda pública
-          </Link>
+      <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Tu tienda</p>
+      <div className="mt-1 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <h1 className="font-display text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">{shopName}</h1>
+          {isPremium ? <PremiumBadge showDetails={false} /> : null}
         </div>
-      </div>
-
-      <p className="mt-4 text-sm font-semibold uppercase tracking-[0.16em] text-brand">Tu tienda</p>
-      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
-        <h1 className="font-display text-3xl font-semibold tracking-[-0.03em] sm:text-4xl">{shopName}</h1>
-        {isPremium ? <PremiumBadge showDetails={false} /> : null}
+        <Link className="tap inline-flex items-center gap-2 text-sm font-semibold text-brand" href={`/tiendas/${shopSlug}`}>
+          <ExternalLink aria-hidden="true" className="size-4" />
+          Ver tienda pública
+        </Link>
       </div>
       {isPremium ? (
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted">
