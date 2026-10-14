@@ -4,7 +4,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { ThreadConversation } from "@/components/messages/thread-conversation";
 import type { ActionState } from "@/lib/action-state";
 import { markConversationRead } from "@/lib/actions/messages";
-import { subscribeToMessageInserts } from "@/lib/realtime-messages";
+import { subscribeToInserts } from "@/lib/realtime-messages";
 
 const refresh = vi.fn();
 // One router for the life of the page, as the real hook hands out.
@@ -12,7 +12,7 @@ const router = { refresh };
 
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
 vi.mock("@/lib/actions/messages", () => ({ markConversationRead: vi.fn(async () => undefined) }));
-vi.mock("@/lib/realtime-messages", () => ({ subscribeToMessageInserts: vi.fn(() => vi.fn()) }));
+vi.mock("@/lib/realtime-messages", () => ({ subscribeToInserts: vi.fn(() => vi.fn()) }));
 vi.mock("@/lib/use-viewer-time-zone", () => ({ useViewerTimeZone: () => "America/Mexico_City" }));
 
 const NOW = "2026-10-12T23:00:00Z";
@@ -137,7 +137,7 @@ test("hands the box back to the writer after sending", async () => {
 test("appends a message that arrives while the thread is open", async () => {
   renderConversation();
 
-  const { onInsert } = vi.mocked(subscribeToMessageInserts).mock.calls[0][0];
+  const { onInsert } = vi.mocked(subscribeToInserts).mock.calls[0][0];
   act(() => {
     onInsert({ id: 3, sender_id: "them", body: "Te la aparto", created_at: "2026-10-12T18:00:00Z" });
   });
@@ -161,7 +161,7 @@ test("brings the newest message into view, and only when there is a new one", as
   );
   expect(scrollIntoView).toHaveBeenCalledTimes(1);
 
-  const { onInsert } = vi.mocked(subscribeToMessageInserts).mock.calls[0][0];
+  const { onInsert } = vi.mocked(subscribeToInserts).mock.calls[0][0];
   act(() => {
     onInsert({ id: 3, sender_id: "them", body: "Te la aparto", created_at: "2026-10-12T18:00:00Z" });
   });
@@ -191,7 +191,7 @@ test("moves only the conversation when it scrolls inside the inbox frame", async
   log().style.overflowY = "auto";
   Object.defineProperty(log(), "scrollHeight", { configurable: true, value: 900 });
 
-  const { onInsert } = vi.mocked(subscribeToMessageInserts).mock.calls[0][0];
+  const { onInsert } = vi.mocked(subscribeToInserts).mock.calls[0][0];
   act(() => {
     onInsert({ id: 3, sender_id: "them", body: "Te la aparto", created_at: "2026-10-12T18:00:00Z" });
   });

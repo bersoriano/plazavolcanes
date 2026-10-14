@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { InboxShell } from "@/components/messages/inbox-shell";
 import { mergeInbox } from "@/lib/queries/messages";
 import { listConversations } from "@/lib/queries/messages.server";
+import { listPlatformNotices } from "@/lib/queries/platform-notices.server";
 import { viewerOwnsAnyShop } from "@/lib/queries/seller-standing.server";
 import { requireSignedIn } from "@/lib/require-signed-in.server";
 
@@ -20,12 +21,13 @@ export const metadata: Metadata = { title: "Mensajes" };
 export default async function MessagesLayout({ children }: { children: ReactNode }) {
   const userId = await requireSignedIn("/mensajes");
 
-  const [buying, selling, ownsShop] = await Promise.all([
+  const [buying, selling, notices, ownsShop] = await Promise.all([
     listConversations("buyer"),
     listConversations("seller"),
+    listPlatformNotices(),
     viewerOwnsAnyShop(),
   ]);
-  const entries = mergeInbox(buying, selling);
+  const entries = mergeInbox(buying, selling, notices);
 
   return (
     <InboxShell

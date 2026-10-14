@@ -58,6 +58,7 @@ describe("AdminLayout", () => {
 
     expect(screen.getByRole("link", { name: "Usuarios" })).toHaveAttribute("href", "/admin/usuarios");
     expect(screen.getByRole("link", { name: "Disputas" })).toHaveAttribute("href", "/admin/disputas");
+    expect(screen.getByRole("link", { name: "Avisos" })).toHaveAttribute("href", "/admin/avisos");
     expect(screen.getByText("Privado")).toBeInTheDocument();
   });
 });

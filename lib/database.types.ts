@@ -601,6 +601,24 @@ export type Database = {
         Update: { user_id?: string; email_enabled?: boolean; updated_at?: string };
         Relationships: [];
       };
+      // Read only for the application: administration writes through functions.
+      platform_notices: {
+        Row: {
+          id: number;
+          recipient_id: string;
+          batch_id: string;
+          kind: "direct" | "announcement";
+          title: string;
+          body: string;
+          action_href: string | null;
+          action_label: string | null;
+          created_at: string;
+          read_at: string | null;
+        };
+        Insert: never;
+        Update: never;
+        Relationships: [];
+      };
       user_contact_details: {
         Row: {
           created_at: string;
@@ -845,6 +863,39 @@ export type Database = {
       my_display_name: { Args: Record<string, never>; Returns: string | null };
       mark_conversation_read: { Args: { p_conversation_id: number; p_last_message_id: number }; Returns: undefined };
       unread_message_count: { Args: Record<string, never>; Returns: number };
+      send_platform_notice: {
+        Args: {
+          p_audience: string;
+          p_recipient_id: string | null;
+          p_title: string;
+          p_body: string;
+          p_action_href: string | null;
+          p_action_label: string | null;
+        };
+        Returns: { batch_id: string; recipient_count: number }[];
+      };
+      retract_platform_notice: { Args: { p_batch_id: string }; Returns: number };
+      platform_notice_audience_counts: {
+        Args: Record<string, never>;
+        Returns: { audience: string; people: number }[];
+      };
+      list_platform_notice_batches: {
+        Args: Record<string, never>;
+        Returns: {
+          batch_id: string;
+          audience: "person" | "everyone" | "sellers" | "buyers";
+          recipient_label: string | null;
+          title: string;
+          body: string;
+          action_href: string | null;
+          action_label: string | null;
+          recipient_count: number;
+          read_count: number;
+          created_at: string;
+          retracted_at: string | null;
+        }[];
+      };
+      mark_platform_notice_read: { Args: { p_notice_id: number }; Returns: undefined };
       list_conversations: {
         Args: { p_role: string };
         Returns: {

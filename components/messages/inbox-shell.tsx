@@ -1,22 +1,28 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter, useSelectedLayoutSegment } from "next/navigation";
+import { useRouter, useSelectedLayoutSegments } from "next/navigation";
 import { ImageIcon, MessageCircle, Package, Search, ShoppingBag, Store } from "lucide-react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
+import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { pageContainer } from "@/components/layout/container";
 import { INBOX_FRAME_HEIGHT, THREAD_MIN_HEIGHT } from "@/components/messages/inbox-layout";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatInboxDate } from "@/lib/format";
 import {
+  conversationKey,
   filterInbox,
+  noticeKey,
   orderItemLabel,
+  PLATFORM_SENDER,
   unreadTotals,
+  type ConversationEntry,
   type InboxEntry,
   type InboxFilter,
+  type NoticeEntry,
 } from "@/lib/queries/messages";
-import { subscribeToMessageInserts } from "@/lib/realtime-messages";
+import { subscribeToInserts } from "@/lib/realtime-messages";
 import { useViewerTimeZone } from "@/lib/use-viewer-time-zone";
 
 /** Long enough to fold a burst of messages into one request. */
@@ -25,8 +31,8 @@ const REFRESH_DEBOUNCE_MS = 400;
 /**
  * The list is rendered by a layout, and a layout is not rendered again when the
  * reader moves between threads. So the list asks for itself: when a message
- * lands in any conversation the reader is part of, and when they come back to
- * the tab after the socket may have slept.
+ * lands in any conversation the reader is part of, when the plaza sends them a
+ * notice, and when they come back to the tab after the socket may have slept.
  */
 function useInboxSync() {
   const router = useRouter();
@@ -41,25 +47,28 @@ function useInboxSync() {
       if (document.visibilityState === "visible") refresh();
     };
 
-    const unsubscribe = subscribeToMessageInserts({ name: "inbox", onInsert: refresh });
+    const stops = [
+      subscribeToInserts({ table: "messages", name: "inbox-messages", onInsert: refresh }),
+      subscribeToInserts({ table: "platform_notices", name: "inbox-notices", onInsert: refresh }),
+    ];
     document.addEventListener("visibilitychange", whenVisible);
 
     return () => {
       if (timer) clearTimeout(timer);
-      unsubscribe();
+      for (const stop of stops) stop();
       document.removeEventListener("visibilitychange", whenVisible);
     };
   }, [router]);
 }
 
 /** What the thread is: an order, a question about one listing, or one about the shop. */
-function threadKind(entry: InboxEntry) {
+function threadKind(entry: ConversationEntry) {
   if (entry.type === "order" && entry.order_id) return `Pedido #${entry.order_id}`;
 
   return entry.product ? "Consulta" : "Consulta general";
 }
 
-function threadSubject(entry: InboxEntry) {
+function threadSubject(entry: ConversationEntry) {
   if (entry.product) return entry.product.name;
 
   return entry.order_item ? orderItemLabel(entry.order_item) : null;
@@ -70,7 +79,7 @@ function threadSubject(entry: InboxEntry) {
  * product, so the image is decoration to a screen reader, and the small badge
  * repeats the side the row states in text.
  */
-function Thumbnail({ entry }: { entry: InboxEntry }) {
+function Thumbnail({ entry }: { entry: ConversationEntry }) {
   const image = entry.product?.image_url ?? entry.order_item?.image_url ?? null;
   const RoleIcon = entry.role === "buyer" ? ShoppingBag : Store;
 
@@ -98,53 +107,74 @@ function Thumbnail({ entry }: { entry: InboxEntry }) {
   );
 }
 
+/**
+ * The plaza's own mark, where a conversation shows a product. Only a notice
+ * draws it, and a notice can only be written by administration, so the mark is
+ * the one thing in the list a seller cannot put there.
+ */
+function PlazaMark() {
+  return (
+    <span
+      className="relative grid size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-brand text-accent"
+      data-plaza-mark
+    >
+      <VolcanoMark className="absolute left-1/2 top-1/2 w-16 -translate-x-1/2 -translate-y-1/2" />
+    </span>
+  );
+}
+
+/** What every row is made of, whoever it is from. */
 function InboxRow({
-  currentUserId,
   entry,
+  label,
+  name,
   now,
   open,
+  picture,
+  preview,
+  subject,
   timeZone,
 }: {
-  currentUserId: string;
   entry: InboxEntry;
+  label: string;
+  name: string;
   now: string;
   open: boolean;
+  picture: ReactNode;
+  preview: string | null;
+  subject: string | null;
   timeZone: string;
 }) {
   const unread = entry.unread_count > 0;
-  const subject = threadSubject(entry);
-  const last = entry.last_message;
 
   return (
     <li>
       <Link
         aria-current={open ? "page" : undefined}
         className="flex gap-3 rounded-2xl px-3 py-3 transition-colors hover:bg-background aria-[current=page]:bg-background"
-        href={`/mensajes/${entry.id}`}
+        href={entry.href}
       >
         <span
           aria-hidden="true"
           className={`mt-5 size-2 shrink-0 rounded-full ${unread ? "bg-brand" : ""}`}
         />
-        <Thumbnail entry={entry} />
+        {picture}
 
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline justify-between gap-3">
-            <span className={`truncate ${unread ? "font-bold" : "font-semibold"}`}>
-              {entry.counterpart_label}
-            </span>
-            {last ? (
+            <span className={`truncate ${unread ? "font-bold" : "font-semibold"}`}>{name}</span>
+            {entry.sent_at ? (
               <time
                 className={`shrink-0 text-xs ${unread ? "font-bold text-ink" : "text-muted"}`}
-                dateTime={last.created_at}
+                dateTime={entry.sent_at}
               >
-                {formatInboxDate(last.created_at, now, timeZone)}
+                {formatInboxDate(entry.sent_at, now, timeZone)}
               </time>
             ) : null}
           </span>
 
           <span className="mt-0.5 block truncate text-xs font-semibold uppercase tracking-[0.14em] text-brand">
-            {entry.role === "buyer" ? "Compra" : "Venta"} · {threadKind(entry)}
+            {label}
           </span>
 
           {subject ? (
@@ -154,9 +184,7 @@ function InboxRow({
           ) : null}
 
           <span className="mt-0.5 flex items-center gap-2">
-            <span className="min-w-0 flex-1 truncate text-sm text-muted">
-              {last ? `${last.sender_id === currentUserId ? "Tú: " : ""}${last.body}` : null}
-            </span>
+            <span className="min-w-0 flex-1 truncate text-sm text-muted">{preview}</span>
             {unread ? (
               <span
                 aria-label={`${entry.unread_count} mensajes sin leer`}
@@ -172,9 +200,61 @@ function InboxRow({
   );
 }
 
+type RowPlace = { now: string; open: boolean; timeZone: string };
+
+function ConversationRow({
+  currentUserId,
+  entry,
+  ...place
+}: RowPlace & { currentUserId: string; entry: ConversationEntry }) {
+  const last = entry.last_message;
+
+  return (
+    <InboxRow
+      entry={entry}
+      label={`${entry.role === "buyer" ? "Compra" : "Venta"} · ${threadKind(entry)}`}
+      name={entry.counterpart_label}
+      picture={<Thumbnail entry={entry} />}
+      preview={last ? `${last.sender_id === currentUserId ? "Tú: " : ""}${last.body}` : null}
+      subject={threadSubject(entry)}
+      {...place}
+    />
+  );
+}
+
+function NoticeRow({ entry, ...place }: RowPlace & { entry: NoticeEntry }) {
+  return (
+    <InboxRow
+      entry={entry}
+      label={entry.kind === "announcement" ? "Anuncio" : "Aviso"}
+      name={PLATFORM_SENDER}
+      picture={<PlazaMark />}
+      preview={entry.body}
+      subject={entry.title}
+      {...place}
+    />
+  );
+}
+
+/**
+ * Which row is open, from the route below the layout: a conversation is one
+ * segment ("7"), a notice is two ("avisos", "12"). The two are numbered by
+ * different tables, so the answer is a key, never a bare number.
+ */
+function openKeyFrom(segments: string[]) {
+  const isNumber = (segment: string | undefined) => segment !== undefined && /^\d+$/.test(segment);
+
+  if (segments.length === 1 && isNumber(segments[0])) return conversationKey(Number(segments[0]));
+  if (segments.length === 2 && segments[0] === "avisos" && isNumber(segments[1])) {
+    return noticeKey(Number(segments[1]));
+  }
+
+  return null;
+}
+
 /**
  * The inbox: every conversation the reader is in, buying and selling together,
- * with the open one beside the list.
+ * and what the plaza itself has sent them, with the open one beside the list.
  *
  * From `lg` it is one frame, the list on the left and the thread on the right;
  * from `xl` the filters take a column of their own. Below `lg` the list and the
@@ -194,19 +274,19 @@ export function InboxShell({
   now: string;
   showSelling: boolean;
 }) {
-  const segment = useSelectedLayoutSegment();
-  const threadOpen = segment !== null;
-  const openId = segment !== null && /^\d+$/.test(segment) ? Number(segment) : null;
+  const segments = useSelectedLayoutSegments();
+  const threadOpen = segments.length > 0;
+  const openKey = openKeyFrom(segments);
   const [filter, setFilter] = useState<InboxFilter>("all");
   const [query, setQuery] = useState("");
   const timeZone = useViewerTimeZone();
 
   useInboxSync();
 
-  // The thread on screen is being read right now, whatever the last fetch said.
+  // The row on screen is being read right now, whatever the last fetch said.
   const current = useMemo(
-    () => entries.map((entry) => (entry.id === openId ? { ...entry, unread_count: 0 } : entry)),
-    [entries, openId],
+    () => entries.map((entry) => (entry.key === openKey ? { ...entry, unread_count: 0 } : entry)),
+    [entries, openKey],
   );
 
   if (!entries.length && !threadOpen) {
@@ -235,12 +315,17 @@ export function InboxShell({
   }
 
   const totals = unreadTotals(current);
-  const visible = filterInbox(current, filter, query, openId);
+  const visible = filterInbox(current, filter, query, openKey);
+  const hasNotices = entries.some((entry) => entry.role === "platform");
   const filters: { id: InboxFilter; label: string; unread: number }[] = [
     { id: "all", label: "Todos", unread: 0 },
     { id: "unread", label: "Sin leer", unread: totals.all },
     { id: "buying", label: "Compras", unread: totals.buying },
     ...(showSelling ? [{ id: "selling" as const, label: "Ventas", unread: totals.selling }] : []),
+    // Offered once the plaza has written: until then it would only ever be empty.
+    ...(hasNotices
+      ? [{ id: "platform" as const, label: PLATFORM_SENDER, unread: totals.platform }]
+      : []),
   ];
   // The open conversation names itself, and a page has one heading at the top.
   const Title = threadOpen ? "p" : "h1";
@@ -316,16 +401,20 @@ export function InboxShell({
               aria-label="Conversaciones"
               className="mt-4 min-h-0 flex-1 space-y-1 rounded-[2rem] border border-line bg-surface p-2 lg:mt-0 lg:overflow-y-auto lg:overscroll-contain lg:rounded-none lg:border-0"
             >
-              {visible.map((entry) => (
-                <InboxRow
-                  currentUserId={currentUserId}
-                  entry={entry}
-                  key={entry.id}
-                  now={now}
-                  open={entry.id === openId}
-                  timeZone={timeZone}
-                />
-              ))}
+              {visible.map((entry) => {
+                const place = { now, open: entry.key === openKey, timeZone };
+
+                return entry.role === "platform" ? (
+                  <NoticeRow entry={entry} key={entry.key} {...place} />
+                ) : (
+                  <ConversationRow
+                    currentUserId={currentUserId}
+                    entry={entry}
+                    key={entry.key}
+                    {...place}
+                  />
+                );
+              })}
             </ul>
           ) : (
             <p className="mt-4 px-4 py-8 text-center text-sm leading-6 text-muted lg:mt-0">

@@ -5,6 +5,7 @@ import { UsersRound } from "lucide-react";
 import { useState } from "react";
 
 import { UserAccountControls } from "@/components/admin/user-account-controls";
+import { UserNoticeForm } from "@/components/admin/user-notice-form";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
   setShopPremium,
@@ -187,6 +188,7 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
           <p className="mt-1 text-sm text-muted">Registro: {formatDate(user.createdAt)}</p>
           <UserShopLimit user={user} />
           <UserAccountControls key={`account:${user.id}:${user.isDisabled}`} user={user} />
+          <UserNoticeForm user={user} />
           {user.shops.length ? (
             <div className="mt-6 space-y-4">
               {user.shops.map((shop) => (

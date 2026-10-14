@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { markConversationRead } from "@/lib/actions/messages";
 import type { ThreadMessage } from "@/lib/queries/messages";
-import { subscribeToMessageInserts } from "@/lib/realtime-messages";
+import { subscribeToInserts } from "@/lib/realtime-messages";
 
 /** How often a thread with a broken socket falls back to asking the server. */
 const DEGRADED_POLL_MS = 20_000;
@@ -55,7 +55,8 @@ export function useLiveThread({
 
   useEffect(
     () =>
-      subscribeToMessageInserts({
+      subscribeToInserts<ThreadMessage>({
+        table: "messages",
         conversationId,
         name: `conversation-${conversationId}`,
         onInsert: (message) => setLive((current) => [...current, message]),
