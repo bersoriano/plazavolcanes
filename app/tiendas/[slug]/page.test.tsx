@@ -141,3 +141,60 @@ test("keeps the measured trust badge beside the granted distinction", async () =
   // on this page.
   expect(document.getElementById("trust-tier-tooltip")).toHaveClass("text-on-brand");
 });
+
+test("names the shop's earned signals up top, and none it has not earned", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, trust_metrics: null, trust_profile: null });
+
+  await renderPage();
+
+  const earned = screen.getByRole("list", { name: "Señales ganadas" });
+  expect(earned).toHaveTextContent("Sin disputas");
+  expect(earned).not.toHaveTextContent("Sin datos");
+});
+
+test("keeps the policy and every trust signal one tap away, folded", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, delivery_policy: "Entrego en persona los sábados." });
+
+  await renderPage();
+
+  const disclosure = screen.getByText("Entregas y señales de confianza").closest("details");
+  expect(disclosure).not.toBeNull();
+  expect(disclosure).not.toHaveAttribute("open");
+  expect(disclosure).toContainElement(screen.getByRole("heading", { name: "Política de entregas" }));
+  expect(disclosure).toContainElement(screen.getByRole("list", { name: "Marcadores de confianza" }));
+});
+
+test("names only the signals in the fold when the shop has written no policy", async () => {
+  getPublicShop.mockResolvedValue({ ...shop, delivery_policy: null });
+
+  await renderPage();
+
+  expect(screen.getByText("Señales de confianza").closest("details")).not.toBeNull();
+  expect(screen.queryByText("Entregas y señales de confianza")).not.toBeInTheDocument();
+});
+
+test("counts the products and leaves the shop off each card", async () => {
+  getPublicShop.mockResolvedValue({
+    ...shop,
+    administrative_area_codes: ["MX-JAL"],
+    products: [
+      {
+        id: 9,
+        slug: "taza-de-barro",
+        imageUrl: null,
+        name: "Taza de barro",
+        price_mxn: 349,
+        condition: "new",
+        used_condition: null,
+        shop: { name: "Casa Niebla", country_code: "MX", administrative_area_codes: ["MX-JAL"], trust_tier: "standard" },
+      },
+    ],
+  });
+
+  await renderPage();
+
+  expect(screen.getByRole("heading", { name: /Productos/ })).toHaveTextContent("1");
+  const card = screen.getByRole("link", { name: /Taza de barro/ });
+  expect(card).not.toHaveTextContent("Casa Niebla");
+  expect(card).not.toHaveTextContent("Jalisco");
+});

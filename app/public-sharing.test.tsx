@@ -226,7 +226,7 @@ describe("public sharing controls", () => {
     expect(screen.getByRole("group", { name: "Compartir tienda" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Compartir" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Compartir por WhatsApp" })).toBeInTheDocument();
-    expect(screen.getByText("Miembro desde febrero de 2024")).toBeInTheDocument();
+    expect(screen.getByTestId("trust-badge-membership")).toHaveTextContent("Miembro desde febrero de 2024");
     expect(screen.getByTestId("trust-badge-membership")).toHaveAttribute(
       "title",
       expect.stringContaining("Vendedor establecido"),
