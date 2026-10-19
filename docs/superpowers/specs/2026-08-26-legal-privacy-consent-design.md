@@ -1,5 +1,9 @@
 # Legal, merchant identity, privacy, consent and transaction proof
 
+> Update 2026-10-19: optional PostHog analytics changes this design's historical
+> no-third-party-tracking assumption when configured. See
+> [analytics activation and privacy boundaries](../../posthog-analytics.md).
+
 Plaza Volcanes has no terms, no privacy notice, no published policies, no
 merchant identity surface, no acceptance evidence and no transaction receipt.
 It also ships two claims that nothing backs. This design builds the surfaces,

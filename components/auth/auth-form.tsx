@@ -56,7 +56,7 @@ function AuthAttempt({ continuar, intent, mode, onRestart }: AuthFormProps & { o
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink">Abre tu cuenta</h1>
         <p className="mb-8 mt-3 leading-7 text-muted">Crea tu cuenta con correo, contraseña, tu nombre y teléfono. Usamos tu teléfono para contactarte sobre pedidos y no es público.</p>
       </> : null}
-      <form action={formAction} className="space-y-5" noValidate>
+      <form action={formAction} className="space-y-5" data-analytics-event={!signingIn && (intent === "vender" || continuar === "/panel/tiendas/nueva") ? "seller_signup_submitted" : undefined} noValidate>
         {continuar ? <input name="continuar" type="hidden" value={continuar} /> : null}
         {intent ? <input name="intent" type="hidden" value={intent} /> : null}
         <Field

@@ -361,7 +361,7 @@ export function ProductForm({
   }
 
   return (
-    <form action={formAction} className="space-y-6" noValidate onInput={() => {
+    <form action={formAction} className="space-y-6" data-analytics-event="seller_product_submitted" noValidate onInput={() => {
       saveDraft();
       setReadiness(formReadiness(formRef.current, images.length + uploadedKeys.length));
     }} ref={formRef}>

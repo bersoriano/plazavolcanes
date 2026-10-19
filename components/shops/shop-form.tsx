@@ -113,7 +113,7 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
   }, [preview]);
 
   return (
-    <form action={formAction} className="space-y-6" noValidate ref={formRef}>
+    <form action={formAction} className="space-y-6" data-analytics-event="seller_shop_submitted" noValidate ref={formRef}>
       <Field
         defaultValue={state.values?.name ?? shop?.name}
         error={state.errors?.name?.[0]}

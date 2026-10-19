@@ -59,6 +59,26 @@ npm run dev
 
 Abre [http://localhost:3000](http://localhost:3000).
 
+## Analítica con PostHog
+
+La analítica es opcional. Para activarla, agrega ambas variables en `.env.local`
+y en el entorno de producción; usa el token público del proyecto, nunca una
+clave personal de administración:
+
+```dotenv
+NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=phc_TU_TOKEN_PUBLICO
+NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+```
+
+Para proyectos de la región europea usa `https://eu.i.posthog.com`. Sin ambas
+variables no se inicializa PostHog ni se registran eventos. Los cambios requieren
+reiniciar desarrollo o generar un nuevo despliegue.
+
+Se registran visitas, navegación de las páginas de inicio y venta, e intentos de
+registro y actividad de vendedores. Replay, captura automática de formularios e
+identificación de personas están desactivados. Consulta [eventos, privacidad y
+verificación](docs/posthog-analytics.md) antes de activar producción.
+
 ## Producción
 
 El sitio vive en [plazavolcanes.com](https://plazavolcanes.com).
