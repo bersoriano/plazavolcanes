@@ -6,11 +6,11 @@ import { ANALYTICS_DAYS, type ShopAnalytics } from "@/lib/shop-analytics";
 const number = new Intl.NumberFormat("es-MX");
 
 /**
- * Estadísticas: the shop's last 30 days. Founders get it first (early access
- * in docs/launch-package.md); every other shop sees that it is coming.
+ * The shop's last 30 days, now available to every seller. Detailed CTA
+ * measurements and filters live in the dedicated statistics section.
  */
-export function ShopAnalyticsCard({ analytics, isFounder }: { analytics: ShopAnalytics | null; isFounder: boolean }) {
-  if (!isFounder) {
+export function ShopAnalyticsCard({ analytics }: { analytics: ShopAnalytics | null; isFounder?: boolean }) {
+  if (!analytics) {
     return (
       <section aria-labelledby="estadisticas-title" className="rounded-[2rem] border border-dashed border-line bg-surface px-6 py-5 sm:px-8">
         <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.16em] text-brand" id="estadisticas-title">
@@ -18,12 +18,12 @@ export function ShopAnalyticsCard({ analytics, isFounder }: { analytics: ShopAna
           Estadísticas
         </h2>
         <p className="mt-2 text-sm leading-6 text-muted">
-          Visitas, preguntas y pedidos de cada producto. Las tiendas fundadoras las tienen primero; pronto, todas.
+          Consulta visitas, actividad de botones, preguntas y solicitudes de tus productos.
         </p>
+        <Link className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-brand underline" href="/panel/estadisticas">Abrir Estadísticas</Link>
       </section>
     );
   }
-  if (!analytics) return null;
 
   return (
     <section aria-labelledby="estadisticas-title" className="rounded-[2rem] border border-line bg-surface px-6 py-5 sm:px-8">
@@ -32,18 +32,18 @@ export function ShopAnalyticsCard({ analytics, isFounder }: { analytics: ShopAna
           <BarChart3 aria-hidden="true" className="size-4" />
           Estadísticas
         </h2>
-        <p className="text-xs text-muted">Últimos {ANALYTICS_DAYS} días · acceso anticipado</p>
+        <p className="text-xs text-muted">Últimos {ANALYTICS_DAYS} días</p>
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <dl className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Metric label="Visitas" value={number.format(analytics.views)} />
         <Metric label="Preguntas" value={number.format(analytics.questions)} />
         <Metric
-          label="Preguntas por visita"
-          value={analytics.questionRate === null ? "Sin datos" : `${analytics.questionRate}%`}
+          label="Preguntas por 100 visitas"
+          value={analytics.questionRate === null ? "Sin datos" : number.format(analytics.questionRate)}
         />
-        <Metric label="Pedidos" value={number.format(analytics.orders)} />
       </dl>
+      <Link className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-brand underline" href="/panel/estadisticas">Abrir Estadísticas</Link>
 
       {analytics.top.length ? (
         <div className="mt-5">

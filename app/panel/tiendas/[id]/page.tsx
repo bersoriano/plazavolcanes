@@ -68,10 +68,9 @@ export default async function ShopCatalogPage({
   // The shop's own picture is no longer asked for here: it belongs to the form
   // in /ajustes, which fetches it there.
   const imageUrls = mediaUrls(visible.map((product) => product.image_path), MEDIA_VARIANTS.thumbnail);
-  const isFounder = Boolean(shop.founder_since);
   const [trustDashboard, analytics, importRequests] = await Promise.all([
     getShopTrustDashboard(shopId),
-    isFounder ? getShopAnalytics(shopId) : null,
+    getShopAnalytics(shopId),
     getShopImportRequests(shopId),
   ]);
   const isFiltered = tab !== "todos" || search.trim() !== "";
@@ -95,7 +94,7 @@ export default async function ShopCatalogPage({
       </section>
 
       {trustDashboard ? <div className="mb-6"><TrustDashboardCard dashboard={trustDashboard} /></div> : null}
-      {isFounder && !analytics ? null : <div className="mb-6"><ShopAnalyticsCard analytics={analytics} isFounder={isFounder} /></div>}
+      <div className="mb-6"><ShopAnalyticsCard analytics={analytics} /></div>
       <div className="mb-6"><ListingImportCard action={requestListingImport.bind(null, shopId)} requests={importRequests} /></div>
 
       <section aria-labelledby="catalogo-title" className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">

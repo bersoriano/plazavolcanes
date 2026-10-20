@@ -17,6 +17,7 @@ const SECTIONS: Section[] = [
   // A product's editor lives outside its shop's path, but it is reached from
   // the shop's catalogue and returns to it.
   { href: "/panel/tiendas", label: "Tiendas", covers: ["/panel/tiendas", "/panel/productos"] },
+  { href: "/panel/estadisticas", label: "Estadísticas", covers: ["/panel/estadisticas"] },
   { href: "/panel/cuenta", label: "Cuenta", covers: ["/panel/cuenta"] },
 ];
 
