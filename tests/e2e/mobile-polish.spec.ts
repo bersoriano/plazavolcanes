@@ -2,6 +2,8 @@ import { execFileSync } from "node:child_process";
 
 import { expect, test, type BrowserContext, type Page } from "@playwright/test";
 
+import { pickOption } from "./pick-option";
+
 // Like the other end-to-end specs, this one registers a real account, so it
 // must never reach the linked remote project. `npm run test:e2e` forces the
 // local stack through scripts/e2e-env.mjs; running Playwright bare skips that.
@@ -192,7 +194,7 @@ test.describe("mobile polish", () => {
       await page
         .getByLabel("Descripción")
         .fill("Tienda de prueba para medir la portada del panel en un telefono.");
-      await page.getByLabel("Estado principal").selectOption({ index: 1 });
+      await pickOption(page.getByLabel("Estado principal"), { index: 1 });
       await page.getByRole("button", { name: "Crear tienda" }).click();
       await expect(page).toHaveURL(/\/panel\/tiendas\/\d+/);
       shopRoute = new URL(page.url()).pathname;
@@ -201,8 +203,8 @@ test.describe("mobile polish", () => {
       // A listing, so the dashboard renders the row the overflow came from.
       await page.getByRole("link", { name: /agregar producto/i }).first().click();
       await expect(page).toHaveURL(/\/productos\/nuevo/);
-      await page.getByLabel("Categoría", { exact: true }).selectOption({ index: 1 });
-      await page.getByLabel("Subcategoría").selectOption({ index: 1 });
+      await pickOption(page.getByLabel("Categoría", { exact: true }), { index: 1 });
+      await pickOption(page.getByLabel("Subcategoría"), { index: 1 });
       await page.getByLabel("Nombre del producto").fill(longProductName);
       await page.getByLabel("Descripción").fill("Pieza de prueba para la portada del panel.");
       await page.getByLabel("Precio en MXN").fill("1899");

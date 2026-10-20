@@ -1,5 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { pickOption } from "./pick-option";
+
 // This spec registers accounts, creates a shop and sends messages. `.env.local`
 // points at the linked remote project, so `npm run test:e2e` routes through
 // scripts/e2e-env.mjs, which forces the local stack. Running Playwright
@@ -50,7 +52,7 @@ test("a shopper asks a question and the shop answers", async ({ browser }) => {
   await sellerPage
     .getByLabel("Descripción")
     .fill("Tienda de prueba para verificar la mensajería de la plaza.");
-  await sellerPage.getByLabel("Estado principal").selectOption({ index: 1 });
+  await pickOption(sellerPage.getByLabel("Estado principal"), { index: 1 });
   await sellerPage.getByRole("button", { name: "Crear tienda" }).click();
   await expect(sellerPage).toHaveURL(/\/panel\/tiendas\/\d+/);
 

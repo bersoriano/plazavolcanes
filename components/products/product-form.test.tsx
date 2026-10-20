@@ -279,6 +279,23 @@ describe("ProductForm", () => {
     expect(screen.queryByRole("option", { name: "Celulares y accesorios" })).not.toBeInTheDocument();
   });
 
+  it("keeps a picked category and subcategory when the browser fires input before change", () => {
+    render(<ProductForm shopId={1} action={action} categories={categories} />);
+    const category = screen.getByLabelText("Categoría");
+    const subcategory = screen.getByLabelText("Subcategoría");
+
+    // Browsers fire input, then change, for a picked option. A re-render in
+    // between must not snap the controlled selects back to their old value.
+    fireEvent.input(category, { target: { value: "1" } });
+    fireEvent.change(category);
+    expect(category).toHaveValue("1");
+    expect(subcategory).toBeEnabled();
+
+    fireEvent.input(subcategory, { target: { value: "11" } });
+    fireEvent.change(subcategory);
+    expect(subcategory).toHaveValue("11");
+  });
+
   it("warns when the saved subcategory is inactive", () => {
     render(
       <ProductForm shopId={1}

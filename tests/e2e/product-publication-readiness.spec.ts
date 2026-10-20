@@ -2,6 +2,8 @@ import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
+import { pickOption } from "./pick-option";
+
 const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
 // Fixture reads and administration changes stay on the local database. The
@@ -47,7 +49,7 @@ for (const path of ["editor", "catalog"] as const) {
     try {
       await page.getByLabel("Nombre de la tienda").fill(`Casa Publicación ${path}`);
       await page.getByLabel("Descripción").fill("Objetos de barro hechos a mano en México.");
-      await page.getByLabel("Estado principal").selectOption("MX-JAL");
+      await pickOption(page.getByLabel("Estado principal"), "MX-JAL");
       await page.getByRole("button", { name: "Crear tienda", exact: true }).click();
       await expect(page).toHaveURL(/\/panel\/tiendas\/\d+\?creada=1$/);
       shopId = Number(new URL(page.url()).pathname.split("/").at(-1));
@@ -56,8 +58,8 @@ for (const path of ["editor", "catalog"] as const) {
       await page.getByLabel("Nombre del producto").fill(productName);
       const category = localQuery("select id, parent_id from public.categories where slug = 'papeleria'")[0];
       const alternate = localQuery("select id, parent_id from public.categories where slug = 'manualidades'")[0];
-      await page.getByLabel("Categoría", { exact: true }).selectOption(String(category.parent_id));
-      await page.getByLabel("Subcategoría", { exact: true }).selectOption(String(category.id));
+      await pickOption(page.getByLabel("Categoría", { exact: true }), String(category.parent_id));
+      await pickOption(page.getByLabel("Subcategoría", { exact: true }), String(category.id));
       await page.getByLabel("Nuevo", { exact: true }).check();
       await page.locator("#product-images").setInputFiles({
         name: "cover.png", mimeType: "image/png",
@@ -98,10 +100,10 @@ for (const path of ["editor", "catalog"] as const) {
         });
         await expect(page.locator('input[name="image_keys"]')).toHaveCount(1);
         imagePaths.push(await page.locator('input[name="image_keys"]').inputValue());
-        await page.getByLabel("Subcategoría", { exact: true }).selectOption(String(alternate.id));
+        await pickOption(page.getByLabel("Subcategoría", { exact: true }), String(alternate.id));
         await page.getByText("Usado", { exact: true }).click();
         await expect(page.getByLabel("Usado", { exact: true })).toBeChecked();
-        await page.getByLabel("Estado del producto usado").selectOption("fair");
+        await pickOption(page.getByLabel("Estado del producto usado"), "fair");
         await page.getByLabel("Nombre del producto").fill("x");
         await page.getByRole("button", { name: "Guardar borrador", exact: true }).click();
         await expect(page.getByRole("status").filter({ hasText: "Revisa los campos marcados." })).toBeVisible();

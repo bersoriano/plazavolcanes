@@ -9,6 +9,8 @@ import {
   type Page,
 } from "@playwright/test";
 
+import { pickOption } from "./pick-option";
+
 // This spec creates an account, a shop, and a published product. Running
 // Playwright directly can inherit the linked remote project from `.env.local`,
 // so refuse unless scripts/e2e-env.mjs has forced a loopback Supabase URL.
@@ -72,7 +74,7 @@ async function createPublishedListing(browser: Browser) {
     await page
       .getByLabel("Descripción")
       .fill("Tienda aislada para verificar la portada responsiva y accesible.");
-    await page.getByLabel("Estado principal").selectOption("MX-JAL");
+    await pickOption(page.getByLabel("Estado principal"), "MX-JAL");
     await page.getByRole("button", { name: "Crear tienda" }).click();
     await expect(page).toHaveURL(/\/panel\/tiendas\/\d+/);
     const publicShopHref = await page.getByRole("link", { name: "Ver tienda pública" }).getAttribute("href");
@@ -80,8 +82,8 @@ async function createPublishedListing(browser: Browser) {
 
     await page.getByRole("link", { name: "Agregar producto", exact: true }).first().click();
     await expect(page).toHaveURL(/\/productos\/nuevo/);
-    await page.getByLabel("Categoría", { exact: true }).selectOption({ index: 1 });
-    await page.getByLabel("Subcategoría").selectOption({ index: 1 });
+    await pickOption(page.getByLabel("Categoría", { exact: true }), { index: 1 });
+    await pickOption(page.getByLabel("Subcategoría"), { index: 1 });
     await page.getByLabel("Nombre del producto").fill(productName);
     await page
       .getByLabel("Descripción")
@@ -307,7 +309,7 @@ test.describe("landing responsive and accessibility gate", () => {
         const stateBox = await state.boundingBox();
         expect(stateBox).not.toBeNull();
         expect(stateBox!.height).toBeGreaterThanOrEqual(44);
-        await state.selectOption("jalisco");
+        await pickOption(state, "jalisco");
         await expect(state).toHaveValue("jalisco");
         await page.getByRole("searchbox", { name: "Buscar productos" }).fill(productName);
         await page.getByRole("button", { name: "Buscar" }).click();
