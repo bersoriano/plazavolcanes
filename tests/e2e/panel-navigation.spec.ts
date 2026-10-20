@@ -10,7 +10,7 @@ import { pickOption } from "./pick-option";
 // local stack through scripts/e2e-env.mjs; running Playwright bare skips that.
 const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
-const SECTIONS = ["Resumen", "Pedidos", "Tiendas", "Cuenta"] as const;
+const SECTIONS = ["Resumen", "Pedidos", "Tiendas", "Estadísticas", "Cuenta"] as const;
 
 // The local service role intentionally lacks table privileges. Fixture writes
 // use the local database owner instead of altering application grants or RLS.
@@ -80,6 +80,8 @@ test("the panel's bar carries a seller between its areas from any page", async (
     await open(page, bar, "Pedidos", /\/panel\/pedidos$/);
     await expect(page.getByRole("heading", { level: 1, name: "Pedidos" })).toBeVisible();
     await open(page, bar, "Cuenta", /\/panel\/cuenta$/);
+    await open(page, bar, "Estadísticas", /\/panel\/estadisticas$/);
+    await expect(page.getByRole("heading", { level: 1, name: "Estadísticas" })).toBeVisible();
     await open(page, bar, "Resumen", /\/panel$/);
     await expect(page.getByRole("heading", { level: 1, name: "Panel de ventas" })).toBeVisible();
 
@@ -101,7 +103,7 @@ test("the panel's bar carries a seller between its areas from any page", async (
 
     // On the narrowest phone the row may scroll; the page must not.
     await page.setViewportSize({ height: 700, width: 320 });
-    for (const route of ["/panel", "/panel/tiendas", shopPath, "/panel/pedidos"]) {
+    for (const route of ["/panel", "/panel/tiendas", shopPath, "/panel/pedidos", "/panel/estadisticas"]) {
       await page.goto(route);
       await expect(bar).toBeVisible();
       await expect

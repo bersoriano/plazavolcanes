@@ -12,7 +12,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-const SECTIONS = ["Resumen", "Pedidos", "Tiendas", "Cuenta"] as const;
+const SECTIONS = ["Resumen", "Pedidos", "Tiendas", "Estadísticas", "Cuenta"] as const;
 
 function renderAt(pathname: string) {
   route.pathname = pathname;
@@ -29,13 +29,14 @@ function marked(bar: ReturnType<typeof renderAt>) {
 }
 
 describe("PanelNav", () => {
-  it("links the panel's four areas, in order", () => {
+  it("links the panel's areas, including seller analytics, in order", () => {
     const bar = renderAt("/panel");
 
     expect(bar.getAllByRole("link").map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
       ["Resumen", "/panel"],
       ["Pedidos", "/panel/pedidos"],
       ["Tiendas", "/panel/tiendas"],
+      ["Estadísticas", "/panel/estadisticas"],
       ["Cuenta", "/panel/cuenta"],
     ]);
   });
@@ -56,6 +57,7 @@ describe("PanelNav", () => {
     ["/panel/tiendas/4/ajustes", "Tiendas"],
     ["/panel/tiendas/4/productos/nuevo", "Tiendas"],
     ["/panel/cuenta", "Cuenta"],
+    ["/panel/estadisticas", "Estadísticas"],
   ])("marks the area %s belongs to", (pathname, section) => {
     expect(marked(renderAt(pathname))).toEqual([section]);
   });

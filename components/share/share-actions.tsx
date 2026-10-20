@@ -68,12 +68,13 @@ export function ShareActions({ label, title, url }: ShareActionsProps) {
 
   return (
     <div aria-label={label} className="flex flex-wrap items-center gap-3" role="group">
-      <Button onClick={share} variant="secondary">
+      <Button data-product-cta="share" onClick={share} variant="secondary">
         <Share2 aria-hidden="true" className="size-4" />
         Compartir
       </Button>
       <a
         aria-label="Compartir por WhatsApp"
+        data-product-cta="share"
         className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line bg-surface-raised px-5 py-2.5 text-sm font-semibold text-brand transition-colors hover:border-brand"
         href={whatsappMessage ? `https://wa.me/?text=${whatsappMessage}` : "https://wa.me/"}
         rel="noopener noreferrer"

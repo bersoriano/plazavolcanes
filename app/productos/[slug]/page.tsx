@@ -121,7 +121,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           subcategory: leafCategory,
         })}
       />
-      <section className={`${pageContainer} py-10 sm:py-14`}>
+      <section className={`${pageContainer} py-10 sm:py-14`} data-product-analytics={product.id}>
         <Link
           className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-brand"
           href={hasCatalogState ? catalogHref : `/tiendas/${product.shop.slug}`}

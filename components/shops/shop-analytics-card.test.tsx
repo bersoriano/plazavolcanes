@@ -17,15 +17,15 @@ describe("ShopAnalyticsCard", () => {
 
     expect(screen.getByRole("heading", { name: "Estadísticas" })).toBeInTheDocument();
     expect(screen.getByText("Visitas").nextSibling).toHaveTextContent("40");
-    expect(screen.getByText("Preguntas por visita").nextSibling).toHaveTextContent("10%");
+    expect(screen.getByText("Preguntas por 100 visitas").nextSibling).toHaveTextContent("10");
     expect(screen.getByRole("link", { name: "Cámara" })).toHaveAttribute("href", "/productos/camara");
     expect(screen.getByRole("heading", { name: "Se ven, pero nadie pregunta" })).toBeInTheDocument();
   });
 
-  it("tells every other shop the tool is coming", () => {
+  it("opens the statistics section for every shop", () => {
     render(<ShopAnalyticsCard analytics={null} isFounder={false} />);
 
-    expect(screen.getByText(/Las tiendas fundadoras las tienen primero; pronto, todas./)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Abrir Estadísticas" })).toHaveAttribute("href", "/panel/estadisticas");
     expect(screen.queryByText("Visitas")).not.toBeInTheDocument();
   });
 });

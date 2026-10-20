@@ -45,7 +45,7 @@ export function StartConversationButton({
     // Sending everyone to the inbox lost the page they were asking about, and with
     // it the product the thread was going to be about.
     return (
-      <Link className={STYLE} href={`/ingresar?continuar=${encodeURIComponent(returnTo)}`}>
+      <Link className={STYLE} data-product-cta="question" href={`/ingresar?continuar=${encodeURIComponent(returnTo)}`}>
         <MessageCircle aria-hidden="true" className="size-4" />
         {label}
       </Link>
@@ -55,7 +55,7 @@ export function StartConversationButton({
   // The shop and the product are bound into the action on the server. Nothing the
   // form carries decides which conversation this opens.
   return (
-    <form action={formAction}>
+    <form action={formAction} data-product-cta="question">
       <OpenButton label={label} />
       {state.message ? (
         <p className="mt-2 text-sm text-sale" role="status">
