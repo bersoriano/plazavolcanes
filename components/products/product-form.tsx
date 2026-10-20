@@ -361,9 +361,14 @@ export function ProductForm({
   }
 
   return (
-    <form action={formAction} className="space-y-6" data-analytics-event="seller_product_submitted" noValidate onInput={() => {
+    // React's onChange, not onInput: a native input event re-renders before a
+    // select's change event, snapping the controlled category selects back.
+    // CategoryFields reports category_id itself; the DOM still holds the old
+    // subcategory until it re-renders.
+    <form action={formAction} className="space-y-6" data-analytics-event="seller_product_submitted" noValidate onChange={() => {
       saveDraft();
-      setReadiness(formReadiness(formRef.current, images.length + uploadedKeys.length));
+      const next = formReadiness(formRef.current, images.length + uploadedKeys.length);
+      setReadiness((current) => ({ ...next, category_id: current.category_id }));
     }} ref={formRef}>
       {showDraftSaved && !state.message ? (
         <div className="rounded-2xl bg-accent/45 px-4 py-3 text-sm text-brand-hover" role="status" aria-live="polite">
