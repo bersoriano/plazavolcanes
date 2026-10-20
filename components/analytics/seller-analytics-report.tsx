@@ -32,7 +32,7 @@ export function SellerAnalyticsReport({ report }: { report: SellerAnalytics }) {
       <p className="mt-2 text-sm leading-6 text-muted">Comparte tus productos para recibir las primeras visitas. Si aún no publicas, completa tu catálogo.</p>
       <Link className="mt-3 inline-flex min-h-11 items-center font-semibold text-brand underline underline-offset-4" href="/panel/tiendas">Ir a mis tiendas</Link>
     </div> : null}
-    <ActivityChart daily={report.daily} />
+    <ActivityChart daily={report.daily} trackingStartedAt={report.tracking_started_at} />
     {quiet.length ? <section className="rounded-2xl border border-brand/20 bg-accent/20 p-5 sm:p-6" aria-labelledby="quiet-products-title">
       <h2 className="font-display text-xl font-semibold text-brand" id="quiet-products-title">Productos para revisar</h2>
       <p className="mt-2 text-sm leading-6 text-muted">Reciben visitas, pero todavía no generan preguntas ni intención de compra. Revisa foto, precio y descripción.</p>

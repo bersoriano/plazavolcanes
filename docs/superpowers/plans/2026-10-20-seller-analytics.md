@@ -50,7 +50,7 @@
 
 ### Task 4: Verification
 
-- [ ] Run full unit suite, lint, typecheck/build, database access tests, and browser checks at desktop/mobile sizes.
+- [x] Run full unit suite, lint, typecheck/build, database access tests, and browser checks at desktop/mobile sizes; record build and seeded-database limitations below.
 - [x] Request fresh branch review; fix material findings with regression tests.
 - [x] Document collection definitions, retention, start-date limitations, migration deployment requirements, and verification results.
 
@@ -58,9 +58,11 @@
 
 - Initial workspace clean on main; task branch codex/seller-analytics created after sync.
 - User approved implementation directly; proceeding inline without another approval cycle.
-- All 2,062 unit/component tests pass (244 files). Both local browser flows pass: panel navigation and seller analytics, including concurrent replay, non-founder access, date/shop filters, CTA collection, screenshots, and mobile overflow.
+- All 2,063 unit/component tests pass (244 files). Both local browser flows pass: panel navigation and seller analytics, including concurrent replay, non-founder access, date/shop filters, CTA collection, screenshots, and mobile overflow.
 - Focused database suite passes: 29 new checks plus 9 legacy product-view checks. Security advisors report only two existing mutable-search-path warnings outside this change.
 - Review found no material new issue. Removed the legacy card's per-product summed order total to avoid disagreeing with the new deduplicated overview.
 - Visual QA corrected repeated count-axis labels at low traffic and moved chart labels to normal-size HTML for readable mobile rendering.
 - Local build is limited by Turbopack worker port binding; generated TypeScript validation also exposes the unchanged seller-orders page's optional-props error. No new application type errors remain.
 - Production migration and deployment are separate release steps; only the local database was changed.
+- Full database suite was attempted and exposes fixture collisions/global-count assumptions in the populated local stack. Affected files and build limits are listed in docs/seller-analytics.md. Existing data was preserved; only this run's orphaned synthetic account was removed.
+- Historical CTA chart/table values now display as unavailable before the recorded collection date, with a regression test.

@@ -47,7 +47,8 @@ limit write amplification but do not establish unique people or fraud-proof data
 
 CTA history starts at migration application time, recorded once by the database
 and shown in the report. Never manufacture older CTA history. The chart includes
-zero days and a shared count axis; the accessible daily table contains exact
+zero-view days and a shared count axis; interest before collection started is
+unavailable, not zero. The accessible daily table contains exact
 values. Low-interest suggestions require at least 10 newly tracked views with no
 primary CTA, new question, or purchase request. Ten is a product heuristic, not
 a statistical significance threshold or a performance benchmark.
@@ -75,6 +76,27 @@ totals. Browser tests exercise an anonymous product visitor, all three CTAs,
 seller filters, a non-founder report, concurrent calls, mobile overflow, and
 invalid shop selection against the local Supabase stack only. Test fixtures are
 removed after each browser run.
+
+Recorded checks on 2026-10-20: focused analytics and legacy-view database suites
+pass (38 checks); both local browser flows pass, including desktop/mobile
+screenshots and concurrent replay. ESLint passes. Security advisors report two
+existing mutable-search-path warnings (`private.display_label` and
+`private.guard_published_legal_versions`), neither introduced here.
+
+The complete database suite was also attempted against the populated local
+stack. Fixture primary-key collisions and global-count assumptions affect
+`admin_marketplace_users`, `catalog_state_filter`, `categories_search`,
+`commerce_foundation`, `founding_shops`, `fulfillment_communication`,
+`marketplace_rls`, `product_expiry`, `product_images`, `product_slugs`,
+`product_units`, `seller_notifications`, `trust_evidence`, and
+`trust_tier_evaluator`. Existing local data was preserved; the full database
+suite is not claimed green.
+
+Local production compilation succeeds with webpack, then generated Next.js
+validation stops on the unchanged optional page-props signature in
+`app/panel/pedidos/page.tsx`. Turbopack production building separately fails to
+bind a worker port in this environment. These limits do not affect the passing
+local browser flows, but a production build is not claimed verified locally.
 
 Rollback: revert application callers first. Unschedule
 `plaza-product-activity-retention`, remove the two new public RPCs and private

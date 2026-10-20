@@ -4,6 +4,13 @@ import { SellerAnalyticsReport } from "@/components/analytics/seller-analytics-r
 import { emptyMetrics,sellerAnalyticsFixture } from "@/tests/fixtures/seller-analytics";
 afterEach(cleanup);
 describe("seller analytics report",()=>{
+  it("does not present missing historical CTA activity as zero interest",()=>{
+    const report=sellerAnalyticsFixture();report.daily.unshift({day:"2026-10-19",...emptyMetrics,views:30});
+    render(<SellerAnalyticsReport report={report}/>);
+    const table=screen.getByLabelText("Datos diarios");
+    const oldRow=within(table).getAllByRole("row",{hidden:true})[1];
+    expect(within(oldRow).getAllByRole("cell",{hidden:true})[1]).toHaveTextContent("—");
+  });
   it("uses distinct integer count ticks for low-volume traffic",()=>{
     const report=sellerAnalyticsFixture();report.daily=[{day:"2026-10-20",...emptyMetrics,views:1}];
     render(<SellerAnalyticsReport report={report}/>);
