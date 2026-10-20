@@ -185,6 +185,10 @@ for (const path of ["editor", "catalog"] as const) {
       await publicPage.reload();
       await expect(publicPage.getByRole("heading", { name: productName, exact: true })).toBeVisible();
       await page.goto(`/panel/tiendas/${shopId}/productos/nuevo`);
+      // The first product's draft must not reappear once it has been created.
+      await expect(page.getByLabel("Nombre del producto")).toHaveValue("");
+      await expect(page.getByLabel("Descripción")).toHaveValue("");
+      await expect(page.getByText(/Recuperamos lo que habías escrito/)).toHaveCount(0);
       await page.getByLabel("Nombre del producto").fill("Borrador tras aprobación");
       await page.getByRole("button", { name: "Guardar borrador", exact: true }).click();
       await expect(page.getByRole("status").filter({ hasText: "Borrador guardado" })).toBeVisible();

@@ -35,17 +35,20 @@ function fieldsOf(form: HTMLFormElement) {
   );
 }
 
+/** For a form that finished somewhere else, such as an action that redirected. */
+export function forgetFormDraft(key: string) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Nothing was stored, so nothing needs clearing.
+  }
+}
+
 export function useFormDraft(key: string, restored?: () => void) {
   const formRef = useRef<HTMLFormElement>(null);
   const restoredOnce = useRef(false);
 
-  const clear = useCallback(() => {
-    try {
-      window.localStorage.removeItem(key);
-    } catch {
-      // Nothing was stored, so nothing needs clearing.
-    }
-  }, [key]);
+  const clear = useCallback(() => forgetFormDraft(key), [key]);
 
   const save = useCallback(() => {
     const form = formRef.current;

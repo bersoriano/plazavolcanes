@@ -24,7 +24,7 @@ import {
 import { getShopPublicationApproval, type SellerListingFlags } from "@/lib/seller-publication";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
-import { useFormDraft } from "@/lib/form-draft";
+import { forgetFormDraft, useFormDraft } from "@/lib/form-draft";
 import type { CategoryTree } from "@/lib/categories";
 import {
   USED_CONDITION_OPTIONS,
@@ -227,6 +227,8 @@ function formReadiness(form: HTMLFormElement | null, imageCount: number): Listin
   };
 }
 
+const newProductDraftKey = (shopId: number) => `producto:nuevo:${shopId}`;
+
 export function ProductForm({
   action,
   categories,
@@ -258,11 +260,15 @@ export function ProductForm({
   const [showDraftSaved] = useState(draftSaved);
   useEffect(() => {
     if (!draftSaved) return;
+    // createProduct redirects here instead of reporting success to the form
+    // that held the draft, so the next new product would otherwise reopen it.
+    forgetFormDraft(newProductDraftKey(shopId));
+    forgetFormDraft("producto:nuevo"); // saved before drafts were kept per shop
     const url = new URL(window.location.href);
     url.searchParams.delete("creado");
     // Consume only the creation flag; keep other feedback, filters and anchors.
     window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
-  }, [draftSaved]);
+  }, [draftSaved, shopId]);
   const [preview, setPreview] = useState(product?.imageUrl ?? null);
   const [condition, setCondition] = useState<ProductCondition>(product?.condition ?? "new");
   const [uploading, setUploading] = useState(false);
@@ -270,7 +276,7 @@ export function ProductForm({
   const [recovered, setRecovered] = useState(false);
   const onRestored = useCallback(() => setRecovered(true), []);
   // Scoped per form, so a draft never leaks between products or shops.
-  const draftKey = `producto:${product ? `editar:${product.name}` : "nuevo"}`;
+  const draftKey = product ? `producto:editar:${product.name}` : newProductDraftKey(shopId);
   const { clear: clearDraft, formRef, save: saveDraft } = useFormDraft(draftKey, onRestored);
   useEffect(() => {
     const form = formRef.current;
