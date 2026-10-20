@@ -276,7 +276,8 @@ export function ProductForm({
   const [recovered, setRecovered] = useState(false);
   const onRestored = useCallback(() => setRecovered(true), []);
   // Scoped per form, so a draft never leaks between products or shops.
-  const draftKey = product ? `producto:editar:${product.name}` : newProductDraftKey(shopId);
+  // By id, not name: names repeat and change.
+  const draftKey = productId === undefined ? newProductDraftKey(shopId) : `producto:editar:${productId}`;
   const { clear: clearDraft, formRef, save: saveDraft } = useFormDraft(draftKey, onRestored);
   useEffect(() => {
     const form = formRef.current;

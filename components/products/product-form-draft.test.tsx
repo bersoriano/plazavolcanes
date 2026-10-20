@@ -62,3 +62,21 @@ describe("new product draft", () => {
     expect(screen.getByLabelText("Nombre del producto")).toHaveValue("Taza de barro");
   });
 });
+
+describe("product editor draft", () => {
+  const undescribed = { ...created, description: null };
+
+  it("belongs to one product even when another shares its name", () => {
+    render(<ProductForm action={action} categories={[]} product={undescribed} productId={7} shopId={1} />);
+    fireEvent.input(screen.getByLabelText("Descripción"), { target: { value: "Notas del producto siete." } });
+    fireEvent.change(screen.getByLabelText("Descripción"));
+    cleanup();
+
+    render(<ProductForm action={action} categories={[]} product={undescribed} productId={8} shopId={1} />);
+    expect(screen.getByLabelText("Descripción")).toHaveValue("");
+    cleanup();
+
+    render(<ProductForm action={action} categories={[]} product={{ ...undescribed, name: "Taza renombrada" }} productId={7} shopId={1} />);
+    expect(screen.getByLabelText("Descripción")).toHaveValue("Notas del producto siete.");
+  });
+});
