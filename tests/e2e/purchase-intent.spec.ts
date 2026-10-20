@@ -2,6 +2,8 @@ import { execFileSync } from "node:child_process";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { pickOption } from "./pick-option";
+
 // Like the messaging spec, this one registers accounts and publishes a product,
 // so it must never reach the linked remote project. `npm run test:e2e` forces
 // the local stack; running Playwright bare skips that, and the guard refuses.
@@ -62,8 +64,8 @@ const onePixelPng = Buffer.from(
 async function publishProduct(sellerPage: Page, productName: string) {
   await sellerPage.getByRole("link", { name: /nuevo producto|agregar producto/i }).first().click();
   await expect(sellerPage).toHaveURL(/\/productos\/nuevo/);
-  await sellerPage.getByLabel("Categoría", { exact: true }).selectOption({ index: 1 });
-  await sellerPage.getByLabel("Subcategoría").selectOption({ index: 1 });
+  await pickOption(sellerPage.getByLabel("Categoría", { exact: true }), { index: 1 });
+  await pickOption(sellerPage.getByLabel("Subcategoría"), { index: 1 });
   await sellerPage.getByLabel("Nombre del producto").fill(productName);
   await sellerPage.getByLabel("Descripción").fill("Pieza de prueba para la compra de un visitante.");
   await sellerPage.getByLabel("Precio en MXN").fill("250");
@@ -107,7 +109,7 @@ test("a signed-out shopper keeps their purchase through sign-in", async ({ brows
   await sellerPage
     .getByLabel("Descripción")
     .fill("Tienda de prueba para verificar la compra de un visitante.");
-  await sellerPage.getByLabel("Estado principal").selectOption({ index: 1 });
+  await pickOption(sellerPage.getByLabel("Estado principal"), { index: 1 });
   await sellerPage.getByRole("button", { name: "Crear tienda" }).click();
   await expect(sellerPage).toHaveURL(/\/panel\/tiendas\/\d+/);
 
@@ -207,11 +209,11 @@ test("a buyer must choose how they receive the item", async ({ browser }) => {
   await sellerPage
     .getByLabel("Descripción")
     .fill("Descripción completa de la tienda de prueba para recolección.");
-  await sellerPage.getByLabel("Estado principal").selectOption("MX-JAL");
+  await pickOption(sellerPage.getByLabel("Estado principal"), "MX-JAL");
   await sellerPage.getByLabel("Ofrezco recolección en tienda").check();
   await sellerPage.getByLabel("Calle y número de recolección").fill("Av. Vallarta 1234");
   await sellerPage.getByLabel("Ciudad de recolección").fill("Zapopan");
-  await sellerPage.getByLabel("Estado de recolección").selectOption("MX-JAL");
+  await pickOption(sellerPage.getByLabel("Estado de recolección"), "MX-JAL");
   await sellerPage.getByLabel("Código postal de recolección").fill("45010");
   await sellerPage.getByRole("button", { name: "Crear tienda" }).click();
   await expect(sellerPage).toHaveURL(/\/panel\/tiendas\//);
@@ -275,7 +277,7 @@ test("choosing shipping asks for an address and creates a shipped order", async 
   await sellerPage
     .getByLabel("Descripción")
     .fill("Descripción completa de la tienda de prueba para envío.");
-  await sellerPage.getByLabel("Estado principal").selectOption("MX-JAL");
+  await pickOption(sellerPage.getByLabel("Estado principal"), "MX-JAL");
   await sellerPage.getByRole("button", { name: "Crear tienda" }).click();
   await expect(sellerPage).toHaveURL(/\/panel\/tiendas\//);
 

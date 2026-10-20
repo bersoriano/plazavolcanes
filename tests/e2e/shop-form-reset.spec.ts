@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { pickOption } from "./pick-option";
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
 test.beforeAll(() => {
@@ -39,8 +41,8 @@ function savedShops(email: string) {
 async function fillShop(page: Page) {
   await page.getByLabel("Nombre de la tienda").fill("Casa Niebla");
   await page.getByLabel("Descripción").fill("Objetos de barro hechos a mano en México.");
-  await page.getByLabel("Estado principal").selectOption("MX-CMX");
-  await page.getByLabel("Segundo estado (opcional)").selectOption("MX-MEX");
+  await pickOption(page.getByLabel("Estado principal"), "MX-CMX");
+  await pickOption(page.getByLabel("Segundo estado (opcional)"), "MX-MEX");
   await page.getByLabel("Ofrezco recolección en tienda").check();
 }
 
@@ -54,7 +56,7 @@ async function expectChoices(page: Page) {
 async function fillPickup(page: Page, postalCode: string) {
   await page.getByLabel("Calle y número de recolección").fill("Calle Niebla 12");
   await page.getByLabel("Ciudad de recolección").fill("Coyoacán");
-  await page.getByLabel("Estado de recolección").selectOption("MX-CMX");
+  await pickOption(page.getByLabel("Estado de recolección"), "MX-CMX");
   await page.getByLabel("Código postal de recolección").fill(postalCode);
   await page.getByLabel("Referencias para llegar").fill("Portón verde");
 }
@@ -118,8 +120,8 @@ test("create and edit retain choices through real validation, reset, correction 
 
   await page.goto(settingsUrl);
   // Change away from persisted defaults, so an edit reset cannot hide the bug.
-  await page.getByLabel("Estado principal").selectOption("MX-JAL");
-  await page.getByLabel("Segundo estado (opcional)").selectOption("MX-OAX");
+  await pickOption(page.getByLabel("Estado principal"), "MX-JAL");
+  await pickOption(page.getByLabel("Segundo estado (opcional)"), "MX-OAX");
   await page.getByLabel("Nombre de la tienda").fill("X");
   await submitError(page, "Guardar cambios", "Revisa los campos marcados.");
   await expect(page.getByLabel("Estado principal")).toHaveValue("MX-JAL");
@@ -150,7 +152,7 @@ test("create and edit retain choices through real validation, reset, correction 
   await expect(page.getByLabel("Calle y número de recolección")).toHaveCount(0);
   const secondary = page.getByLabel("Segundo estado (opcional)");
   await expect(secondary.locator('option[value="MX-JAL"]')).toHaveCount(0);
-  await page.getByLabel("Estado principal").selectOption("MX-OAX");
+  await pickOption(page.getByLabel("Estado principal"), "MX-OAX");
   await expect(secondary).toHaveValue("");
   await page.getByRole("button", { name: "Guardar cambios", exact: true }).click();
   await expect(page.getByRole("status").filter({ hasText: "Tienda actualizada." })).toBeVisible();
@@ -171,7 +173,7 @@ test("creation can disable pickup after rejection and clears a duplicate seconda
   await expect(page.getByLabel("Calle y número de recolección")).toHaveCount(0);
   const secondary = page.getByLabel("Segundo estado (opcional)");
   await expect(secondary.locator('option[value="MX-CMX"]')).toHaveCount(0);
-  await page.getByLabel("Estado principal").selectOption("MX-MEX");
+  await pickOption(page.getByLabel("Estado principal"), "MX-MEX");
   await expect(secondary).toHaveValue("");
   await page.getByRole("button", { name: "Crear tienda", exact: true }).click();
   await expect(page).toHaveURL(/\/panel\/tiendas\/\d+\?creada=1/);

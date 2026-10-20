@@ -3,6 +3,8 @@ import { execFileSync } from "node:child_process";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
+import { pickOption } from "./pick-option";
+
 // Like the other end-to-end specs, this one registers a real account, so it
 // must never reach the linked remote project. `npm run test:e2e` forces the
 // local stack through scripts/e2e-env.mjs; running Playwright bare skips that.
@@ -65,7 +67,7 @@ test("the panel's bar carries a seller between its areas from any page", async (
 
     await page.getByLabel("Nombre de la tienda").fill(shopName);
     await page.getByLabel("Descripción").fill("Objetos de barro hechos a mano en México.");
-    await page.getByLabel("Estado principal").selectOption("MX-JAL");
+    await pickOption(page.getByLabel("Estado principal"), "MX-JAL");
     await page.getByRole("button", { name: "Crear tienda", exact: true }).click();
     await expect(page).toHaveURL(/\/panel\/tiendas\/\d+\?creada=1$/);
     const shopPath = new URL(page.url()).pathname;

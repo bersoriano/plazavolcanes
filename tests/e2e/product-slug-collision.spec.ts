@@ -1,6 +1,8 @@
 import { execFileSync } from "node:child_process";
 import { expect, test, type Page } from "@playwright/test";
 
+import { pickOption } from "./pick-option";
+
 // This spec registers accounts and creates shops and listings. `.env.local`
 // points at the linked remote project, so `npm run test:e2e` routes through
 // scripts/e2e-env.mjs, which forces the local stack. Running Playwright
@@ -56,7 +58,7 @@ async function openShop(page: Page, seller: (typeof sellers)[number]) {
   await page.goto("/panel/tiendas/nueva");
   await page.getByLabel("Nombre de la tienda").fill(seller.shop);
   await page.getByLabel("Descripción").fill("Tienda de prueba para dos borradores con el mismo nombre.");
-  await page.getByLabel("Estado principal").selectOption({ index: 1 });
+  await pickOption(page.getByLabel("Estado principal"), { index: 1 });
   await page.getByRole("button", { name: "Crear tienda", exact: true }).click();
   await expect(page).toHaveURL(/\/panel\/tiendas\/\d+/);
 

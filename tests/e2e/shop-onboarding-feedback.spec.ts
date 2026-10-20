@@ -2,6 +2,8 @@ import { execFileSync } from "node:child_process";
 import { expect, test } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
 
+import { pickOption } from "./pick-option";
+
 const apiUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 
 test("shop creation, approval, storefront and trust states", async ({ page }) => {
@@ -20,7 +22,7 @@ test("shop creation, approval, storefront and trust states", async ({ page }) =>
   await expect(page).toHaveURL(/\/panel\/tiendas\/nueva$/);
   await page.getByLabel("Nombre de la tienda").fill("Casa Volcanes Prueba");
   await page.getByLabel("Descripción").fill("Objetos de barro hechos a mano en México.");
-  await page.getByLabel("Estado principal").selectOption("MX-JAL");
+  await pickOption(page.getByLabel("Estado principal"), "MX-JAL");
   await page.getByRole("button", { name: "Crear tienda", exact: true }).click();
   await expect(page).toHaveURL(/\/panel\/tiendas\/\d+\?creada=1$/);
   const workspace = page.url();
