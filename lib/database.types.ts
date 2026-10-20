@@ -700,6 +700,8 @@ export type Database = {
       };
       is_current_user_admin: { Args: Record<never, never>; Returns: boolean };
       record_product_view: { Args: { p_product_id: number }; Returns: undefined };
+      record_product_activity: { Args: { p_product_id: number; p_action: string; p_session_id: string }; Returns: boolean };
+      seller_product_analytics: { Args: { p_days?: number; p_shop_id?: number | null }; Returns: Json };
       request_listing_import: { Args: { p_shop_id: number; p_links: string[]; p_note?: string | null }; Returns: number };
       shop_import_requests: {
         Args: { p_shop_id: number };
