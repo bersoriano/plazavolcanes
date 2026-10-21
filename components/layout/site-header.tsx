@@ -6,6 +6,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { NavLink } from "@/components/layout/nav-link";
 import { SignedOutHeaderNav } from "@/components/layout/signed-out-header-nav";
 import { SiteFrame } from "@/components/layout/site-frame";
+import { Badge } from "@/components/ui/badge";
 import { fetchUnreadCount } from "@/lib/queries/messages.server";
 import { getCurrentUserAdminStatus } from "@/lib/admin-auth.server";
 
@@ -72,12 +73,13 @@ export async function SiteHeader() {
               <NavLink className={`relative ${SIGNED_IN_LINK}`} href="/mensajes">
                 Mensajes
                 {unread > 0 ? (
-                  <span
+                  <Badge
+                    variant="unstyled"
                     aria-label={`${unread} mensajes sin leer`}
                     className="ml-2 grid min-w-5 place-items-center rounded-full bg-brand px-1.5 py-0.5 text-xs font-semibold text-white"
                   >
                     {unread}
-                  </span>
+                  </Badge>
                 ) : null}
               </NavLink>
               {isAdmin ? (

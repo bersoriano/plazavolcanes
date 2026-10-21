@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { ActivityChart } from "@/components/analytics/activity-chart";
+import { ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { interestRate, metricChange, type SellerAnalytics } from "@/lib/seller-analytics";
 
 const number = new Intl.NumberFormat("es-MX");
@@ -20,11 +22,11 @@ export function SellerAnalyticsReport({ report }: { report: SellerAnalytics }) {
   const started = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" }).format(new Date(report.tracking_started_at));
   return <div className="space-y-6">
     <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-      {cards.map((card) => <div className="rounded-2xl border border-line bg-surface p-5" key={card.label}>
+      {cards.map((card) => <Card padding="sm" className="rounded-2xl" key={card.label}>
         <dt className="text-sm font-medium text-muted">{card.label}</dt>
         <dd className="mt-3 font-display text-4xl font-semibold tabular-nums text-ink">{card.value}</dd>
         <dd className="mt-2 text-xs text-muted">{card.change}</dd>
-      </div>)}
+      </Card>)}
     </dl>
     <p className="text-sm leading-6 text-muted">Un clic no confirma una pregunta, un pedido ni un pago. Las preguntas son conversaciones nuevas y las solicitudes son pedidos guardados; cada pedido cuenta una vez en el resumen.</p>
     {current.views === 0 && current.questions === 0 && current.orders === 0 ? <div className="rounded-2xl bg-accent/30 p-5">
@@ -36,7 +38,7 @@ export function SellerAnalyticsReport({ report }: { report: SellerAnalytics }) {
     {quiet.length ? <section className="rounded-2xl border border-brand/20 bg-accent/20 p-5 sm:p-6" aria-labelledby="quiet-products-title">
       <h2 className="font-display text-xl font-semibold text-brand" id="quiet-products-title">Productos para revisar</h2>
       <p className="mt-2 text-sm leading-6 text-muted">Reciben visitas, pero todavía no generan preguntas ni intención de compra. Revisa foto, precio y descripción.</p>
-      <ul className="mt-3 flex flex-wrap gap-3">{quiet.map((product) => <li key={product.id}><Link className="inline-flex min-h-11 items-center rounded-full bg-surface px-4 text-sm font-semibold text-brand underline underline-offset-4" href={`/panel/productos/${product.id}/editar`}>{product.name}</Link></li>)}</ul>
+      <ul className="mt-3 flex flex-wrap gap-3">{quiet.map((product) => <li key={product.id}><ButtonLink variant="unstyled" className="inline-flex min-h-11 items-center rounded-full bg-surface px-4 text-sm font-semibold text-brand underline underline-offset-4" href={`/panel/productos/${product.id}/editar`}>{product.name}</ButtonLink></li>)}</ul>
       <p className="mt-3 text-xs text-muted">Se muestra desde 10 visitas medidas con el nuevo contador; es una señal para investigar.</p>
     </section> : null}
     <section className="overflow-hidden rounded-[2rem] border border-line bg-surface" aria-labelledby="products-activity-title">

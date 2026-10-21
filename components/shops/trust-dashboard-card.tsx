@@ -1,5 +1,6 @@
 import { BarChart3, CheckCircle2, ChevronDown, CircleGauge, Target } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
 import { getTrustTierMarker, type TrustDashboard } from "@/lib/trust-tiers";
 
@@ -29,10 +30,10 @@ export function TrustDashboardCard({ dashboard }: { dashboard: TrustDashboard })
             <span className="font-display text-lg font-semibold">Nivel {marker.label}</span>
           </div>
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full bg-accent/45 px-3 py-1.5 text-sm font-bold text-brand-hover">
+            <Badge variant="unstyled" className="inline-flex items-center gap-2 rounded-full bg-accent/45 px-3 py-1.5 text-sm font-bold text-brand-hover">
               <CircleGauge aria-hidden="true" className="size-4" />
               {dashboard.publishedCount} de {dashboard.listingLimit} publicaciones
-            </span>
+            </Badge>
             <ChevronDown aria-hidden="true" className="size-5 shrink-0 text-brand transition-transform group-open:rotate-180" />
           </div>
         </div>

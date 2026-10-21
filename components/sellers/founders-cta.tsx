@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { Accent, VolcanoLines } from "@/components/home/landing/primitives";
+import { ButtonLink } from "@/components/ui/button";
 import { FOUNDER_EARN_RULE, FOUNDER_MIN_LIVE_ITEMS, FOUNDER_OFFER, FOUNDERS_CAP, resolveFoundersProgress } from "@/lib/launch";
 import { OWNER_CTA_LABEL, sellerCtaHref, type SellerViewer } from "@/lib/seller-cta";
 
@@ -63,13 +64,14 @@ export function FoundersCta({
               </div>
             </>
           ) : null}
-          <Link
+          <ButtonLink
+            variant="unstyled"
             className="mt-1.5 flex h-[58px] items-center justify-center gap-2.5 rounded-full bg-accent text-[17px] font-bold text-brand lg:h-[60px] lg:text-[18px]"
             href={sellerCtaHref(viewer, "final")}
           >
             {viewer === "owner" ? OWNER_CTA_LABEL : "Crear mi tienda gratis"}
             <ArrowRight aria-hidden="true" className="size-5" strokeWidth={2.2} />
-          </Link>
+          </ButtonLink>
           {viewer === "signed-out" ? (
             <Link
               className="tap inline-flex items-center justify-center self-center text-[15px] font-semibold text-white underline decoration-accent underline-offset-4"

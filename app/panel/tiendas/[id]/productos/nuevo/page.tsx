@@ -5,6 +5,7 @@ import { pageContainer } from "@/components/layout/container";
 import { PublicationApprovalNotice } from "@/components/products/publication-approval-notice";
 import { ProductForm } from "@/components/products/product-form";
 import { CategorySuggestionForm } from "@/components/products/category-suggestion-form";
+import { Card } from "@/components/ui/card";
 import { createCategorySuggestion } from "@/lib/actions/categories";
 import { createProduct } from "@/lib/actions/products";
 import { DEFAULT_CATALOG_LOCALE } from "@/lib/catalog-locale";
@@ -26,5 +27,5 @@ export default async function NewProductPage({ params }: { params: Promise<{ id:
   if (!shop) notFound();
   const action = createProduct.bind(null, shopId);
 
-  return <section className={`${pageContainer} py-10 sm:py-14`}><BackLink href={`/panel/tiendas/${shopId}`}>{shop.name}</BackLink><div className="mt-7 rounded-[2rem] border border-line bg-surface p-6 sm:p-9"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Nuevo producto</p><h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">Agrega una publicación</h1><p className="mb-8 mt-3 leading-7 text-muted">Guarda primero un borrador privado. Después podrás completar los requisitos para publicar.</p><PublicationApprovalNotice shop={shop} /><ProductForm shopPublication={shop} action={action} categories={categories} shopId={shopId} /><CategorySuggestionForm action={createCategorySuggestion} categories={categories} /></div></section>;
+  return <section className={`${pageContainer} py-10 sm:py-14`}><BackLink href={`/panel/tiendas/${shopId}`}>{shop.name}</BackLink><Card padding="md" className="mt-7 sm:p-9"><p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Nuevo producto</p><h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">Agrega una publicación</h1><p className="mb-8 mt-3 leading-7 text-muted">Guarda primero un borrador privado. Después podrás completar los requisitos para publicar.</p><PublicationApprovalNotice shop={shop} /><ProductForm shopPublication={shop} action={action} categories={categories} shopId={shopId} /><CategorySuggestionForm action={createCategorySuggestion} categories={categories} /></Card></section>;
 }

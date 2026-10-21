@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { deleteUser, setUserDisabled } from "@/lib/actions/admin-users";
 import type { ActionState } from "@/lib/action-state";
 import type { AdminMarketplaceUser } from "@/lib/queries/admin";
@@ -29,8 +31,9 @@ function DisableAccount({ user, labelName }: { user: AdminMarketplaceUser; label
   return (
     <form action={formAction} className="flex flex-wrap items-center gap-3">
       <input name="user_id" type="hidden" value={user.id} />
-      <button
-        className="min-h-11 rounded-full border border-line bg-surface px-5 text-sm font-semibold disabled:opacity-60"
+      <Button
+        variant="secondary"
+        className="min-h-11 border border-line bg-surface px-5 text-sm disabled:opacity-60"
         disabled={pending}
         name="disabled"
         type="submit"
@@ -38,7 +41,7 @@ function DisableAccount({ user, labelName }: { user: AdminMarketplaceUser; label
       >
         {isDisabled ? "Habilitar cuenta" : "Deshabilitar cuenta"}{" "}
         <span className="sr-only">de {labelName}</span>
-      </button>
+      </Button>
       <p className="min-w-48 flex-1 text-sm text-muted">
         {isDisabled
           ? "La cuenta no puede ingresar y sus tiendas quedaron pendientes de aprobación."
@@ -61,13 +64,14 @@ function DeleteAccount({ user, labelName }: { user: AdminMarketplaceUser; labelN
   if (!confirming) {
     return (
       <div className="flex flex-wrap items-center gap-3">
-        <button
+        <Button
+          variant="unstyled"
           className="min-h-11 rounded-full border border-sale/40 bg-surface px-5 text-sm font-semibold text-sale"
           onClick={() => setConfirming(true)}
           type="button"
         >
           Eliminar cuenta <span className="sr-only">de {labelName}</span>
-        </button>
+        </Button>
         <ActionMessage state={state} />
       </div>
     );
@@ -85,9 +89,9 @@ function DeleteAccount({ user, labelName }: { user: AdminMarketplaceUser; labelN
         <label className="block text-sm font-semibold" htmlFor={inputId}>
           Escribe {phrase} para confirmar
         </label>
-        <input
+        <Input
           autoComplete="off"
-          className="min-h-11 w-full rounded-xl border border-line bg-background px-3 text-ink focus:border-brand focus:outline-none"
+          className="min-h-11 rounded-xl bg-background px-3"
           id={inputId}
           onChange={(event) => setTyped(event.target.value)}
           spellCheck={false}
@@ -96,14 +100,16 @@ function DeleteAccount({ user, labelName }: { user: AdminMarketplaceUser; labelN
         />
       </div>
       <div className="flex flex-wrap gap-3">
-        <button
-          className="min-h-11 rounded-full bg-sale px-5 text-sm font-semibold text-white disabled:opacity-60"
+        <Button
+          variant="danger"
+          className="min-h-11 px-5 text-sm disabled:opacity-60"
           disabled={pending || !matches}
           type="submit"
         >
           {pending ? "Eliminando…" : "Eliminar definitivamente"}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           className="min-h-11 rounded-full border border-line px-5 text-sm font-semibold"
           disabled={pending}
           onClick={() => {
@@ -113,7 +119,7 @@ function DeleteAccount({ user, labelName }: { user: AdminMarketplaceUser; labelN
           type="button"
         >
           Cancelar
-        </button>
+        </Button>
       </div>
       <ActionMessage state={state} />
     </form>

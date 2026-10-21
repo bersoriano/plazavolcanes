@@ -1,11 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
 import { pageContainer } from "@/components/layout/container";
 import { isCurrent } from "@/components/layout/nav-link";
+import { ButtonLink } from "@/components/ui/button";
 
 type Section = { href: string; label: string; covers: string[] };
 
@@ -65,13 +65,14 @@ export function PanelNav() {
         <ul className="-ml-3 flex w-max gap-1 py-1">
           {SECTIONS.map((section) => (
             <li key={section.href}>
-              <Link
+              <ButtonLink
+                variant="unstyled"
                 aria-current={isOpen(pathname, section) ? "page" : undefined}
                 className="tap inline-flex items-center justify-center whitespace-nowrap rounded-full px-3 text-sm font-semibold text-muted transition-colors hover:text-brand aria-[current=page]:bg-accent aria-[current=page]:text-brand"
                 href={section.href}
               >
                 {section.label}
-              </Link>
+              </ButtonLink>
             </li>
           ))}
         </ul>

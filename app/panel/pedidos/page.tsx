@@ -3,6 +3,8 @@ import { ChevronRight, ImageIcon, PackageOpen, RotateCw, SearchX } from "lucide-
 
 import { pageContainer } from "@/components/layout/container";
 import { SellerOrdersToolbar } from "@/components/orders/seller-orders-toolbar";
+import { ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { formatOrderStatus } from "@/lib/order-status";
@@ -45,7 +47,7 @@ export default async function SellerOrdersPage({
   searchParams,
 }: {
   searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
-} = {}) {
+}) {
   const filter = parseSellerOrdersFilter((await searchParams) ?? {});
   const result = await getSellerOrderQueue({ filter });
   if (!result) return null;
@@ -56,14 +58,14 @@ export default async function SellerOrdersPage({
       <h1 className="mt-2 font-display text-4xl font-semibold">Pedidos</h1>
 
       {result.status === "error" ? (
-        <div className="mt-8 rounded-[2rem] border border-line bg-surface p-6 sm:p-8" role="alert">
+        <Card padding="lg" className="mt-8" role="alert">
           <h2 className="font-display text-2xl font-semibold">No pudimos cargar tus pedidos</h2>
           <p className="mt-2 max-w-xl leading-7 text-muted">Tus pedidos no cambiaron; solo falló la consulta. Vuelve a intentarlo en un momento.</p>
-          <Link className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-on-brand" href="/panel/pedidos">
+          <ButtonLink  className="mt-5 min-h-11 bg-brand px-5 py-3 text-sm text-on-brand" href="/panel/pedidos">
             <RotateCw aria-hidden="true" className="size-4" />
             Reintentar
-          </Link>
-        </div>
+          </ButtonLink>
+        </Card>
       ) : result.counts.todos > 0 || filter.search !== "" || filter.shopId !== null ? (
         <>
           <SellerOrdersToolbar counts={result.counts} filter={filter} shops={result.shops} />
@@ -169,12 +171,13 @@ function OrderGroup({
         <p className="mt-3 text-sm text-muted">Nada pendiente por ahora.</p>
       )}
       {moreHref ? (
-        <Link
+        <ButtonLink
+          variant="unstyled"
           className="tap mt-4 inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-5 text-sm font-semibold text-brand hover:border-brand"
           href={moreHref}
         >
           Ver más pedidos cerrados
-        </Link>
+        </ButtonLink>
       ) : null}
     </section>
   );

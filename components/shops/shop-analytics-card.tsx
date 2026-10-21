@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BarChart3 } from "lucide-react";
 
+import { Card } from "@/components/ui/card";
 import { ANALYTICS_DAYS, type ShopAnalytics } from "@/lib/shop-analytics";
 
 const number = new Intl.NumberFormat("es-MX");
@@ -12,7 +13,7 @@ const number = new Intl.NumberFormat("es-MX");
 export function ShopAnalyticsCard({ analytics }: { analytics: ShopAnalytics | null; isFounder?: boolean }) {
   if (!analytics) {
     return (
-      <section aria-labelledby="estadisticas-title" className="rounded-[2rem] border border-dashed border-line bg-surface px-6 py-5 sm:px-8">
+      <Card as="section" aria-labelledby="estadisticas-title" className="border-dashed px-6 py-5 sm:px-8">
         <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.16em] text-brand" id="estadisticas-title">
           <BarChart3 aria-hidden="true" className="size-4" />
           Estadísticas
@@ -21,12 +22,12 @@ export function ShopAnalyticsCard({ analytics }: { analytics: ShopAnalytics | nu
           Consulta visitas, actividad de botones, preguntas y solicitudes de tus productos.
         </p>
         <Link className="mt-3 inline-flex min-h-11 items-center text-sm font-semibold text-brand underline" href="/panel/estadisticas">Abrir Estadísticas</Link>
-      </section>
+      </Card>
     );
   }
 
   return (
-    <section aria-labelledby="estadisticas-title" className="rounded-[2rem] border border-line bg-surface px-6 py-5 sm:px-8">
+    <Card as="section" aria-labelledby="estadisticas-title" className="px-6 py-5 sm:px-8">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.16em] text-brand" id="estadisticas-title">
           <BarChart3 aria-hidden="true" className="size-4" />
@@ -79,7 +80,7 @@ export function ShopAnalyticsCard({ analytics }: { analytics: ShopAnalytics | nu
           </ul>
         </div>
       ) : null}
-    </section>
+    </Card>
   );
 }
 

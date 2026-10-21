@@ -1,9 +1,10 @@
-import Link from "next/link";
 import { ArrowRight, Check, Mic, Sparkle } from "lucide-react";
 
 import { FoundersCounter } from "@/components/home/landing/founders-counter";
 import { VolcanoLines } from "@/components/home/landing/primitives";
 import { FounderSeal } from "@/components/sellers/founder-seal";
+import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button";
 import { BASE_LISTING_LIMIT, FOUNDER_EARN_RULE, FOUNDERS_CAP, REPUTATION_IMPORT_AVAILABLE } from "@/lib/launch";
 import { OWNER_CTA_LABEL, sellerCtaHref, type SellerViewer } from "@/lib/seller-cta";
 
@@ -89,7 +90,8 @@ export function SellerHero({
           </p>
 
           <div className="flex flex-col items-center gap-4 self-stretch sm:flex-row sm:gap-[22px] sm:self-auto">
-            <Link
+            <ButtonLink
+              variant="unstyled"
               className="flex h-[58px] items-center justify-between gap-4 self-stretch rounded-full bg-accent pl-6 pr-2 text-[17px] font-bold text-brand shadow-[0_16px_36px_-14px] shadow-accent/55 sm:self-auto lg:h-[62px] lg:pl-[30px] lg:pr-2.5 lg:text-[18px]"
               data-hero-cta
               href={sellerCtaHref(viewer, "hero")}
@@ -98,7 +100,7 @@ export function SellerHero({
               <span aria-hidden="true" className="grid size-[42px] place-items-center rounded-full bg-brand text-accent lg:size-11">
                 <ArrowRight className="size-5" strokeWidth={2.2} />
               </span>
-            </Link>
+            </ButtonLink>
             <a
               className="tap inline-flex items-center text-[16px] font-semibold text-white underline decoration-accent decoration-[3px] underline-offset-[6px] lg:text-[17px]"
               href="#pasos"
@@ -217,10 +219,10 @@ function HeroCollage({ promoActive }: { promoActive: boolean }) {
         {promoActive ? (
           <>
             <FounderSeal className="animate-rise-in absolute left-[236px] top-[270px] size-28 border-[3px] text-[11px] [animation-delay:320ms] sm:-left-10 sm:top-[548px] sm:size-[150px] sm:border-4 sm:text-[13px]" />
-            <span className="animate-rise-in absolute left-4 top-[352px] flex h-[38px] -rotate-3 items-center gap-1.5 rounded-full bg-premium-ink px-3.5 text-[13px] font-bold text-premium-gold shadow-[0_16px_30px_-14px_rgb(0_0_0/0.7)] [animation-delay:440ms] sm:left-[330px] sm:top-[590px] sm:h-11 sm:gap-2 sm:px-[18px] sm:text-[15px]">
+            <Badge variant="unstyled" className="animate-rise-in absolute left-4 top-[352px] flex h-[38px] -rotate-3 items-center gap-1.5 rounded-full bg-premium-ink px-3.5 text-[13px] font-bold text-premium-gold shadow-[0_16px_30px_-14px_rgb(0_0_0/0.7)] [animation-delay:440ms] sm:left-[330px] sm:top-[590px] sm:h-11 sm:gap-2 sm:px-[18px] sm:text-[15px]">
               <Sparkle className="size-4" fill="currentColor" strokeWidth={0} />
               0% comisión · 12 meses
-            </span>
+            </Badge>
           </>
         ) : null}
       </div>

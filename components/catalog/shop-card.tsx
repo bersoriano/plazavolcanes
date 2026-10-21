@@ -3,6 +3,7 @@ import { ArrowRight, ArrowUpRight, MapPin, Plus, ShieldCheck, Sparkles, Store } 
 
 import { CatalogImage } from "@/components/catalog/catalog-image";
 import { FounderMark } from "@/components/shops/founder-mark";
+import { Badge } from "@/components/ui/badge";
 import type { CatalogShop } from "@/lib/queries/catalog.server";
 import { formatShopLocation } from "@/lib/shop-location";
 import { getTrustTierMarker } from "@/lib/trust-tiers";
@@ -41,16 +42,16 @@ export function PublicShopCard({
         {isPremium ? (
           <span className="absolute left-3.5 top-3.5 z-10 flex gap-1.5 lg:left-[18px] lg:top-[18px]">
             {isFounder ? (
-              <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-premium-ink px-2.5 text-[12px] font-bold text-premium-gold lg:h-[30px] lg:px-3">
+              <Badge variant="unstyled" className="inline-flex h-7 items-center gap-1.5 rounded-full bg-premium-ink px-2.5 text-[12px] font-bold text-premium-gold lg:h-[30px] lg:px-3">
                 <FounderMark className="size-3.5" />
                 Tienda fundadora
-              </span>
+              </Badge>
             ) : null}
             {shop.is_premium ? (
-              <span className="inline-flex h-7 items-center gap-1.5 rounded-full bg-premium-ink px-2.5 text-[12px] font-bold text-premium-gold lg:h-[30px] lg:px-3">
+              <Badge variant="unstyled" className="inline-flex h-7 items-center gap-1.5 rounded-full bg-premium-ink px-2.5 text-[12px] font-bold text-premium-gold lg:h-[30px] lg:px-3">
                 <Sparkles aria-hidden="true" className="size-3.5" />
                 Premium
-              </span>
+              </Badge>
             ) : null}
           </span>
         ) : null}
@@ -80,10 +81,10 @@ export function PublicShopCard({
           />
         </div>
         <div className="flex flex-wrap items-center gap-x-2.5 gap-y-2 text-[13px]">
-          <span className="inline-flex h-6 items-center gap-1.5 rounded-full bg-lime-tint px-[9px] text-[12px] font-bold text-brand lg:h-[26px] lg:px-2.5 lg:text-[13px]">
+          <Badge variant="unstyled" className="inline-flex h-6 items-center gap-1.5 rounded-full bg-lime-tint px-[9px] text-[12px] font-bold text-brand lg:h-[26px] lg:px-2.5 lg:text-[13px]">
             <ShieldCheck aria-hidden="true" className="size-3.5" />
             Nivel {tier.label}
-          </span>
+          </Badge>
           <span className="flex items-center gap-1 text-muted">
             <MapPin aria-hidden="true" className="size-3.5 shrink-0" />
             {formatShopLocation(shop.country_code, shop.administrative_area_codes)}
@@ -121,10 +122,10 @@ export function ShopInviteCard() {
       <span className="col-span-2 text-[15px] font-medium leading-[1.5] lg:text-[17px]">
         Abre tu tienda gratis y aparece en la plaza junto a quienes ya venden.
       </span>
-      <span className="col-span-2 inline-flex h-12 items-center gap-2 justify-self-start rounded-full bg-brand px-5 text-[15px] font-semibold text-white lg:mt-4 lg:h-[52px] lg:px-6 lg:text-[16px]">
+      <Badge variant="unstyled" className="col-span-2 inline-flex h-12 items-center gap-2 justify-self-start rounded-full bg-brand px-5 text-[15px] font-semibold text-white lg:mt-4 lg:h-[52px] lg:px-6 lg:text-[16px]">
         Quiero vender
         <ArrowRight aria-hidden="true" className="size-[18px] text-accent" strokeWidth={2.2} />
-      </span>
+      </Badge>
     </Link>
   );
 }

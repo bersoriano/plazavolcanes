@@ -1,6 +1,6 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
+import { ButtonLink } from "@/components/ui/button";
 
 /**
  * The landing's shared pieces. Type sizes interpolate between the handoff's
@@ -73,7 +73,8 @@ export function PrimaryCta({
   className?: string;
 }) {
   return (
-    <Link
+    <ButtonLink
+      variant="unstyled"
       className={`inline-flex h-[58px] items-center gap-4 rounded-full bg-brand pl-6 pr-2 text-[17px] font-semibold text-white shadow-cta transition-colors hover:bg-brand-hover lg:h-[62px] lg:pl-[30px] lg:pr-2.5 lg:text-[18px] ${
         block ? "justify-between sm:justify-start" : ""
       } ${className}`}
@@ -83,6 +84,6 @@ export function PrimaryCta({
       <span aria-hidden="true" className="grid size-[42px] shrink-0 place-items-center rounded-full bg-accent text-brand lg:size-11">
         <ArrowRight className="size-5" strokeWidth={2.2} />
       </span>
-    </Link>
+    </ButtonLink>
   );
 }

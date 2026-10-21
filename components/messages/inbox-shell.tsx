@@ -8,7 +8,10 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { pageContainer } from "@/components/layout/container";
 import { INBOX_FRAME_HEIGHT, THREAD_MIN_HEIGHT } from "@/components/messages/inbox-layout";
+import { Badge } from "@/components/ui/badge";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 import { formatInboxDate } from "@/lib/format";
 import {
   conversationKey,
@@ -186,12 +189,13 @@ function InboxRow({
           <span className="mt-0.5 flex items-center gap-2">
             <span className="min-w-0 flex-1 truncate text-sm text-muted">{preview}</span>
             {unread ? (
-              <span
+              <Badge
+                variant="unstyled"
                 aria-label={`${entry.unread_count} mensajes sin leer`}
                 className="grid min-w-6 shrink-0 place-items-center rounded-full bg-brand px-2 py-0.5 text-xs font-semibold text-white"
               >
                 {entry.unread_count}
-              </span>
+              </Badge>
             ) : null}
           </span>
         </span>
@@ -298,12 +302,12 @@ export function InboxShell({
         <div className="mt-8">
           <EmptyState
             action={
-              <Link
-                className="inline-flex min-h-11 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white"
+              <ButtonLink
+                className="min-h-11 bg-brand px-5 text-sm text-white"
                 href="/explorar"
               >
                 Explorar productos
-              </Link>
+              </ButtonLink>
             }
             description="Aquí verás las preguntas que hagas a una tienda, las que reciban las tuyas y la conversación de cada pedido."
             icon={<MessageCircle aria-hidden="true" className="size-7" />}
@@ -350,7 +354,8 @@ export function InboxShell({
               role="group"
             >
               {filters.map((item) => (
-                <button
+                <Button
+                  variant="unstyled"
                   aria-pressed={filter === item.id}
                   className="inline-flex min-h-11 shrink-0 items-center justify-between gap-2 rounded-full border border-line px-4 text-sm font-semibold text-muted transition-colors aria-pressed:border-brand aria-pressed:bg-brand aria-pressed:text-white xl:border-transparent"
                   key={item.id}
@@ -359,14 +364,15 @@ export function InboxShell({
                 >
                   {item.label}
                   {item.unread > 0 ? (
-                    <span
+                    <Badge
+                      variant="unstyled"
                       aria-label={item.id === "unread" ? `${item.unread} mensajes` : `${item.unread} sin leer`}
                       className="grid min-w-5 place-items-center rounded-full bg-accent px-1.5 py-0.5 text-xs font-semibold text-brand"
                     >
                       {item.unread}
-                    </span>
+                    </Badge>
                   ) : null}
-                </button>
+                </Button>
               ))}
             </div>
           ) : null}
@@ -385,8 +391,8 @@ export function InboxShell({
                 aria-hidden="true"
                 className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted"
               />
-              <input
-                className="min-h-11 w-full rounded-full border border-line bg-surface pl-11 pr-4 text-ink focus:border-brand focus:outline-none"
+              <Input
+                className="min-h-11 rounded-full pl-11 pr-4"
                 id="inbox-search"
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Persona, tienda o producto"

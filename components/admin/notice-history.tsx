@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { AUDIENCE_LABELS } from "@/components/admin/broadcast-form";
 import { NoticeActionMessage } from "@/components/admin/notice-fields";
+import { Button } from "@/components/ui/button";
 import { retractNotice } from "@/lib/actions/platform-notices";
 import { formatDate } from "@/lib/format";
 import type { NoticeBatch } from "@/lib/queries/platform-notices";
@@ -36,13 +37,14 @@ function Retract({ batch }: { batch: NoticeBatch }) {
   if (!confirming) {
     return (
       <div className="flex flex-wrap items-center gap-3">
-        <button
+        <Button
+          variant="unstyled"
           className="min-h-11 rounded-full border border-sale/40 bg-surface px-5 text-sm font-semibold text-sale"
           onClick={() => setConfirming(true)}
           type="button"
         >
           Retirar <span className="sr-only">{batch.title}</span>
-        </button>
+        </Button>
         <NoticeActionMessage state={state} />
       </div>
     );
@@ -55,21 +57,23 @@ function Retract({ batch }: { batch: NoticeBatch }) {
         Se quitará de todas las bandejas donde llegó. No se puede volver a poner.
       </p>
       <div className="flex flex-wrap gap-3">
-        <button
-          className="min-h-11 rounded-full bg-sale px-5 text-sm font-semibold text-white disabled:opacity-60"
+        <Button
+          variant="danger"
+          className="min-h-11 px-5 text-sm disabled:opacity-60"
           disabled={pending}
           type="submit"
         >
           {pending ? "Retirando…" : "Retirar definitivamente"}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           className="min-h-11 rounded-full border border-line px-5 text-sm font-semibold"
           disabled={pending}
           onClick={() => setConfirming(false)}
           type="button"
         >
           Cancelar
-        </button>
+        </Button>
       </div>
       <NoticeActionMessage state={state} />
     </form>

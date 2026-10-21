@@ -1,24 +1,29 @@
-import type { InputHTMLAttributes } from "react";
+"use client";
 
-type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
+import { useId, type ComponentProps } from "react";
+
+import { Input } from "@/components/ui/input";
+
+type FieldProps = ComponentProps<"input"> & {
   label: string;
   error?: string;
   hint?: string;
 };
 
-export function Field({ label, error, hint, id, className = "", ...props }: FieldProps) {
-  const inputId = id ?? props.name;
-  const describedBy = [hint ? `${inputId}-hint` : null, error ? `${inputId}-error` : null].filter(Boolean).join(" ") || undefined;
+export function Field({ label, error, hint, id, className, "aria-describedby": externalDescription, "aria-invalid": invalid, ...props }: FieldProps) {
+  const generatedId = useId();
+  const inputId = id ?? props.name ?? generatedId;
+  const describedBy = [externalDescription, hint ? `${inputId}-hint` : null, error ? `${inputId}-error` : null].filter(Boolean).join(" ") || undefined;
 
   return (
     <div className="space-y-2">
       <label className="block text-sm font-semibold text-ink" htmlFor={inputId}>
         {label}
       </label>
-      <input
+      <Input
         aria-describedby={describedBy}
-        aria-invalid={Boolean(error)}
-        className={`min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none ${className}`}
+        aria-invalid={error ? true : invalid ?? false}
+        className={className}
         id={inputId}
         {...props}
       />

@@ -4,14 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { ImagePlus } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input, Select, Textarea } from "@/components/ui/input";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
-import { Button } from "@/components/ui/button";
 import { requestShopImageUpload } from "@/lib/actions/media";
 import { inspectImage } from "@/lib/media/signature";
 import { uploadWithTickets } from "@/lib/media/upload-client";
 import { rejectionMessage } from "@/lib/media/validation";
-import { Field } from "@/components/ui/field";
 import {
   MEXICO_ADMINISTRATIVE_AREAS,
   SUPPORTED_COUNTRY,
@@ -126,10 +127,10 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
 
       <div className="space-y-2">
         <label className="block text-sm font-semibold text-ink" htmlFor="description">Descripción</label>
-        <textarea
+        <Textarea
           aria-describedby={state.errors?.description ? "description-error" : undefined}
           aria-invalid={Boolean(state.errors?.description)}
-          className="min-h-36 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none"
+          className="min-h-36"
           defaultValue={state.values?.description ?? shop?.description}
           id="description"
           maxLength={1200}
@@ -143,23 +144,23 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-ink" htmlFor="country">País</label>
-          <select
-            className="min-h-12 w-full cursor-not-allowed rounded-2xl border border-line bg-background px-4 text-muted"
+          <Select
+            className="cursor-not-allowed bg-background text-muted"
             disabled
             id="country"
             value={SUPPORTED_COUNTRY.code}
           >
             <option value={SUPPORTED_COUNTRY.code}>{SUPPORTED_COUNTRY.label}</option>
-          </select>
+          </Select>
           <input name="country_code" type="hidden" value={SUPPORTED_COUNTRY.code} />
         </div>
 
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-ink" htmlFor="administrative-area">Estado principal</label>
-          <select
+          <Select
             aria-describedby={state.errors?.administrative_area_codes ? "administrative-area-error" : undefined}
             aria-invalid={Boolean(state.errors?.administrative_area_codes)}
-            className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none"
+
             id="administrative-area"
             name={AREA_FIELD_NAME}
             onChange={(event) => {
@@ -174,17 +175,17 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
             {MEXICO_ADMINISTRATIVE_AREAS.map((area) => (
               <option key={area.code} value={area.code}>{area.label}</option>
             ))}
-          </select>
+          </Select>
         </div>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-ink" htmlFor="secondary-administrative-area">Segundo estado (opcional)</label>
-          <select
+          <Select
             aria-describedby={state.errors?.administrative_area_codes ? "administrative-area-error" : undefined}
             aria-invalid={Boolean(state.errors?.administrative_area_codes)}
-            className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none"
+
             id="secondary-administrative-area"
             name={AREA_FIELD_NAME}
             onChange={(event) => setSecondaryArea(event.target.value)}
@@ -194,7 +195,7 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
             {MEXICO_ADMINISTRATIVE_AREAS.filter((area) => area.code !== primaryArea).map((area) => (
               <option key={area.code} value={area.code}>{area.label}</option>
             ))}
-          </select>
+          </Select>
           <p className="text-xs text-muted">Agrega un segundo estado si también vendes o entregas ahí.</p>
         </div>
         <div className="space-y-2 sm:col-span-2">
@@ -209,10 +210,10 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
           <label className="block text-sm font-semibold text-ink" htmlFor="delivery_policy">
             Política de entregas <span className="font-normal text-muted">(opcional)</span>
           </label>
-          <textarea
+          <Textarea
             aria-describedby="delivery-policy-hint"
             aria-invalid={Boolean(state.errors?.delivery_policy)}
-            className="min-h-28 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none"
+
             defaultValue={state.values?.delivery_policy}
             id="delivery_policy"
             maxLength={1200}
@@ -231,7 +232,8 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
 
       <div className="space-y-4 border-t border-line pt-6">
         <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-semibold text-ink" htmlFor="offers_pickup">
-          <input
+          <Input
+            variant="unstyled"
             checked={offersPickup}
             className="size-5 rounded border-line accent-brand"
             id="offers_pickup"
@@ -268,14 +270,14 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
                 <label className="block text-sm font-semibold text-ink" htmlFor="pickup_administrative_area_code">
                   Estado de recolección
                 </label>
-                <select
+                <Select
                   aria-describedby={
                     state.errors?.pickup_administrative_area_code
                       ? "pickup-administrative-area-code-error"
                       : undefined
                   }
                   aria-invalid={Boolean(state.errors?.pickup_administrative_area_code)}
-                  className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none"
+
                   defaultValue={
                     state.values?.pickup_administrative_area_code
                       ?? pickupPoint?.administrativeAreaCode
@@ -295,7 +297,7 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
                       {area.label}
                     </option>
                   ))}
-                </select>
+                </Select>
                 {state.errors?.pickup_administrative_area_code?.[0] ? (
                   <p
                     className="text-sm font-medium text-sale"
@@ -339,7 +341,8 @@ export function ShopForm({ action, shop, pickupPoint }: ShopFormProps) {
           </span>
           <span><strong className="block text-sm text-ink">Elige una imagen</strong><span className="mt-1 block text-xs text-muted">JPEG, PNG o WebP · la reducimos por ti</span></span>
         </label>
-        <input
+        <Input
+          variant="unstyled"
           accept="image/jpeg,image/png,image/webp"
           className="sr-only"
           id="image"

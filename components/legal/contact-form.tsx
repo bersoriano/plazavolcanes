@@ -5,7 +5,9 @@ import { useState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/input";
 import { submitContactMessage } from "@/lib/actions/contact";
 import { useFormAction } from "@/lib/use-form-action";
 
@@ -41,14 +43,14 @@ function ContactAttempt({ onRestart, signedIn }: { onRestart: () => void; signed
 
   if (state.status === "success") {
     return (
-      <div className="space-y-4 rounded-[1.5rem] border border-line bg-surface p-6">
+      <Card padding="md" className="space-y-4 rounded-[1.5rem]">
         <p className="leading-7 text-ink" role="status">
           {state.message}
         </p>
         <Button onClick={onRestart} variant="secondary">
           Escribir otro mensaje
         </Button>
-      </div>
+      </Card>
     );
   }
 
@@ -103,10 +105,10 @@ function ContactAttempt({ onRestart, signedIn }: { onRestart: () => void; signed
         <label className="block text-sm font-semibold text-ink" htmlFor="contact-message">
           Mensaje
         </label>
-        <textarea
+        <Textarea
           aria-describedby={messageError ? "contact-message-error" : undefined}
           aria-invalid={Boolean(messageError)}
-          className="min-h-40 w-full rounded-2xl border border-line bg-surface px-4 py-3 leading-7 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none"
+          className="min-h-40 leading-7"
           defaultValue={state.values?.message}
           id="contact-message"
           maxLength={2000}

@@ -11,6 +11,7 @@ import {
   FOUNDER_QUALIFY_DAYS,
   FOUNDERS_CAP,
 } from "@/lib/launch";
+import { Badge } from "@/components/ui/badge";
 
 /** The store mock's published count: an illustration, not anybody's store. */
 const EXAMPLE_PUBLISHED = 12;
@@ -159,7 +160,7 @@ function StoreMock() {
             </svg>
             Tienda fundadora
           </span>
-          <span className="flex h-7 items-center rounded-full bg-lime-tint px-2.5 font-bold text-brand">Nivel Estándar</span>
+          <Badge variant="unstyled" className="flex h-7 items-center rounded-full bg-lime-tint px-2.5 font-bold text-brand">Nivel Estándar</Badge>
         </div>
         <div className="flex flex-col gap-1.5">
           <div className="flex justify-between text-[13px] font-semibold">

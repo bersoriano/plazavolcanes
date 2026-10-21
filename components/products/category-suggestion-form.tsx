@@ -5,6 +5,7 @@ import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { Select, Textarea } from "@/components/ui/input";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
 import type { CategoryTree } from "@/lib/categories";
@@ -31,14 +32,15 @@ export function CategorySuggestionForm({ action, categories }: CategorySuggestio
 
   return (
     <section className="mt-6 border-t border-line pt-6">
-      <button
+      <Button
+        variant="unstyled"
         aria-expanded={isExpanded}
         className="inline-flex min-h-11 items-center text-sm font-semibold text-brand hover:text-brand-hover"
         onClick={() => setIsExpanded((expanded) => !expanded)}
         type="button"
       >
         No encuentro mi categoría
-      </button>
+      </Button>
       {isExpanded ? (
         <form action={formAction} className="mt-4 space-y-4" noValidate>
           <p className="text-sm leading-6 text-muted">
@@ -56,10 +58,10 @@ export function CategorySuggestionForm({ action, categories }: CategorySuggestio
             <label className="block text-sm font-semibold text-ink" htmlFor="suggestion-context">
               Detalles (opcional)
             </label>
-            <textarea
+            <Textarea
               aria-describedby={state.errors?.context ? "suggestion-context-error" : undefined}
               aria-invalid={Boolean(state.errors?.context)}
-              className="min-h-28 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none"
+
               id="suggestion-context"
               maxLength={500}
               defaultValue={state.values?.context}
@@ -72,10 +74,10 @@ export function CategorySuggestionForm({ action, categories }: CategorySuggestio
             <label className="block text-sm font-semibold text-ink" htmlFor="suggestion-root-category">
               Categoría principal (opcional)
             </label>
-            <select
+            <Select
               aria-describedby={state.errors?.root_category_id ? "suggestion-root-category-error" : undefined}
               aria-invalid={Boolean(state.errors?.root_category_id)}
-              className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none"
+
               id="suggestion-root-category"
               defaultValue={state.values?.root_category_id}
               key={`root-category-${state.values?.root_category_id ?? ""}`}
@@ -85,7 +87,7 @@ export function CategorySuggestionForm({ action, categories }: CategorySuggestio
               {activeRoots.map((category) => (
                 <option key={category.id} value={category.id}>{category.name}</option>
               ))}
-            </select>
+            </Select>
             {state.errors?.root_category_id?.[0] ? <p className="text-sm font-medium text-sale" id="suggestion-root-category-error">{state.errors.root_category_id[0]}</p> : null}
           </div>
           {state.message ? <p className={`rounded-2xl px-4 py-3 text-sm font-medium ${state.status === "success" ? "bg-accent/45 text-brand-hover" : "bg-sale/10 text-sale"}`} role="status">{state.message}</p> : null}

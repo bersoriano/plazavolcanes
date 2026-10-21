@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { NoticeActionMessage, NoticeFields } from "@/components/admin/notice-fields";
+import { Button } from "@/components/ui/button";
 import type { ActionState } from "@/lib/action-state";
 import { sendNotice } from "@/lib/actions/platform-notices";
 import type { AdminMarketplaceUser } from "@/lib/queries/admin";
@@ -29,13 +30,14 @@ export function UserNoticeForm({ user }: { user: AdminMarketplaceUser }) {
   if (!open) {
     return (
       <div className="mt-5 flex flex-wrap items-center gap-3">
-        <button
-          className="min-h-11 rounded-full border border-line bg-surface px-5 text-sm font-semibold"
+        <Button
+          variant="secondary"
+          className="min-h-11 border border-line bg-surface px-5 text-sm"
           onClick={() => setOpen(true)}
           type="button"
         >
           Enviar aviso <span className="sr-only">a {labelName}</span>
-        </button>
+        </Button>
         <NoticeActionMessage state={state} />
       </div>
     );
@@ -56,21 +58,22 @@ export function UserNoticeForm({ user }: { user: AdminMarketplaceUser }) {
       <NoticeFields idPrefix={`notice-${user.id}`} values={state.values} />
 
       <div className="flex flex-wrap gap-3">
-        <button
-          className="min-h-11 rounded-full bg-brand px-5 text-sm font-semibold text-white disabled:opacity-60"
+        <Button
+          className="min-h-11 bg-brand px-5 text-sm text-white disabled:opacity-60"
           disabled={pending}
           type="submit"
         >
           {pending ? "Enviando…" : "Enviar aviso"}
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="unstyled"
           className="min-h-11 rounded-full border border-line px-5 text-sm font-semibold"
           disabled={pending}
           onClick={() => setOpen(false)}
           type="button"
         >
           Cancelar
-        </button>
+        </Button>
       </div>
       <NoticeActionMessage state={state} />
     </form>

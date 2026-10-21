@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import type { PickupPoint } from "@/lib/queries/checkout";
 import { MEXICO_ADMINISTRATIVE_AREAS } from "@/lib/shop-location";
 import type { OrderDetail } from "@/lib/queries/orders.types";
@@ -25,7 +26,7 @@ export function FulfillmentSummary({
   pickupPoint: PickupPoint | null;
 }) {
   return (
-    <div className="rounded-[2rem] border border-line bg-surface p-6">
+    <Card padding="md" >
       <h2 className="font-display text-xl font-semibold">
         {fulfillmentMethod === "pickup" ? "Recolección en tienda" : "Envío a domicilio"}
       </h2>
@@ -85,6 +86,6 @@ export function FulfillmentSummary({
           {altContact.note ? <p className="text-muted">{altContact.note}</p> : null}
         </div>
       ) : null}
-    </div>
+    </Card>
   );
 }

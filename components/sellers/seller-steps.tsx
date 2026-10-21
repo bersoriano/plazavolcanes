@@ -11,6 +11,7 @@ import {
   FOUNDER_MIN_LIVE_ITEMS,
   FOUNDER_QUALIFY_DAYS,
 } from "@/lib/launch";
+import { Badge } from "@/components/ui/badge";
 import { OWNER_CTA_LABEL, sellerCtaHref, type SellerViewer } from "@/lib/seller-cta";
 
 /** `phonePreview` false: the drawing only appears from lg, as in the phone mockup. */
@@ -140,10 +141,10 @@ function NameField() {
         Tienda de [tu nombre]
         <span className="ml-0.5 h-[18px] w-0.5 bg-brand" />
       </span>
-      <span className="flex h-[30px] items-center gap-1.5 self-start rounded-full bg-lime-tint px-3 text-[13px] font-semibold text-brand">
+      <Badge variant="unstyled" className="flex h-[30px] items-center gap-1.5 self-start rounded-full bg-lime-tint px-3 text-[13px] font-semibold text-brand">
         <MapPin className="size-3.5" strokeWidth={2} />
         Entrego en Ciudad de México
-      </span>
+      </Badge>
     </div>
   );
 }
@@ -158,10 +159,10 @@ function FounderProgress() {
         </span>
       </span>
       <span className="h-2.5 rounded-full bg-brand" />
-      <span className="flex items-center gap-1.5 self-start rounded-full bg-premium-ink px-3 py-1.5 text-[13px] font-bold text-premium-gold">
+      <Badge variant="unstyled" className="flex items-center gap-1.5 self-start rounded-full bg-premium-ink px-3 py-1.5 text-[13px] font-bold text-premium-gold">
         <FounderMark />
         Tienda fundadora
-      </span>
+      </Badge>
     </div>
   );
 }

@@ -18,6 +18,8 @@
 @source "../../components/layout";
 @source "../../components/brand";
 @source "../../components/auth";
+/* Shared controls must include their responsive variants in this later layer. */
+@source "../../components/ui";
 /* Only the landing pieces this page reuses. */
 @source "../../components/home/landing/primitives.tsx";
 @source "../../components/home/landing/crossing-tapes.tsx";

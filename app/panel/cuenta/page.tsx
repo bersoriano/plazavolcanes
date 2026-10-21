@@ -2,6 +2,7 @@ import { DisplayNameForm } from "@/components/account/display-name-form";
 import { EmailNotificationsForm } from "@/components/account/email-notifications-form";
 import { PhoneForm } from "@/components/account/phone-form";
 import { pageContainer } from "@/components/layout/container";
+import { Card } from "@/components/ui/card";
 import { updateDisplayName, updatePhone } from "@/lib/actions/auth";
 import { updateEmailNotifications } from "@/lib/actions/notifications";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -31,7 +32,7 @@ export default async function AccountPage() {
 
   return (
     <section className={`${pageContainer} py-10 sm:py-14`}>
-      <div className="rounded-[2rem] border border-line bg-surface p-6 sm:p-9">
+      <Card padding="md" className="sm:p-9">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Tu cuenta</p>
         <h1 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">Datos de contacto</h1>
         {email ? <p className="mb-8 mt-3 leading-7 text-muted">Tu cuenta usa {email}.</p> : null}
@@ -45,7 +46,7 @@ export default async function AccountPage() {
         <div className="mt-8 border-t border-line pt-8">
           <EmailNotificationsForm action={updateEmailNotifications} email={email} enabled={preferences?.email_enabled ?? true} />
         </div>
-      </div>
+      </Card>
     </section>
   );
 }

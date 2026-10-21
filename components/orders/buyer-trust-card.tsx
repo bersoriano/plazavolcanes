@@ -6,6 +6,9 @@ import {
   type BuyerTrustOutput,
   type BuyerTrustSignal,
 } from "@/lib/buyer-trust";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 const markerLabels: Record<keyof BuyerTrustOutput["markers"], string> = {
   total_completed_purchases: "Compras completadas",
@@ -48,7 +51,7 @@ function IdentityMarker({
         <div className="min-w-0">
           <p className="text-xs font-bold uppercase tracking-[0.14em] text-muted">{label}</p>
           <p className="mt-1 text-sm font-semibold">{primary}</p>
-          {badge ? <span className="mt-2 inline-flex rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-brand-hover">{badge}</span> : null}
+          {badge ? <Badge  className="mt-2 bg-accent px-2.5 text-brand-hover">{badge}</Badge> : null}
           <p className="mt-2 text-xs leading-5 text-muted">{tooltip}</p>
         </div>
       </div>
@@ -59,20 +62,21 @@ function IdentityMarker({
 function BehaviorMarker({ name, marker }: { name: keyof BuyerTrustOutput["markers"]; marker: BuyerTrustOutput["markers"][keyof BuyerTrustOutput["markers"]] }) {
   const tooltipId = `buyer-marker-${name}`;
   return (
-    <div className="group relative rounded-2xl border border-line bg-surface p-3.5">
+    <Card className="group relative rounded-2xl p-3.5">
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-xs font-semibold text-muted">{markerLabels[name]}</p>
           <p className="mt-1 text-sm font-bold text-ink">{marker.primary_text}</p>
         </div>
-        <button
+        <Button
+          variant="unstyled"
           aria-describedby={tooltipId}
           aria-label={`Más información sobre ${markerLabels[name].toLowerCase()}`}
           className="tap-halo grid size-7 shrink-0 place-items-center rounded-full text-muted hover:text-brand"
           type="button"
         >
           <CircleHelp aria-hidden="true" className="size-4" />
-        </button>
+        </Button>
       </div>
       <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-xs font-bold ${signalClass(marker.signal)}`}>
         {formatBuyerSignal(marker.signal)}
@@ -84,7 +88,7 @@ function BehaviorMarker({ name, marker }: { name: keyof BuyerTrustOutput["marker
       >
         {marker.tooltip}
       </span>
-    </div>
+    </Card>
   );
 }
 
@@ -96,7 +100,7 @@ function BehaviorMarker({ name, marker }: { name: keyof BuyerTrustOutput["marker
  */
 export function BuyerTrustCard({ trust }: { trust: BuyerTrustOutput }) {
   return (
-    <section aria-labelledby="buyer-standing" className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
+    <Card padding="lg" as="section" aria-labelledby="buyer-standing" >
       <div className="flex items-start gap-3">
         <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-brand text-accent">
           <ShieldCheck aria-hidden="true" className="size-5" />
@@ -128,6 +132,6 @@ export function BuyerTrustCard({ trust }: { trust: BuyerTrustOutput }) {
         {trust.reasons.length ? <div className="mt-6"><h3 className="flex items-center gap-2 font-semibold"><CheckCircle2 aria-hidden="true" className="size-4 text-brand" />Por qué tiene este nivel</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-muted">{trust.reasons.map((reason) => <li key={reason}>• {reason}</li>)}</ul></div> : null}
         {trust.next_tier_requirements.length ? <div className="mt-6"><h3 className="flex items-center gap-2 font-semibold"><Target aria-hidden="true" className="size-4 text-brand" />Cómo llegar al siguiente nivel</h3><ul className="mt-3 space-y-2 text-sm leading-6 text-muted">{trust.next_tier_requirements.map((requirement) => <li key={requirement}>• {requirement}</li>)}</ul></div> : null}
       </details>
-    </section>
+    </Card>
   );
 }

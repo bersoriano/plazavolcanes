@@ -5,6 +5,8 @@ import { pageContainer } from "@/components/layout/container";
 import { DeliveryPolicyForm } from "@/components/shops/delivery-policy-form";
 import { ShopForm } from "@/components/shops/shop-form";
 import { ShopWorkspaceHeader } from "@/components/shops/shop-workspace-header";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { deleteShop, updateDeliveryPolicy, updateShop } from "@/lib/actions/shops";
 import {
   deliveryPolicyUnlocksAt,
@@ -47,7 +49,7 @@ export default async function ShopSettingsPage({ params }: { params: Promise<{ i
     <section className={`${pageContainer} py-10 sm:py-14`}>
       <ShopWorkspaceHeader active="ajustes" isPremium={shop.is_premium === true} shopId={shopId} shopName={shop.name} shopSlug={shop.slug} />
 
-      <section aria-labelledby="ajustes-title" className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
+      <Card padding="lg" as="section" aria-labelledby="ajustes-title" >
         <h2 className="font-display text-2xl font-semibold" id="ajustes-title">Editar tienda</h2>
         <p className="mb-7 mt-2 text-muted">Mantén clara la historia de tu tienda.</p>
         <ShopForm
@@ -89,11 +91,11 @@ export default async function ShopSettingsPage({ params }: { params: Promise<{ i
           <div className="mt-4 rounded-2xl bg-sale/10 p-4">
             <p className="text-sm leading-6 text-ink">Se eliminarán también todos sus productos e imágenes. Esta acción no se puede deshacer.</p>
             <form action={deleteAction} className="mt-3">
-              <button className="tap inline-flex items-center rounded-full bg-sale px-4 py-2 text-sm font-semibold text-white" type="submit">Confirmar eliminación</button>
+              <Button variant="danger" className="tap px-4 py-2 text-sm" type="submit">Confirmar eliminación</Button>
             </form>
           </div>
         </details>
-      </section>
+      </Card>
     </section>
   );
 }

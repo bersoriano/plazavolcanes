@@ -1,8 +1,7 @@
-import Link from "next/link";
-
 import { FoundersCounter } from "@/components/home/landing/founders-counter";
 import { HeroCollage, type CollageProduct } from "@/components/home/landing/hero-collage";
 import { PrimaryCta, TYPE, VolcanoLines } from "@/components/home/landing/primitives";
+import { ButtonLink } from "@/components/ui/button";
 import type { CatalogLocale } from "@/lib/catalog-locale";
 
 /**
@@ -56,12 +55,13 @@ export function SellerHero({
             <PrimaryCta block href="/registro?vender=1">
               Abrir mi tienda gratis
             </PrimaryCta>
-            <Link
+            <ButtonLink
+              variant="unstyled"
               className="inline-flex h-[58px] items-center justify-center rounded-full border-[1.5px] border-line bg-surface px-7 text-[17px] font-semibold text-ink transition-colors hover:border-brand lg:h-[62px] lg:text-[18px]"
               href="#explorar"
             >
               Explorar productos
-            </Link>
+            </ButtonLink>
           </div>
 
           {promoActive ? <FoundersCounter spotsTaken={spotsTaken} /> : null}

@@ -17,6 +17,7 @@ import {
   DEFAULT_CATALOG_LOCALE,
   DEFAULT_CATALOG_MARKET,
 } from "@/lib/catalog-locale";
+import { ButtonLink } from "@/components/ui/button";
 import { buildCatalogHref, findCategorySelection } from "@/lib/categories";
 import { formatCurrency } from "@/lib/format";
 import { formatProductCondition } from "@/lib/product-condition";
@@ -160,10 +161,10 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
           <ProductGallery images={product.images} name={product.name} />
           <div className="flex flex-col justify-center">
             <div className="flex flex-wrap items-center gap-3">
-              <Link className="inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-sm font-semibold text-brand-hover" href={`/tiendas/${product.shop.slug}`}>
+              <ButtonLink variant="unstyled" className="inline-flex min-h-11 w-fit items-center gap-2 rounded-full bg-accent px-3 py-1.5 text-sm font-semibold text-brand-hover" href={`/tiendas/${product.shop.slug}`}>
                 <Store aria-hidden="true" className="size-4" />
                 {product.shop.name}
-              </Link>
+              </ButtonLink>
               {isPremium ? <PremiumBadge showDetails={false} /> : null}
             </div>
             <h1 className="mt-5 font-display text-4xl font-semibold leading-tight tracking-[-0.04em] text-ink sm:text-5xl">{product.name}</h1>

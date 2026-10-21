@@ -3,6 +3,8 @@
 import { useRef, useState } from "react";
 
 import { NoticeActionMessage, NoticeFields } from "@/components/admin/notice-fields";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { ActionState } from "@/lib/action-state";
 import { sendNotice } from "@/lib/actions/platform-notices";
 import type { AudienceCounts } from "@/lib/queries/platform-notices";
@@ -56,7 +58,8 @@ export function BroadcastForm({ counts }: { counts: AudienceCounts }) {
               className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border border-line bg-background px-3 py-2 text-sm font-semibold has-checked:border-brand"
               key={option}
             >
-              <input
+              <Input
+                variant="unstyled"
                 checked={audience === option}
                 className="size-4 accent-brand"
                 name="audience"
@@ -79,26 +82,27 @@ export function BroadcastForm({ counts }: { counts: AudienceCounts }) {
             <strong>Se enviará a {reach}.</strong> No se puede editar después; solo retirar.
           </p>
           <div className="flex flex-wrap gap-3">
-            <button
-              className="min-h-11 rounded-full bg-brand px-5 text-sm font-semibold text-white disabled:opacity-60"
+            <Button
+              className="min-h-11 bg-brand px-5 text-sm text-white disabled:opacity-60"
               disabled={pending}
               type="submit"
             >
               {pending ? "Enviando…" : `Enviar a ${reach}`}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="unstyled"
               className="min-h-11 rounded-full border border-line px-5 text-sm font-semibold"
               disabled={pending}
               onClick={() => setConfirming(false)}
               type="button"
             >
               Cancelar
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
-        <button
-          className="min-h-11 rounded-full bg-brand px-5 text-sm font-semibold text-white"
+        <Button
+          className="min-h-11 bg-brand px-5 text-sm text-white"
           // The browser checks the required fields first, so the confirmation
           // is never about an announcement with nothing in it.
           onClick={() => {
@@ -107,7 +111,7 @@ export function BroadcastForm({ counts }: { counts: AudienceCounts }) {
           type="button"
         >
           Enviar anuncio
-        </button>
+        </Button>
       )}
 
       <NoticeActionMessage state={state} />

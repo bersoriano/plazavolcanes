@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { Search } from "lucide-react";
 
 import {
@@ -9,6 +8,8 @@ import {
   type SellerOrderCounts,
   type SellerOrdersFilter,
 } from "@/lib/seller-orders-filter";
+import { Button, ButtonLink } from "@/components/ui/button";
+import { Input, Select } from "@/components/ui/input";
 
 const TAB_LABELS: Record<OrderTab, string> = {
   todos: "Todos",
@@ -39,7 +40,8 @@ export function SellerOrdersToolbar({
             const active = tab === filter.tab;
             return (
               <li key={tab}>
-                <Link
+                <ButtonLink
+                  variant="unstyled"
                   aria-current={active ? "page" : undefined}
                   className={`tap inline-flex min-h-10 items-center gap-2 rounded-full border px-4 text-sm font-semibold transition-colors ${
                     active ? "border-brand bg-brand text-on-brand" : "border-line bg-surface text-brand hover:border-brand"
@@ -48,7 +50,7 @@ export function SellerOrdersToolbar({
                 >
                   {TAB_LABELS[tab]}
                   <span className={`rounded-full px-2 py-0.5 text-xs ${active ? "bg-on-brand/15" : "bg-background"}`}>{counts[tab]}</span>
-                </Link>
+                </ButtonLink>
               </li>
             );
           })}
@@ -60,8 +62,8 @@ export function SellerOrdersToolbar({
         <label className="relative min-w-0 flex-1 basis-60">
           <span className="sr-only">Buscar pedido</span>
           <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
-          <input
-            className="min-h-11 w-full rounded-full border border-line bg-surface pl-10 pr-4 text-sm text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none"
+          <Input
+            className="min-h-11 rounded-full pl-10 pr-4 text-sm"
             defaultValue={filter.search}
             maxLength={80}
             name="buscar"
@@ -72,7 +74,8 @@ export function SellerOrdersToolbar({
         {shops.length > 1 ? (
           <label className="min-w-0">
             <span className="sr-only">Tienda</span>
-            <select
+            <Select
+              variant="unstyled"
               className="min-h-11 rounded-full border border-line bg-surface px-4 text-sm text-ink focus:border-brand focus:outline-none"
               defaultValue={filter.shopId === null ? "" : String(filter.shopId)}
               name="tienda"
@@ -83,12 +86,12 @@ export function SellerOrdersToolbar({
                   {shop.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         ) : null}
-        <button className="tap inline-flex min-h-11 items-center rounded-full bg-brand px-5 text-sm font-semibold text-on-brand" type="submit">
+        <Button className="tap min-h-11 bg-brand px-5 text-sm text-on-brand" type="submit">
           Buscar
-        </button>
+        </Button>
       </form>
     </div>
   );

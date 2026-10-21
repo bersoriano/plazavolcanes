@@ -2,6 +2,9 @@ import Link from "next/link";
 import { CheckCircle2, Circle, CircleHelp, Lightbulb } from "lucide-react";
 
 import { ShareActions } from "@/components/share/share-actions";
+import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import type { ChecklistStep, FirstSaleChecklist as Checklist } from "@/lib/seller-dashboard";
 
 const STATE_ICON = {
@@ -35,7 +38,7 @@ export function FirstSaleChecklist({
   const percent = checklist.total ? Math.round((checklist.completed / checklist.total) * 100) : 0;
 
   return (
-    <section aria-labelledby="checklist-title" className="rounded-[2rem] border border-line bg-surface p-5 sm:p-7">
+    <Card padding="sm" as="section" aria-labelledby="checklist-title" className="sm:p-7">
       <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Tu primera venta</p>
       <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="font-display text-2xl font-semibold tracking-[-0.02em]" id="checklist-title">
@@ -61,7 +64,8 @@ export function FirstSaleChecklist({
           {shops.map((shop) => {
             const isCurrent = shop.id === focusShopId;
             return (
-              <Link
+              <ButtonLink
+                variant="unstyled"
                 aria-current={isCurrent ? "true" : undefined}
                 className={`tap inline-flex min-h-9 items-center rounded-full border px-3 text-sm font-semibold transition-colors ${
                   isCurrent ? "border-brand bg-brand text-on-brand" : "border-line bg-background text-brand hover:border-brand"
@@ -71,7 +75,7 @@ export function FirstSaleChecklist({
                 scroll={false}
               >
                 {shop.name}
-              </Link>
+              </ButtonLink>
             );
           })}
         </nav>
@@ -82,7 +86,7 @@ export function FirstSaleChecklist({
           <Step key={step.id} shareUrl={shareUrl} shopName={checklist.shop?.name ?? null} step={step} />
         ))}
       </ol>
-    </section>
+    </Card>
   );
 }
 
@@ -98,7 +102,7 @@ function Step({ step, shareUrl, shopName }: { step: ChecklistStep; shareUrl: str
           {step.title}
           <span className="sr-only"> ({state.label})</span>
           {step.state === "suggestion" ? (
-            <span className="ml-2 rounded-full bg-accent px-2 py-0.5 align-middle text-xs font-bold text-brand-hover">Recomendado</span>
+            <Badge variant="unstyled" className="ml-2 rounded-full bg-accent px-2 py-0.5 align-middle text-xs font-bold text-brand-hover">Recomendado</Badge>
           ) : null}
         </p>
         <p className="mt-1 text-sm leading-6 text-muted">

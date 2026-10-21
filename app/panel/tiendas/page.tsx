@@ -1,9 +1,10 @@
-import Link from "next/link";
 import { RotateCw, Store } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { pageContainer } from "@/components/layout/container";
 import { ShopOverview } from "@/components/seller-dashboard/shop-overview";
+import { ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { getSellerShops } from "@/lib/queries/shops.server";
 
@@ -20,16 +21,16 @@ export default async function ShopsPage() {
   if (result.status === "error") {
     return (
       <section className={`${pageContainer} py-10 sm:py-14`}>
-        <div className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8" role="alert">
+        <Card padding="lg"  role="alert">
           <h1 className="font-display text-2xl font-semibold">No pudimos cargar tus tiendas</h1>
           <p className="mt-2 max-w-xl leading-7 text-muted">
             Tus tiendas y productos no cambiaron; solo falló la consulta. Vuelve a intentarlo en un momento.
           </p>
-          <Link className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-on-brand" href="/panel/tiendas">
+          <ButtonLink  className="mt-5 min-h-11 bg-brand px-5 py-3 text-sm text-on-brand" href="/panel/tiendas">
             <RotateCw aria-hidden="true" className="size-4" />
             Reintentar
-          </Link>
-        </div>
+          </ButtonLink>
+        </Card>
       </section>
     );
   }
@@ -55,12 +56,12 @@ export default async function ShopsPage() {
         <div className="mt-6">
           <EmptyState
             action={
-              <Link
-                className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-on-brand hover:bg-brand-hover"
+              <ButtonLink
+                className="min-h-11 bg-brand px-5 py-2.5 text-sm text-on-brand hover:bg-brand-hover"
                 href="/panel/tiendas/nueva"
               >
                 Crear tienda
-              </Link>
+              </ButtonLink>
             }
             description="Crea tu tienda para empezar a preparar tus productos."
             icon={<Store aria-hidden="true" className="size-7" />}

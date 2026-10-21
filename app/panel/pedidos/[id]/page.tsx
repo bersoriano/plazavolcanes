@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { Card } from "@/components/ui/card";
 import { formatCurrency } from "@/lib/format";
 import { formatOrderStatus } from "@/lib/order-status";
 import { orderDeliveryLine } from "@/lib/order-summary";
@@ -99,7 +100,7 @@ export default async function SellerOrderDetailPage({ params }: { params: Promis
         </p>
       </section>
 
-      <div className="mt-7 rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
+      <Card padding="lg" className="mt-7">
         <h2 className="font-display text-2xl font-semibold">{order.shop.name}</h2>
         <p className="mt-2 text-muted">Estado: {formatOrderStatus(order.status, order.fulfillment_method)}</p>
         <p className="mt-2 text-sm text-muted">Preparación prometida: {order.handling_days} días hábiles</p>
@@ -118,7 +119,7 @@ export default async function SellerOrderDetailPage({ params }: { params: Promis
         <div className="mt-4">
           <FulfillmentSummary altContact={order.alt_contact} address={order.address} fulfillmentMethod={order.fulfillment_method} pickupPoint={pickupPoint} />
         </div>
-      </div>
+      </Card>
 
       {buyerTrust ? <div className="mt-7"><BuyerTrustCard trust={buyerTrust} /></div> : null}
 

@@ -1,5 +1,7 @@
 import { ImageIcon, Minus, Plus, Trash2 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { cartLineStockNotice } from "@/lib/cart-stock";
 import { formatCurrency } from "@/lib/format";
 import { DEFAULT_CATALOG_CURRENCY } from "@/lib/catalog-locale";
@@ -22,7 +24,7 @@ export function CartItems({
     items.find((item) => item.product)?.product?.currency_code ?? DEFAULT_CATALOG_CURRENCY;
 
   return (
-    <div className="rounded-[2rem] border border-line bg-surface p-6">
+    <Card padding="md" >
       <ul className="divide-y divide-line">
         {items.map((item) => {
           const stockNotice = item.product ? cartLineStockNotice(item.quantity, item.product.units_available) : null;
@@ -64,7 +66,8 @@ export function CartItems({
                      press on an update button, and the edit of anyone who missed
                      it was thrown away without a word. */
                   <form action={quantityAction(item.id)} className="flex items-center gap-1">
-                    <button
+                    <Button
+                      variant="unstyled"
                       aria-label={`Quitar una unidad de ${item.product.name}`}
                       className="tap grid place-items-center rounded-full border border-line text-brand disabled:opacity-40"
                       disabled={item.quantity <= 1}
@@ -73,9 +76,10 @@ export function CartItems({
                       value={item.quantity - 1}
                     >
                       <Minus aria-hidden="true" className="size-4" />
-                    </button>
+                    </Button>
                     <span className="min-w-8 text-center font-semibold tabular-nums">{item.quantity}</span>
-                    <button
+                    <Button
+                      variant="unstyled"
                       aria-label={`Agregar una unidad de ${item.product.name}`}
                       className="tap grid place-items-center rounded-full border border-line text-brand disabled:opacity-40"
                       disabled={item.quantity >= item.product.units_available}
@@ -84,11 +88,12 @@ export function CartItems({
                       value={item.quantity + 1}
                     >
                       <Plus aria-hidden="true" className="size-4" />
-                    </button>
+                    </Button>
                   </form>
                 ) : null}
                 <form action={removeAction(item.id)}>
-                  <button
+                  <Button
+                    variant="unstyled"
                     aria-label={
                       item.product
                         ? `Quitar ${item.product.name} del carrito`
@@ -98,7 +103,7 @@ export function CartItems({
                     type="submit"
                   >
                     <Trash2 aria-hidden="true" className="size-4" />
-                  </button>
+                  </Button>
                 </form>
               </div>
             </li>
@@ -112,6 +117,6 @@ export function CartItems({
       <p className="mt-2 text-sm text-muted">
         Pago y entrega se coordinan directamente con vendedor después de aceptar pedido.
       </p>
-    </div>
+    </Card>
   );
 }

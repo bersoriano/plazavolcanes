@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
-import type { ActionState } from "@/lib/action-state";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/input";
+import type { ActionState } from "@/lib/action-state";
 import { formatDate } from "@/lib/format";
 import { useFormAction } from "@/lib/use-form-action";
 
@@ -53,10 +54,10 @@ export function DeliveryPolicyForm({ action, policy, unlocksAt }: DeliveryPolicy
       <p className="text-sm leading-6 text-muted" id="delivery-policy-help">
         Escribe cómo envías y cómo entregas en persona. Quien compre la verá en tu tienda pública.
       </p>
-      <textarea
+      <Textarea
         aria-describedby="delivery-policy-help"
         aria-invalid={Boolean(state.errors?.delivery_policy)}
-        className="min-h-36 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none disabled:cursor-not-allowed disabled:bg-background disabled:text-muted"
+        className="min-h-36 disabled:bg-background disabled:text-muted"
         defaultValue={state.values?.delivery_policy ?? policy}
         disabled={Boolean(opensOn)}
         id="delivery_policy"

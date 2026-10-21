@@ -2,9 +2,10 @@
 
 import { useFormStatus } from "react-dom";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
-import { Button } from "@/components/ui/button";
 
 function SaveButton() {
   const { pending } = useFormStatus();
@@ -41,7 +42,8 @@ export function PhoneForm({
         </label>
         <div className="flex items-center gap-2 rounded-2xl border border-line bg-surface px-4 focus-within:border-brand">
           <span className="text-sm font-semibold text-muted">+52</span>
-          <input
+          <Input
+            variant="unstyled"
             aria-describedby={state.errors?.phone?.[0] ? "phone-error" : undefined}
             aria-invalid={Boolean(state.errors?.phone?.[0])}
             autoComplete="tel-national"

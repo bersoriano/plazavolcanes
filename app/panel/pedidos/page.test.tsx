@@ -77,7 +77,7 @@ describe("SellerOrdersPage", () => {
       ]),
     );
 
-    render(await SellerOrdersPage());
+    render(await SellerOrdersPage({}));
 
     const link = screen.getByRole("link", { name: /Florero ×2 y 1 producto más/ });
     expect(link).toHaveAttribute("href", "/panel/pedidos/3");
@@ -125,7 +125,7 @@ describe("SellerOrdersPage", () => {
 
   it("offers a shop picker only to a seller with more than one shop", async () => {
     mocks.getSellerOrderQueue.mockResolvedValue(ready([row({ id: 3 })]));
-    const { unmount } = render(await SellerOrdersPage());
+    const { unmount } = render(await SellerOrdersPage({}));
     expect(screen.queryByRole("combobox", { name: "Tienda" })).not.toBeInTheDocument();
     expect(screen.getByRole("searchbox", { name: "Buscar pedido" })).toBeInTheDocument();
     unmount();
@@ -174,7 +174,7 @@ describe("SellerOrdersPage", () => {
       ]),
     );
 
-    render(await SellerOrdersPage());
+    render(await SellerOrdersPage({}));
 
     const mine = screen.getByRole("region", { name: "Te toca actuar, 2 pedidos" });
     expect(within(mine).getAllByRole("link").map((link) => link.getAttribute("href"))).toEqual(["/panel/pedidos/5", "/panel/pedidos/3"]);
@@ -193,7 +193,7 @@ describe("SellerOrdersPage", () => {
       ready([row({ id: 7, status: "accepted", fulfillment_method: "pickup", payment_completed_at: "2026-09-12T00:00:00.000Z" })]),
     );
 
-    render(await SellerOrdersPage());
+    render(await SellerOrdersPage({}));
 
     const mine = screen.getByRole("region", { name: "Te toca actuar, 1 pedido" });
     expect(within(mine).getByText("Entrega el pedido")).toBeInTheDocument();
@@ -203,7 +203,7 @@ describe("SellerOrdersPage", () => {
   it("keeps the seller's section and says plainly that nothing waits on them", async () => {
     mocks.getSellerOrderQueue.mockResolvedValue(ready([row({ id: 1, status: "completed" })]));
 
-    render(await SellerOrdersPage());
+    render(await SellerOrdersPage({}));
 
     const mine = screen.getByRole("region", { name: "Te toca actuar, 0 pedidos" });
     expect(within(mine).getByText("Nada pendiente por ahora.")).toBeInTheDocument();
@@ -213,7 +213,7 @@ describe("SellerOrdersPage", () => {
   it("shows the empty state to a seller who has not received an order", async () => {
     mocks.getSellerOrderQueue.mockResolvedValue(ready([]));
 
-    render(await SellerOrdersPage());
+    render(await SellerOrdersPage({}));
 
     expect(screen.getByRole("heading", { name: "Aún no recibes pedidos" })).toBeInTheDocument();
     expect(screen.getByText(/te avisaremos por correo/)).toBeInTheDocument();
@@ -223,7 +223,7 @@ describe("SellerOrdersPage", () => {
   it("says the orders could not be read instead of claiming there are none", async () => {
     mocks.getSellerOrderQueue.mockResolvedValue({ status: "error" });
 
-    render(await SellerOrdersPage());
+    render(await SellerOrdersPage({}));
 
     expect(screen.getByRole("alert")).toHaveTextContent("No pudimos cargar tus pedidos");
     expect(screen.getByRole("link", { name: "Reintentar" })).toHaveAttribute("href", "/panel/pedidos");
@@ -233,7 +233,7 @@ describe("SellerOrdersPage", () => {
   it("leaves the way around the panel to the panel's bar", async () => {
     mocks.getSellerOrderQueue.mockResolvedValue(ready([row({ id: 3 })]));
 
-    render(await SellerOrdersPage());
+    render(await SellerOrdersPage({}));
 
     const hrefs = screen.getAllByRole("link").map((link) => link.getAttribute("href"));
     expect(hrefs).not.toContain("/panel");

@@ -1,6 +1,7 @@
-import Link from "next/link";
 import { Plus, Search } from "lucide-react";
 
+import { ButtonLink } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { CATALOG_TABS, type CatalogCounts, type CatalogTab } from "@/lib/seller-catalog";
 
 const TAB_LABELS: Record<CatalogTab, string> = {
@@ -44,7 +45,8 @@ export function CatalogToolbar({
 
             return (
               <li key={name}>
-                <Link
+                <ButtonLink
+                  variant="unstyled"
                   aria-current={isOpen ? "page" : undefined}
                   className={`tap inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                     isOpen
@@ -63,7 +65,7 @@ export function CatalogToolbar({
                   >
                     {counts[name]}
                   </span>
-                </Link>
+                </ButtonLink>
               </li>
             );
           })}
@@ -76,22 +78,22 @@ export function CatalogToolbar({
         <form action={`/panel/tiendas/${shopId}`} className="relative flex-1" method="get" role="search">
           {tab === "todos" ? null : <input name="estado" type="hidden" value={tab} />}
           <Search aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted" />
-          <input
+          <Input
             aria-label="Buscar producto"
-            className="tap w-full rounded-full border border-line bg-surface py-2 pl-11 pr-4 text-sm placeholder:text-muted"
+            className="tap rounded-full py-2 pl-11 pr-4 text-sm placeholder:text-muted"
             defaultValue={search}
             name="buscar"
             placeholder="Buscar producto…"
             type="search"
           />
         </form>
-        <Link
-          className="tap inline-flex items-center justify-center gap-2 rounded-full bg-brand px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
+        <ButtonLink
+          className="tap bg-brand px-5 py-2 text-sm text-white hover:bg-brand-hover"
           href={`/panel/tiendas/${shopId}/productos/nuevo`}
         >
           <Plus aria-hidden="true" className="size-4" />
           Agregar producto
-        </Link>
+        </ButtonLink>
       </div>
     </div>
   );

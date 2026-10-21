@@ -1,4 +1,5 @@
 import { Store, UserRound } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 const FLOW_SUMMARY =
   "Diagrama: tu cliente te paga $1,999.00 directo a tu tienda, con el método que acuerden; Plaza Volcanes recibe $0.00.";
@@ -16,9 +17,9 @@ export function MoneyFlow() {
         aria-hidden="true"
         className="relative mt-auto flex h-[150px] items-center justify-between rounded-[20px] bg-background px-4 pt-6 lg:h-[170px] lg:rounded-[24px] lg:px-7"
       >
-        <span className="absolute left-1/2 top-3 flex h-7 -translate-x-1/2 -rotate-3 items-center whitespace-nowrap rounded-full bg-brand px-3 text-[12px] font-bold text-accent">
+        <Badge variant="unstyled" className="absolute left-1/2 top-3 flex h-7 -translate-x-1/2 -rotate-3 items-center whitespace-nowrap rounded-full bg-brand px-3 text-[12px] font-bold text-accent">
           Plaza Volcanes: $0.00
-        </span>
+        </Badge>
         <Party className="bg-lilac-tint" icon={<UserRound className="size-6 lg:size-7" strokeWidth={1.8} />} label="Tu cliente" />
         <span className="flex grow flex-col items-center gap-1.5 px-3 lg:px-4">
           <span className="font-display text-[20px] font-bold text-brand lg:text-[26px]">$1,999.00</span>

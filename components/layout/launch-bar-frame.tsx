@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { isLaunchBarRoute } from "@/lib/launch-bar";
 
 /**
@@ -64,13 +65,14 @@ export function LaunchBarFrame({
         </Link>
 
         <form action={dismissAction} className="absolute right-2 shrink-0 sm:right-5">
-          <button
+          <Button
+            variant="unstyled"
             aria-label="Cerrar aviso"
             className="tap-halo grid size-6 place-items-center rounded-full text-white/70 transition-colors hover:text-white"
             type="submit"
           >
             <X aria-hidden="true" className="size-4" />
-          </button>
+          </Button>
         </form>
       </div>
     </aside>

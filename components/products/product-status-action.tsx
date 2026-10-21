@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 
+import { Button } from "@/components/ui/button";
 import { setProductStatus } from "@/lib/actions/products";
 import { useFormAction } from "@/lib/use-form-action";
 
@@ -19,9 +20,9 @@ export function ProductStatusAction({
 
   return (
     <form action={formAction}>
-      <button className="inline-flex min-h-11 items-center text-xs font-semibold text-brand" disabled={pending} type="submit">
+      <Button variant="unstyled" className="inline-flex min-h-11 items-center text-xs font-semibold text-brand" disabled={pending} type="submit">
         {label}
-      </button>
+      </Button>
       {state.message ? (
         <div
           className={`mt-2 text-xs ${state.status === "error" ? "text-sale" : "text-success"}`}

@@ -1,3 +1,4 @@
+import { Input, Textarea } from "@/components/ui/input";
 import type { ActionState } from "@/lib/action-state";
 
 const INPUT =
@@ -25,7 +26,8 @@ export function NoticeFields({
         <label className={LABEL} htmlFor={`${idPrefix}-title`}>
           Título
         </label>
-        <input
+        <Input
+          variant="unstyled"
           className={INPUT}
           defaultValue={values?.title}
           id={`${idPrefix}-title`}
@@ -40,7 +42,8 @@ export function NoticeFields({
         <label className={LABEL} htmlFor={`${idPrefix}-body`}>
           Mensaje
         </label>
-        <textarea
+        <Textarea
+          variant="unstyled"
           className={`${INPUT} min-h-28 py-2.5 leading-6`}
           defaultValue={values?.body}
           id={`${idPrefix}-body`}
@@ -55,7 +58,8 @@ export function NoticeFields({
           <label className={LABEL} htmlFor={`${idPrefix}-href`}>
             Enlace <span className="font-normal text-muted">(opcional)</span>
           </label>
-          <input
+          <Input
+            variant="unstyled"
             aria-describedby={`${idPrefix}-href-hint`}
             className={INPUT}
             defaultValue={values?.action_href}
@@ -75,7 +79,8 @@ export function NoticeFields({
           <label className={LABEL} htmlFor={`${idPrefix}-label`}>
             Texto del botón <span className="font-normal text-muted">(con enlace)</span>
           </label>
-          <input
+          <Input
+            variant="unstyled"
             className={INPUT}
             defaultValue={values?.action_label}
             id={`${idPrefix}-label`}

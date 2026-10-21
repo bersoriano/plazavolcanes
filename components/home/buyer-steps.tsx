@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { ArrowRight, ClipboardCheck, Compass, HandHeart } from "lucide-react";
+import { ButtonLink } from "@/components/ui/button";
 
 export const buyerSteps = [
   {
@@ -50,13 +50,13 @@ export function BuyerSteps({ catalogHref, headingLevel = 2 }: { catalogHref: str
           </p>
         </div>
 
-        <Link
-          className="order-3 flex h-14 shrink-0 items-center justify-center gap-2.5 rounded-full bg-brand text-[17px] font-bold text-white transition-colors hover:bg-brand-hover lg:order-none lg:px-7"
+        <ButtonLink
+          className="order-3 flex h-14 shrink-0 gap-2.5 bg-brand text-[17px] font-bold text-white hover:bg-brand-hover lg:order-none lg:px-7"
           href={catalogHref}
         >
           Ver productos
           <ArrowRight aria-hidden="true" className="size-5" strokeWidth={2.2} />
-        </Link>
+        </ButtonLink>
 
         <div className="relative order-2 lg:order-none lg:col-span-2">
           <div

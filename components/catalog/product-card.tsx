@@ -10,6 +10,7 @@ import {
   DEFAULT_CATALOG_LOCALE,
   type CatalogLocale,
 } from "@/lib/catalog-locale";
+import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/format";
 import { formatProductCondition, type ProductCondition, type UsedCondition } from "@/lib/product-condition";
 import { formatShopLocation } from "@/lib/shop-location";
@@ -114,9 +115,9 @@ export function ProductCard({
               {pillText}
             </span>
             {isPremium ? (
-              <span className="hidden h-7 shrink-0 items-center gap-1 rounded-full bg-premium-ink px-2.5 text-[12px] font-bold text-premium-gold sm:inline-flex">
+              <Badge variant="unstyled" className="hidden h-7 shrink-0 items-center gap-1 rounded-full bg-premium-ink px-2.5 text-[12px] font-bold text-premium-gold sm:inline-flex">
                 {chip}
-              </span>
+              </Badge>
             ) : null}
           </span>
           <CatalogImage
@@ -153,9 +154,9 @@ export function ProductCard({
         {isPremium ? (
           // Bottom-left on a phone, where top-right would collide with the
           // condition pill on a narrow card.
-          <span className="absolute bottom-2 left-2 z-10 inline-flex items-center gap-1 rounded-full bg-premium-ink px-[9px] py-[5px] text-[11px] font-bold text-premium-gold shadow-sm sm:bottom-auto sm:left-auto sm:right-3 sm:top-3 sm:px-2.5 sm:py-1.5 sm:text-xs">
+          <Badge  className="absolute bottom-2 left-2 z-10 bg-premium-ink px-[9px] py-[5px] text-[11px] text-premium-gold shadow-sm sm:bottom-auto sm:left-auto sm:right-3 sm:top-3 sm:px-2.5 sm:py-1.5 sm:text-xs">
             {chip}
-          </span>
+          </Badge>
         ) : null}
         <CatalogImage
           alt={product.name}

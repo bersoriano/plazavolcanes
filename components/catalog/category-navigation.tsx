@@ -6,6 +6,7 @@ import {
   buildCatalogHref,
   type CategoryTree,
 } from "@/lib/categories";
+import { ButtonLink } from "@/components/ui/button";
 import type { CatalogLocale } from "@/lib/catalog-locale";
 
 type CategoryNavigationProps = {
@@ -112,7 +113,8 @@ export function CategoryNavigation({
               const isActive = subcategory.slug === activeSubcategorySlug;
 
               return (
-                <Link
+                <ButtonLink
+                  variant="unstyled"
                   aria-current={isActive ? "page" : undefined}
                   className={`inline-flex min-h-11 shrink-0 items-center rounded-full px-4 text-sm font-semibold transition-colors ${
                     isActive
@@ -130,7 +132,7 @@ export function CategoryNavigation({
                   key={subcategory.id}
                 >
                   {subcategory.name}
-                </Link>
+                </ButtonLink>
               );
             })}
           </div>

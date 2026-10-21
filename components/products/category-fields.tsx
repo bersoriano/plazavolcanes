@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { Select } from "@/components/ui/input";
 import { findCategorySelection, type CategoryTree } from "@/lib/categories";
 
 type CategoryFieldsProps = {
@@ -31,8 +32,8 @@ export function CategoryFields({ categories, selectedLeafId, error, onSelectionC
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-ink" htmlFor="category-parent">Categoría</label>
-          <select
-            className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none"
+          <Select
+
             id="category-parent"
             onChange={(event) => {
               setParentId(event.currentTarget.value ? Number(event.currentTarget.value) : null);
@@ -47,14 +48,14 @@ export function CategoryFields({ categories, selectedLeafId, error, onSelectionC
                 {category.name}{category.isActive ? "" : " (no disponible)"}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-ink" htmlFor="category-leaf">Subcategoría</label>
-          <select
+          <Select
             aria-describedby={describedBy}
             aria-invalid={Boolean(error)}
-            className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none disabled:cursor-not-allowed disabled:opacity-55"
+
             disabled={!selectedParent}
             id="category-leaf"
             name="category_id"
@@ -71,7 +72,7 @@ export function CategoryFields({ categories, selectedLeafId, error, onSelectionC
                 {category.name}{category.isActive ? "" : " (no disponible)"}
               </option>
             ))}
-          </select>
+          </Select>
           {error ? <p className="text-sm font-medium text-sale" id="category-error">{error}</p> : null}
           {hasInactiveSelection ? (
             <p className="text-sm font-medium text-sale" id="category-inactive">

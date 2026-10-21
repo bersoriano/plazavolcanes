@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import type { SellerAnalytics } from "@/lib/seller-analytics";
 
 const dayLabel = (day: string) => new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`));
@@ -10,7 +11,7 @@ export function ActivityChart({ daily, trackingStartedAt }: { daily: SellerAnaly
   const measuredInterest = daily.flatMap((day, index) => day.day >= trackingDay ? [point(day.interests, index)] : []);
   const points = daily.map((day, index) => point(day.views, index));
   const coordinates = (points: { x: number; y: number }[]) => points.map(({ x, y }) => `${x},${y}`).join(" ");
-  return <section aria-labelledby="activity-chart-title" className="rounded-[2rem] border border-line bg-surface p-5 sm:p-8">
+  return <Card padding="sm" as="section" aria-labelledby="activity-chart-title" className="sm:p-8">
     <div className="flex flex-wrap items-baseline justify-between gap-3">
       <h2 className="font-display text-2xl font-semibold text-ink" id="activity-chart-title">Cómo cambia el interés</h2>
       <p className="flex gap-4 text-xs text-muted"><span>● Visitas</span><span className="text-success">● Sesiones con interés</span></p>
@@ -42,5 +43,5 @@ export function ActivityChart({ daily, trackingStartedAt }: { daily: SellerAnaly
         </table>
       </div>
     </details>
-  </section>;
+  </Card>;
 }

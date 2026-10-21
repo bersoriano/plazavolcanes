@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 
+import { ButtonLink } from "@/components/ui/button";
 import { FOUNDERS_CAP, resolveFoundersProgress } from "@/lib/launch";
 
 /**
@@ -62,13 +62,14 @@ export function StickyCta({ href, spotsTaken }: { href: string; spotsTaken: numb
             )}
           </span>
         </p>
-        <Link
+        <ButtonLink
+          variant="unstyled"
           className="flex h-[52px] shrink-0 items-center gap-1.5 rounded-full bg-accent px-5 text-[15px] font-bold text-brand"
           href={href}
         >
           Crear mi tienda
           <ArrowRight aria-hidden="true" className="size-4" strokeWidth={2.4} />
-        </Link>
+        </ButtonLink>
       </div>
     </aside>
   );
