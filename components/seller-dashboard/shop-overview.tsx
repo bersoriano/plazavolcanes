@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ExternalLink, Plus, Settings, Store } from "lucide-react";
 
 import { PremiumBadge } from "@/components/shops/premium-badge";
+import { ButtonLink } from "@/components/ui/button";
 import type { ShopCard } from "@/lib/seller-dashboard";
 import { getTrustTierMarker } from "@/lib/trust-tiers";
 
@@ -47,13 +48,14 @@ export function ShopOverview({
           Mis tiendas
         </Heading>
         {canCreateShop && shops.length ? (
-          <Link
+          <ButtonLink
+            variant="unstyled"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line bg-surface px-5 py-2.5 text-sm font-semibold text-brand transition-colors hover:border-brand"
             href="/panel/tiendas/nueva"
           >
             <Plus aria-hidden="true" className="size-4" />
             Crear tienda
-          </Link>
+          </ButtonLink>
         ) : null}
       </div>
 

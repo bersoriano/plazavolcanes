@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { ArrowRight, Menu, X } from "lucide-react";
 
 import { NavLink } from "@/components/layout/nav-link";
+import { Button } from "@/components/ui/button";
 
 export type HeaderMenuLink = { href: string; label: string };
 
@@ -19,14 +20,15 @@ export function HeaderMenu({ cta, links }: { cta: HeaderMenuLink; links: HeaderM
 
   return (
     <>
-      <button
+      <Button
+        variant="unstyled"
         aria-label="Abrir menú"
         className="tap grid place-items-center rounded-full text-brand transition-colors hover:bg-background lg:hidden"
         popoverTarget="menu-principal"
         type="button"
       >
         <Menu aria-hidden="true" className="size-6" />
-      </button>
+      </Button>
       <div
         aria-label="Menú"
         className="fixed inset-x-0 top-0 bottom-auto m-0 h-auto w-full max-w-none border-b border-brand/10 bg-accent p-0 text-brand shadow-float backdrop:bg-brand/30"
@@ -37,7 +39,8 @@ export function HeaderMenu({ cta, links }: { cta: HeaderMenuLink; links: HeaderM
       >
         <div className="flex h-16 items-center justify-between px-4 sm:px-8">
           <span className="font-display text-[19px] font-bold tracking-[-0.02em]">Plaza Volcanes</span>
-          <button
+          <Button
+            variant="unstyled"
             aria-label="Cerrar menú"
             className="tap grid place-items-center rounded-full hover:bg-background"
             popoverTarget="menu-principal"
@@ -45,7 +48,7 @@ export function HeaderMenu({ cta, links }: { cta: HeaderMenuLink; links: HeaderM
             type="button"
           >
             <X aria-hidden="true" className="size-6" />
-          </button>
+          </Button>
         </div>
         <nav aria-label="Menú principal" className="flex flex-col px-4 pb-6 sm:px-8">
           {links.map((link) => (

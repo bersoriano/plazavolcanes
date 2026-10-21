@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { ButtonLink } from "@/components/ui/button";
 
 /**
  * A notice that is not there, said inside the inbox so the list stays in reach.
@@ -13,12 +13,12 @@ export default function NoticeNotFound() {
           No encontramos ese aviso
         </h1>
         <p className="mt-2 leading-7 text-muted">Puede que ya no esté disponible.</p>
-        <Link
-          className="mt-5 inline-flex min-h-11 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white"
+        <ButtonLink
+          className="mt-5 min-h-11 bg-brand px-5 text-sm text-white"
           href="/mensajes"
         >
           Volver a mensajes
-        </Link>
+        </ButtonLink>
       </div>
     </div>
   );

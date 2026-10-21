@@ -3,6 +3,8 @@
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { AdminReadState } from "@/lib/actions/admin-conversation";
 import { formatDate } from "@/lib/format";
 
@@ -10,13 +12,13 @@ function OpenButton() {
   const { pending } = useFormStatus();
 
   return (
-    <button
-      className="rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white"
+    <Button
+      className="bg-brand px-5 py-3 text-sm text-white"
       disabled={pending}
       type="submit"
     >
       {pending ? "Abriendo…" : "Abrir conversación"}
-    </button>
+    </Button>
   );
 }
 
@@ -39,8 +41,8 @@ export function ConversationReveal({
         <p className="text-sm text-muted">
           Abrir esta conversación queda registrado con tu nombre y el motivo que escribas.
         </p>
-        <input
-          className="w-full rounded-2xl border border-line bg-surface px-4 py-3"
+        <Input
+          className="py-3"
           defaultValue={state.values?.reason}
           id={reasonId}
           maxLength={500}

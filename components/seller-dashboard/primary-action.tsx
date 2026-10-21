@@ -1,7 +1,8 @@
-import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { ShareActions } from "@/components/share/share-actions";
+import { ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import type { PrimaryAction } from "@/lib/seller-dashboard";
 import { buildSiteUrl } from "@/lib/site-url";
 
@@ -13,9 +14,11 @@ import { buildSiteUrl } from "@/lib/site-url";
  */
 export function PrimaryActionCard({ primary }: { primary: PrimaryAction }) {
   return (
-    <section
+    <Card
+      as="section"
+      variant="brand"
       aria-labelledby="primary-action-title"
-      className="rounded-[2rem] bg-brand px-6 py-7 text-on-brand sm:px-8 sm:py-8"
+      className="px-6 py-7 sm:px-8 sm:py-8"
     >
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-on-brand/75">
         Tu siguiente paso · {primary.eyebrow}
@@ -26,13 +29,14 @@ export function PrimaryActionCard({ primary }: { primary: PrimaryAction }) {
       <p className="mt-3 max-w-2xl leading-7 text-on-brand/85">{primary.detail}</p>
 
       {primary.action ? (
-        <Link
+        <ButtonLink
+          variant="unstyled"
           className="mt-6 inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-surface px-6 py-3 text-sm font-semibold text-brand transition-colors hover:bg-accent"
           href={primary.action.href}
         >
           {primary.action.label}
           <ArrowRight aria-hidden="true" className="size-4" />
-        </Link>
+        </ButtonLink>
       ) : null}
 
       {primary.share ? (
@@ -46,6 +50,6 @@ export function PrimaryActionCard({ primary }: { primary: PrimaryAction }) {
           />
         </div>
       ) : null}
-    </section>
+    </Card>
   );
 }

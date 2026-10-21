@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Input, Textarea } from "@/components/ui/input";
 import type { ActionState } from "@/lib/action-state";
 import { IMPORT_MAX_LINKS } from "@/lib/listing-import";
 import { useFormAction } from "@/lib/use-form-action";
@@ -11,8 +13,8 @@ export function ListingImportForm({ action }: { action: (state: ActionState, for
     <form action={formAction} className="mt-4 space-y-3">
       <label className="block text-sm font-semibold">
         Enlaces a tus publicaciones, uno por línea (hasta {IMPORT_MAX_LINKS})
-        <textarea
-          className="mt-2 min-h-28 w-full rounded-2xl border border-line bg-background p-4 font-normal"
+        <Textarea
+          className="mt-2 bg-background p-4 font-normal"
           defaultValue={state.values?.links}
           key={`links-${state.status}-${state.message}`}
           name="links"
@@ -22,8 +24,8 @@ export function ListingImportForm({ action }: { action: (state: ActionState, for
       </label>
       <label className="block text-sm font-semibold">
         Nota (opcional)
-        <input
-          className="mt-2 min-h-12 w-full rounded-2xl border border-line bg-background px-4 font-normal"
+        <Input
+          className="mt-2 bg-background font-normal"
           defaultValue={state.values?.note}
           key={`note-${state.status}-${state.message}`}
           maxLength={500}
@@ -31,13 +33,13 @@ export function ListingImportForm({ action }: { action: (state: ActionState, for
           placeholder="Por ejemplo: todos son usados, en buen estado."
         />
       </label>
-      <button
-        className="min-h-11 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+      <Button
+        className="min-h-11 bg-brand px-5 py-2.5 text-sm text-white disabled:opacity-60"
         disabled={pending}
         type="submit"
       >
         {pending ? "Enviando…" : "Enviar enlaces"}
-      </button>
+      </Button>
       {state.message ? (
         <p className={`text-sm ${state.status === "error" ? "text-sale" : "text-success"}`} role="status">
           {state.message}

@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import type { DashboardMetrics, MetricCounts } from "@/lib/seller-dashboard";
 import { REPORTING_WINDOW_DAYS } from "@/lib/seller-dashboard";
 
@@ -37,7 +38,7 @@ export function SellerResults({ metrics, shopCount }: { metrics: DashboardMetric
   const window = `${dayMonth.format(metrics.windowStart)} – ${dayMonth.format(metrics.windowEnd)}`;
 
   return (
-    <section aria-labelledby="results-title" className="rounded-[2rem] border border-line bg-surface p-5 sm:p-7">
+    <Card padding="sm" as="section" aria-labelledby="results-title" className="sm:p-7">
       <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Resultados</p>
       <div className="mt-1 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h2 className="font-display text-2xl font-semibold tracking-[-0.02em]" id="results-title">
@@ -102,6 +103,6 @@ export function SellerResults({ metrics, shopCount }: { metrics: DashboardMetric
       <p className="mt-4 text-xs leading-5 text-muted">
         No calculamos tasas de conversión: una consulta y un pedido no siempre vienen de la misma persona, y sin visitas medidas no hay una base confiable.
       </p>
-    </section>
+    </Card>
   );
 }

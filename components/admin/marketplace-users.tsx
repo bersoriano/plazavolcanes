@@ -6,12 +6,16 @@ import { useState } from "react";
 
 import { UserAccountControls } from "@/components/admin/user-account-controls";
 import { UserNoticeForm } from "@/components/admin/user-notice-form";
-import { EmptyState } from "@/components/ui/empty-state";
 import {
   setShopPremium,
   setShopPublishingApproval,
   setUserShopLimit,
 } from "@/lib/actions/admin-publication";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 import { formatDate } from "@/lib/format";
 import type {
   AdminMarketplaceProductState,
@@ -75,7 +79,8 @@ function ShopFlagSwitch({
           <p className="text-sm font-semibold">{isOn ? onHeading : offHeading}</p>
           <p className="mt-1 text-sm text-muted">{description}</p>
         </div>
-        <button
+        <Button
+          variant="unstyled"
           aria-checked={isOn}
           className={`tap-halo relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition ${
             isOn ? onTrackClassName : "bg-line"
@@ -93,7 +98,7 @@ function ShopFlagSwitch({
               isOn ? `translate-x-7 ${onKnobClassName}` : "translate-x-1 bg-white"
             }`}
           />
-        </button>
+        </Button>
       </div>
       {state.message ? (
         <p
@@ -123,8 +128,8 @@ function UserShopLimit({ user }: { user: AdminMarketplaceUser }) {
         <label className="block text-sm font-semibold" htmlFor={inputId}>
           Límite de tiendas para {labelName}
         </label>
-        <input
-          className="min-h-11 w-full rounded-xl border border-line bg-surface px-3 text-ink focus:border-brand focus:outline-none"
+        <Input
+          className="min-h-11 rounded-xl px-3"
           id={inputId}
           inputMode="numeric"
           max="2147483647"
@@ -137,13 +142,13 @@ function UserShopLimit({ user }: { user: AdminMarketplaceUser }) {
           value={value}
         />
       </div>
-      <button
-        className="min-h-11 rounded-full bg-brand px-5 text-sm font-semibold text-white disabled:opacity-60"
+      <Button
+        className="min-h-11 bg-brand px-5 text-sm text-white disabled:opacity-60"
         disabled={pending}
         type="submit"
       >
         {pending ? "Guardando…" : "Guardar límite"}
-      </button>
+      </Button>
       {state.message ? (
         <p
           className={`w-full text-sm ${state.status === "error" ? "text-sale" : "text-success"}`}
@@ -173,15 +178,15 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
         {users.length} {users.length === 1 ? "persona registrada" : "personas registradas"}
       </p>
       {users.map((user) => (
-        <article className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8" key={user.id}>
+        <Card padding="lg" as="article"  key={user.id}>
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="font-display text-2xl font-semibold">
               {user.displayName ?? user.email ?? "Cuenta sin nombre"}
             </h2>
             {user.isDisabled ? (
-              <span className="inline-flex rounded-full bg-sale/15 px-3 py-1 text-xs font-bold text-sale">
+              <Badge  className="bg-sale/15 text-sale">
                 Cuenta deshabilitada
-              </span>
+              </Badge>
             ) : null}
           </div>
           <p className="mt-1 text-sm text-muted">{user.email ?? "Sin correo registrado"}</p>
@@ -258,7 +263,7 @@ export function MarketplaceUsers({ users }: { users: AdminMarketplaceUser[] }) {
           ) : (
             <p className="mt-6 rounded-2xl bg-background p-5 text-sm text-muted">Sin tiendas</p>
           )}
-        </article>
+        </Card>
       ))}
     </div>
   );

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { RotateCw } from "lucide-react";
 
 import { pageContainer } from "@/components/layout/container";
@@ -8,6 +7,8 @@ import { OngoingTasks } from "@/components/seller-dashboard/ongoing-tasks";
 import { PrimaryActionCard } from "@/components/seller-dashboard/primary-action";
 import { SellerResults } from "@/components/seller-dashboard/seller-results";
 import { ShopOverview } from "@/components/seller-dashboard/shop-overview";
+import { ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { getSellerDashboard } from "@/lib/queries/seller-dashboard.server";
 import { buildSiteUrl } from "@/lib/site-url";
 
@@ -84,15 +85,15 @@ function Dashboard({ result }: { result: Extract<Awaited<ReturnType<typeof getSe
 
 function DashboardError() {
   return (
-    <div className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8" role="alert">
+    <Card padding="lg"  role="alert">
       <h2 className="font-display text-2xl font-semibold">No pudimos cargar tu panel</h2>
       <p className="mt-2 max-w-xl leading-7 text-muted">
         Tus tiendas y pedidos están a salvo; solo falló la consulta. Vuelve a intentarlo en un momento.
       </p>
-      <Link className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-on-brand" href="/panel">
+      <ButtonLink  className="mt-5 min-h-11 bg-brand px-5 py-3 text-sm text-on-brand" href="/panel">
         <RotateCw aria-hidden="true" className="size-4" />
         Reintentar
-      </Link>
-    </div>
+      </ButtonLink>
+    </Card>
   );
 }

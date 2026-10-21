@@ -2,6 +2,8 @@ import Link from "next/link";
 import { Import } from "lucide-react";
 
 import { pageContainer } from "@/components/layout/container";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { completeImportRequest } from "@/lib/actions/listing-import";
 import { formatDate } from "@/lib/format";
@@ -22,7 +24,7 @@ export default async function AdminImportsPage() {
       {requests.length ? (
         <div className="mt-8 space-y-6">
           {requests.map((request) => (
-            <article className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8" key={request.id}>
+            <Card padding="lg" as="article"  key={request.id}>
               <div className="flex flex-wrap justify-between gap-4">
                 <div>
                   <p className={`text-sm font-semibold ${request.status === "done" ? "text-success" : "text-brand"}`}>
@@ -36,9 +38,9 @@ export default async function AdminImportsPage() {
                 </div>
                 {request.status === "pending" ? (
                   <form action={completeImportRequest.bind(null, request.id)}>
-                    <button className="min-h-11 rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white" type="submit">
+                    <Button className="min-h-11 bg-brand px-5 py-2.5 text-sm text-white" type="submit">
                       Marcar como lista
-                    </button>
+                    </Button>
                   </form>
                 ) : null}
               </div>
@@ -52,7 +54,7 @@ export default async function AdminImportsPage() {
                   </li>
                 ))}
               </ol>
-            </article>
+            </Card>
           ))}
         </div>
       ) : (

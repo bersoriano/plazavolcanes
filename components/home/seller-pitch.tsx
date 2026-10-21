@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
+import { ButtonLink } from "@/components/ui/button";
 import { BASE_LISTING_LIMIT } from "@/lib/launch";
 
 /** The same three promises /vender leads with, in the same order. */
@@ -112,13 +113,14 @@ export function SellerPitch() {
         </div>
 
         <div className="relative mt-1.5 flex flex-col gap-2.5 lg:col-span-7 lg:col-start-1 lg:mt-2 lg:flex-row lg:items-center lg:gap-3.5">
-          <Link
+          <ButtonLink
+            variant="unstyled"
             className="flex h-14 items-center justify-center gap-2.5 rounded-full bg-accent text-[17px] font-bold text-brand-hover lg:px-7"
             href="/registro?vender=1"
           >
             Crear mi tienda gratis
             <ArrowRight aria-hidden="true" className="size-5" strokeWidth={2.2} />
-          </Link>
+          </ButtonLink>
           <Link
             className="flex h-14 items-center justify-center rounded-full border border-white/30 text-[17px] font-semibold text-white transition-colors hover:border-accent hover:text-accent lg:px-6"
             href="/vender?desde=pitch"

@@ -13,6 +13,7 @@ import { PremiumBadge } from "@/components/shops/premium-badge";
 import { PremiumScope } from "@/components/shops/premium-scope";
 import { TrustTierBadge } from "@/components/shops/trust-tier-badge";
 import { EarnedSignals, TrustBadges } from "@/components/shops/trust-badges";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { openConversation } from "@/lib/actions/start-conversation";
 import { getPublicShop } from "@/lib/queries/catalog.server";
@@ -111,7 +112,7 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
                 {shop.delivery_policy ? "Entregas y señales de confianza" : "Señales de confianza"}
                 <ChevronDown aria-hidden="true" className="size-4 transition-transform group-open:rotate-180" />
               </summary>
-              <div className="mt-2 rounded-2xl border border-line bg-surface p-5 sm:p-6">
+              <Card padding="sm" className="mt-2 rounded-2xl sm:p-6">
                 {shop.delivery_policy ? (
                   <section aria-labelledby="delivery-policy-title" className="mb-6">
                     <h2
@@ -130,7 +131,7 @@ export default async function PublicShopPage({ params }: { params: Promise<{ slu
                   Estas son todas las señales que Plaza Volcanes mide para cada tienda. Nadie puede editar
                   sus propias métricas.
                 </p>
-              </div>
+              </Card>
             </details>
           </div>
 

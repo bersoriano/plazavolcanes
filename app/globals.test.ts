@@ -115,7 +115,7 @@ describe("route stylesheets", () => {
   });
 
   it("scans everything /vender renders, so its utilities never undo a global one", () => {
-    for (const dir of ["components/sellers", "components/layout", "components/home/landing/primitives.tsx"]) {
+    for (const dir of ["components/sellers", "components/layout", "components/ui", "components/home/landing/primitives.tsx"]) {
       expect(vender).toContain(`@source "../../${dir}";`);
     }
   });

@@ -14,6 +14,8 @@ import { NoFeesStatement } from "@/components/home/no-fees-statement";
 import { SellerPitch } from "@/components/home/seller-pitch";
 import { StateExplorer } from "@/components/home/state-explorer";
 import { TrustStrip } from "@/components/home/trust-strip";
+import { Badge } from "@/components/ui/badge";
+import { ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { buildCatalogHref } from "@/lib/categories";
 import type { CatalogFilters } from "@/lib/queries/catalog";
@@ -117,20 +119,20 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
           </div>
           <nav aria-label="Vistas del catálogo" className="mt-1 flex flex-wrap gap-2 lg:mt-0">
             {hasFilters ? (
-              <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-brand lg:px-[18px]" href={resetHref}>
+              <ButtonLink variant="unstyled" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-brand lg:px-[18px]" href={resetHref}>
                 Limpiar filtros
-              </Link>
+              </ButtonLink>
             ) : (
-              <span className="inline-flex min-h-11 items-center rounded-full bg-accent px-4 text-sm font-bold text-brand-hover lg:px-[18px]">
+              <Badge variant="unstyled" className="inline-flex min-h-11 items-center rounded-full bg-accent px-4 text-sm font-bold text-brand-hover lg:px-[18px]">
                 Todos
-              </span>
+              </Badge>
             )}
-            <span className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-muted lg:px-[18px]">
+            <Badge variant="unstyled" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-muted lg:px-[18px]">
               Más recientes
-            </span>
-            <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-brand lg:px-[18px]" href="#tiendas">
+            </Badge>
+            <ButtonLink variant="unstyled" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-brand lg:px-[18px]" href="#tiendas">
               Tiendas
-            </Link>
+            </ButtonLink>
           </nav>
         </div>
         <ProductGrid>
@@ -244,30 +246,32 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
             </p>
             {area ? (
               <div className="mt-7">
-                <Link
+                <ButtonLink
+                  variant="unstyled"
                   className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-5 text-sm font-semibold text-brand transition-colors hover:border-brand"
                   href={buildCatalogHref({ locale: filters.locale, countryCode: filters.countryCode })}
                 >
                   Ver todo México
                   <ArrowRight aria-hidden="true" className="size-4" />
-                </Link>
+                </ButtonLink>
               </div>
             ) : null}
             {!area && coldStart ? (
               <div className="mt-8 flex flex-wrap justify-center gap-4">
-                <Link
-                  className="inline-flex min-h-12 items-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-transform hover:-translate-y-0.5"
+                <ButtonLink
+                  className="min-h-12 bg-brand px-7 text-white transition-transform hover:-translate-y-0.5"
                   href="/vender?desde=vacio"
                 >
                   Quiero vender
                   <ArrowRight aria-hidden="true" className="size-4" />
-                </Link>
-                <Link
+                </ButtonLink>
+                <ButtonLink
+                  variant="unstyled"
                   className="inline-flex min-h-12 items-center rounded-full border border-line bg-surface px-6 font-semibold text-brand transition-colors hover:border-brand"
                   href="/ingresar"
                 >
                   Ya tengo cuenta
-                </Link>
+                </ButtonLink>
               </div>
             ) : null}
             <div className="relative z-10 mx-auto mt-9 max-w-2xl">

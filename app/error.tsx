@@ -3,6 +3,7 @@
 import { RotateCw } from "lucide-react";
 
 import { pageContainer } from "@/components/layout/container";
+import { Button } from "@/components/ui/button";
 
 /**
  * The public pages' last line of defence. A catalogue read that fails throws
@@ -15,14 +16,14 @@ export default function PlazaError({ retry }: { error: Error & { digest?: string
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Plaza Volcanes</p>
       <h1 className="mt-2 font-display text-3xl font-semibold tracking-[-0.03em]">No pudimos cargar la plaza</h1>
       <p className="mt-3 leading-7 text-muted">Las tiendas y sus productos siguen ahí. Vuelve a intentarlo en un momento.</p>
-      <button
-        className="mt-6 inline-flex min-h-11 items-center gap-2 rounded-full bg-brand px-5 py-3 text-sm font-semibold text-on-brand"
+      <Button
+        className="mt-6 min-h-11 bg-brand px-5 py-3 text-sm text-on-brand"
         onClick={() => retry()}
         type="button"
       >
         <RotateCw aria-hidden="true" className="size-4" />
         Reintentar
-      </button>
+      </Button>
     </section>
   );
 }

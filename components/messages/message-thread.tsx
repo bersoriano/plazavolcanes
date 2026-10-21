@@ -3,12 +3,14 @@
 import { useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/input";
 import type { ActionState } from "@/lib/action-state";
 import { formatDate } from "@/lib/format";
 import type { ThreadMessage } from "@/lib/queries/messages";
 import { useFormAction } from "@/lib/use-form-action";
 import { useLiveThread } from "@/components/messages/use-live-thread";
-import { Button } from "@/components/ui/button";
 
 function SendButton() {
   const { pending } = useFormStatus();
@@ -43,7 +45,7 @@ export function MessageThread({
   }, [shown]);
 
   return (
-    <section className="rounded-[2rem] border border-line bg-surface p-6">
+    <Card padding="md" as="section" >
       <h2 className="font-display text-2xl font-semibold">Conversación</h2>
 
       <div className="mt-5 space-y-3">
@@ -71,8 +73,8 @@ export function MessageThread({
         <label className="sr-only" htmlFor="message-body">
           Mensaje
         </label>
-        <textarea
-          className="min-h-28 w-full rounded-2xl border border-line bg-background p-4"
+        <Textarea
+          className="bg-background p-4"
           defaultValue={state.values?.body}
           id="message-body"
           maxLength={2000}
@@ -90,6 +92,6 @@ export function MessageThread({
           </p>
         ) : null}
       </form>
-    </section>
+    </Card>
   );
 }

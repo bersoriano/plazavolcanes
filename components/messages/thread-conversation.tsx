@@ -5,6 +5,8 @@ import { SendHorizontal } from "lucide-react";
 
 import { STICK_ABOVE_BAR } from "@/components/messages/inbox-layout";
 import { useLiveThread } from "@/components/messages/use-live-thread";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/input";
 import type { ActionState } from "@/lib/action-state";
 import { formatMessageDay, formatMessageTime, sameCalendarDay } from "@/lib/format";
 import type { ThreadMessage } from "@/lib/queries/messages";
@@ -127,7 +129,8 @@ export function ThreadConversation({
             Mensaje
           </label>
           {/* 16px text: anything smaller makes a phone zoom in on focus. */}
-          <textarea
+          <Textarea
+            variant="unstyled"
             className="field-sizing-content max-h-40 min-h-11 flex-1 resize-none rounded-3xl border border-line bg-background px-4 py-2.5 leading-6 text-ink focus:border-brand focus:outline-none"
             defaultValue={state.values?.body}
             id="message-body"
@@ -138,14 +141,15 @@ export function ThreadConversation({
             required
             rows={1}
           />
-          <button
+          <Button
+            variant="unstyled"
             aria-label="Enviar mensaje"
             className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-white transition-colors hover:bg-brand-hover disabled:opacity-55"
             disabled={pending}
             type="submit"
           >
             <SendHorizontal aria-hidden="true" className="size-5" />
-          </button>
+          </Button>
         </div>
       </form>
     </div>

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Store } from "lucide-react";
 
+import { Card } from "@/components/ui/card";
 import type { PublicTrustMetrics } from "@/lib/public-trust";
 import { TrustBadges } from "@/components/shops/trust-badges";
 import { TrustTierBadge } from "@/components/shops/trust-tier-badge";
@@ -21,7 +22,7 @@ export function ShopPanel({
   };
 }) {
   return (
-    <div className="rounded-[2rem] border border-line bg-surface p-6">
+    <Card padding="md" >
       <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Vendedor</p>
 
       <div className="mt-4 flex items-center gap-4">
@@ -51,6 +52,6 @@ export function ShopPanel({
       <Link className="mt-5 inline-flex text-sm font-semibold text-brand" href={`/tiendas/${shop.slug}`}>
         Ver la tienda
       </Link>
-    </div>
+    </Card>
   );
 }

@@ -8,8 +8,10 @@ import { unstable_rethrow } from "next/navigation";
 
 import { CategoryFields } from "@/components/products/category-fields";
 import { ShareActions } from "@/components/share/share-actions";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { Input, Select, Textarea } from "@/components/ui/input";
 import { requestProductImageUploads, sweepMyOrphanedImages } from "@/lib/actions/media";
 import { inspectImage } from "@/lib/media/signature";
 import { uploadWithTickets } from "@/lib/media/upload-client";
@@ -106,32 +108,35 @@ function StoredImages({
               ) : null}
             </span>
             {index === 0 ? (
-              <span className="absolute left-1 top-1 rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-brand-hover">Portada</span>
+              <Badge variant="unstyled" className="absolute left-1 top-1 rounded-full bg-accent px-2 py-0.5 text-xs font-bold text-brand-hover">Portada</Badge>
             ) : null}
             {onRemove ? (
               confirming === image.id ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 rounded-xl bg-ink/80 px-1 text-center">
                   <p className="text-[0.65rem] font-bold text-white">¿Eliminar?</p>
-                  <button
+                  <Button
+                    variant="danger"
                     aria-label={`Sí, eliminar imagen ${index + 1}`}
-                    className="rounded-full bg-sale px-2 py-0.5 text-[0.65rem] font-semibold text-white disabled:opacity-60"
+                    className="px-2 py-0.5 text-[0.65rem] disabled:opacity-60"
                     disabled={pending}
                     onClick={() => remove(image.id)}
                     type="button"
                   >
                     {pending ? "Eliminando…" : "Sí"}
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="unstyled"
                     className="text-[0.65rem] font-semibold text-white/80 underline disabled:opacity-60"
                     disabled={pending}
                     onClick={() => setConfirming(null)}
                     type="button"
                   >
                     Cancelar
-                  </button>
+                  </Button>
                 </div>
               ) : (
-                <button
+                <Button
+                  variant="unstyled"
                   aria-label={`Eliminar imagen ${index + 1}`}
                   className="tap-halo absolute -right-1 -top-1 grid size-6 place-items-center rounded-full border border-line bg-surface text-sale transition-colors hover:bg-sale hover:text-white"
                   onClick={() => {
@@ -141,7 +146,7 @@ function StoredImages({
                   type="button"
                 >
                   <X aria-hidden="true" className="size-3.5" />
-                </button>
+                </Button>
               )
             ) : null}
           </li>
@@ -400,7 +405,7 @@ export function ProductForm({
       <Field defaultValue={state.values?.name ?? product?.name} error={state.errors?.name?.[0]} label="Nombre del producto" maxLength={120} name="name" placeholder="Taza de barro" required />
       <div className="space-y-2">
         <label className="block text-sm font-semibold text-ink" htmlFor="description">Descripción</label>
-        <textarea aria-describedby={state.errors?.description ? "description-error" : undefined} aria-invalid={Boolean(state.errors?.description)} className="min-h-40 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none" defaultValue={state.values?.description ?? product?.description ?? undefined} id="description" maxLength={3000} name="description" placeholder="Materiales, proceso, medidas y cualquier detalle importante." />
+        <Textarea aria-describedby={state.errors?.description ? "description-error" : undefined} aria-invalid={Boolean(state.errors?.description)} className="min-h-40" defaultValue={state.values?.description ?? product?.description ?? undefined} id="description" maxLength={3000} name="description" placeholder="Materiales, proceso, medidas y cualquier detalle importante." />
         {state.errors?.description?.[0] ? <p className="text-sm font-medium text-sale" id="description-error">{state.errors.description[0]}</p> : null}
       </div>
       <Field defaultValue={state.values?.price_mxn ?? product?.price_mxn ?? undefined} error={state.errors?.price_mxn?.[0]} inputMode="decimal" label="Precio en MXN" min="0" name="price_mxn" placeholder="349.00" step="0.01" type="number" />
@@ -412,7 +417,7 @@ export function ProductForm({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {(["new", "used"] as const).map((value) => (
             <label className={`cursor-pointer rounded-2xl border px-4 py-3 text-center text-sm font-semibold transition-colors ${condition === value ? "border-brand bg-accent/45 text-brand-hover" : "border-line bg-surface text-muted hover:border-brand"}`} key={value}>
-              <input checked={condition === value} className="sr-only" name="condition" onChange={() => setCondition(value)} type="radio" value={value} />
+              <Input variant="unstyled" checked={condition === value} className="sr-only" name="condition" onChange={() => setCondition(value)} type="radio" value={value} />
               {value === "new" ? "Nuevo" : "Usado"}
             </label>
           ))}
@@ -422,10 +427,10 @@ export function ProductForm({
       {condition === "used" ? (
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-ink" htmlFor="used-condition">Estado del producto usado</label>
-          <select aria-describedby={state.errors?.used_condition ? "used-condition-error" : undefined} aria-invalid={Boolean(state.errors?.used_condition)} className="min-h-12 w-full rounded-2xl border border-line bg-surface px-4 text-ink focus:border-brand focus:outline-none" defaultValue={state.values?.used_condition ?? product?.used_condition ?? ""} id="used-condition" name="used_condition">
+          <Select aria-describedby={state.errors?.used_condition ? "used-condition-error" : undefined} aria-invalid={Boolean(state.errors?.used_condition)}  defaultValue={state.values?.used_condition ?? product?.used_condition ?? ""} id="used-condition" name="used_condition">
             <option value="">Sin decidir</option>
             {USED_CONDITION_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-          </select>
+          </Select>
           {state.errors?.used_condition?.[0] ? <p className="text-sm font-medium text-sale" id="used-condition-error">{state.errors.used_condition[0]}</p> : null}
         </div>
       ) : null}
@@ -450,7 +455,7 @@ export function ProductForm({
             <span className="mt-1 block text-xs text-muted">La primera imagen es la portada.</span>
           </span>
         </label>
-        <input accept="image/jpeg,image/png,image/webp" className="sr-only" id="product-images" multiple name="images" onChange={(event) => { void handleImages(event.currentTarget); }} type="file" />
+        <Input variant="unstyled" accept="image/jpeg,image/png,image/webp" className="sr-only" id="product-images" multiple name="images" onChange={(event) => { void handleImages(event.currentTarget); }} type="file" />
         {images.length ? (
           <p className="text-xs text-muted">{`Quedan ${MAX_PRODUCT_IMAGES - images.length} espacios de ${MAX_PRODUCT_IMAGES}.`}</p>
         ) : null}

@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
 
 import { STICK_UNDER_HEADER } from "@/components/messages/inbox-layout";
+import { ButtonLink } from "@/components/ui/button";
 import { markPlatformNoticeRead } from "@/lib/actions/platform-notices";
 import { formatMessageDay, formatMessageTime } from "@/lib/format";
 import { PLATFORM_SENDER } from "@/lib/queries/messages";
@@ -82,12 +83,12 @@ export function NoticeView({
         </p>
 
         {notice.action ? (
-          <Link
-            className="mt-6 inline-flex min-h-11 items-center rounded-full bg-brand px-5 text-sm font-semibold text-white"
+          <ButtonLink
+            className="mt-6 min-h-11 bg-brand px-5 text-sm text-white"
             href={notice.action.href}
           >
             {notice.action.label}
-          </Link>
+          </ButtonLink>
         ) : null}
 
         <p className="mt-8 max-w-prose border-t border-line pt-4 text-sm leading-6 text-muted">

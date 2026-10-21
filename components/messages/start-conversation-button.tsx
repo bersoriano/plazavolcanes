@@ -4,6 +4,7 @@ import Link from "next/link";
 import { MessageCircle } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
+import { Button } from "@/components/ui/button";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
 
@@ -14,10 +15,10 @@ function OpenButton({ label }: { label: string }) {
   const { pending } = useFormStatus();
 
   return (
-    <button className={STYLE} disabled={pending} type="submit">
+    <Button variant="unstyled" className={STYLE} disabled={pending} type="submit">
       <MessageCircle aria-hidden="true" className="size-4" />
       {pending ? "Abriendo…" : label}
-    </button>
+    </Button>
   );
 }
 

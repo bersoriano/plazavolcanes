@@ -1,6 +1,5 @@
-import Link from "next/link";
-
 import { pageContainer } from "@/components/layout/container";
+import { ButtonLink } from "@/components/ui/button";
 import { requireAdmin } from "@/lib/admin-auth.server";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -9,21 +8,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <>
       <nav aria-label="Administración" className={`${pageContainer} flex flex-wrap gap-2 pt-6`}>
-        <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/usuarios">
+        <ButtonLink variant="unstyled" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/usuarios">
           Usuarios
-        </Link>
-        <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/disputas">
+        </ButtonLink>
+        <ButtonLink variant="unstyled" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/disputas">
           Centro de Resoluciones
-        </Link>
-        <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/importaciones">
+        </ButtonLink>
+        <ButtonLink variant="unstyled" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/importaciones">
           Importaciones
-        </Link>
-        <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/avisos">
+        </ButtonLink>
+        <ButtonLink variant="unstyled" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/avisos">
           Avisos
-        </Link>
-        <Link className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/contacto">
+        </ButtonLink>
+        <ButtonLink variant="unstyled" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold text-brand" href="/admin/contacto">
           Contacto
-        </Link>
+        </ButtonLink>
       </nav>
       {children}
     </>

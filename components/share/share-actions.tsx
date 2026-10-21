@@ -3,7 +3,7 @@
 import { MessageCircle, Share2 } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 
 type ShareActionsProps = {
   label: string;
@@ -72,17 +72,17 @@ export function ShareActions({ label, title, url }: ShareActionsProps) {
         <Share2 aria-hidden="true" className="size-4" />
         Compartir
       </Button>
-      <a
+      <ButtonLink
         aria-label="Compartir por WhatsApp"
         data-product-cta="share"
-        className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-line bg-surface-raised px-5 py-2.5 text-sm font-semibold text-brand transition-colors hover:border-brand"
+        variant="secondary"
         href={whatsappMessage ? `https://wa.me/?text=${whatsappMessage}` : "https://wa.me/"}
         rel="noopener noreferrer"
         target="_blank"
       >
         <MessageCircle aria-hidden="true" className="size-4" />
         WhatsApp
-      </a>
+      </ButtonLink>
       {status ? (
         <p
           className={`basis-full text-sm font-medium ${status === "copied" ? "text-success" : "text-sale"}`}

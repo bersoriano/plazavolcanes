@@ -1,6 +1,5 @@
-import Link from "next/link";
-
 import { Accent, PrimaryCta, VolcanoLines } from "@/components/home/landing/primitives";
+import { ButtonLink } from "@/components/ui/button";
 import { FOUNDER_OFFER } from "@/lib/launch";
 
 /**
@@ -31,12 +30,13 @@ export function FinalCta() {
           <PrimaryCta block href="/registro?vender=1">
             Abrir mi tienda gratis
           </PrimaryCta>
-          <Link
+          <ButtonLink
+            variant="unstyled"
             className="inline-flex h-[58px] items-center justify-center rounded-full bg-surface px-[30px] text-[17px] font-semibold text-brand transition-colors hover:bg-background lg:h-16 lg:text-[19px]"
             href="#pasos"
           >
             Conoce cómo funciona
-          </Link>
+          </ButtonLink>
         </div>
         <p className="mt-1 text-[14px] font-semibold lg:mt-2.5 lg:text-[16px]">
           Plaza Volcanes es una plataforma 100% mexicana 🇲🇽

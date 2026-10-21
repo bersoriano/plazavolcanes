@@ -1,3 +1,4 @@
+import { Card } from "@/components/ui/card";
 import type { PublishedLegalDocument } from "@/lib/queries/legal.server";
 
 const dateFormat = new Intl.DateTimeFormat("es-MX", {
@@ -52,7 +53,7 @@ export function LegalDocument({ document }: { document: PublishedLegalDocument }
       ))}
 
       {hasIdentity ? (
-        <section className="mt-12 rounded-[1.5rem] border border-line bg-surface p-6">
+        <Card padding="md" as="section" className="mt-12 rounded-[1.5rem]">
           <h2 className="font-display text-xl font-semibold" id="responsable-identidad">
             Responsable de este documento
           </h2>
@@ -76,7 +77,7 @@ export function LegalDocument({ document }: { document: PublishedLegalDocument }
                   )),
               )}
           </dl>
-        </section>
+        </Card>
       ) : null}
 
       {/* The hash covers the section body and issuer identity, not this

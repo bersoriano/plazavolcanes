@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ChevronRight, HandCoins, MessageCircle, PackageCheck, ShoppingBag } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { attentionTiming, type AttentionGroup, type AttentionItem, type SellerDashboard } from "@/lib/seller-dashboard";
 
 function describe(item: AttentionItem) {
@@ -43,12 +45,12 @@ export function ActionQueue({
   const deadlinesMissing = unavailable.deadlines && groups.some((group) => group.id === "reply");
 
   return (
-    <section aria-labelledby="attention-title" className="rounded-[2rem] border border-line bg-surface p-5 sm:p-7">
+    <Card padding="sm" as="section" aria-labelledby="attention-title" className="sm:p-7">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="font-display text-2xl font-semibold tracking-[-0.02em]" id="attention-title">
           Requiere tu atención
         </h2>
-        {total ? <span className="rounded-full bg-sale/15 px-3 py-1 text-xs font-bold text-sale">{pendingCount(total)}</span> : null}
+        {total ? <Badge variant="unstyled" className="rounded-full bg-sale/15 px-3 py-1 text-xs font-bold text-sale">{pendingCount(total)}</Badge> : null}
       </div>
 
       {unavailable.attention || deadlinesMissing ? (
@@ -121,6 +123,6 @@ export function ActionQueue({
         </Link>
         .
       </p>
-    </section>
+    </Card>
   );
 }

@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, ShoppingBag, Store, type LucideIcon } from "luci
 
 import { buyerSteps } from "@/components/home/buyer-steps";
 import { sellerSteps } from "@/components/sellers/seller-onboarding-steps";
+import { ButtonLink } from "@/components/ui/button";
 import { signupStepHref } from "@/lib/signup-onboarding";
 
 const textLink =
@@ -174,13 +175,13 @@ export function SignupFlow({ continuar, flow, intent }: SignupContext & { flow: 
 
       <p className="mt-8 rounded-2xl bg-accent/45 px-4 py-3 text-sm leading-6 text-brand-hover">{note}</p>
 
-      <Link
-        className="mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-brand px-7 font-semibold text-white transition-colors hover:bg-brand-hover"
+      <ButtonLink
+        className="mt-6 flex min-h-12 w-full bg-brand px-7 text-white hover:bg-brand-hover"
         href={signupStepHref("formulario", continuar, intent)}
       >
         Crear mi cuenta
         <ArrowRight aria-hidden="true" className="size-4" />
-      </Link>
+      </ButtonLink>
       <p className="mt-3 text-center">
         <Link className={textLink} href={signupStepHref(other.step, continuar, intent)}>
           {other.label}

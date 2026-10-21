@@ -1,4 +1,5 @@
 import { Check, Store } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * Text only, never a logo: the marketplaces named here are not partners, and a
@@ -24,13 +25,14 @@ export function ReputationFlow() {
       >
         <div className="flex flex-wrap gap-2 sm:max-w-[290px]">
           {PLATFORMS.map((platform) => (
-            <span
+            <Badge
+              variant="unstyled"
               className="flex h-8 items-center gap-1.5 rounded-full border border-line bg-surface px-3 text-[13px] font-semibold"
               key={platform}
             >
               {platform}
               <Check className="size-3.5 text-success" strokeWidth={2.8} />
-            </span>
+            </Badge>
           ))}
         </div>
         <div className="flex grow flex-col gap-2 rounded-[18px] bg-surface p-4 shadow-card">

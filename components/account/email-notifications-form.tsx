@@ -2,9 +2,10 @@
 
 import { useFormStatus } from "react-dom";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
-import { Button } from "@/components/ui/button";
 
 function SaveButton() {
   const { pending } = useFormStatus();
@@ -32,7 +33,7 @@ export function EmailNotificationsForm({
       <fieldset className="space-y-3">
         <legend className="text-sm font-semibold text-ink">Avisos por correo</legend>
         <label className="flex items-start gap-3 rounded-2xl border border-line bg-surface px-4 py-3">
-          <input className="mt-1 size-4 accent-brand" defaultChecked={enabled} name="email_enabled" type="checkbox" />
+          <Input variant="unstyled" className="mt-1 size-4 accent-brand" defaultChecked={enabled} name="email_enabled" type="checkbox" />
           <span className="text-sm leading-6 text-ink">
             Avísame por correo de solicitudes de compra, mensajes de compradores y solicitudes por vencer en mis tiendas.
           </span>

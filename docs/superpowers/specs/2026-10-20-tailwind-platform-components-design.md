@@ -4,7 +4,7 @@ Implement the requested platform-wide Tailwind component system using the existi
 
 ## Scope and defaults
 
-- Keep Plaza Volcanes' plum/lime branding, typography, Spanish copy, premium theme, responsive layouts, and existing interactions. This is the implementation default, not a requested redesign.
+- Keep Plaza Volcanes' plum/lime branding, typography, Spanish copy, premium theme, responsive layouts, and existing interactions. User confirmed the goal is reusable Tailwind components replacing native markup; retain existing branding.
 - Consolidate buttons, action links, inputs, selects, textareas, cards, and badges under `components/ui`.
 - Adopt these primitives throughout landing pages, catalog/product/shop pages, buyer purchases/cart, seller onboarding/dashboard/shop/product/order screens, authentication/account, messages, legal/contact, and admin.
 - Keep navigation links as links, actions as buttons, hidden fields native, and existing confirmation flows intact.

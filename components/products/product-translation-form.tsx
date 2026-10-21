@@ -4,6 +4,7 @@ import { useFormStatus } from "react-dom";
 
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { Textarea } from "@/components/ui/input";
 import type { ActionState } from "@/lib/action-state";
 import { useFormAction } from "@/lib/use-form-action";
 
@@ -52,10 +53,10 @@ export function ProductTranslationForm({ action, translation }: ProductTranslati
           <label className="block text-sm font-semibold text-ink" htmlFor="english-description">
             Descripción en inglés
           </label>
-          <textarea
+          <Textarea
             aria-describedby={state.errors?.description ? "english-description-error" : undefined}
             aria-invalid={Boolean(state.errors?.description)}
-            className="min-h-36 w-full resize-y rounded-2xl border border-line bg-surface px-4 py-3 text-ink placeholder:text-muted/70 focus:border-brand focus:outline-none"
+            className="min-h-36"
             id="english-description"
             maxLength={3000}
             defaultValue={state.values?.description ?? translation?.description}

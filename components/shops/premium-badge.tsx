@@ -1,4 +1,5 @@
 import { CircleHelp, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /**
  * The mark of a shop administration has distinguished.
@@ -28,14 +29,15 @@ export function PremiumBadge({
       Premium
       {showDetails ? (
         <>
-          <button
+          <Button
+            variant="unstyled"
             aria-describedby="premium-badge-tooltip"
             aria-label="Más información sobre la distinción Premium"
             className="tap-halo grid size-5 place-items-center rounded-full text-premium-gold/70 hover:text-premium-gold"
             type="button"
           >
             <CircleHelp aria-hidden="true" className="size-3.5" />
-          </button>
+          </Button>
           <span
             className="pointer-events-none absolute left-0 top-[calc(100%+.5rem)] z-30 w-72 rounded-xl border border-premium-gold/40 bg-premium-ink px-3 py-2 text-xs font-normal leading-5 text-premium-cream opacity-0 shadow-lg transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
             id="premium-badge-tooltip"

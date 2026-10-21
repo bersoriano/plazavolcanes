@@ -2,6 +2,7 @@
 
 import { useState, type KeyboardEvent } from "react";
 
+import { Button } from "@/components/ui/button";
 import type { ActionState } from "@/lib/action-state";
 import type { CartThread } from "@/lib/queries/checkout.server";
 import { MessageThread } from "@/components/messages/message-thread";
@@ -96,7 +97,8 @@ export function CartThreads({
           role="tablist"
         >
           {threads.map((thread, index) => (
-            <button
+            <Button
+              variant="unstyled"
               aria-controls={`cart-thread-panel-${thread.productId}`}
               aria-selected={thread.productId === active.productId}
               className={`rounded-full px-4 py-2 text-sm font-semibold ${
@@ -113,7 +115,7 @@ export function CartThreads({
               type="button"
             >
               {thread.productName}
-            </button>
+            </Button>
           ))}
         </div>
       ) : null}

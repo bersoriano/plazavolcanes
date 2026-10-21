@@ -3,11 +3,13 @@
 import { useState } from "react";
 import { useFormStatus } from "react-dom";
 
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import type { ActionState } from "@/lib/action-state";
 import type { PickupPoint } from "@/lib/queries/checkout";
 import { MEXICO_ADMINISTRATIVE_AREAS } from "@/lib/shop-location";
 import { useFormAction } from "@/lib/use-form-action";
-import { Field } from "@/components/ui/field";
 
 type Method = "pickup" | "shipping" | null;
 
@@ -19,13 +21,13 @@ function ConfirmButton({ chosen }: { chosen: boolean }) {
   const { pending } = useFormStatus();
 
   return (
-    <button
-      className="w-full rounded-full bg-brand px-6 py-3 font-semibold text-white disabled:opacity-60"
+    <Button
+      className="w-full bg-brand px-6 py-3 text-white disabled:opacity-60"
       disabled={pending || !chosen}
       type="submit"
     >
       {pending ? "Creando pedido…" : "Confirmar solicitud"}
-    </button>
+    </Button>
   );
 }
 
@@ -65,7 +67,8 @@ export function FulfillmentChoice({
         </legend>
 
         <label className="flex items-start gap-3 rounded-2xl border border-line p-4" htmlFor="method-pickup">
-          <input
+          <Input
+            variant="unstyled"
             aria-describedby="pickup-desc"
             aria-labelledby="pickup-name"
             checked={method === "pickup"}
@@ -87,7 +90,8 @@ export function FulfillmentChoice({
         </label>
 
         <label className="flex items-start gap-3 rounded-2xl border border-line p-4" htmlFor="method-shipping">
-          <input
+          <Input
+            variant="unstyled"
             aria-describedby="shipping-desc"
             aria-labelledby="shipping-name"
             checked={method === "shipping"}

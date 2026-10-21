@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageIcon, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /**
  * The first image is the cover, and the strip below it picks which one the big
@@ -75,7 +76,8 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
 
   return (
     <div className="space-y-3">
-      <button
+      <Button
+        variant="unstyled"
         aria-label="Ampliar imagen"
         className="relative block aspect-[4/3] w-full cursor-zoom-in overflow-hidden rounded-[2rem] bg-photo-backdrop focus:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
         onClick={() => setZoomed(true)}
@@ -89,13 +91,14 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
           data-testid="gallery-active"
           src={images[active]}
         />
-      </button>
+      </Button>
 
       {count > 1 ? (
         <ul className="flex gap-3 overflow-x-auto pb-1">
           {images.map((image, index) => (
             <li className="shrink-0" key={image}>
-              <button
+              <Button
+                variant="unstyled"
                 aria-current={index === active ? "true" : undefined}
                 aria-label={`Ver imagen ${index + 1}`}
                 className={`block size-20 overflow-hidden rounded-xl border-2 bg-photo-backdrop transition-colors sm:size-24 ${
@@ -110,7 +113,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
                   className="size-full object-cover"
                   src={image}
                 />
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
@@ -126,7 +129,8 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
           }}
           role="dialog"
         >
-          <button
+          <Button
+            variant="unstyled"
             aria-label="Cerrar"
             className="absolute right-4 top-4 inline-flex size-11 items-center justify-center rounded-full bg-surface/90 text-brand transition-colors hover:bg-surface"
             onClick={() => setZoomed(false)}
@@ -134,17 +138,18 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
             type="button"
           >
             <X aria-hidden="true" className="size-5" />
-          </button>
+          </Button>
 
           {count > 1 ? (
-            <button
+            <Button
+              variant="unstyled"
               aria-label="Anterior"
               className="absolute left-2 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface/90 text-brand transition-colors hover:bg-surface sm:left-4"
               onClick={() => step(-1)}
               type="button"
             >
               <ChevronLeft aria-hidden="true" className="size-5" />
-            </button>
+            </Button>
           ) : null}
 
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -157,14 +162,15 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
 
           {count > 1 ? (
             <>
-              <button
+              <Button
+                variant="unstyled"
                 aria-label="Siguiente"
                 className="absolute right-2 top-1/2 inline-flex size-11 -translate-y-1/2 items-center justify-center rounded-full bg-surface/90 text-brand transition-colors hover:bg-surface sm:right-4"
                 onClick={() => step(1)}
                 type="button"
               >
                 <ChevronRight aria-hidden="true" className="size-5" />
-              </button>
+              </Button>
               <p className="absolute inset-x-0 bottom-5 text-center text-sm font-semibold text-background/80">
                 {`${active + 1} / ${count}`}
               </p>

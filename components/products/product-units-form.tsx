@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { setProductUnits } from "@/lib/actions/catalog";
 import { MAX_UNITS } from "@/lib/listing-readiness";
 import { useFormAction } from "@/lib/use-form-action";
@@ -23,8 +25,8 @@ export function ProductUnitsForm({
       <label className="sr-only" htmlFor={fieldId}>
         Unidades de {productName}
       </label>
-      <input
-        className="h-11 w-20 rounded-xl border border-line bg-surface px-3 text-sm tabular-nums text-ink focus:border-brand focus:outline-none"
+      <Input
+        className="h-11 w-20 rounded-xl px-3 text-sm tabular-nums"
         defaultValue={state.values?.units_available ?? units ?? undefined}
         id={fieldId}
         inputMode="numeric"
@@ -35,14 +37,15 @@ export function ProductUnitsForm({
         type="number"
       />
       <span aria-hidden="true" className="text-xs text-muted">unidades</span>
-      <button
+      <Button
+        variant="unstyled"
         aria-label={`Guardar unidades de ${productName}`}
         className="inline-flex min-h-11 items-center text-xs font-semibold text-brand disabled:opacity-60"
         disabled={pending}
         type="submit"
       >
         {pending ? "Guardando…" : "Guardar"}
-      </button>
+      </Button>
       {state.message ? (
         <p className={`w-full text-xs ${state.status === "error" ? "text-sale" : "text-success"}`} role="status">
           {state.message}

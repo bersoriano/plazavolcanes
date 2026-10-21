@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useFormStatus } from "react-dom";
 import { useState } from "react";
 
-import { signIn, signUp } from "@/lib/actions/auth";
-import { useFormAction } from "@/lib/use-form-action";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { signIn, signUp } from "@/lib/actions/auth";
+import { useFormAction } from "@/lib/use-form-action";
 import { SignupConfirmation } from "@/components/auth/signup-confirmation";
 import { safeContinuation } from "@/lib/safe-continuation";
 
@@ -90,7 +91,8 @@ function AuthAttempt({ continuar, intent, mode, onRestart }: AuthFormProps & { o
             </label>
             <div className="flex items-center gap-2 rounded-2xl border border-line bg-surface px-4 focus-within:border-brand">
               <span className="text-sm font-semibold text-muted">+52</span>
-              <input
+              <Input
+                variant="unstyled"
                 aria-describedby={state.errors?.phone?.[0] ? "phone-error" : undefined}
                 aria-invalid={Boolean(state.errors?.phone?.[0])}
                 autoComplete="tel-national"

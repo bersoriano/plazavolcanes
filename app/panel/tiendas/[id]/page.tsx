@@ -10,8 +10,10 @@ import { ShopWorkspaceHeader } from "@/components/shops/shop-workspace-header";
 import { ListingImportCard } from "@/components/shops/listing-import-card";
 import { ShopAnalyticsCard } from "@/components/shops/shop-analytics-card";
 import { TrustDashboardCard } from "@/components/shops/trust-dashboard-card";
-import { EmptyState } from "@/components/ui/empty-state";
 import type { ListingStatus } from "@/components/ui/status-badge";
+import { ButtonLink } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { requestListingImport } from "@/lib/actions/listing-import";
 import { getShopImportRequests } from "@/lib/queries/listing-import.server";
 import { getShopAnalytics } from "@/lib/queries/shop-analytics.server";
@@ -83,21 +85,21 @@ export default async function ShopCatalogPage({
         <section className="mb-6 rounded-[2rem] border border-brand/25 bg-accent/45 p-6 sm:p-8" aria-labelledby="shop-created-title">
           <h2 id="shop-created-title" className="font-display text-2xl font-semibold" role="status">Tu tienda se creó correctamente.</h2>
           <p className="mt-3 text-sm leading-6 text-muted">La página pública de tu tienda ya está disponible. Crear la tienda no equivale a tener permiso para publicar productos.</p>
-          <Link className="mt-5 inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-on-brand hover:bg-brand-hover" href={`/panel/tiendas/${shopId}/productos/nuevo`}>Agregar mi primer producto</Link>
+          <ButtonLink  className="mt-5 min-h-11 bg-brand px-5 py-2.5 text-sm text-on-brand hover:bg-brand-hover" href={`/panel/tiendas/${shopId}/productos/nuevo`}>Agregar mi primer producto</ButtonLink>
         </section>
       ) : null}
-      <section aria-labelledby="publication-approval-title" className="mb-6 rounded-[2rem] border border-line bg-surface p-6 sm:px-8">
+      <Card padding="md" as="section" aria-labelledby="publication-approval-title" className="mb-6 sm:px-8">
         <h2 id="publication-approval-title" className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Permiso para publicar productos</h2>
         <p className={`mt-3 inline-flex rounded-full px-3 py-1 text-sm font-bold ${approval.kind === "approved" ? "bg-accent text-brand-hover" : "bg-background text-muted"}`}>{approval.label}</p>
         <p className="mt-3 text-sm leading-6 text-muted">{getShopPublicationGuidance(shop)}</p>
         {!created ? <p className="mt-2 text-xs leading-5 text-muted">La página pública de tu tienda es independiente del permiso para publicar productos.</p> : null}
-      </section>
+      </Card>
 
       {trustDashboard ? <div className="mb-6"><TrustDashboardCard dashboard={trustDashboard} /></div> : null}
       <div className="mb-6"><ShopAnalyticsCard analytics={analytics} /></div>
       <div className="mb-6"><ListingImportCard action={requestListingImport.bind(null, shopId)} requests={importRequests} /></div>
 
-      <section aria-labelledby="catalogo-title" className="rounded-[2rem] border border-line bg-surface p-6 sm:p-8">
+      <Card padding="lg" as="section" aria-labelledby="catalogo-title" >
         <h2 className="sr-only" id="catalogo-title">Productos</h2>
         <p className="mb-4 text-sm text-muted">Espacios de publicación usados: {listings.filter((product) => product.status === "published").length} de {shop.listing_limit}. Los productos pendientes de aprobación y los bloqueados con publicación guardada también cuentan; los borradores no.</p>
         <CatalogToolbar counts={counts} search={search} shopId={shopId} tab={tab} />
@@ -156,7 +158,7 @@ export default async function ShopCatalogPage({
             )}
           </div>
         )}
-      </section>
+      </Card>
     </section>
   );
 }

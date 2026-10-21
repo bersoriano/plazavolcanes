@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, ChevronRight } from "lucide-react";
 
+import { Card } from "@/components/ui/card";
 import type { OngoingTask } from "@/lib/seller-dashboard";
 
 /**
@@ -9,7 +10,7 @@ import type { OngoingTask } from "@/lib/seller-dashboard";
  */
 export function OngoingTasks({ tasks }: { tasks: OngoingTask[] }) {
   return (
-    <section aria-labelledby="ongoing-title" className="rounded-[2rem] border border-line bg-surface p-5 sm:p-7">
+    <Card padding="sm" as="section" aria-labelledby="ongoing-title" className="sm:p-7">
       <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Sigue vendiendo</p>
       <h2 className="mt-1 font-display text-2xl font-semibold tracking-[-0.02em]" id="ongoing-title">
         Mantén tus tiendas al día
@@ -37,6 +38,6 @@ export function OngoingTasks({ tasks }: { tasks: OngoingTask[] }) {
           No encontramos pendientes en tus tiendas.
         </p>
       )}
-    </section>
+    </Card>
   );
 }

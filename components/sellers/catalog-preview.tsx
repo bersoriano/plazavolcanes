@@ -1,4 +1,5 @@
 import { Plus, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 /**
  * Four real listings from the marketplace, frozen here as an illustration.
@@ -95,10 +96,10 @@ export function CatalogPreview() {
               <Search className="size-4" strokeWidth={2} />
               Buscar
             </span>
-            <span className="flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full bg-brand px-4 text-[13px] font-bold text-white sm:text-[14px]">
+            <Badge variant="unstyled" className="flex h-10 items-center gap-1.5 whitespace-nowrap rounded-full bg-brand px-4 text-[13px] font-bold text-white sm:text-[14px]">
               <Plus className="size-4" strokeWidth={2.4} />
               Agregar producto
-            </span>
+            </Badge>
           </span>
         </div>
 

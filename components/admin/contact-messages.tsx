@@ -3,6 +3,7 @@
 import { useId } from "react";
 
 import { NoticeActionMessage } from "@/components/admin/notice-fields";
+import { Button } from "@/components/ui/button";
 import { markContactMessageAttended } from "@/lib/actions/contact";
 import { formatDate } from "@/lib/format";
 import type { ContactMessage } from "@/lib/queries/contact";
@@ -14,14 +15,15 @@ function Attend({ message, label }: { message: ContactMessage; label: string }) 
   return (
     <form action={formAction} className="flex flex-wrap items-center gap-3">
       <input name="message_id" type="hidden" value={message.id} />
-      <button
-        className="min-h-11 rounded-full border border-line bg-surface px-5 text-sm font-semibold text-brand disabled:opacity-60"
+      <Button
+        variant="secondary"
+        className="min-h-11 border border-line bg-surface px-5 text-sm text-brand disabled:opacity-60"
         disabled={pending}
         type="submit"
       >
         {pending ? "Marcando…" : "Marcar como atendido"}{" "}
         <span className="sr-only">el mensaje de {label}</span>
-      </button>
+      </Button>
       <NoticeActionMessage state={state} />
     </form>
   );

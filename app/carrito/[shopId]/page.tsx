@@ -8,7 +8,9 @@ import { CartItems } from "@/components/orders/cart-items";
 import { CartThreads, type CartThreadWithActions } from "@/components/orders/cart-thread";
 import { FulfillmentChoice } from "@/components/orders/fulfillment-choice";
 import { ShopPanel } from "@/components/orders/shop-panel";
+import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Input } from "@/components/ui/input";
 import { checkoutCart, removeCartItem, setCartItemQuantity } from "@/lib/actions/cart";
 import { sendMessage } from "@/lib/actions/messages";
 import { openConversation } from "@/lib/actions/start-conversation";
@@ -110,7 +112,7 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
               <BuyerPanel buyer={buyer} />
             </div>
           ) : null}
-          <div className="order-3 rounded-[2rem] border border-line bg-surface p-6 lg:order-none">
+          <Card padding="md" className="order-3 lg:order-none">
             <h2 className="font-display text-2xl font-semibold">Entrega</h2>
             <div className="mt-5">
               {hasUnavailableItems ? (
@@ -130,7 +132,7 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
                 />
               )}
             </div>
-          </div>
+          </Card>
         </div>
 
         <div className="contents lg:block lg:space-y-7">
@@ -143,11 +145,11 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
             />
           </div>
 
-          <div className="order-4 rounded-[2rem] border border-line bg-surface p-6 lg:order-none" id="conversacion">
+          <Card padding="md" className="order-4 lg:order-none" id="conversacion">
             <h2 className="font-display text-2xl font-semibold">Conversación</h2>
             {buyer ? (
               <div className="mt-5">
-                <input className="peer sr-only lg:hidden" id="cart-thread-toggle" type="checkbox" />
+                <Input variant="unstyled" className="peer sr-only lg:hidden" id="cart-thread-toggle" type="checkbox" />
                 <label
                   className="cursor-pointer rounded-sm text-sm font-semibold text-brand peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-4 lg:hidden"
                   htmlFor="cart-thread-toggle"
@@ -159,7 +161,7 @@ export default async function CartPage({ params }: { params: Promise<{ shopId: s
                 </div>
               </div>
             ) : null}
-          </div>
+          </Card>
         </div>
 
         <div className="contents lg:block">
