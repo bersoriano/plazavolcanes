@@ -1,3 +1,5 @@
+import { Badge } from "@/components/ui/badge";
+
 export type ListingStatus = "draft" | "published" | "expired";
 
 const styles: Record<ListingStatus, { label: string; className: string }> = {
@@ -10,8 +12,9 @@ export function StatusBadge({ status }: { status: ListingStatus }) {
   const { label, className } = styles[status];
 
   return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${className}`}>
+    <Badge className={className}>
       {label}
-    </span>
+    </Badge>
   );
 }
+

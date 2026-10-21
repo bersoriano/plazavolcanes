@@ -1,6 +1,9 @@
-import type { ButtonHTMLAttributes } from "react";
+import Link from "next/link";
+import type { ComponentProps } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "ghost";
+import { cn } from "@/components/ui/cn";
+
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "danger" | "accent" | "unstyled";
 
 const variants: Record<ButtonVariant, string> = {
   primary:
@@ -8,18 +11,49 @@ const variants: Record<ButtonVariant, string> = {
   secondary:
     "border border-[var(--border)] bg-surface-raised text-[var(--brand)] hover:border-[var(--brand)]",
   ghost: "bg-transparent text-[var(--brand)] hover:bg-[var(--accent)]",
+  danger: "bg-sale text-white hover:bg-sale/90",
+  accent: "bg-accent text-brand-hover hover:bg-accent/80",
+  unstyled: "",
 };
 
-type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type ActionStyleProps = {
   variant?: ButtonVariant;
+  size?: "default" | "sm" | "lg" | "icon";
+  className?: string;
 };
 
-export function Button({ className = "", variant = "primary", type = "button", ...props }: ButtonProps) {
+const sizes = {
+  default: "min-h-11 px-5 py-2.5 text-sm",
+  sm: "min-h-11 px-3 py-2 text-xs",
+  lg: "min-h-12 px-6 py-3 text-base",
+  icon: "size-11 shrink-0 p-0",
+};
+
+export function buttonStyles({ variant = "primary", size = "default", className }: ActionStyleProps = {}) {
+  return cn(
+    "disabled:cursor-not-allowed disabled:opacity-55",
+    variant !== "unstyled" && "inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-colors",
+    variant !== "unstyled" && sizes[size],
+    variants[variant],
+    className,
+  );
+}
+
+export type ButtonProps = ComponentProps<"button"> & ActionStyleProps;
+
+export function Button({ className, variant, size, type = "button", ...props }: ButtonProps) {
   return (
     <button
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-55 ${variants[variant]} ${className}`}
+      className={buttonStyles({ variant, size, className })}
       type={type}
       {...props}
     />
   );
+}
+
+export type ButtonLinkProps = ComponentProps<typeof Link> & ActionStyleProps;
+
+/** Navigation remains an anchor, including prefetch and modified-click support. */
+export function ButtonLink({ className, variant, size, ...props }: ButtonLinkProps) {
+  return <Link className={buttonStyles({ variant, size, className })} {...props} />;
 }
