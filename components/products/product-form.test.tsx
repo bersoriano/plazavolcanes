@@ -53,7 +53,11 @@ const categories: CategoryTree[] = [
   },
 ];
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  // Every change saves a draft; one test's typing must not refill the next form.
+  window.localStorage.clear();
+});
 
 describe("ProductForm", () => {
   it("saves new products hidden first with a single submit action", () => {
@@ -391,6 +395,7 @@ describe("ProductForm units available", () => {
   it("keeps a cleared value cleared when the draft is reopened", () => {
     render(
       <ProductForm
+        productId={7}
         shopId={1}
         action={action}
         categories={categories}
