@@ -19,13 +19,25 @@ const PRIVATE_PATHS = [
   "/nueva-contrasena",
 ];
 
+// Search engines and the crawlers behind AI answers (ChatGPT, Perplexity,
+// Claude), named so the welcome is explicit. A crawler with its own group
+// ignores the `*` one, so each repeats the private paths.
+const SEARCH_CRAWLERS = [
+  "OAI-SearchBot",
+  "ChatGPT-User",
+  "PerplexityBot",
+  "Claude-SearchBot",
+  "Claude-User",
+  "Googlebot",
+  "Bingbot",
+];
+
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: {
-      userAgent: "*",
-      allow: "/",
-      disallow: PRIVATE_PATHS,
-    },
+    rules: [
+      { userAgent: "*", allow: "/", disallow: PRIVATE_PATHS },
+      { userAgent: SEARCH_CRAWLERS, allow: "/", disallow: PRIVATE_PATHS },
+    ],
     sitemap: buildSiteUrl("/sitemap.xml"),
     host: getSiteUrl(),
   };

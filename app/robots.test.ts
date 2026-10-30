@@ -16,12 +16,33 @@ describe("robots", () => {
     expect(result.host).toBe("https://plazavolcanes.com");
   });
 
-  it("blocks the routes that require a session", () => {
-    const rules = robots().rules;
-    const disallow = Array.isArray(rules) ? [] : [rules.disallow].flat();
+  it("blocks the routes that require a session for every crawler", () => {
+    const rules = [robots().rules].flat();
 
-    expect(disallow).toEqual(
-      expect.arrayContaining(["/panel/", "/admin/", "/compras/", "/mensajes/", "/carrito/", "/auth/", "/api/"]),
+    expect(rules.length).toBeGreaterThan(1);
+    for (const rule of rules) {
+      expect([rule.disallow].flat()).toEqual(
+        expect.arrayContaining(["/panel/", "/admin/", "/compras/", "/mensajes/", "/carrito/", "/auth/", "/api/"]),
+      );
+    }
+  });
+
+  it("welcomes search engines and the crawlers behind AI answers", () => {
+    const rules = [robots().rules].flat();
+    const named = rules.flatMap((rule) => [rule.userAgent].flat());
+
+    expect(named).toEqual(
+      expect.arrayContaining([
+        "*",
+        "OAI-SearchBot",
+        "ChatGPT-User",
+        "PerplexityBot",
+        "Claude-SearchBot",
+        "Claude-User",
+        "Googlebot",
+        "Bingbot",
+      ]),
     );
+    for (const rule of rules) expect(rule.allow).toBe("/");
   });
 });

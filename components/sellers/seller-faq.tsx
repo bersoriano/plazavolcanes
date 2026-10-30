@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Minus, Plus } from "lucide-react";
 
 import { Accent, Eyebrow } from "@/components/home/landing/primitives";
+import { JsonLd } from "@/components/seo/json-ld";
 import {
   BASE_LISTING_LIMIT,
   FOUNDER_COMMISSION_LOCK_MONTHS,
@@ -75,7 +76,9 @@ function questionsFor(promoActive: boolean) {
  * #preguntas: a native exclusive accordion (<details name>), so the browser
  * announces each item's state and handles the keyboard. The first item opens
  * by default. It answers the objections sellers actually raise. `promoActive`
- * false drops the founders questions (what it includes, month 13).
+ * false drops the founders questions (what it includes, month 13). The same
+ * questions go out as FAQPage structured data, so what search engines and AI
+ * answers quote is what the page shows.
  */
 export function SellerFaq({ promoActive = true }: { promoActive?: boolean }) {
   const questions = questionsFor(promoActive);
@@ -86,6 +89,17 @@ export function SellerFaq({ promoActive = true }: { promoActive?: boolean }) {
       className="scroll-mt-20 border-t border-line bg-surface px-5 py-14 sm:px-8 lg:scroll-mt-24 lg:py-[88px] xl:px-20"
       id="preguntas"
     >
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: questions.map((entry) => ({
+            "@type": "Question",
+            name: entry.question,
+            acceptedAnswer: { "@type": "Answer", text: entry.answer },
+          })),
+        }}
+      />
       <div className="mx-auto flex max-w-[1280px] flex-col gap-6 lg:flex-row lg:items-start lg:gap-20">
         <div className="flex flex-col gap-3.5 lg:sticky lg:top-28 lg:w-[420px] lg:shrink-0 lg:gap-[18px]">
           <Eyebrow>Preguntas de quien vende</Eyebrow>
