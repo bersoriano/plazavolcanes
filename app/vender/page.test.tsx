@@ -45,4 +45,15 @@ describe("Seller page", () => {
       "/ingresar?intent=vender",
     );
   });
+
+  it("describes the plaza, the seller offer and its questions as structured data", async () => {
+    render(await SellerPage());
+
+    const types = [...document.querySelectorAll('script[type="application/ld+json"]')]
+      .map((script) => JSON.parse(script.textContent ?? ""))
+      .flatMap((data) => data["@graph"] ?? [data])
+      .map((node) => node["@type"]);
+
+    expect(types).toEqual(["Organization", "Service", "FAQPage"]);
+  });
 });

@@ -45,4 +45,18 @@ describe("SellerFaq", () => {
     expect(questions()).not.toContain("¿Qué pasa en el mes 13?");
     expect(document.body).not.toHaveTextContent("fundadoras");
   });
+
+  it("publishes the questions it shows as FAQPage structured data", () => {
+    render(<SellerFaq promoActive={false} />);
+
+    const script = document.querySelector('script[type="application/ld+json"]');
+    const data = JSON.parse(script?.textContent ?? "");
+    const answers = [...document.querySelectorAll("details p")].map((answer) => answer.textContent);
+
+    expect(data["@type"]).toBe("FAQPage");
+    expect(data.mainEntity.map((entry: { name: string }) => entry.name)).toEqual(questions());
+    expect(
+      data.mainEntity.map((entry: { acceptedAnswer: { text: string } }) => entry.acceptedAnswer.text),
+    ).toEqual(answers);
+  });
 });

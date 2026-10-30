@@ -11,6 +11,7 @@ import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { getFoundersProgram } from "@/lib/queries/founders.server";
 import { getListedCategoryIds, hasPublishedProducts } from "@/lib/queries/sitemap.server";
 import { buildHomeMetadata, SITE_NAME } from "@/lib/seo/home-metadata";
+import { organizationId, organizationSchema, sellerServiceSchema } from "@/lib/seo/organization";
 import { buildSiteUrl } from "@/lib/site-url";
 
 type HomeSearchParams = Promise<{
@@ -40,14 +41,25 @@ export async function generateMetadata({
   return buildHomeMetadata({ filters, selection, listed });
 }
 
-/** Names the site and who runs it, for search results and their site name. */
-function HomeStructuredData() {
+/**
+ * Names the site, who runs it and what a seller gets, for search results and
+ * AI answers. The founders offer only while its seats are open.
+ */
+function HomeStructuredData({ foundersOpen }: { foundersOpen: boolean }) {
   const url = buildSiteUrl("/");
   const data = {
     "@context": "https://schema.org",
     "@graph": [
-      { "@type": "WebSite", name: SITE_NAME, alternateName: "Plaza Volcanes México", url, inLanguage: "es-MX" },
-      { "@type": "Organization", name: SITE_NAME, url },
+      {
+        "@type": "WebSite",
+        name: SITE_NAME,
+        alternateName: "Plaza Volcanes México",
+        url,
+        inLanguage: "es-MX",
+        publisher: { "@id": organizationId() },
+      },
+      organizationSchema(),
+      sellerServiceSchema({ foundersOpen }),
     ],
   };
 
@@ -93,7 +105,7 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
   if (landing && founders) {
     return (
       <>
-        <HomeStructuredData />
+        <HomeStructuredData foundersOpen={founders.open} />
         <HomeLanding
           // Only categories with something behind them: an empty chip is a dead end.
           catalog={listed ? { ...catalog, categories: listedCategoryTree(catalog.categories, listed) } : catalog}
@@ -107,7 +119,7 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
 
   return (
     <>
-      {bareHome ? <HomeStructuredData /> : null}
+      {bareHome ? <HomeStructuredData foundersOpen={false} /> : null}
       <CatalogScreen catalog={catalog} filters={filters} stateCounts={stateCounts} />
     </>
   );

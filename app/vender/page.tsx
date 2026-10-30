@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 
+import { JsonLd } from "@/components/seo/json-ld";
 import { SellerProgram } from "@/components/sellers/seller-program";
 import { getCurrentUserAdminStatus } from "@/lib/admin-auth.server";
 import { getFoundersProgram, viewerIsFounder } from "@/lib/queries/founders.server";
 import { viewerOwnsAnyShop } from "@/lib/queries/seller-standing.server";
+import { organizationSchema, sellerServiceSchema } from "@/lib/seo/organization";
 import { sellerViewer } from "@/lib/seller-cta";
 
 import "./vender.css";
@@ -25,5 +27,15 @@ export default async function SellerPage() {
     viewerIsFounder(),
   ]);
 
-  return <SellerProgram founders={founders} isFounder={isFounder} viewer={sellerViewer(signedIn, ownsShop)} />;
+  return (
+    <>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [organizationSchema(), sellerServiceSchema({ foundersOpen: founders.open })],
+        }}
+      />
+      <SellerProgram founders={founders} isFounder={isFounder} viewer={sellerViewer(signedIn, ownsShop)} />
+    </>
+  );
 }

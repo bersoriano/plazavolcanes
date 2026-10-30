@@ -19,4 +19,13 @@ describe("/como-comprar", () => {
   it("is its own canonical page", () => {
     expect(metadata.alternates).toEqual({ canonical: "/como-comprar" });
   });
+
+  it("names who runs the plaza in its structured data", () => {
+    render(<HowToBuyPage />);
+
+    const script = document.querySelector('script[type="application/ld+json"]');
+    const graph = JSON.parse(script?.textContent ?? "")["@graph"];
+
+    expect(graph.map((node: { "@type": string }) => node["@type"])).toEqual(["Organization", "Service"]);
+  });
 });

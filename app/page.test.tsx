@@ -600,6 +600,7 @@ describe("Home search metadata", () => {
             inLanguage: "es-MX",
           }),
           expect.objectContaining({ "@type": "Organization", name: "Plaza Volcanes", url: "https://plazavolcanes.com/" }),
+          expect.objectContaining({ "@type": "Service", areaServed: "MX" }),
         ],
       },
     ]);
