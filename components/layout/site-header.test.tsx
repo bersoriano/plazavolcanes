@@ -164,6 +164,7 @@ describe("SiteHeader", () => {
       expect(within(navigation).getAllByRole("link").map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
         ["Explorar", "/explorar"],
         ["Cómo comprar", "/como-comprar"],
+        ["Blog", "/blog"],
         ["Vender", "/vender?desde=header"],
       ]);
       cleanup();
@@ -230,6 +231,7 @@ describe("SiteHeader", () => {
     expect(within(sheet).getAllByRole("link", { hidden: true }).map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
       ["Explorar", "/explorar"],
       ["Cómo comprar", "/como-comprar"],
+      ["Blog", "/blog"],
       ["Vender", "/vender?desde=header"],
       ["Ingresar", "/ingresar"],
       ["Crear mi tienda", "/registro?vender=1&desde=header"],
