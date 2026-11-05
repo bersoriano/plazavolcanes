@@ -1,0 +1,193 @@
+/*
+ * The look of a post's Markdown, which carries no classes of its own. A module
+ * loads only on /blog, so none of this counts against the global stylesheet's
+ * ~100 KiB limit (see the note at the top of app/globals.css).
+ */
+.prose {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--text-body);
+  overflow-wrap: break-word;
+}
+.prose > * + * {
+  margin-top: 1.1em;
+}
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-family: var(--font-bricolage);
+  font-weight: 600;
+  color: var(--text);
+  text-wrap: balance;
+  scroll-margin-top: 6rem;
+}
+.prose h2 {
+  margin-top: 1.9em;
+  font-size: 1.75rem;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.prose h3 {
+  margin-top: 1.6em;
+  font-size: 1.375rem;
+  line-height: 1.25;
+}
+.prose h4 {
+  margin-top: 1.4em;
+  font-size: 1.1875rem;
+  line-height: 1.3;
+}
+.prose :is(h2, h3, h4) + * {
+  margin-top: 0.6em;
+}
+/* The accent is a lime for fills: as text on this background it cannot be read. */
+.prose a {
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.prose a:hover {
+  color: var(--brand-hover);
+}
+.prose strong {
+  font-weight: 600;
+  color: var(--text);
+}
+/* Tailwind's preflight strips list markers; posts need them back. */
+.prose ul {
+  list-style: disc;
+  padding-left: 1.3em;
+}
+.prose ol {
+  list-style: decimal;
+  padding-left: 1.3em;
+}
+.prose li + li {
+  margin-top: 0.4em;
+}
+.prose li::marker {
+  color: var(--text-muted);
+}
+.prose blockquote {
+  padding-left: 1.25rem;
+  border-left: 4px solid var(--brand);
+  font-family: var(--font-bricolage);
+  font-size: 1.375rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin-block: 2em;
+}
+.prose code {
+  font-size: 0.88em;
+  padding: 0.1em 0.35em;
+  border-radius: 0.375rem;
+  background: var(--photo-backdrop);
+}
+.prose pre {
+  padding: 1.125rem 1.25rem;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+.prose pre code {
+  padding: 0;
+  background: none;
+  font-size: inherit;
+}
+.prose img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 1rem;
+}
+.prose figure {
+  display: grid;
+  gap: 0.625rem;
+}
+.prose figcaption {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+/* GFM footnotes: superscript markers and the closing list of sources. */
+.prose sup {
+  font-size: 0.7em;
+  line-height: 0;
+}
+.prose [data-footnote-ref] {
+  text-decoration: none;
+}
+.prose :global(.footnotes) {
+  margin-top: 3em;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.9375rem;
+  line-height: 1.6;
+}
+.prose :global(.footnotes) h2 {
+  margin-top: 0;
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.prose :global(.footnotes) ol {
+  margin-top: 0.75rem;
+}
+
+/* A wide table scrolls by itself instead of widening the page on a phone. */
+.tableWrap {
+  overflow-x: auto;
+}
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+.prose :is(th, td) {
+  padding: 0.625rem 0.875rem 0.625rem 0;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+.prose th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* The boxed summary a post can open with. */
+.takeaway {
+  display: grid;
+  gap: 0.625rem;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--brand);
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--text);
+}
+.takeaway > * {
+  margin: 0;
+}
+.takeawayLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
