@@ -1,0 +1,38 @@
+---
+title: "Publicación de ejemplo: cómo escribir para este blog"
+description: "Una referencia de formato para nuevas publicaciones. Los borradores como este solo se ven en desarrollo."
+date: 2026-11-05
+draft: true
+---
+
+Esta publicación es una plantilla y se queda como borrador. Copia este archivo, cámbiale el nombre por tu slug y pon `draft: false` cuando la publicación esté lista. La página ya muestra el título y la descripción del frontmatter, así que empieza el cuerpo con un párrafo, no con un encabezado `#`.
+
+<Takeaway>
+Usa este recuadro para resumir en una o dos frases lo que el lector se lleva. Es opcional.
+</Takeaway>
+
+## Los encabezados de sección llevan dos almohadillas
+
+Los párrafos son texto simple. Usa **negritas** para la frase que importa e *itálicas* con moderación. Los enlaces a páginas de la plaza van con su ruta, como [cómo comprar](/como-comprar) o [abrir tu tienda](/vender). Los enlaces externos llevan la dirección completa, como [Next.js](https://nextjs.org).
+
+### Listas
+
+- Háblale de tú al lector.
+- Di lo que puede hacer hoy con su tienda.
+- Sé honesto con los números: marca las cifras ilustrativas como ejemplos.
+
+1. Los pasos numerados también funcionan.
+2. Mantenlos cortos.
+
+> Una cita destacada usa la tipografía de los títulos.
+
+| Paso | Quién lo hace | Resultado |
+| --- | --- | --- |
+| Solicitud | Cliente | Pedido enviado a la tienda |
+| Acuerdo | Tienda y cliente | Pago y entrega por escrito |
+
+Las imágenes van en `public/blog/<slug>/` y se referencian como `/blog/<slug>/imagen.jpg`. Las pruebas rechazan imágenes remotas. Si citas un dato, agrega su fuente con una nota al pie[^1].
+
+No escribas `<` ni `{` sueltos en el texto: MDX los lee como código. Ponlos entre comillas invertidas.
+
+[^1]: Las notas al pie cierran la publicación como una lista visible de fuentes.
