@@ -11,7 +11,15 @@ afterEach(() => {
   promo.active = true;
 });
 
-function renderLanding() {
+const article = {
+  slug: "cuanto-te-queda",
+  title: "Vendiste en $1,000. ¿Cuánto te quedó?",
+  description: "La cuenta de una venta, paso a paso.",
+  date: "2026-11-05",
+  draft: false,
+};
+
+function renderLanding(latestPost: typeof article | null = null) {
   render(
     <HomeLanding
       catalog={{
@@ -25,6 +33,7 @@ function renderLanding() {
       }}
       filters={normalizeCatalogFilters({})}
       founders={{ open: promo.active, taken: null, cap: 100 }}
+      latestPost={latestPost}
       stateCounts={[]}
     />,
   );
@@ -49,5 +58,19 @@ describe("HomeLanding and the founders promotion", () => {
     // The rest of the landing stays.
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Vende lo tuyo. Quédate con todo.");
     expect(screen.getByRole("region", { name: "Encuentra productos únicos cerca de ti." })).toBeInTheDocument();
+  });
+});
+
+describe("HomeLanding and the blog", () => {
+  it("briefs the newest post", () => {
+    renderLanding(article);
+
+    expect(screen.getByRole("region", { name: article.title })).toBeInTheDocument();
+  });
+
+  it("leaves the section out while nothing is published", () => {
+    renderLanding(null);
+
+    expect(screen.queryByRole("link", { name: "Leer el artículo" })).not.toBeInTheDocument();
   });
 });

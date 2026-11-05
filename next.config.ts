@@ -54,6 +54,7 @@ const posts = ["./content/posts/**/*.mdx"];
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
   outputFileTracingIncludes: {
+    "/": posts,
     "/blog": posts,
     "/blog/**": posts,
     "/sitemap.xml": posts,

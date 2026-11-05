@@ -2,10 +2,12 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import Home, { generateMetadata } from "@/app/page";
+import { getPosts } from "@/lib/posts.server";
 import { getHomeCatalog } from "@/lib/queries/catalog.server";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { getListedCategoryIds, hasPublishedProducts } from "@/lib/queries/sitemap.server";
 
+vi.mock("@/lib/posts.server", () => ({ getPosts: vi.fn(async () => []) }));
 vi.mock("@/lib/queries/catalog.server", () => ({
   getHomeCatalog: vi.fn(),
   getCatalogStateCounts: vi.fn(async () => []),
@@ -314,6 +316,24 @@ describe("Home landing", () => {
       "/registro?vender=1",
     );
     expect(within(hero).getByRole("link", { name: "Explorar productos" })).toHaveAttribute("href", "#explorar");
+  });
+
+  it("briefs the newest post from the blog", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products: [sampleProduct()] }));
+    const post = { title: "", description: "", date: "2026-11-05", draft: false, body: "" };
+    vi.mocked(getPosts).mockResolvedValueOnce([
+      { ...post, slug: "la-mas-nueva", title: "La más nueva" },
+      { ...post, slug: "la-anterior", title: "La anterior" },
+    ]);
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const section = screen.getByRole("region", { name: "La más nueva" });
+    expect(within(section).getByRole("link", { name: "Leer el artículo" })).toHaveAttribute(
+      "href",
+      "/blog/la-mas-nueva",
+    );
+    expect(screen.queryByRole("region", { name: "La anterior" })).not.toBeInTheDocument();
   });
 
   it("names the founders offer without a tally while nothing counts the spots", async () => {

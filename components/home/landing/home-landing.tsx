@@ -2,10 +2,12 @@ import { BuyerPanel } from "@/components/home/landing/buyer-panel";
 import { BenefitsBento } from "@/components/home/landing/benefits-bento";
 import { CrossingTapes } from "@/components/home/landing/crossing-tapes";
 import { FinalCta } from "@/components/home/landing/final-cta";
+import { LandingArticle } from "@/components/home/landing/landing-article";
 import { LandingStores } from "@/components/home/landing/landing-stores";
 import { SellerHero } from "@/components/home/landing/seller-hero";
 import { SellerStepsShowcase } from "@/components/home/landing/seller-steps-showcase";
 import type { FoundersProgram } from "@/lib/launch";
+import type { PostMeta } from "@/lib/posts";
 import type { CatalogFilters } from "@/lib/queries/catalog";
 import type { getCatalogStateCounts, getHomeCatalog } from "@/lib/queries/catalog.server";
 
@@ -15,6 +17,8 @@ type HomeLandingProps = {
   filters: CatalogFilters;
   /** The founders promotion: whether it is open and how many spots are taken. */
   founders: FoundersProgram;
+  /** The newest published post, briefed on the page; none while the blog is empty. */
+  latestPost: PostMeta | null;
 };
 
 /**
@@ -24,7 +28,7 @@ type HomeLandingProps = {
  * All of it reads the one home catalogue query, which is newest first: its
  * first product is the newest listing.
  */
-export function HomeLanding({ catalog, stateCounts, filters, founders }: HomeLandingProps) {
+export function HomeLanding({ catalog, stateCounts, filters, founders, latestPost }: HomeLandingProps) {
   const { products, categories, shops } = catalog;
   // Read per request: the landing is rendered on demand, so the offer leaves
   // the page the moment the promotion closes or fills.
@@ -36,6 +40,7 @@ export function HomeLanding({ catalog, stateCounts, filters, founders }: HomeLan
       <CrossingTapes categories={categories.map((category) => category.name)} />
       <BenefitsBento promoActive={promoActive} />
       <SellerStepsShowcase />
+      {latestPost ? <LandingArticle post={latestPost} /> : null}
       <LandingStores shops={shops} />
       <BuyerPanel
         categories={categories}
