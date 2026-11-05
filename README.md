@@ -107,6 +107,15 @@ npx supabase start
 npx supabase test db
 ```
 
+## Blog
+
+Las publicaciones son archivos MDX en `content/posts/<slug>.mdx`; no pasan por la base de datos. Publicar es hacer commit y desplegar.
+
+- Copia `content/posts/example-post.mdx`, que muestra el formato y se queda como borrador. Con Claude Code, `/new-post <tema>` redacta un borrador.
+- Frontmatter: `title`, `description`, `date` (AAAA-MM-DD) y `draft`; opcionales `seoTitle` y `updated`. Los borradores solo se ven con `npm run dev`. Pon `draft: false` para publicar.
+- El blog queda fuera del índice y del sitemap hasta tener una publicación.
+- Las imágenes van en `public/blog/<slug>/`. `npm test` compila cada publicación y rechaza imágenes remotas.
+
 ## Reglas de datos
 
 - Tiendas son públicas; solo propietario puede crearlas, editarlas o eliminarlas.

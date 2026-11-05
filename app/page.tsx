@@ -5,6 +5,7 @@ import { CatalogScreen } from "@/components/catalog/catalog-screen";
 import { HomeLanding } from "@/components/home/landing/home-landing";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildCatalogHref, listedCategoryTree, listingCategoryIds, resolveCategorySelection } from "@/lib/categories";
+import { getPosts } from "@/lib/posts.server";
 import { normalizeCatalogFilters } from "@/lib/queries/catalog";
 import { getCatalogStateCounts, getHomeCatalog } from "@/lib/queries/catalog.server";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
@@ -93,11 +94,12 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
   }
 
   const landing = bareHome && !filters.invalidAreaSelection;
-  const [catalog, stateCounts, founders, listed] = await Promise.all([
+  const [catalog, stateCounts, founders, listed, posts] = await Promise.all([
     getHomeCatalog(filters),
     getCatalogStateCounts(filters.countryCode),
     landing ? getFoundersProgram() : null,
     landing ? getListedCategoryIds() : null,
+    landing ? getPosts() : null,
   ]);
 
   // The bare home is the seller-first landing; anything filtered, or an
@@ -111,6 +113,7 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
           catalog={listed ? { ...catalog, categories: listedCategoryTree(catalog.categories, listed) } : catalog}
           filters={filters}
           founders={founders}
+          latestPost={posts?.[0] ?? null}
           stateCounts={stateCounts}
         />
       </>

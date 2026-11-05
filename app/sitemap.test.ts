@@ -2,11 +2,13 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import sitemap from "@/app/sitemap";
 import { LEGAL_ROUTES } from "@/lib/legal/document-types";
+import { getPosts } from "@/lib/posts.server";
 import { getSitemapCatalog } from "@/lib/queries/sitemap.server";
 import { MEXICO_ADMINISTRATIVE_AREAS } from "@/lib/shop-location";
 import { buildSiteUrl } from "@/lib/site-url";
 
 vi.mock("@/lib/queries/sitemap.server", () => ({ getSitemapCatalog: vi.fn() }));
+vi.mock("@/lib/posts.server", () => ({ getPosts: vi.fn(async () => []) }));
 
 afterEach(() => {
   vi.clearAllMocks();
@@ -14,6 +16,47 @@ afterEach(() => {
 });
 
 describe("sitemap", () => {
+  describe("the blog", () => {
+    const emptyCatalog = { shops: [], products: [], categoryPaths: [] };
+    const post = { title: "Guía", description: "Corta.", body: "", draft: false };
+
+    it("lists published posts with their own dates, and dates the blog by the latest", async () => {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://plazavolcanes.com");
+      vi.mocked(getSitemapCatalog).mockResolvedValue(emptyCatalog);
+      vi.mocked(getPosts).mockResolvedValueOnce([
+        { ...post, slug: "nueva", date: "2026-10-01" },
+        { ...post, slug: "editada", date: "2026-08-01", updated: "2026-10-15" },
+      ]);
+
+      const entries = await sitemap();
+      const lastModified = (path: string) =>
+        entries.find((entry) => entry.url === `https://plazavolcanes.com${path}`)?.lastModified;
+
+      expect(lastModified("/blog/nueva")).toEqual(new Date("2026-10-01"));
+      expect(lastModified("/blog/editada")).toEqual(new Date("2026-10-15"));
+      expect(lastModified("/blog")).toEqual(new Date("2026-10-15"));
+    });
+
+    it("leaves out drafts, which development lists", async () => {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://plazavolcanes.com");
+      vi.mocked(getSitemapCatalog).mockResolvedValue(emptyCatalog);
+      vi.mocked(getPosts).mockResolvedValueOnce([{ ...post, slug: "borrador", date: "2026-10-01", draft: true }]);
+
+      const urls = (await sitemap()).map((entry) => entry.url);
+
+      expect(urls).not.toContain("https://plazavolcanes.com/blog/borrador");
+    });
+
+    it("leaves out the blog itself while it is empty and marked noindex", async () => {
+      vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://plazavolcanes.com");
+      vi.mocked(getSitemapCatalog).mockResolvedValue(emptyCatalog);
+
+      const urls = (await sitemap()).map((entry) => entry.url);
+
+      expect(urls).not.toContain("https://plazavolcanes.com/blog");
+    });
+  });
+
   it("lists public pages on the configured domain", async () => {
     vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://plazavolcanes.com");
     vi.mocked(getSitemapCatalog).mockResolvedValue({

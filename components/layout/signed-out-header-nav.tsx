@@ -11,6 +11,7 @@ import { NavLink } from "@/components/layout/nav-link";
 const DESTINATIONS: HeaderMenuLink[] = [
   { href: "/explorar", label: "Explorar" },
   { href: "/como-comprar", label: "Cómo comprar" },
+  { href: "/blog", label: "Blog" },
   { href: "/vender?desde=header", label: "Vender" },
 ];
 

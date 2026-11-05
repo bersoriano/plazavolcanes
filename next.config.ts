@@ -48,8 +48,17 @@ const localMedia = remotePatterns.some((pattern) =>
   ["127.0.0.1", "localhost", "[::1]"].includes(pattern.hostname),
 );
 
+// Blog posts are read from disk at request time; ship them with these routes.
+const posts = ["./content/posts/**/*.mdx"];
+
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
+  outputFileTracingIncludes: {
+    "/": posts,
+    "/blog": posts,
+    "/blog/**": posts,
+    "/sitemap.xml": posts,
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: "12mb",

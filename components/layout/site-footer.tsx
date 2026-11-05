@@ -36,6 +36,7 @@ export function SiteFooter() {
               <p className={`${LABEL} flex min-h-11 items-center`}>Plaza</p>
               <Link className={LINK} href="/explorar">Explorar</Link>
               <Link className={LINK} href="/como-comprar">Cómo comprar</Link>
+              <Link className={LINK} href="/blog">Blog</Link>
               <Link className={LINK} href="/vender?desde=footer">Vender</Link>
               <Link className={LINK} href="/ingresar">Ingresar</Link>
             </nav>
