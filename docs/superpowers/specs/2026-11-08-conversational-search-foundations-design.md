@@ -50,8 +50,12 @@ optional so existing callers and links continue to work.
 Represent price bounds with explicit inclusive/exclusive semantics: “under 100”
 means strictly below 100; “up to 100” includes 100. Validate finite nonnegative
 amounts, at most two decimal places, bounded input sizes and consistent ranges.
-Reject unsupported fields, invalid enums, contradictory bounds and unsupported
-currency; do not silently discard a constraint and widen results.
+Compare against the stored decimal MXN price and explicitly match currency.
+A used-condition grade implies used condition. Pairing a grade with new condition
+is invalid. In-stock means `units_available > 0`; ordinary browsing includes
+sold-out listings. Strictly validate criteria from every client, including direct
+RPC callers. Reject conflicting duplicate filter parameters. Unrelated route
+parameters such as campaign tags or product-page notices are outside the criteria.
 
 Keep original user text separate from executable lexical text. Validation of
 interpreted/model criteria must be strict, unlike forgiving legacy URL handling.
@@ -60,7 +64,8 @@ unfiltered product results. Existing category/location reset behavior stays inta
 
 Allow enough input for a shopping request (proposed limit: 500 characters). Bound
 both application and database input; never silently truncate a supported request
-so its final constraints disappear. Telemetry must not obstruct longer searches.
+so its final constraints disappear. Reject an over-limit request with a correction
+message before retrieval. Search and telemetry have separate limits below.
 
 ### 2. Conservative deterministic interpretation
 
@@ -81,25 +86,32 @@ Unsupported or ambiguous budget syntax produces an explanatory invalid-search
 state and no product results until corrected. This is the proposed default for
 this release; it must not claim that a budget was applied. Mere numbers in an
 ordinary product name are not budget syntax and remain lexical search terms.
+Recognize bounds only in a price context. Preserve “Under Armour” and “New Balance
+574” as lexical names. Respect quoted phrases, negation and alternatives before
+extracting attributes: “not waterproof” must never set waterproof to yes, and
+“black or blue” must never silently select one color. If an explicit constraint
+cannot be represented, show the correction state. Ordinary unmatched words stay
+searchable.
 
 MXN is the visible catalog default for bare `$` in the current Mexico market,
 regardless of Spanish/English wording. Explicit USD requests are unsupported in
 this release and produce an explanatory state rather than an invented conversion.
 Current product write paths and `price_mxn` remain MXN-only.
 
-For conflicts between recognized text and explicit URL/form filters, ask for
-correction through an invalid-search state rather than silently choosing one.
-Without a conflict, combine all supported constraints. Preserve original text in
-the search field for the initial submitted request. Canonical navigation/share
-URLs carry executable lexical text as `q` and validated constraints as explicit
-parameters. On reload they may display that lexical text with applied constraints;
-the original sentence is not a second executable source of filters.
+A fresh search submission uses `q` for buyer text and carries the currently
+selected category and location. Interpret it once. When explicit filters and the
+sentence specify compatible constraints, intersect them. An empty intersection
+needs correction. Preserve the original text for the initial response.
 
-After interpretation, validated criteria are authoritative. Refinements operate
-on those criteria and do not reparse an earlier sentence. Thus changing a budget
-from 100 to 80 is valid even if an original message said “under $100”. A future
-chat transcript may retain that message as history, separate from current criteria.
-These serialization and conflict decisions are proposed implementation defaults.
+For share/navigation URLs, use a separate parameter (proposed `texto`) for
+literal lexical text, plus explicit validated filter parameters. Parse this form
+directly into criteria. Reject a URL supplying both text representations. Links
+with legacy `q` still work. This distinction prevents quoted names or residual
+keywords from becoming new filters on reload. A filter-only URL is valid.
+
+A subsequent refinement operates on those criteria. Changing an upper bound from
+100 to 80 replaces the bound, preserves other criteria, and serializes the new
+state. Historical messages have no authority over the current budget.
 
 ### 3. Trustworthy structured product details
 
@@ -119,7 +131,11 @@ Waterproofing has three states: explicitly yes, explicitly no, and unknown.
 Only explicit yes satisfies a waterproof filter. Description text, product images
 and AI guesses never turn unknown into yes. Seller claims remain seller claims,
 not certifications. Other attributes likewise filter only on declared values.
-No arbitrary seller-defined attribute keys or per-category schema editor.
+At rollout, some relevant older listings will lack these fields. On an empty
+waterproof search, offer to remove that one filter and keep the product term,
+budget and location. Clearly label the broader search. A buyer can then inspect
+seller descriptions. Each listing describes one item or configuration: avoid
+combining independently listed sizes and colors into an unverified variant.
 
 For the example request, “waterproof” becomes an explicit attribute requirement;
 “jacket” remains lexical intent. Include a small documented synonym mapping for
@@ -137,14 +153,24 @@ and market rules stay authoritative for anonymous visitors and signed-in owners.
 Preserve exact/name-prefix preference and use full-text relevance for remaining
 terms and controlled synonym groups. Synonyms within one concept are alternatives;
 multiple concepts remain conjunctive. Never loosen price, attributes or market
-because there are no results. An unknown waterproofing claim cannot pass by a
-high lexical score.
+because there are no results. Expand a jacket synonym only in lexical retrieval,
+after parsing, so expanded words never change a price or attribute constraint.
+Keep literal name matches ahead of description-only synonym matches, with stable
+ordering for ties. Use approved translations in public search.
 
 Database failures may degrade ranking/lexical coverage, but fallback must enforce
 all hard filters. If a filter cannot be enforced safely, report search unavailable
 instead of returning broader matches. Existing unfiltered browsing remains intact.
 No arbitrary model-authored SQL, raw filter operators or privileged AI database
 client is introduced.
+
+Account for two reads beyond the ranked RPC in `lib/queries/catalog.server.ts`.
+The product-card read fetches current records by ID. Recheck mutable hard filters
+there, or return matching card fields in the same database snapshot. A jacket
+repriced above budget between reads must not be displayed. The category founder
+promotion can prepend products from a separate query. Reserve that promotion for
+ordinary category browsing, or apply every active constraint to its candidates
+before their limit. Count results and record click positions from the final grid.
 
 Continue returning real product IDs and loading current catalog records. The
 builder must choose necessary indexes from actual filter/query shape, not add
@@ -157,7 +183,10 @@ Keep existing search box and result grid as current buyer experience. Show which
 recognized constraints were applied, including currency, and explain invalid or
 unsupported interpretation. Retain constraints across category/location links,
 refresh, sharing and return from product pages. Existing filter reset remains
-available. Avoid presenting a rule-based parser as an AI assistant.
+available. A fresh submission replaces the previous sentence-derived criteria.
+Changing a category or state preserves other active criteria. Removing one
+criterion or changing a bound must also update the form so submitting again
+cannot restore a removed value.
 
 Use a small pure criteria-refinement operation: a refinement sets selected fields,
 explicitly clears selected fields, or starts a fresh search; omitted fields retain
@@ -172,14 +201,25 @@ does not ship a chat toggle, fake assistant responses or conversation persistenc
 
 ### 6. Telemetry and rollout
 
-Extend existing best-effort search telemetry with bounded applied criteria and
-interpretation status where useful, without recording chat transcripts, identities
-or new raw input fields. Product selection tracking continues to work. Keep any
-existing telemetry rate limits; telemetry errors never hide valid results.
+Today both `record_catalog_search` and the `search_events.normalized_query`
+column require 1–200 characters. Proposed 500-character searches and filter-only
+requests must work independently of event creation. For the existing RPC, send
+only eligible normalized lexical text or the existing category slug and skip
+the event when neither fits. Do not substitute the original shopping sentence.
+A missing event ID disables click recording for that search. If adding structured
+event fields, allowlist bounded filter values and share the existing quota
+across callers. Do not send transcript text to analytics.
 
-Update filter URL building, route selection, redirects and search metadata so a
-filter-only search stays a catalog view and receives appropriate noindex behavior.
-Traditional search remains functional when no AI provider is configured.
+Route filter-only searches to the catalog on `/` or `/estado/[slug]`.
+`/explorar` currently reads only locale and market. Keep it as the destination
+for an unfiltered catalog. Update the bare-home check, state redirects, and
+metadata on both home and state routes. Filtered variants receive noindex while
+existing indexable category and state pages retain their metadata.
+
+Product cards currently copy only the query-string portion of the catalog URL.
+Pass the validated state slug alongside criteria on product links, then rebuild
+the catalog URL from those values on the product page. Use the same serialization
+for category navigation and form state.
 
 Ship additive schema changes with database validation and rollback guidance.
 Do not apply migrations to a hosted project or deploy as part of this task.
@@ -217,7 +257,19 @@ Do not apply migrations to a hosted project or deploy as part of this task.
 9. Refinement tests prove set/clear/reset semantics, retained constraints and
    whole-state revalidation, including changing an earlier budget from 100 to 80
    without reparsing the original sentence. No AI dependency is needed.
-10. Run focused Vitest tests and database tests, then typecheck, lint and build.
+10. For a category plus budget with no lexical terms, an over-budget founder
+    product stays out of the grid. When a ranked listing changes price before
+    cards load, the displayed price still satisfies the requested bound.
+11. Round-trip a state + budget search through a product card and its catalog
+    return link. Assert the same state, criteria, and filtered route metadata.
+12. Check relevance with a small fixed bilingual catalog. Compare ordered IDs
+    for a literal jacket title, an approved translation, a description-only
+    synonym, and an unrelated item. Run “New Balance 574”, “Under Armour”, a
+    quoted phrase and a negated attribute to catch unintended filter extraction.
+13. Exercise a valid 201–500 character request and a price-only request without
+    a category. Search still works when telemetry is skipped. A 501-character
+    request ending in a budget produces the correction state.
+14. Run focused Vitest tests and database tests, then typecheck, lint and build.
     Run browser coverage for affected buyer/seller flows when environment permits.
     Report any unavailable database/browser verification explicitly.
 
