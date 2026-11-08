@@ -1,6 +1,6 @@
 # Search foundations for future conversational AI
 
-Status: proposed; implementation awaits user review.
+Approved for implementation on 2026-11-08.
 
 ## Intent and confirmed requirements
 
@@ -273,9 +273,22 @@ Do not apply migrations to a hosted project or deploy as part of this task.
     Run browser coverage for affected buyer/seller flows when environment permits.
     Report any unavailable database/browser verification explicitly.
 
-## Review boundary
+## Using the criteria from a future chat
 
-User review should confirm this traditional-search-first scope. A later AI/chat
-feature will plug into these tested criteria and retrieval boundaries. The builder
-may settle file organization, minimal index choices and exact internal storage
-details while preserving the behavior and constraints above.
+Keep the last validated criteria for the conversation. A price change or attribute
+choice can use the same refinement operation as the removable catalog filters.
+For example, changing the budget while keeping the previous product and location:
+
+```ts
+import { buildCatalogHref } from "@/lib/categories";
+import { refineSearchCriteria } from "@/lib/search/criteria";
+
+const result = refineSearchCriteria(previousCriteria, { set: { max: 80, maxInclusive: false } });
+if (result.error) return { clarification: result.error };
+return { catalogUrl: buildCatalogHref({ criteria: result.criteria }) };
+```
+
+For a new model-supplied criteria object, call `validateSearchCriteria` before
+building the URL. The catalog route resolves category and location and loads
+current public products. The migration defining `search_catalog_ids` must be in
+place before rolling out the seller form and filtered search.
