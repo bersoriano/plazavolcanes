@@ -60,7 +60,14 @@ export function useFormDraft(key: string, restored?: () => void) {
         if (field.checked) draft[field.name] = field.value;
         continue;
       }
-      if (field.value) draft[field.name] = field.value;
+      // An editor may opt in to restoring changes to a nonempty field. Key its
+      // draft by the original value so a later server edit takes precedence.
+      const baseline = field.dataset.draftBaseline;
+      if (baseline !== undefined) {
+        if (field.value !== baseline) draft[`${field.name}:${baseline}`] = field.value;
+      } else if (field.value) {
+        draft[field.name] = field.value;
+      }
     }
 
     try {
@@ -80,14 +87,12 @@ export function useFormDraft(key: string, restored?: () => void) {
 
     let filled = false;
     for (const field of fieldsOf(form)) {
-      const value = draft[field.name];
-      if (value === undefined) continue;
-      // Never overwrite something already on screen: a saved product's own
-      // values, or whatever a failed submit handed back.
       if (field instanceof HTMLInputElement && (field.type === "radio" || field.type === "checkbox")) {
         continue;
       }
-      if (field.value) continue;
+      const baseline = field.dataset.draftBaseline;
+      const value = draft[baseline === undefined ? field.name : `${field.name}:${baseline}`];
+      if (value === undefined || field.value !== (baseline ?? "")) continue;
 
       field.value = value;
       filled = true;

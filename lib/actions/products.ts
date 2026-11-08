@@ -116,12 +116,15 @@ async function writeUnderFreeSlug<Result extends { error: WriteError }>(
   return { ...result, slug: candidate };
 }
 
-export async function createProduct(
-  shopId: number,
-  _previousState: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const parsed = productCreationSchema.safeParse({
+function productFormFields(formData: FormData) {
+  const attributes: Record<string, FormDataEntryValue | FormDataEntryValue[]> = {};
+  for (const field of ["color", "size", "material", "waterproof"]) {
+    const values = formData.getAll(field);
+    // Older forms omit these keys. An empty control explicitly clears a claim.
+    // Leave repeated values as an array so scalar validation rejects them.
+    if (values.length) attributes[field] = values.length === 1 ? values[0] : values;
+  }
+  return {
     name: formData.get("name"),
     description: formData.get("description"),
     price_mxn: formData.get("price_mxn"),
@@ -132,7 +135,16 @@ export async function createProduct(
     units_available: formData.get("units_available"),
     currency_code: formData.get("currency_code"),
     content_locale: formData.get("content_locale"),
-  });
+    ...attributes,
+  };
+}
+
+export async function createProduct(
+  shopId: number,
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = productCreationSchema.safeParse(productFormFields(formData));
   const imageKeys = galleryKeysFrom(formData);
 
   if (!parsed.success) {
@@ -154,16 +166,7 @@ export async function createProduct(
       supabase
         .from("products")
         .insert({
-          name: parsed.data.name,
-          description: parsed.data.description,
-          price_mxn: parsed.data.price_mxn,
-          condition: parsed.data.condition,
-          used_condition: parsed.data.used_condition,
-          category_id: parsed.data.category_id,
-          handling_days: parsed.data.handling_days,
-          units_available: parsed.data.units_available,
-          currency_code: parsed.data.currency_code,
-          content_locale: parsed.data.content_locale,
+          ...parsed.data,
           shop_id: shopId,
           slug,
           status: "draft",
@@ -193,19 +196,7 @@ export async function updateProduct(
   _previousState: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
-  const parsed = productSchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description"),
-    price_mxn: formData.get("price_mxn"),
-    status: formData.get("status"),
-    condition: formData.get("condition"),
-    used_condition: formData.get("used_condition"),
-    category_id: formData.get("category_id"),
-    handling_days: formData.get("handling_days"),
-    units_available: formData.get("units_available"),
-    currency_code: formData.get("currency_code"),
-    content_locale: formData.get("content_locale"),
-  });
+  const parsed = productSchema.safeParse({ ...productFormFields(formData), status: formData.get("status") });
   const imageKeys = galleryKeysFrom(formData);
   if (!parsed.success) return { status: "error", message: "Revisa los campos marcados.", errors: parsed.error.flatten().fieldErrors };
 
@@ -263,17 +254,7 @@ export async function updateProduct(
       supabase
         .from("products")
         .update({
-          name: parsed.data.name,
-          description: parsed.data.description,
-          price_mxn: parsed.data.price_mxn,
-          status: parsed.data.status,
-          condition: parsed.data.condition,
-          used_condition: parsed.data.used_condition,
-          category_id: parsed.data.category_id,
-          handling_days: parsed.data.handling_days,
-          units_available: parsed.data.units_available,
-          currency_code: parsed.data.currency_code,
-          content_locale: parsed.data.content_locale,
+          ...parsed.data,
           slug: candidate,
           updated_at: new Date().toISOString(),
         })

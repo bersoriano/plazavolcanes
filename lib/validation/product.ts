@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { DEFAULT_CATALOG_CURRENCY, DEFAULT_CATALOG_LOCALE } from "@/lib/catalog-locale";
+import { COLORS, MATERIALS, SIZES } from "@/lib/search/attributes";
 import {
   MAX_HANDLING_DAYS,
   MAX_UNITS,
@@ -29,6 +30,14 @@ const blankAsNull = (value: unknown) => (value === "" || value == null ? null : 
  * `lib/listing-readiness.ts`, which the form and the server action both read.
  */
 const productFields = {
+  color: z.preprocess(blankAsNull, z.enum(COLORS, "Selecciona un color de la lista.").nullable()).optional(),
+  size: z.preprocess(blankAsNull, z.enum(SIZES, "Selecciona una talla de la lista.").nullable()).optional(),
+  material: z.preprocess(blankAsNull, z.enum(MATERIALS, "Selecciona un material de la lista.").nullable()).optional(),
+  waterproof: z.preprocess(
+    blankAsNull,
+    z.enum(["true", "false"], "Indica si es impermeable o deja el campo sin especificar.")
+      .transform((value) => value === "true").nullable(),
+  ).optional(),
   name: z
     .string()
     .trim()

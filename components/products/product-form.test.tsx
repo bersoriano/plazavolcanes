@@ -450,7 +450,7 @@ describe("ProductForm gallery", () => {
 
     expect(screen.getByLabelText(/Imágenes del producto/)).toBeInTheDocument();
     expect(screen.getByText(/^Imágenes del producto/).closest("label")).toHaveTextContent("Imágenes del producto (necesarias para publicar)");
-    expect(screen.queryByText(/opcional/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/Imágenes del producto/)).not.toHaveAccessibleName(/opcional/i);
     expect(screen.getByText("Puedes guardar el borrador sin imágenes; para publicar necesitas al menos una, que será la portada.")).toBeInTheDocument();
   });
 
