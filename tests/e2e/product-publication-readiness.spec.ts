@@ -32,7 +32,7 @@ for (const path of ["editor", "catalog"] as const) {
     expect(status.API_URL).toBe(apiUrl);
     const admin = createClient(apiUrl, status.SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
     const email = `publication-${path}-${crypto.randomUUID()}@test.local`;
-    const productName = `Taza prueba ${path} ${crypto.randomUUID().slice(0, 8)}`;
+    const productName = `${path === "catalog" ? "Chamarra" : "Taza"} prueba ${path} ${crypto.randomUUID().slice(0, 8)}`;
     await page.goto("/registro?intent=vender");
     await page.getByLabel("Tu nombre").fill("Vendedor Prueba");
     await page.getByLabel("Correo electrónico").fill(email);
@@ -56,6 +56,10 @@ for (const path of ["editor", "catalog"] as const) {
       expect(Number.isSafeInteger(shopId) && shopId > 0).toBe(true);
       await page.getByRole("link", { name: "Agregar mi primer producto", exact: true }).click();
       await page.getByLabel("Nombre del producto").fill(productName);
+      if (path === "editor") {
+        await pickOption(page.getByLabel("Color", { exact: true }), "blue");
+      }
+      await pickOption(page.getByLabel("Impermeable", { exact: true }), "true");
       const category = localQuery("select id, parent_id from public.categories where slug = 'papeleria'")[0];
       const alternate = localQuery("select id, parent_id from public.categories where slug = 'manualidades'")[0];
       await pickOption(page.getByLabel("Categoría", { exact: true }), String(category.parent_id));
@@ -88,6 +92,10 @@ for (const path of ["editor", "catalog"] as const) {
       await page.reload();
       await expect(page.getByRole("status").filter({ hasText: "Borrador guardado" })).toHaveCount(0);
       if (path === "editor") {
+        await expect(page.getByLabel("Color", { exact: true })).toHaveValue("blue");
+        await expect(page.getByLabel("Impermeable", { exact: true })).toHaveValue("true");
+        await pickOption(page.getByLabel("Color", { exact: true }), "");
+        await pickOption(page.getByLabel("Impermeable", { exact: true }), "false");
         // A file change is not replayed if it happens before hydration after reload.
         // Wait for an interactive control rather than relying on a fixed delay.
         const categoryHelp = page.getByRole("button", { name: "No encuentro mi categoría", exact: true });
@@ -133,8 +141,10 @@ for (const path of ["editor", "catalog"] as const) {
       }
       expect(readProduct()).toEqual(draft);
       expect(slotsUsed()).toBe(0);
-      await page.getByLabel("Descripción", { exact: true }).fill("Taza hecha a mano con barro de alta temperatura.");
-      await page.getByLabel("Precio en MXN").fill("349");
+      await page.getByLabel("Descripción", { exact: true }).fill(path === "catalog"
+        ? "Chamarra ligera con cierre y dos bolsillos exteriores."
+        : "Taza hecha a mano con barro de alta temperatura.");
+      await page.getByLabel("Precio en MXN").fill(path === "catalog" ? "99.99" : "349");
       if (path === "catalog") {
         await page.getByRole("button", { name: "Guardar borrador", exact: true }).click();
         await expect(page.getByRole("status").filter({ hasText: "Borrador guardado" })).toBeVisible();
@@ -153,6 +163,9 @@ for (const path of ["editor", "catalog"] as const) {
         await expect(page.locator('input[name="image_keys"]')).toHaveCount(0);
         await expect(page.getByRole("img", { name: /^Imagen \d$/ })).toHaveCount(2);
         await expect(page.getByRole("button", { name: "Retirar de pendientes", exact: true })).toBeVisible();
+        await page.reload();
+        await expect(page.getByLabel("Color", { exact: true })).toHaveValue("");
+        await expect(page.getByLabel("Impermeable", { exact: true })).toHaveValue("false");
       }
       await page.goto(catalogUrl);
       await expect(page.getByRole("link", { name: "Pendientes de aprobación 1", exact: true })).toBeVisible();
@@ -184,6 +197,31 @@ for (const path of ["editor", "catalog"] as const) {
       expect(readProduct().expires_at).not.toBeNull();
       await publicPage.reload();
       await expect(publicPage.getByRole("heading", { name: productName, exact: true })).toBeVisible();
+      if (path === "catalog") {
+        await publicPage.goto("/");
+        await publicPage.getByRole("searchbox", { name: "Buscar productos" }).fill("waterproof jacket under $100");
+        await pickOption(publicPage.getByLabel("Estado", { exact: true }), "jalisco");
+        await publicPage.getByRole("button", { name: "Buscar", exact: true }).click();
+        await expect(publicPage).toHaveURL((url) => url.pathname === "/estado/jalisco");
+        await expect(publicPage.getByRole("searchbox", { name: "Buscar productos" })).toHaveValue("waterproof jacket under $100");
+        const productCard = publicPage.getByRole("link").filter({ has: publicPage.getByRole("heading", { name: productName, exact: true }) });
+        await productCard.click();
+        await expect(publicPage.getByRole("heading", { name: productName, exact: true })).toBeVisible();
+        await publicPage.getByRole("link", { name: "Volver a resultados", exact: true }).click();
+        await expect(publicPage).toHaveURL((url) => url.pathname === "/estado/jalisco"
+          && url.searchParams.get("texto") === "jacket"
+          && url.searchParams.get("max") === "100"
+          && url.searchParams.get("maxInclusive") === "false"
+          && url.searchParams.get("currency") === "MXN"
+          && url.searchParams.get("waterproof") === "true");
+        await expect(publicPage.locator('meta[name="robots"]')).toHaveAttribute("content", /noindex/);
+        const broader = new URL(publicPage.url());
+        broader.searchParams.delete("waterproof");
+        await publicPage.getByRole("link", { name: "Quitar filtro: Impermeable", exact: true }).click();
+        await expect(publicPage).toHaveURL(broader.href);
+        await expect(productCard).toBeVisible();
+        await publicPage.goto(publicUrl);
+      }
       await page.goto(`/panel/tiendas/${shopId}/productos/nuevo`);
       // The first product's draft must not reappear once it has been created.
       await expect(page.getByLabel("Nombre del producto")).toHaveValue("");
