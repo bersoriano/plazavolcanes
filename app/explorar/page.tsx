@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
+import { redirect } from "next/navigation";
 import { CatalogScreen } from "@/components/catalog/catalog-screen";
-import { normalizeCatalogFilters } from "@/lib/queries/catalog";
+import { hasCatalogSearch, normalizeCatalogFilters, submittedCatalogHref, type CatalogSearchParams } from "@/lib/queries/catalog";
 import { getCatalogStateCounts, getHomeCatalog } from "@/lib/queries/catalog.server";
 
 export const metadata: Metadata = {
@@ -11,10 +12,7 @@ export const metadata: Metadata = {
   alternates: { canonical: "/explorar" },
 };
 
-type ExploreSearchParams = Promise<{
-  locale?: string | string[];
-  countryCode?: string | string[];
-}>;
+type ExploreSearchParams = Promise<CatalogSearchParams>;
 
 /**
  * The whole plaza, unfiltered: what "/" showed before it became the seller
@@ -23,8 +21,12 @@ type ExploreSearchParams = Promise<{
  * language carry over.
  */
 export default async function ExplorePage({ searchParams }: { searchParams: ExploreSearchParams }) {
-  const { locale, countryCode } = await searchParams;
-  const filters = normalizeCatalogFilters({ locale, countryCode });
+  const params = await searchParams;
+  const filters = normalizeCatalogFilters(params);
+  const hasSelection = filters.categorySlug || filters.subcategorySlug || filters.administrativeAreaSlug;
+  if (hasCatalogSearch(filters) || hasSelection || filters.invalidCategorySelection || filters.invalidAreaSelection) {
+    redirect(submittedCatalogHref(params));
+  }
   const [catalog, stateCounts] = await Promise.all([
     getHomeCatalog(filters),
     getCatalogStateCounts(filters.countryCode),

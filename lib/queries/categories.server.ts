@@ -27,7 +27,7 @@ function compareCategories(
 // same request; cache() lets the second read reuse the first.
 export const getProductCategoryTree = cache(async function getProductCategoryTree(
   locale: CatalogLocale,
-  { includeInactive = false }: { includeInactive?: boolean } = {},
+  { includeInactive = false, requireAvailable = false }: { includeInactive?: boolean; requireAvailable?: boolean } = {},
 ): Promise<CategoryTree[]> {
   if (!isSupabaseConfigured()) return [];
 
@@ -41,7 +41,10 @@ export const getProductCategoryTree = cache(async function getProductCategoryTre
 
   if (!includeInactive) query = query.eq("is_active", true);
 
-  const { data } = await query;
+  const { data, error } = await query;
+  if (error && requireAvailable) {
+    throw new Error(`Catalogue categories (${error.code}): ${error.message}`);
+  }
   const rows = (data ?? []) as CategoryQueryRow[];
   const visibleRows = includeInactive ? rows : rows.filter((row) => row.is_active);
   const options = visibleRows.map((row) => {

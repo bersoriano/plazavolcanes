@@ -6,7 +6,7 @@ import { HomeLanding } from "@/components/home/landing/home-landing";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildCatalogHref, listedCategoryTree, listingCategoryIds, resolveCategorySelection } from "@/lib/categories";
 import { getPosts } from "@/lib/posts.server";
-import { normalizeCatalogFilters } from "@/lib/queries/catalog";
+import { hasCatalogSearch, normalizeCatalogFilters, submittedCatalogHref, type CatalogSearchParams } from "@/lib/queries/catalog";
 import { getCatalogStateCounts, getHomeCatalog } from "@/lib/queries/catalog.server";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { getFoundersProgram } from "@/lib/queries/founders.server";
@@ -15,14 +15,7 @@ import { buildHomeMetadata, SITE_NAME } from "@/lib/seo/home-metadata";
 import { organizationId, organizationSchema, sellerServiceSchema } from "@/lib/seo/organization";
 import { buildSiteUrl } from "@/lib/site-url";
 
-type HomeSearchParams = Promise<{
-  q?: string | string[];
-  categoria?: string | string[];
-  subcategoria?: string | string[];
-  estado?: string | string[];
-  locale?: string | string[];
-  countryCode?: string | string[];
-}>;
+type HomeSearchParams = Promise<CatalogSearchParams>;
 
 export async function generateMetadata({
   searchParams,
@@ -31,12 +24,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const filters = normalizeCatalogFilters(await searchParams);
   // A state parameter redirects before anything renders.
-  if (filters.administrativeAreaSlug) return {};
+  if (filters.administrativeAreaSlug && !filters.searchError) return {};
 
   const selection = resolveCategorySelection(await getProductCategoryTree(filters.locale), filters);
   // Only a category view needs the count: a search is never indexed, and the
   // bare home page always is.
-  const categoryIds = filters.query ? [] : listingCategoryIds(selection);
+  const categoryIds = hasCatalogSearch(filters) ? [] : listingCategoryIds(selection);
   const listed = categoryIds.length > 0 && (await hasPublishedProducts(categoryIds));
 
   return buildHomeMetadata({ filters, selection, listed });
@@ -72,20 +65,11 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
   const filters = normalizeCatalogFilters(rawParams);
 
   // A state is a place, not a query parameter: send it to its canonical path.
-  if (filters.administrativeAreaSlug) {
-    redirect(
-      buildCatalogHref({
-        query: filters.query,
-        categorySlug: filters.categorySlug,
-        subcategorySlug: filters.subcategorySlug,
-        stateSlug: filters.administrativeAreaSlug,
-        locale: filters.locale,
-        countryCode: filters.countryCode,
-      }),
-    );
+  if (filters.administrativeAreaSlug && !filters.searchError) {
+    redirect(submittedCatalogHref(rawParams, filters.administrativeAreaSlug));
   }
 
-  const bareHome = !filters.query && !filters.categorySlug && !filters.subcategorySlug && !filters.invalidCategorySelection;
+  const bareHome = !hasCatalogSearch(filters) && !filters.categorySlug && !filters.subcategorySlug && !filters.invalidCategorySelection;
 
   // The buyer panel's search submitted with nothing in it: somebody asking to
   // see everything, which is the catalogue, not the landing they came from.

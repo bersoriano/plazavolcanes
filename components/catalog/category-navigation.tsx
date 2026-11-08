@@ -9,7 +9,10 @@ import {
 import { ButtonLink } from "@/components/ui/button";
 import type { CatalogLocale } from "@/lib/catalog-locale";
 
+import type { SearchCriteria } from "@/lib/search/criteria";
+
 type CategoryNavigationProps = {
+  criteria?: SearchCriteria;
   tree: CategoryTree[];
   activeCategorySlug?: string;
   activeSubcategorySlug?: string;
@@ -37,6 +40,7 @@ const ROOT_CHIP = {
 
 export function CategoryNavigation({
   tree,
+  criteria,
   activeCategorySlug,
   activeSubcategorySlug,
   query,
@@ -73,7 +77,7 @@ export function CategoryNavigation({
           <Link
             aria-current={!activeCategory ? "page" : undefined}
             className={`${chipBase} ${panel ? "" : "min-w-[5.5rem]"} ${!activeCategory ? chipActive : chipIdle}`}
-            href={buildCatalogHref({ query, stateSlug, locale, countryCode })}
+            href={buildCatalogHref({ criteria, query, stateSlug, locale, countryCode })}
           >
             Todos
             {!activeCategory ? activeRule : null}
@@ -88,7 +92,7 @@ export function CategoryNavigation({
               <Link
                 aria-current={isActive ? "page" : undefined}
                 className={`${chipBase} ${panel ? "" : "min-w-[8rem]"} ${isActive ? chipActive : chipIdle}`}
-                href={buildCatalogHref({ query, categorySlug: category.slug, stateSlug, locale, countryCode })}
+                href={buildCatalogHref({ criteria, query, categorySlug: category.slug, stateSlug, locale, countryCode })}
                 key={category.id}
               >
                 {iconName && !panel ? <CategoryIcon aria-hidden="true" className="size-5 shrink-0" name={iconName} /> : null}
@@ -122,6 +126,7 @@ export function CategoryNavigation({
                       : "border border-line bg-surface text-muted hover:border-brand hover:text-brand"
                   }`}
                   href={buildCatalogHref({
+                    criteria,
                     query,
                     categorySlug: activeCategory.slug,
                     subcategorySlug: subcategory.slug,

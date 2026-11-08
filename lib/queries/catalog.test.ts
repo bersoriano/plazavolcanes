@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import {
   escapePostgresLikePattern,
   normalizeCatalogFilters,
-  normalizeSearchQuery,
 } from "@/lib/queries/catalog";
 
 describe("escapePostgresLikePattern", () => {
@@ -24,7 +23,8 @@ describe("normalizeCatalogFilters", () => {
         categoria: "electronica",
         subcategoria: "celulares-y-accesorios",
       }),
-    ).toEqual({
+    ).toMatchObject({
+      criteria: { text: "iphone" },
       query: "iphone",
       categorySlug: "electronica",
       subcategorySlug: "celulares-y-accesorios",
@@ -45,19 +45,9 @@ describe("normalizeCatalogFilters", () => {
   });
 });
 
-describe("normalizeSearchQuery", () => {
-  it("trims surrounding whitespace", () => {
-    expect(normalizeSearchQuery("  barro  ")).toBe("barro");
-  });
-
-  it("returns undefined for an empty query", () => {
-    expect(normalizeSearchQuery("   ")).toBeUndefined();
-    expect(normalizeSearchQuery(undefined)).toBeUndefined();
-  });
-
-  it("caps a query at 80 characters", () => {
-    expect(normalizeSearchQuery("a".repeat(100))).toHaveLength(80);
-  });
+it("rejects an oversized request instead of losing its price limit", () => {
+  const filters = normalizeCatalogFilters({ q: "a".repeat(500) + " under $100" });
+  expect(filters.searchError).toBeTruthy();
 });
 
 describe("normalizeCatalogFilters state selection", () => {

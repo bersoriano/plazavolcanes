@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { buildCatalogHref, type ResolvedCategorySelection } from "@/lib/categories";
-import type { CatalogFilters } from "@/lib/queries/catalog";
+import { hasCatalogSearch, type CatalogFilters } from "@/lib/queries/catalog";
 
 export const SITE_NAME = "Plaza Volcanes";
 
@@ -73,9 +73,9 @@ function withSharing(
  * make a separate page, so the canonical drops them.
  */
 export function buildHomeMetadata({ filters, selection, listed }: HomeMetadataInput): Metadata {
-  if (filters.query) {
+  if (hasCatalogSearch(filters)) {
     return withSharing(
-      { title: `Resultados para “${filters.query}”`, description: HOME_DESCRIPTION },
+      { title: filters.query ? `Resultados para “${filters.query}”` : "Resultados de búsqueda", description: HOME_DESCRIPTION },
       { robots: NOINDEX },
     );
   }

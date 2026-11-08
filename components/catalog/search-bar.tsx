@@ -9,7 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/input";
 import { MEXICO_ADMINISTRATIVE_AREAS } from "@/lib/shop-location";
 
+import { readSearchCriteria, writeSearchCriteria, type SearchCriteria } from "@/lib/search/criteria";
+
 type SearchBarProps = {
+  criteria?: SearchCriteria;
   defaultValue?: string;
   categorySlug?: string;
   subcategorySlug?: string;
@@ -25,6 +28,7 @@ type SearchBarProps = {
 
 export function SearchBar({
   defaultValue = "",
+  criteria,
   categorySlug,
   subcategorySlug,
   stateSlug,
@@ -32,6 +36,11 @@ export function SearchBar({
   countryCode,
   variant = "default",
 }: SearchBarProps) {
+  // A fresh submission interprets the editable text. When the URL contains
+  // extra filters, changing state must submit those exact criteria instead.
+  const canonical = criteria && writeSearchCriteria(criteria);
+  const separateStateForm = canonical && canonical.toString() !==
+    writeSearchCriteria(readSearchCriteria({ q: defaultValue, countryCode }).criteria).toString();
   const hiddenFields = (
     <>
       {categorySlug ? <input name="categoria" type="hidden" value={categorySlug} /> : null}
@@ -91,27 +100,42 @@ export function SearchBar({
   }
 
   return (
-    <form action="/" className="flex flex-wrap items-center gap-2 rounded-[1.5rem] border border-line bg-surface p-2 pl-5 shadow-[0_18px_55px_rgba(50,23,77,0.14)] sm:flex-nowrap sm:rounded-full" role="search">
-      {hiddenFields}
-      <Search aria-hidden="true" className="size-5 shrink-0 text-brand" />
-      <label className="sr-only" htmlFor="buscar-productos">Buscar productos</label>
-      <Input variant="unstyled" className="min-w-0 flex-1 bg-transparent py-3 text-base text-ink outline-none placeholder:text-muted" defaultValue={defaultValue} id="buscar-productos" name="q" placeholder="¿Qué estás buscando?" type="search" />
-      <div className="order-3 flex min-h-11 basis-full items-center gap-2 border-t border-line px-1 pt-2 text-brand sm:order-none sm:basis-auto sm:border-l sm:border-t-0 sm:pt-0">
-        <MapPin aria-hidden="true" className="size-4" />
-        <label className="sr-only" htmlFor="filtrar-estado">Estado</label>
-        <Select
-          variant="unstyled"
-          className="min-h-11 min-w-0 flex-1 cursor-pointer bg-transparent py-2 text-sm font-semibold text-brand outline-none sm:max-w-[10rem]"
-          defaultValue={stateSlug ?? ""}
-          id="filtrar-estado"
-          name="estado"
-        >
-          {stateOptions}
-        </Select>
-      </div>
-      <Button variant="unstyled" aria-label="Buscar" className="grid size-12 shrink-0 place-items-center rounded-full bg-brand text-white transition-colors hover:bg-brand-hover" type="submit">
-        <Search aria-hidden="true" className="size-5" />
-      </Button>
-    </form>
+    <div>
+      <form action="/" className="flex flex-wrap items-center gap-2 rounded-[1.5rem] border border-line bg-surface p-2 pl-5 shadow-[0_18px_55px_rgba(50,23,77,0.14)] sm:flex-nowrap sm:rounded-full" role="search">
+        {hiddenFields}
+        <Search aria-hidden="true" className="size-5 shrink-0 text-brand" />
+        <label className="sr-only" htmlFor="buscar-productos">Buscar productos</label>
+        <Input variant="unstyled" className="min-w-0 flex-1 bg-transparent py-3 text-base text-ink outline-none placeholder:text-muted" defaultValue={defaultValue} id="buscar-productos" name="q" placeholder="¿Qué estás buscando?" type="search" />
+        {separateStateForm ? <input type="hidden" name="estado" value={stateSlug ?? ""} /> : <div className="order-3 flex min-h-11 basis-full items-center gap-2 border-t border-line px-1 pt-2 text-brand sm:order-none sm:basis-auto sm:border-l sm:border-t-0 sm:pt-0">
+          <MapPin aria-hidden="true" className="size-4" />
+          <label className="sr-only" htmlFor="filtrar-estado">Estado</label>
+          <Select
+            variant="unstyled"
+            className="min-h-11 min-w-0 flex-1 cursor-pointer bg-transparent py-2 text-sm font-semibold text-brand outline-none sm:max-w-[10rem]"
+            defaultValue={stateSlug ?? ""}
+            id="filtrar-estado"
+            name="estado"
+          >
+            {stateOptions}
+          </Select>
+        </div>}
+        <Button variant="unstyled" aria-label="Buscar" className="grid size-12 shrink-0 place-items-center rounded-full bg-brand text-white transition-colors hover:bg-brand-hover" type="submit">
+          <Search aria-hidden="true" className="size-5" />
+        </Button>
+      </form>
+      {separateStateForm && canonical && (
+        <form action="/" className="mt-3 flex flex-wrap items-center justify-center gap-2 text-sm">
+          {hiddenFields}
+          {Array.from(canonical, ([name, value]) => (
+            <input key={name} type="hidden" name={name} value={value} />
+          ))}
+          <label htmlFor="filtrar-estado">Estado</label>
+          <Select id="filtrar-estado" name="estado" defaultValue={stateSlug ?? ""} className="w-auto">
+            {stateOptions}
+          </Select>
+          <Button type="submit">Aplicar</Button>
+        </form>
+      )}
+    </div>
   );
 }

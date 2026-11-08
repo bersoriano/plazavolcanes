@@ -1,3 +1,5 @@
+import { refineSearchCriteria } from "@/lib/search/criteria";
+import { normalizeCatalogFilters } from "@/lib/queries/catalog";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -127,5 +129,20 @@ describe("buildCatalogHref state paths", () => {
   it("returns the national catalog when no state is selected", () => {
     expect(buildCatalogHref({ query: "taza" })).toBe("/?q=taza");
     expect(buildCatalogHref({})).toBe("/explorar");
+  });
+});
+
+it("carries a validated conversational refinement into an executable catalog URL", () => {
+  const change = refineSearchCriteria({
+    text: "jacket", max: 100, maxInclusive: false, waterproof: true,
+    administrativeAreaSlug: "jalisco", categorySlug: "moda-y-accesorios", locale: "en-US",
+  }, { set: { max: 80 } });
+  expect(change.error).toBeUndefined();
+  const url = new URL(buildCatalogHref({ criteria: change.criteria }), "http://local.test");
+  expect(url.pathname).toBe("/estado/jalisco");
+  const filters = normalizeCatalogFilters({ ...Object.fromEntries(url.searchParams), estado: "jalisco" });
+  expect(filters).toMatchObject({
+    criteria: { text: "jacket", max: 80, maxInclusive: false, waterproof: true, currency: "MXN" },
+    categorySlug: "moda-y-accesorios", administrativeAreaCode: "MX-JAL", locale: "en-US",
   });
 });

@@ -2,30 +2,28 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { CatalogScreen } from "@/components/catalog/catalog-screen";
-import { normalizeCatalogFilters } from "@/lib/queries/catalog";
+import { hasCatalogSearch, normalizeCatalogFilters, type CatalogSearchParams } from "@/lib/queries/catalog";
 import { getHomeCatalog } from "@/lib/queries/catalog.server";
 import { findAdministrativeAreaBySlug } from "@/lib/shop-location";
 
 type StateParams = Promise<{ slug: string }>;
 
-type StateSearchParams = Promise<{
-  q?: string | string[];
-  categoria?: string | string[];
-  subcategoria?: string | string[];
-  locale?: string | string[];
-  countryCode?: string | string[];
-}>;
+type StateSearchParams = Promise<CatalogSearchParams>;
 
 export async function generateMetadata({
   params,
+  searchParams,
 }: {
   params: StateParams;
+  searchParams?: StateSearchParams;
 }): Promise<Metadata> {
   const area = findAdministrativeAreaBySlug((await params).slug);
 
   if (!area) return { title: "Estado no disponible — Plaza Volcanes" };
 
+  const filters = normalizeCatalogFilters((await searchParams) ?? {});
   return {
+    ...(hasCatalogSearch(filters) ? { robots: { index: false, follow: true } } : {}),
     title: `Productos en ${area.label} — Plaza Volcanes`,
     description: `Descubre productos de tiendas independientes que operan en ${area.label}.`,
   };

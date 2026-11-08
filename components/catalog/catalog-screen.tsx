@@ -3,6 +3,7 @@ import Image from "next/image";
 import { ArrowRight, MapPin, SearchX, Sparkles, Store } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
+import { AppliedSearchFilters } from "@/components/catalog/applied-search-filters";
 import { CategoryNavigation } from "@/components/catalog/category-navigation";
 import { ProductCard } from "@/components/catalog/product-card";
 import { ProductGrid } from "@/components/catalog/product-grid";
@@ -18,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { buildCatalogHref } from "@/lib/categories";
-import type { CatalogFilters } from "@/lib/queries/catalog";
+import { hasCatalogSearch, type CatalogFilters } from "@/lib/queries/catalog";
 import type {
   CatalogStateCount,
   getCatalogStateCounts,
@@ -51,8 +52,9 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
   const activeCategoryName = invalidCategorySelection
     ? undefined
     : (selectedSubcategory?.name ?? selectedCategory?.name);
-  const stateSlug = area?.slug;
+  const stateSlug = area?.slug ?? filters.administrativeAreaSlug;
   const catalogHref = buildCatalogHref({
+    criteria: filters.criteria,
     query: filters.query,
     categorySlug: activeCategorySlug,
     subcategorySlug: activeSubcategorySlug,
@@ -65,6 +67,12 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
     locale: filters.locale,
     countryCode: filters.countryCode,
   });
+  const broaderHref = filters.criteria?.waterproof === true
+    ? buildCatalogHref({
+        ...filters, stateSlug, criteria: { ...filters.criteria, waterproof: undefined },
+        categorySlug: activeCategorySlug, subcategorySlug: activeSubcategorySlug,
+      })
+    : undefined;
   const categoryNameById = new Map(
     categories.flatMap((category) => [
       [category.id, category.name] as const,
@@ -72,7 +80,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
     ]),
   );
   // The state scopes the page rather than filtering within it, so it never counts here.
-  const hasFilters = Boolean(filters.query || activeCategorySlug);
+  const hasFilters = Boolean(hasCatalogSearch(filters) || activeCategorySlug);
   const coldStart = !hasFilters && products.length === 0;
   // Only /explorar shows the whole plaza unfiltered; its heading keeps the
   // larger size the home catalogue used to have.
@@ -85,9 +93,8 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
       : `Productos para “${filters.query}”`
     : activeCategoryName
       ? `Productos de ${activeCategoryName}${placeSuffix}`
-      : area
-        ? `Recién publicado en ${area.label}`
-        : "Descubrimientos de la plaza";
+      : hasFilters ? `Resultados de búsqueda${placeSuffix}`
+        : area ? `Recién publicado en ${area.label}` : "Descubrimientos de la plaza";
 
   const catalogSection = (
     <section
@@ -127,14 +134,17 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
                 Todos
               </Badge>
             )}
-            <Badge variant="unstyled" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-muted lg:px-[18px]">
-              Más recientes
-            </Badge>
+            {!filters.query && (
+              <Badge variant="unstyled" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-muted lg:px-[18px]">
+                Más recientes
+              </Badge>
+            )}
             <ButtonLink variant="unstyled" className="inline-flex min-h-11 items-center rounded-full border border-line bg-surface px-4 text-sm font-semibold text-brand lg:px-[18px]" href="#tiendas">
               Tiendas
             </ButtonLink>
           </nav>
         </div>
+        <AppliedSearchFilters filters={filters} />
         <ProductGrid>
           {products.length ? (
             products.map((product, index) => (
@@ -151,20 +161,22 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
           ) : (
             <EmptyState
               action={
-                <Link className="inline-flex min-h-11 items-center gap-2 font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href={hasFilters ? resetHref : "/vender?desde=vacio"}>
-                  {hasFilters ? "Limpiar filtros" : "Crear una tienda"}
+                <Link className="inline-flex min-h-11 items-center gap-2 font-semibold text-brand underline decoration-accent decoration-4 underline-offset-4" href={broaderHref ?? (hasFilters ? resetHref : "/vender?desde=vacio")}>
+                  {broaderHref ? "Buscar sin exigir impermeabilidad" : hasFilters ? "Limpiar filtros" : "Crear una tienda"}
                   <ArrowRight aria-hidden="true" className="size-4" />
                 </Link>
               }
               description={
-                hasFilters
+                filters.searchError ?? (broaderHref
+                  ? "No encontramos coincidencias con impermeabilidad indicada por el vendedor."
+                  : hasFilters
                   ? "Prueba con otros filtros o explora todos los productos."
                   : area
                     ? `Todavía nadie publica en ${area.label}. Tu tienda puede ser la primera.`
-                    : "Abre la primera tienda de la plaza y comparte lo que haces."
+                    : "Abre la primera tienda de la plaza y comparte lo que haces.")
               }
               icon={hasFilters ? <SearchX aria-hidden="true" className="size-7" /> : <Store aria-hidden="true" className="size-7" />}
-              title={hasFilters ? "No encontramos productos" : "Aún no hay productos publicados"}
+              title={filters.searchError ? "Revisa tu búsqueda" : hasFilters ? "No encontramos productos" : "Aún no hay productos publicados"}
             />
           )}
         </ProductGrid>
@@ -249,7 +261,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
                 <ButtonLink
                   variant="unstyled"
                   className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-5 text-sm font-semibold text-brand transition-colors hover:border-brand"
-                  href={buildCatalogHref({ locale: filters.locale, countryCode: filters.countryCode })}
+                  href={buildCatalogHref({ criteria: filters.criteria, categorySlug: activeCategorySlug, subcategorySlug: activeSubcategorySlug, locale: filters.locale, countryCode: filters.countryCode })}
                 >
                   Ver todo México
                   <ArrowRight aria-hidden="true" className="size-4" />
@@ -277,7 +289,8 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
             <div className="relative z-10 mx-auto mt-9 max-w-2xl">
               <SearchBar
                 categorySlug={activeCategorySlug}
-                defaultValue={filters.query}
+                defaultValue={filters.originalQuery ?? filters.query}
+                criteria={filters.criteria}
                 subcategorySlug={activeSubcategorySlug}
                 stateSlug={stateSlug}
                 locale={filters.locale}
@@ -291,6 +304,7 @@ export function CatalogScreen({ filters, catalog, area, stateCounts }: CatalogSc
               activeCategorySlug={activeCategorySlug}
               activeSubcategorySlug={activeSubcategorySlug}
               query={filters.query}
+              criteria={filters.criteria}
               stateSlug={stateSlug}
               locale={filters.locale}
               countryCode={filters.countryCode}

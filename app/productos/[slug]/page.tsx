@@ -24,7 +24,7 @@ import { formatProductCondition } from "@/lib/product-condition";
 import { addToCart } from "@/lib/actions/cart";
 import { openConversation } from "@/lib/actions/start-conversation";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
-import { normalizeCatalogFilters } from "@/lib/queries/catalog";
+import { hasCatalogSearch, normalizeCatalogFilters, type CatalogSearchParams } from "@/lib/queries/catalog";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getPublicProduct } from "@/lib/queries/catalog.server";
@@ -37,14 +37,7 @@ const PURCHASE_NOTICES: Record<string, string> = {
   error: "No pudimos agregar el producto a tu carrito. Inténtalo de nuevo.",
 };
 
-type ProductSearchParams = Promise<{
-  compra?: string | string[];
-  q?: string | string[];
-  categoria?: string | string[];
-  subcategoria?: string | string[];
-  locale?: string | string[];
-  countryCode?: string | string[];
-}>;
+type ProductSearchParams = Promise<CatalogSearchParams>;
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -77,14 +70,15 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
     (category) => category.id === categorySelection.leafId,
   );
   const catalogHref = buildCatalogHref({
-    query: filters.query,
+    criteria: filters.criteria,
+    stateSlug: filters.administrativeAreaSlug,
     categorySlug: filters.categorySlug,
     subcategorySlug: filters.subcategorySlug,
     locale: filters.locale,
     countryCode: filters.countryCode,
   });
   const hasCatalogState = Boolean(
-    filters.query ||
+    hasCatalogSearch(filters) || filters.administrativeAreaSlug ||
       filters.categorySlug ||
       filters.subcategorySlug ||
       filters.locale !== DEFAULT_CATALOG_LOCALE ||
@@ -133,7 +127,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
 
         {rootCategory ? (
           <nav aria-label="Categoría del producto" className="mt-4 flex flex-wrap items-center gap-1.5 text-sm font-medium text-muted">
-            <Link className="inline-flex min-h-11 items-center rounded-full px-3 py-2 hover:text-brand" href={buildCatalogHref({ query: filters.query, categorySlug: rootCategory.slug, locale: filters.locale, countryCode: filters.countryCode })}>
+            <Link className="inline-flex min-h-11 items-center rounded-full px-3 py-2 hover:text-brand" href={buildCatalogHref({ criteria: filters.criteria, stateSlug: filters.administrativeAreaSlug, categorySlug: rootCategory.slug, locale: filters.locale, countryCode: filters.countryCode })}>
               {rootCategory.name}
             </Link>
             {leafCategory ? (
@@ -143,7 +137,8 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
                   aria-current="page"
                   className="inline-flex min-h-11 items-center rounded-full px-3 py-2 font-semibold text-brand"
                   href={buildCatalogHref({
-                    query: filters.query,
+                    criteria: filters.criteria,
+                    stateSlug: filters.administrativeAreaSlug,
                     categorySlug: rootCategory.slug,
                     subcategorySlug: leafCategory.slug,
                     locale: filters.locale,
