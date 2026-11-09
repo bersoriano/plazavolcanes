@@ -71,7 +71,18 @@ returns setof text language sql stable as $$
   join public.products p on p.id = r.product_id order by r.ordinality
 $$;
 
+update public.products set other_features = 'Capucha desmontable; tela impermeable'
+where name in ('Jacket de tela', 'Jacket borrador');
+update public.products set other_features = 'Bolsillo oculto' where name = 'Abrigo térmico';
+
 set local role anon;
+select results_eq($$select p.name from public.search_catalog_ids('chaqueta capucha desmontable', 'es-MX', 'MX', 'MX-JAL',
+  null, 24, '{}') r join public.products p on p.id = r.product_id$$,
+  array['Jacket de tela'], 'Spanish keywords span title and other features on public listings only');
+select results_eq($$select * from pg_temp.search_names('alpine bolsillo', '{}')$$,
+  array['Abrigo térmico'], 'keywords can span an approved translation and seller features');
+select results_eq($$select * from pg_temp.search_names('capucha', '{"waterproof":true}')$$,
+  array[]::text[], 'other features cannot override structured waterproofing');
 select results_eq($$select * from pg_temp.search_names('jacket', '{"waterproof":true,"max":100,"maxInclusive":false}')$$,
   array['Jacket','Abrigo térmico','Prenda ligera'],
   'literal title, approved translation, then description-only synonym survive the strict budget and limit');

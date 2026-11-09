@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { DEFAULT_CATALOG_CURRENCY, DEFAULT_CATALOG_LOCALE } from "@/lib/catalog-locale";
-import { COLORS, MATERIALS, SIZES } from "@/lib/search/attributes";
+import { COLORS, MATERIALS, OTHER_FEATURES_MAX_LENGTH, SIZES } from "@/lib/search/attributes";
 import {
   MAX_HANDLING_DAYS,
   MAX_UNITS,
@@ -33,6 +33,9 @@ const productFields = {
   color: z.preprocess(blankAsNull, z.enum(COLORS, "Selecciona un color de la lista.").nullable()).optional(),
   size: z.preprocess(blankAsNull, z.enum(SIZES, "Selecciona una talla de la lista.").nullable()).optional(),
   material: z.preprocess(blankAsNull, z.enum(MATERIALS, "Selecciona un material de la lista.").nullable()).optional(),
+  other_features: z.string().trim()
+    .max(OTHER_FEATURES_MAX_LENGTH, `Escribe hasta ${OTHER_FEATURES_MAX_LENGTH} caracteres.`)
+    .transform((value) => value || null).optional(),
   waterproof: z.preprocess(
     blankAsNull,
     z.enum(["true", "false"], "Indica si es impermeable o deja el campo sin especificar.")

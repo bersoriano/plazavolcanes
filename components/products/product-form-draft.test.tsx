@@ -34,7 +34,7 @@ afterEach(() => {
 describe("new product draft", () => {
   it("restores the seller's optional declarations in a new draft", () => {
     render(<ProductForm action={action} categories={[]} shopId={1} />);
-    for (const [label, value] of [["Color", "blue"], ["Talla", "L"], ["Material", "cotton"], ["Impermeable", "false"]]) {
+    for (const [label, value] of [["Color", "blue"], ["Talla", "L"], ["Material", "cotton"], ["Impermeable", "false"], ["Otras características", "Capucha desmontable"]]) {
       expect(screen.getByLabelText(label)).toHaveValue("");
       fireEvent.change(screen.getByLabelText(label), { target: { value } });
     }
@@ -42,6 +42,7 @@ describe("new product draft", () => {
     render(<ProductForm action={action} categories={[]} shopId={1} />);
     expect(screen.getByLabelText("Color")).toHaveValue("blue");
     expect(screen.getByLabelText("Talla")).toHaveValue("L");
+    expect(screen.getByLabelText("Otras características")).toHaveValue("Capucha desmontable");
     expect(screen.getByLabelText("Material")).toHaveValue("cotton");
     expect(screen.getByLabelText("Impermeable")).toHaveValue("false");
   });

@@ -118,7 +118,7 @@ async function writeUnderFreeSlug<Result extends { error: WriteError }>(
 
 function productFormFields(formData: FormData) {
   const attributes: Record<string, FormDataEntryValue | FormDataEntryValue[]> = {};
-  for (const field of ["color", "size", "material", "waterproof"]) {
+  for (const field of ["color", "size", "material", "waterproof", "other_features"]) {
     const values = formData.getAll(field);
     // Older forms omit these keys. An empty control explicitly clears a claim.
     // Leave repeated values as an array so scalar validation rejects them.

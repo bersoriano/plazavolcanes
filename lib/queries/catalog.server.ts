@@ -442,7 +442,7 @@ export const getPublicProduct = cache(async function getPublicProduct(
   const supabase = await createServerSupabaseClient();
   const result = await supabase
     .from("products")
-    .select(productSelection)
+    .select(`other_features, ${productSelection}`)
     .eq("slug", slug)
     .eq("status", "published")
     .eq("is_admin_enabled", true)
@@ -471,6 +471,7 @@ export const getPublicProduct = cache(async function getPublicProduct(
   // A product from before galleries existed still has its single cover image.
   return {
     ...product,
+    other_features: data.other_features,
     images: images.length ? images : product.imageUrl ? [product.imageUrl] : [],
     // Only the detail page offers to message the shop, so the identifiers it
     // needs stay here rather than widening the type every catalog card uses.

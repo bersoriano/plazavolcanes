@@ -161,10 +161,10 @@ beforeEach(() => {
 
 describe("createProduct", () => {
   it("saves declared attributes on an incomplete draft", async () => {
-    const form = sellerForm({ description: "", color: "black", size: "M", material: "wool", waterproof: "true" });
+    const form = sellerForm({ description: "", color: "black", size: "M", material: "wool", waterproof: "true", other_features: "  Capucha desmontable  " });
     await expect(createProduct(7, idle, form)).rejects.toThrow("NEXT_REDIRECT");
     expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
-      color: "black", size: "M", material: "wool", waterproof: true, status: "draft",
+      color: "black", size: "M", material: "wool", waterproof: true, other_features: "Capucha desmontable", status: "draft",
     }));
   });
 
@@ -329,10 +329,10 @@ describe("updateProduct and the slug of a draft", () => {
 describe("updateProduct", () => {
   it("clears a declared detail, stores explicit no, and leaves omitted details untouched", async () => {
     mocks.productsSelect.mockReturnValueOnce(draft("taza-volcanica"));
-    const result = await updateProduct(22, idle, sellerForm({ status: "draft", color: "", waterproof: "false" }));
+    const result = await updateProduct(22, idle, sellerForm({ status: "draft", color: "", waterproof: "false", other_features: "  " }));
     expect(result.status).toBe("success");
     const row = mocks.update.mock.calls[0][0];
-    expect(row).toMatchObject({ color: null, waterproof: false });
+    expect(row).toMatchObject({ color: null, waterproof: false, other_features: null });
     expect(row).not.toHaveProperty("material");
     expect(row).not.toHaveProperty("size");
   });
@@ -343,8 +343,8 @@ describe("updateProduct", () => {
     expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ waterproof: null }));
   });
 
-  it.each([["color", "purple"], ["size", "XXL"], ["material", "linen"], ["waterproof", "yes"]])(
-    "rejects an unknown %s on both write paths", async (field, value) => {
+  it.each([["color", "purple"], ["size", "XXL"], ["material", "linen"], ["waterproof", "yes"], ["other_features", "x".repeat(301)]])(
+    "rejects an invalid %s on both write paths", async (field, value) => {
       const form = sellerForm({ [field]: value });
       for (const write of [createProduct, updateProduct]) {
         expect(await write(22, idle, form)).toMatchObject({ status: "error", errors: { [field]: expect.any(Array) } });

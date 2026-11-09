@@ -68,6 +68,16 @@ beforeEach(() => {
 
 afterEach(cleanup);
 
+it("shows the seller’s other features only when provided", async () => {
+  render(await renderPage());
+  expect(screen.queryByText("Otras características")).not.toBeInTheDocument();
+  cleanup();
+  getPublicProduct.mockResolvedValue({ ...product, other_features: "Asa reforzada" });
+  render(await renderPage());
+  expect(screen.getByRole("heading", { name: "Otras características" })).toBeInTheDocument();
+  expect(screen.getByText("Asa reforzada")).toBeInTheDocument();
+});
+
 describe("Product page purchase notices", () => {
   it("treats a moderation-hidden published product as not found", async () => {
     const adminDisabledPublishedProduct = { slug: "taza-deshabilitada", is_admin_enabled: false };

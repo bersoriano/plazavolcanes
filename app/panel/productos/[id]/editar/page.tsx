@@ -84,6 +84,7 @@ export default async function EditProductPage({ params, searchParams }: { params
           size: product.size,
           material: product.material,
           waterproof: product.waterproof,
+          other_features: product.other_features,
           category_id: product.category_id,
           handling_days: product.handling_days,
           units_available: product.units_available,

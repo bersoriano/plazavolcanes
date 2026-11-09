@@ -172,6 +172,12 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
             </p>
             <div className="my-7 h-px bg-line" />
             <p className="whitespace-pre-wrap text-base leading-8 text-muted">{product.description}</p>
+            {product.other_features ? (
+              <section className="mt-5">
+                <h2 className="text-base font-semibold text-ink">Otras características</h2>
+                <p className="mt-1 whitespace-pre-wrap wrap-anywhere leading-7 text-muted">{product.other_features}</p>
+              </section>
+            ) : null}
             {purchaseNotice ? (
               <p
                 className="mt-7 rounded-2xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale"

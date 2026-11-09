@@ -120,6 +120,12 @@ waterproofing, authored through existing seller product create/edit flow. Keep
 draft saving, ownership checks and publication requirements intact. Existing
 products need no guessed backfill and gain no new publication blocker.
 
+**Otras características** is a fifth, optional plain-text field (up to 300
+characters). Sellers can add, edit or clear details such as “capucha desmontable”.
+When present, the text appears on the public product page and participates in
+keyword search alongside the name and description. It never supplies a value
+for a structured filter such as waterproofing.
+
 Use a small bounded attribute schema, validated on the server and in the database.
 Storage representation is left to the builder, with an additive migration and no
 new taxonomy management system. Stable canonical attribute values are independent
