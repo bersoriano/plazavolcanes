@@ -37,7 +37,7 @@ describe("SiteFooter", () => {
     render(<SiteFooter />);
 
     const footer = screen.getByRole("contentinfo");
-    const links = within(footer).getAllByRole("link");
+    const links = within(footer).getAllByRole("navigation").flatMap((nav) => within(nav).getAllByRole("link"));
 
     expect(links).not.toHaveLength(0);
     for (const link of links) {
@@ -86,12 +86,12 @@ describe("SiteFooter", () => {
     expect(screen.getByRole("contentinfo")).toHaveAttribute("data-site-footer");
   });
 
-  it("signs off with the year and where it is made, above a decorative wordmark", () => {
+  it("signs off with copyright and developer credit above a decorative wordmark", () => {
     render(<SiteFooter />);
 
     const footer = screen.getByRole("contentinfo");
-    expect(within(footer).getByText("© 2026 Plaza Volcanes")).toBeInTheDocument();
-    expect(within(footer).getByText("Hecho en México")).toBeInTheDocument();
+    expect(footer).toHaveTextContent("© 2026 Plaza Volcanes. Todos los derechos reservados. Desarrollado por https://brilliant.dev/");
+    expect(within(footer).getByRole("link", { name: "https://brilliant.dev/" })).toHaveAttribute("href", "https://brilliant.dev/");
     const wordmark = within(footer).getByText("Volcanes", { selector: "em" }).parentElement;
     expect(wordmark).toHaveAttribute("aria-hidden", "true");
   });

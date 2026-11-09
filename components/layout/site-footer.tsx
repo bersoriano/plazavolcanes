@@ -63,9 +63,11 @@ export function SiteFooter() {
           </div>
         </div>
 
-        <div className="flex justify-between gap-4 border-t border-white/15 pt-[18px] text-[13px] text-white/60 lg:pt-[22px] lg:text-[14px]">
-          <p>© 2026 Plaza Volcanes</p>
-          <p>Hecho en México</p>
+        <div className="border-t border-white/15 pt-[18px] text-[13px] text-white/60 lg:pt-[22px] lg:text-[14px]">
+          <p>
+            © 2026 Plaza Volcanes. Todos los derechos reservados. Desarrollado por{" "}
+            <a className="text-white underline hover:text-accent" href="https://brilliant.dev/">https://brilliant.dev/</a>
+          </p>
         </div>
       </SiteFrame>
 
