@@ -32,6 +32,20 @@ afterEach(() => {
 });
 
 describe("new product draft", () => {
+  it("restores the seller's optional declarations in a new draft", () => {
+    render(<ProductForm action={action} categories={[]} shopId={1} />);
+    for (const [label, value] of [["Color", "blue"], ["Talla", "L"], ["Material", "cotton"], ["Impermeable", "false"]]) {
+      expect(screen.getByLabelText(label)).toHaveValue("");
+      fireEvent.change(screen.getByLabelText(label), { target: { value } });
+    }
+    cleanup();
+    render(<ProductForm action={action} categories={[]} shopId={1} />);
+    expect(screen.getByLabelText("Color")).toHaveValue("blue");
+    expect(screen.getByLabelText("Talla")).toHaveValue("L");
+    expect(screen.getByLabelText("Material")).toHaveValue("cotton");
+    expect(screen.getByLabelText("Impermeable")).toHaveValue("false");
+  });
+
   it("is forgotten once the product it held has been created", () => {
     render(<ProductForm action={action} categories={[]} shopId={1} />);
     fireEvent.input(screen.getByLabelText("Nombre del producto"), { target: { value: "Taza de barro" } });
@@ -64,6 +78,23 @@ describe("new product draft", () => {
 });
 
 describe("product editor draft", () => {
+  it("recovers an unsaved edit or clear unless the stored declaration has changed", () => {
+    const product = { ...created, color: "blue" as const, waterproof: true };
+    const editor = <ProductForm action={action} categories={[]} product={product} productId={7} shopId={1} />;
+    render(editor);
+    expect(screen.getByLabelText("Color")).toHaveValue("blue");
+    expect(screen.getByLabelText("Impermeable")).toHaveValue("true");
+    fireEvent.change(screen.getByLabelText("Color"), { target: { value: "red" } });
+    fireEvent.change(screen.getByLabelText("Impermeable"), { target: { value: "" } });
+    cleanup();
+    render(editor);
+    expect(screen.getByLabelText("Color")).toHaveValue("red");
+    expect(screen.getByLabelText("Impermeable")).toHaveValue("");
+    cleanup();
+    render(<ProductForm action={action} categories={[]} product={{ ...product, color: "green" }} productId={7} shopId={1} />);
+    expect(screen.getByLabelText("Color")).toHaveValue("green");
+  });
+
   const undescribed = { ...created, description: null };
 
   it("belongs to one product even when another shares its name", () => {

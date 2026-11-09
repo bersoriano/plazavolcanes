@@ -108,7 +108,7 @@ describe("public sharing controls", () => {
     );
     expect(screen.getByRole("link", { name: "Volver a resultados" })).toHaveAttribute(
       "href",
-      "/?q=taza&categoria=hogar-y-jardin&subcategoria=cocina-y-comedor",
+      "/?texto=taza&categoria=hogar-y-jardin&subcategoria=cocina-y-comedor",
     );
     expect(screen.getByText("MXN")).toBeInTheDocument();
   });

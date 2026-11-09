@@ -1,3 +1,4 @@
+import { readSearchCriteria, type SearchCriteria } from "@/lib/search/criteria";
 import {
   findAdministrativeAreaBySlug,
 } from "@/lib/shop-location";
@@ -9,6 +10,9 @@ import {
 
 export type CatalogFilters = {
   query?: string;
+  criteria?: SearchCriteria;
+  searchError?: string;
+  originalQuery?: string;
   categorySlug?: string;
   subcategorySlug?: string;
   administrativeAreaSlug?: string;
@@ -19,14 +23,19 @@ export type CatalogFilters = {
   invalidAreaSelection: boolean;
 };
 
-type CatalogSearchParams = {
-  q?: string | string[];
-  categoria?: string | string[];
-  subcategoria?: string | string[];
-  estado?: string | string[];
-  locale?: string | string[];
-  countryCode?: string | string[];
-};
+export type CatalogSearchParams = Record<string, string | string[] | undefined>;
+
+/** Move a submitted request to its route before rewriting text into criteria. */
+export function submittedCatalogHref(params: CatalogSearchParams, stateSlug?: string) {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (stateSlug && key === "estado") continue;
+    if (typeof value === "string") search.append(key, value);
+    else value?.forEach((item) => search.append(key, item));
+  }
+  const path = stateSlug ? `/estado/${encodeURIComponent(stateSlug)}` : "/";
+  return search.size ? `${path}?${search}` : path;
+}
 
 const CATEGORY_SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
@@ -39,9 +48,8 @@ function normalizeCategorySlug(value: string | string[] | undefined) {
   return slug && CATEGORY_SLUG_PATTERN.test(slug) ? slug : undefined;
 }
 
-export function normalizeSearchQuery(query: string | undefined) {
-  const normalized = query?.trim().slice(0, 80);
-  return normalized || undefined;
+export function hasCatalogSearch(filters: CatalogFilters) {
+  return Boolean(filters.query || filters.criteria || filters.searchError);
 }
 
 export function escapePostgresLikePattern(value: string) {
@@ -57,8 +65,12 @@ export function normalizeCatalogFilters(params: CatalogSearchParams): CatalogFil
   const rawAreaSlug = firstValue(params.estado)?.trim();
   const area = findAdministrativeAreaBySlug(normalizeCategorySlug(params.estado));
 
+  const { criteria, original, error } = readSearchCriteria(params);
   return {
-    query: normalizeSearchQuery(firstValue(params.q)),
+    query: criteria.text,
+    ...(Object.keys(criteria).length ? { criteria } : {}),
+    ...(original ? { originalQuery: original } : {}),
+    ...(error ? { searchError: error } : {}),
     categorySlug,
     subcategorySlug,
     administrativeAreaSlug: area?.slug,

@@ -1,0 +1,45 @@
+import { Select } from "@/components/ui/input";
+import type { ActionState } from "@/lib/action-state";
+import type { Product } from "@/lib/database.types";
+import { COLORS, COLOR_LABELS, MATERIALS, MATERIAL_LABELS, SIZES } from "@/lib/search/attributes";
+
+export type ListingAttributes = Partial<Pick<Product, "color" | "size" | "material" | "waterproof">>;
+
+const fields = [
+  { name: "color", label: "Color", options: COLORS.map((value) => ({ value, label: COLOR_LABELS[value] })) },
+  { name: "size", label: "Talla", options: SIZES.map((value) => ({ value, label: value })) },
+  { name: "material", label: "Material", options: MATERIALS.map((value) => ({ value, label: MATERIAL_LABELS[value] })) },
+  { name: "waterproof", label: "Impermeable", options: [{ value: "true", label: "Sí" }, { value: "false", label: "No" }] },
+] as const;
+
+export function ProductAttributeFields({ product, state }: { product?: ListingAttributes; state: ActionState }) {
+  return (
+    <fieldset className="space-y-3">
+      <legend className="text-sm font-semibold text-ink">Características opcionales</legend>
+      <p className="text-sm text-muted">Indica las características de esta presentación del producto.</p>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {fields.map(({ name, label, options }) => {
+          const stored = String(product?.[name] ?? "");
+          const error = state.errors?.[name]?.[0];
+          return (
+            <div className="space-y-2" key={name}>
+              <label className="block text-sm font-semibold text-ink" htmlFor={name}>{label}</label>
+              <Select
+                aria-describedby={error ? `${name}-error` : undefined}
+                aria-invalid={Boolean(error)}
+                data-draft-baseline={stored}
+                defaultValue={state.values?.[name] ?? stored}
+                id={name}
+                name={name}
+              >
+                <option value="">Sin especificar</option>
+                {options.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </Select>
+              {error ? <p className="text-sm font-medium text-sale" id={`${name}-error`}>{error}</p> : null}
+            </div>
+          );
+        })}
+      </div>
+    </fieldset>
+  );
+}

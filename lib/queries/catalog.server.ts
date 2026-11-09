@@ -15,7 +15,7 @@ import {
 import type { Product, Shop, UserTrustProfile } from "@/lib/database.types";
 import { FOUNDER_FEATURE_DAYS, withFeaturedFounders } from "@/lib/launch";
 import type { CatalogFilters } from "@/lib/queries/catalog";
-import { escapePostgresLikePattern, normalizeSearchQuery } from "@/lib/queries/catalog";
+import { escapePostgresLikePattern, normalizeCatalogFilters } from "@/lib/queries/catalog";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -139,23 +139,13 @@ function mapProduct(
   };
 }
 
-function defaultCatalogFilters(query?: string): CatalogFilters {
-  return {
-    query: normalizeSearchQuery(query),
-    locale: DEFAULT_CATALOG_LOCALE,
-    countryCode: DEFAULT_CATALOG_MARKET,
-    invalidCategorySelection: false,
-    invalidAreaSelection: false,
-  };
-}
-
 export async function getHomeCatalog(filters?: CatalogFilters | string) {
   const normalizedFilters =
     typeof filters === "string" || filters === undefined
-      ? defaultCatalogFilters(filters)
+      ? normalizeCatalogFilters({ q: filters })
       : filters;
 
-  if (!isSupabaseConfigured()) {
+  if (normalizedFilters.searchError || !isSupabaseConfigured()) {
     return {
       products: [] as CatalogProduct[],
       shops: [] as CatalogShop[],
@@ -169,12 +159,17 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
 
   const [supabase, categories] = await Promise.all([
     createServerSupabaseClient(),
-    getProductCategoryTree(normalizedFilters.locale),
+    getProductCategoryTree(normalizedFilters.locale,
+      normalizedFilters.categorySlug || normalizedFilters.subcategorySlug ? { requireAvailable: true } : undefined,
+    ),
   ]);
   const selection = resolveCategorySelection(categories, normalizedFilters);
   const areaCode = normalizedFilters.administrativeAreaCode ?? null;
+  const { text: lexicalText, ...hardFilters } = normalizedFilters.criteria ?? {};
+  const query = lexicalText ?? normalizedFilters.query;
+  const hasHardFilters = Object.keys(hardFilters).length > 0;
   const hasCatalogFilter = Boolean(
-    normalizedFilters.query || selection.categoryId || areaCode,
+    query || hasHardFilters || selection.categoryId || areaCode,
   );
   let shopsQuery = supabase
     .from("shops")
@@ -190,13 +185,41 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
   }
   let productRows: ProductQueryRow[] = [];
 
+  // Ranked IDs and fallback results both cross this boundary. Reapply mutable
+  // criteria when reading the cards so their displayed prices still qualify.
+  function eligibleProducts() {
+    let read = supabase.from("products").select(productSelection)
+      .eq("status", "published").eq("is_admin_enabled", true)
+      .eq("shops.is_publishing_approved", true)
+      .not("expires_at", "is", null).gt("expires_at", new Date().toISOString())
+      .eq("shops.country_code", normalizedFilters.countryCode);
+    if (areaCode) read = read.overlaps("shops.administrative_area_codes", [areaCode]);
+    if (!selection.invalidCategorySelection && selection.selectedCategory) {
+      read = read.in("category_id", listingCategoryIds(selection));
+    }
+    const { currency, min, minInclusive, max, maxInclusive, condition, grade, inStock, waterproof } = hardFilters;
+    if (currency || min !== undefined || max !== undefined) read = read.eq("currency_code", "MXN");
+    if (min !== undefined) read = minInclusive === false ? read.gt("price_mxn", min) : read.gte("price_mxn", min);
+    if (max !== undefined) read = maxInclusive === false ? read.lt("price_mxn", max) : read.lte("price_mxn", max);
+    if (condition || grade) read = read.eq("condition", condition ?? "used");
+    if (grade) read = read.eq("used_condition", grade);
+    if (inStock) read = read.gt("units_available", 0);
+    if (waterproof !== undefined) read = read.eq("waterproof", waterproof);
+    for (const key of ["color", "size", "material"] as const) {
+      const value = hardFilters[key];
+      if (value) read = read.eq(key, value);
+    }
+    return read;
+  }
+
   if (hasCatalogFilter) {
     let rankedRows: { product_id: number; rank: number }[] = [];
     let rankedSearchFailed = false;
 
     try {
-      const rankedResult = await supabase.rpc("search_product_ids", {
-        p_query: normalizedFilters.query ?? "",
+      const rankedResult = await supabase.rpc("search_catalog_ids", {
+        p_filters: hardFilters,
+        p_query: query ?? "",
         p_locale: normalizedFilters.locale,
         p_country_code: normalizedFilters.countryCode,
         p_administrative_area_code: areaCode,
@@ -213,15 +236,7 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
       const rankedIds = rankedRows.map((item) => item.product_id);
 
       if (rankedIds.length) {
-        const result = await supabase
-          .from("products")
-          .select(productSelection)
-          .eq("status", "published")
-          .eq("is_admin_enabled", true)
-          .eq("shops.is_publishing_approved", true)
-          .not("expires_at", "is", null)
-          .gt("expires_at", new Date().toISOString())
-          .in("id", rankedIds);
+        const result = await eligibleProducts().in("id", rankedIds);
         const data = readOrThrow(result, "Catalogue products");
         const rankById = new Map(rankedIds.map((id, index) => [id, index]));
         productRows = ((data ?? []) as unknown as ProductQueryRow[]).sort(
@@ -231,85 +246,28 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
         );
       }
     } else {
-      const fallbackLeafIds = listingCategoryIds(selection);
-
-      if (
-        selection.invalidCategorySelection ||
-        !selection.selectedCategory ||
-        fallbackLeafIds.length
-      ) {
-        let fallbackQuery = supabase
-          .from("products")
-          .select(productSelection)
-          .eq("status", "published")
-          .eq("is_admin_enabled", true)
-          .eq("shops.is_publishing_approved", true)
-          .not("expires_at", "is", null)
-          .gt("expires_at", new Date().toISOString())
-          .eq("shops.country_code", normalizedFilters.countryCode)
-          .order("created_at", { ascending: false })
-          .limit(24);
-
-        if (areaCode) {
-          fallbackQuery = fallbackQuery.overlaps("shops.administrative_area_codes", [areaCode]);
-        }
-        if (normalizedFilters.query) {
-          fallbackQuery = fallbackQuery.ilike(
-            "name",
-            `%${escapePostgresLikePattern(normalizedFilters.query)}%`,
-          );
-        }
-        if (!selection.invalidCategorySelection && selection.selectedCategory) {
-          fallbackQuery = fallbackQuery.in("category_id", fallbackLeafIds);
-        }
-
-        const data = readOrThrow(await fallbackQuery, "Catalogue products");
-        productRows = (data ?? []) as unknown as ProductQueryRow[];
-      }
+      let read = eligibleProducts();
+      if (query) read = read.ilike("name", `%${escapePostgresLikePattern(query)}%`);
+      const result = await read.order("created_at", { ascending: false }).limit(24);
+      productRows = (readOrThrow(result, "Catalogue products") ?? []) as unknown as ProductQueryRow[];
     }
   } else {
-    const result = await supabase
-      .from("products")
-      .select(productSelection)
-      .eq("status", "published")
-      .eq("is_admin_enabled", true)
-      .eq("shops.is_publishing_approved", true)
-      .not("expires_at", "is", null)
-      .gt("expires_at", new Date().toISOString())
-      .eq("shops.country_code", normalizedFilters.countryCode)
+    const result = await eligibleProducts()
       .order("created_at", { ascending: false })
       .limit(24);
     productRows = (readOrThrow(result, "Catalogue products") ?? []) as unknown as ProductQueryRow[];
   }
 
   // A category page gives founders in their 90 days the featured slot.
-  if (selection.categoryId && !normalizedFilters.query && !selection.invalidCategorySelection) {
-    const leafIds = listingCategoryIds(selection);
-
-    if (leafIds.length) {
-      try {
-        let founderQuery = supabase
-          .from("products")
-          .select(productSelection)
-          .eq("status", "published")
-          .eq("is_admin_enabled", true)
-          .eq("shops.is_publishing_approved", true)
-          .not("expires_at", "is", null)
-          .gt("expires_at", new Date().toISOString())
-          .eq("shops.country_code", normalizedFilters.countryCode)
-          .gte("shops.founder_since", new Date(Date.now() - FOUNDER_FEATURE_DAYS * 86_400_000).toISOString())
-          .in("category_id", leafIds)
-          .order("created_at", { ascending: false })
-          .limit(40);
-
-        if (areaCode) {
-          founderQuery = founderQuery.overlaps("shops.administrative_area_codes", [areaCode]);
-        }
-        const { data } = await founderQuery;
-        productRows = withFeaturedFounders(productRows, (data ?? []) as unknown as ProductQueryRow[]);
-      } catch {
-        // The featured slot is a bonus; the category's results stand without it.
-      }
+  if (selection.categoryId && !query && !hasHardFilters && !selection.invalidCategorySelection) {
+    try {
+      const { data } = await eligibleProducts()
+        .gte("shops.founder_since", new Date(Date.now() - FOUNDER_FEATURE_DAYS * 86_400_000).toISOString())
+        .order("created_at", { ascending: false })
+        .limit(40);
+      productRows = withFeaturedFounders(productRows, (data ?? []) as unknown as ProductQueryRow[]);
+    } catch {
+      // Featuring is optional. Keep the eligible products if this read fails.
     }
   }
 
@@ -332,7 +290,7 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
       selection.selectedSubcategory?.slug ??
       selection.selectedCategory?.slug;
 
-    if (telemetryQuery) {
+    if (telemetryQuery && [...telemetryQuery].length <= 200) {
       try {
         const telemetryResult = await supabase.rpc("record_catalog_search", {
           p_query: telemetryQuery,

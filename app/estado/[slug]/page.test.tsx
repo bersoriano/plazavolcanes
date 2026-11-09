@@ -74,6 +74,14 @@ describe("State catalog page", () => {
     expect(notFound).toHaveBeenCalled();
   });
 
+  it("keeps a state budget search out of the search index", async () => {
+    const result = await generateMetadata({
+      params: Promise.resolve({ slug: "jalisco" }),
+      searchParams: Promise.resolve({ max: "100", maxInclusive: "false" }),
+    });
+    expect(result.robots).toEqual({ index: false, follow: true });
+  });
+
   it("titles the page after the state", async () => {
     expect(await generateMetadata({ params: Promise.resolve({ slug: "jalisco" }) })).toMatchObject({
       title: "Productos en Jalisco — Plaza Volcanes",

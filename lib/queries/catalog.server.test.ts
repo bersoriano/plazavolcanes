@@ -15,6 +15,70 @@ afterEach(() => {
 });
 
 describe("getHomeCatalog", () => {
+  it.each([false, true])("enforces the budget and seller claim on the card read (ranking unavailable: %s)", async (rpcFailed) => {
+    const current = { id: 9, price_mxn: 100, waterproof: true };
+    const products = {
+      select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(),
+      not: vi.fn().mockReturnThis(), gt: vi.fn().mockReturnThis(),
+      lt: vi.fn().mockReturnThis(), ilike: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(),
+      in: vi.fn(() => readCards()), limit: vi.fn(() => readCards()),
+    };
+    // The ranker previously saw this listing below 100. Its current price
+    // sits exactly at the exclusive upper bound when the page loads its cards.
+    function readCards(): { data: typeof current[] } {
+      const bound = products.lt.mock.calls.find(([key]) => key === "price_mxn")?.[1];
+      return { data: bound !== undefined && current.price_mxn >= bound ? [] : [current] };
+    }
+    const shops = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue({ data: [] }) };
+    const rpc = vi.fn().mockResolvedValueOnce(rpcFailed
+      ? { data: null, error: { message: "unavailable" } }
+      : { data: [{ product_id: 9, rank: 60 }] }).mockResolvedValue({ data: null });
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({
+      from: (table: string) => table === "products" ? products : shops, rpc,
+    } as never);
+    vi.mocked(getProductCategoryTree).mockResolvedValue([]);
+    const result = await getHomeCatalog("waterproof jacket under $100");
+    expect(rpc).toHaveBeenCalledWith("search_catalog_ids", expect.objectContaining({
+      p_query: "jacket", p_filters: { waterproof: true, max: 100, maxInclusive: false, currency: "MXN" },
+    }));
+    expect(result.products).toEqual([]);
+    expect(products.eq).toHaveBeenCalledWith("waterproof", true);
+    expect(products.eq).toHaveBeenCalledWith("currency_code", "MXN");
+    expect(rpc).toHaveBeenCalledWith("record_catalog_search", expect.objectContaining({ p_query: "jacket", p_result_count: 0 }));
+  });
+
+  it("keeps over-budget featured listings out of empty category results", async () => {
+    const shops = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue({ data: [] }) };
+    const from = vi.fn().mockReturnValue(shops);
+    const rpc = vi.fn().mockResolvedValue({ data: [] });
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({ from, rpc } as never);
+    const category = { id: 10, name: "Moda", slug: "moda", parentId: null, sortOrder: 0, isActive: true };
+    vi.mocked(getProductCategoryTree).mockResolvedValue([{
+      ...category, children: [{ ...category, id: 11, parentId: 10, name: "Ropa", slug: "ropa" }],
+    }]);
+    const result = await getHomeCatalog({
+      categorySlug: "moda", criteria: { max: 100, currency: "MXN" },
+      countryCode: "MX", locale: "es-MX", invalidAreaSelection: false, invalidCategorySelection: false,
+    });
+    expect(result.products).toEqual([]);
+    expect(rpc).toHaveBeenCalledWith("search_catalog_ids", expect.objectContaining({ p_category_id: 10 }));
+    expect(from).not.toHaveBeenCalledWith("products");
+  });
+
+  it.each(["a".repeat(450), "under $100"])("can search even when no eligible telemetry text exists", async (query) => {
+    const shops = { select: vi.fn().mockReturnThis(), eq: vi.fn().mockReturnThis(), order: vi.fn().mockReturnThis(), limit: vi.fn().mockResolvedValue({ data: [] }) };
+    const rpc = vi.fn().mockResolvedValue({ data: [] });
+    vi.mocked(createServerSupabaseClient).mockResolvedValue({ from: () => shops, rpc } as never);
+    vi.mocked(getProductCategoryTree).mockResolvedValue([]);
+    expect((await getHomeCatalog(query)).searchEventId).toBeNull();
+    expect(rpc.mock.calls.map(([name]) => name)).toEqual(["search_catalog_ids"]);
+  });
+
+  it("does not run a catalog read for an unsupported currency", async () => {
+    expect((await getHomeCatalog("jacket under 100 USD")).products).toEqual([]);
+    expect(createServerSupabaseClient).not.toHaveBeenCalled();
+  });
+
   it("keeps selected shop location and tier evidence on catalog products", async () => {
     const productSelect = vi.fn();
     const productRows = [

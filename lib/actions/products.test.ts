@@ -160,6 +160,14 @@ beforeEach(() => {
 });
 
 describe("createProduct", () => {
+  it("saves declared attributes on an incomplete draft", async () => {
+    const form = sellerForm({ description: "", color: "black", size: "M", material: "wool", waterproof: "true" });
+    await expect(createProduct(7, idle, form)).rejects.toThrow("NEXT_REDIRECT");
+    expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
+      color: "black", size: "M", material: "wool", waterproof: true, status: "draft",
+    }));
+  });
+
   it("creates a literal draft without accepting forged publication or moderation values", async () => {
     await expect(createProduct(7, idle, sellerForm({ is_admin_enabled: "false" }))).rejects.toThrow(
       "NEXT_REDIRECT:/panel/productos/22/editar?creado=1",
@@ -319,6 +327,40 @@ describe("updateProduct and the slug of a draft", () => {
 });
 
 describe("updateProduct", () => {
+  it("clears a declared detail, stores explicit no, and leaves omitted details untouched", async () => {
+    mocks.productsSelect.mockReturnValueOnce(draft("taza-volcanica"));
+    const result = await updateProduct(22, idle, sellerForm({ status: "draft", color: "", waterproof: "false" }));
+    expect(result.status).toBe("success");
+    const row = mocks.update.mock.calls[0][0];
+    expect(row).toMatchObject({ color: null, waterproof: false });
+    expect(row).not.toHaveProperty("material");
+    expect(row).not.toHaveProperty("size");
+  });
+
+  it("clears waterproofing back to unknown", async () => {
+    mocks.productsSelect.mockReturnValueOnce(draft("taza-volcanica"));
+    expect((await updateProduct(22, idle, sellerForm({ status: "draft", waterproof: "" }))).status).toBe("success");
+    expect(mocks.update).toHaveBeenCalledWith(expect.objectContaining({ waterproof: null }));
+  });
+
+  it.each([["color", "purple"], ["size", "XXL"], ["material", "linen"], ["waterproof", "yes"]])(
+    "rejects an unknown %s on both write paths", async (field, value) => {
+      const form = sellerForm({ [field]: value });
+      for (const write of [createProduct, updateProduct]) {
+        expect(await write(22, idle, form)).toMatchObject({ status: "error", errors: { [field]: expect.any(Array) } });
+      }
+      expect(mocks.insert).not.toHaveBeenCalled();
+      expect(mocks.update).not.toHaveBeenCalled();
+    },
+  );
+
+  it("rejects multiple declarations for a single configuration", async () => {
+    const form = sellerForm({ color: "black" });
+    form.append("color", "white");
+    expect(await createProduct(7, idle, form)).toMatchObject({ status: "error", errors: { color: expect.any(Array) } });
+    expect(mocks.insert).not.toHaveBeenCalled();
+  });
+
   it("never publishes a new listing without a usable uploaded cover", async () => {
     mocks.productImagesSelect.mockImplementationOnce(() => query({ count: 0, error: null }));
     mocks.productsSelect.mockImplementationOnce(() => query({

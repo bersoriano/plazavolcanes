@@ -486,6 +486,13 @@ describe("Home landing", () => {
     redirect.mockReset();
   });
 
+  it("renders a price-only search with an MXN filter the buyer can remove", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult());
+    render(await Home({ searchParams: Promise.resolve({ q: "under $100" }) }));
+    expect(screen.getByRole("link", { name: "Quitar filtro: Menos de 100 MXN" })).toHaveAttribute("href", "/explorar");
+    expect(screen.getByRole("heading", { name: "No encontramos productos" })).toBeVisible();
+  });
+
   it("keeps the catalogue screen for a search", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products: [sampleProduct()] }));
 
@@ -512,6 +519,12 @@ describe("Home state parameter", () => {
     });
 
     expect(redirect).toHaveBeenCalledWith("/estado/jalisco?q=taza&categoria=electronica");
+  });
+
+  it("keeps the buyer’s original sentence on the first regional results page", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult());
+    await Home({ searchParams: Promise.resolve({ q: "waterproof jacket under $100", estado: "jalisco", min: "20" }) });
+    expect(redirect).toHaveBeenCalledWith("/estado/jalisco?q=waterproof+jacket+under+%24100&min=20");
   });
 
   it("keeps the national catalog and warns when the state is unknown", async () => {

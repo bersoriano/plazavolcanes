@@ -65,9 +65,10 @@ export function ProductCard({
   variant = "default",
   showShop = true,
 }: ProductCardProps) {
-  const catalogQuery = catalogHref?.includes("?")
-    ? catalogHref.slice(catalogHref.indexOf("?"))
-    : "";
+  const [catalogPath, search] = (catalogHref ?? "").split("?");
+  const context = new URLSearchParams(search);
+  if (catalogPath.startsWith("/estado/")) context.set("estado", catalogPath.slice("/estado/".length));
+  const catalogQuery = context.size ? `?${context}` : "";
   const currencyCode = product.currency_code ?? DEFAULT_CATALOG_CURRENCY;
   // A founding shop wears the same gold frame as a Premium one, with its own
   // chip: status earned at launch (docs/launch-package.md).

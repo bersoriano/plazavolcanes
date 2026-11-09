@@ -276,6 +276,7 @@ export type Database = {
       products: {
         Row: {
           category_id: number | null;
+          color: "black" | "white" | "blue" | "red" | "green" | null;
           condition: "new" | "used" | null;
           content_locale: "es-MX" | "en-US";
           created_at: string;
@@ -285,19 +286,23 @@ export type Database = {
           id: number;
           image_path: string | null;
           is_admin_enabled: boolean;
+          material: "cotton" | "wool" | "leather" | "polyester" | null;
           name: string;
           price_mxn: number | null;
           search_document: unknown;
           shop_id: number;
+          size: "XS" | "S" | "M" | "L" | "XL" | null;
           slug: string;
           status: "draft" | "published" | "expired" | "deleted";
           units_available: number | null;
           expires_at: string | null;
           updated_at: string;
+          waterproof: boolean | null;
           used_condition: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
         Insert: {
           category_id?: number | null;
+          color?: "black" | "white" | "blue" | "red" | "green" | null;
           condition?: "new" | "used" | null;
           content_locale?: "es-MX" | "en-US";
           created_at?: string;
@@ -307,18 +312,22 @@ export type Database = {
           id?: never;
           image_path?: string | null;
           is_admin_enabled?: boolean;
+          material?: "cotton" | "wool" | "leather" | "polyester" | null;
           name: string;
           price_mxn?: number | null;
           shop_id: number;
+          size?: "XS" | "S" | "M" | "L" | "XL" | null;
           slug: string;
           status?: "draft" | "published" | "expired" | "deleted";
           units_available?: number | null;
           expires_at?: string | null;
           updated_at?: string;
+          waterproof?: boolean | null;
           used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
         Update: {
           category_id?: number | null;
+          color?: "black" | "white" | "blue" | "red" | "green" | null;
           condition?: "new" | "used" | null;
           content_locale?: "es-MX" | "en-US";
           created_at?: string;
@@ -328,14 +337,17 @@ export type Database = {
           id?: never;
           image_path?: string | null;
           is_admin_enabled?: boolean;
+          material?: "cotton" | "wool" | "leather" | "polyester" | null;
           name?: string;
           price_mxn?: number | null;
           shop_id?: number;
+          size?: "XS" | "S" | "M" | "L" | "XL" | null;
           slug?: string;
           status?: "draft" | "published" | "expired" | "deleted";
           units_available?: number | null;
           expires_at?: string | null;
           updated_at?: string;
+          waterproof?: boolean | null;
           used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
         Relationships: [
@@ -840,6 +852,21 @@ export type Database = {
           last_active_days_ago: number | null;
           seller_active_days_ago: number | null;
           evaluated_at: string | null;
+        }[];
+      };
+      search_catalog_ids: {
+        Args: {
+          p_administrative_area_code: string | null;
+          p_category_id: number | null;
+          p_country_code: string;
+          p_filters: Json;
+          p_limit: number;
+          p_locale: string;
+          p_query: string;
+        };
+        Returns: {
+          product_id: number;
+          rank: number;
         }[];
       };
       search_product_ids: {

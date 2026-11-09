@@ -1,3 +1,4 @@
+import { writeSearchCriteria, type CatalogSearchCriteria } from "@/lib/search/criteria";
 import {
   DEFAULT_CATALOG_LOCALE,
   DEFAULT_CATALOG_MARKET,
@@ -115,6 +116,7 @@ export function findCategorySelection(
 }
 
 type CatalogHrefFilters = {
+  criteria?: CatalogSearchCriteria;
   query?: string;
   categorySlug?: string;
   subcategorySlug?: string;
@@ -124,17 +126,19 @@ type CatalogHrefFilters = {
 };
 
 export function buildCatalogHref({
+  criteria,
   query,
-  categorySlug,
-  subcategorySlug,
-  stateSlug,
-  locale,
-  countryCode,
+  categorySlug = criteria?.categorySlug,
+  subcategorySlug = criteria?.subcategorySlug,
+  stateSlug = criteria?.administrativeAreaSlug,
+  locale = criteria?.locale,
+  countryCode = criteria?.countryCode,
 }: CatalogHrefFilters): string {
-  const searchParams = new URLSearchParams();
+  const searchParams = criteria ? writeSearchCriteria(criteria) : new URLSearchParams();
   const normalizedQuery = query?.trim();
 
-  if (normalizedQuery) searchParams.set("q", normalizedQuery);
+  const hasCriteria = searchParams.size > 0;
+  if (!criteria && normalizedQuery) searchParams.set("q", normalizedQuery);
   if (categorySlug) searchParams.set("categoria", categorySlug);
   if (subcategorySlug) searchParams.set("subcategoria", subcategorySlug);
   if (locale && locale !== DEFAULT_CATALOG_LOCALE) searchParams.set("locale", locale);
@@ -145,7 +149,7 @@ export function buildCatalogHref({
   // The state is a place, so it owns the path; everything else refines it.
   // A search or a category still lives on "/", but "/" with nothing to filter
   // is the seller landing, so the whole unfiltered plaza is /explorar.
-  const filtered = searchParams.has("q") || searchParams.has("categoria");
+  const filtered = hasCriteria || searchParams.has("q") || searchParams.has("categoria");
   const basePath = stateSlug ? `/estado/${stateSlug}` : filtered ? "/" : "/explorar";
   const queryString = searchParams.toString();
 
