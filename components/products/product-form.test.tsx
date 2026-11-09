@@ -171,10 +171,8 @@ describe("ProductForm", () => {
       "https://plazavolcanes.com/productos/taza-volcanica",
     );
     expect(screen.getByRole("group", { name: "Compartir producto" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Compartir por WhatsApp" })).toHaveAttribute(
-      "href",
-      expect.stringContaining(encodeURIComponent("https://plazavolcanes.com/productos/taza-volcanica")),
-    );
+    expect(screen.getByRole("button", { name: "Compartir" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Compartir por WhatsApp" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Agregar otro producto" })).toHaveAttribute(
       "href",
       "/panel/tiendas/1/productos/nuevo",

@@ -475,7 +475,7 @@ export function ProductForm({
         <section aria-labelledby="publication-success" className="rounded-2xl border border-success/30 bg-success/10 p-4">
           <h2 className="font-display text-xl font-semibold" id="publication-success">Tu publicación está lista</h2>
           <Link className="mt-3 inline-flex min-h-11 items-center font-semibold text-brand underline underline-offset-4" href={publicUrl}>Ver publicación</Link>
-          <div className="mt-3"><ShareActions label="Compartir producto" title={product?.name ?? "tu producto"} url={publicUrl} /></div>
+          <div className="mt-3"><ShareActions showWhatsApp={false} label="Compartir producto" title={product?.name ?? "tu producto"} url={publicUrl} /></div>
           <Link className="mt-4 inline-flex min-h-11 items-center font-semibold text-brand underline underline-offset-4" href={`/panel/tiendas/${shopId}/productos/nuevo`}>Agregar otro producto</Link>
         </section>
       ) : null}
