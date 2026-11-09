@@ -297,6 +297,7 @@ export type Database = {
           units_available: number | null;
           expires_at: string | null;
           updated_at: string;
+          other_features: string | null;
           waterproof: boolean | null;
           used_condition: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
@@ -322,6 +323,7 @@ export type Database = {
           units_available?: number | null;
           expires_at?: string | null;
           updated_at?: string;
+          other_features?: string | null;
           waterproof?: boolean | null;
           used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
@@ -347,6 +349,7 @@ export type Database = {
           units_available?: number | null;
           expires_at?: string | null;
           updated_at?: string;
+          other_features?: string | null;
           waterproof?: boolean | null;
           used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };

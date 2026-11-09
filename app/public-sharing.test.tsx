@@ -63,6 +63,7 @@ describe("public sharing controls", () => {
       },
     ]);
     vi.mocked(getPublicProduct).mockResolvedValue({
+      other_features: null,
       id: 8,
       slug: "taza-volcanica",
       name: "Taza volcánica",
@@ -135,6 +136,7 @@ describe("public sharing controls", () => {
       },
     ]);
     vi.mocked(getPublicProduct).mockResolvedValue({
+      other_features: null,
       id: 8,
       slug: "taza-volcanica",
       name: "Volcanic clay mug",
@@ -244,6 +246,7 @@ describe("product slug routing", () => {
   it("looks the product up by the slug in the path", async () => {
     vi.mocked(getProductCategoryTree).mockResolvedValue([]);
     vi.mocked(getPublicProduct).mockResolvedValue({
+      other_features: null,
       id: 8,
       slug: "motorola-razr-5g",
       name: "Motorola Razr 5G",
