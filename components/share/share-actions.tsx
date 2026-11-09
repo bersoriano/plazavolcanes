@@ -8,6 +8,7 @@ import { Button, ButtonLink } from "@/components/ui/button";
 type ShareActionsProps = {
   label: string;
   title: string;
+  showWhatsApp?: boolean;
   /**
    * The address to share. Pages that are themselves the thing being shared
    * leave it out and share where the visitor is; the seller panel shares the
@@ -28,7 +29,7 @@ function getServerLocationSnapshot() {
   return "";
 }
 
-export function ShareActions({ label, title, url }: ShareActionsProps) {
+export function ShareActions({ label, title, url, showWhatsApp = true }: ShareActionsProps) {
   const locationUrl = useSyncExternalStore(
     subscribeToLocation,
     getLocationSnapshot,
@@ -72,17 +73,19 @@ export function ShareActions({ label, title, url }: ShareActionsProps) {
         <Share2 aria-hidden="true" className="size-4" />
         Compartir
       </Button>
-      <ButtonLink
-        aria-label="Compartir por WhatsApp"
-        data-product-cta="share"
-        variant="secondary"
-        href={whatsappMessage ? `https://wa.me/?text=${whatsappMessage}` : "https://wa.me/"}
-        rel="noopener noreferrer"
-        target="_blank"
-      >
-        <MessageCircle aria-hidden="true" className="size-4" />
-        WhatsApp
-      </ButtonLink>
+      {showWhatsApp ? (
+        <ButtonLink
+          aria-label="Compartir por WhatsApp"
+          data-product-cta="share"
+          variant="secondary"
+          href={whatsappMessage ? `https://wa.me/?text=${whatsappMessage}` : "https://wa.me/"}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          <MessageCircle aria-hidden="true" className="size-4" />
+          WhatsApp
+        </ButtonLink>
+      ) : null}
       {status ? (
         <p
           className={`basis-full text-sm font-medium ${status === "copied" ? "text-success" : "text-sale"}`}

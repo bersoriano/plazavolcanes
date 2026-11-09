@@ -193,7 +193,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
                 returnTo={productPath}
                 signedIn={Boolean(viewerId)}
               />
-              <ShareActions label="Compartir producto" title={product.name} />
+              <ShareActions showWhatsApp={false} label="Compartir producto" title={product.name} />
             </div>
             <p className="mt-8 rounded-2xl border border-line bg-surface p-4 text-sm leading-6 text-muted">
               Producto publicado por una tienda independiente de Plaza Volcanes.

@@ -102,7 +102,7 @@ describe("public sharing controls", () => {
 
     expect(screen.getByRole("group", { name: "Compartir producto" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Compartir" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Compartir por WhatsApp" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Compartir por WhatsApp" })).not.toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "Categoría del producto" })).toHaveTextContent(
       "Hogar y jardínCocina y comedor",
     );
