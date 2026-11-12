@@ -298,6 +298,9 @@ export type Database = {
           expires_at: string | null;
           updated_at: string;
           other_features: string | null;
+          phone_battery_health: number | null;
+          phone_carrier_status: "unlocked" | "locked" | null;
+          phone_repair_history: string | null;
           waterproof: boolean | null;
           used_condition: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
@@ -324,6 +327,9 @@ export type Database = {
           expires_at?: string | null;
           updated_at?: string;
           other_features?: string | null;
+          phone_battery_health?: number | null;
+          phone_carrier_status?: "unlocked" | "locked" | null;
+          phone_repair_history?: string | null;
           waterproof?: boolean | null;
           used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
@@ -350,6 +356,9 @@ export type Database = {
           expires_at?: string | null;
           updated_at?: string;
           other_features?: string | null;
+          phone_battery_health?: number | null;
+          phone_carrier_status?: "unlocked" | "locked" | null;
+          phone_repair_history?: string | null;
           waterproof?: boolean | null;
           used_condition?: "mint" | "good" | "fair" | "bad" | "scrap" | null;
         };
@@ -830,6 +839,7 @@ export type Database = {
       resolve_order_dispute: { Args: { p_dispute_id: number; p_resolution: string; p_seller_fault: boolean; p_notes: string }; Returns: undefined };
       respond_to_dispute: { Args: { p_dispute_id: number; p_response: string; p_evidence: Json }; Returns: undefined };
       send_conversation_message: { Args: { p_conversation_id: number; p_body: string; p_idempotency_key: string }; Returns: number };
+      send_product_question: { Args: { p_shop_id: number; p_product_id: number; p_body: string; p_idempotency_key: string }; Returns: number };
       catalog_state_counts: {
         Args: { p_country_code: string | null };
         Returns: {

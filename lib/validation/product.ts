@@ -30,6 +30,9 @@ const blankAsNull = (value: unknown) => (value === "" || value == null ? null : 
  * `lib/listing-readiness.ts`, which the form and the server action both read.
  */
 const productFields = {
+  phone_battery_health: z.preprocess(blankAsNull, z.coerce.number().int().min(0).max(100).nullable()).optional(),
+  phone_carrier_status: z.preprocess(blankAsNull, z.enum(["unlocked", "locked"]).nullable()).optional(),
+  phone_repair_history: z.string().trim().max(500, "Escribe hasta 500 caracteres.").transform((value) => value || null).optional(),
   color: z.preprocess(blankAsNull, z.enum(COLORS, "Selecciona un color de la lista.").nullable()).optional(),
   size: z.preprocess(blankAsNull, z.enum(SIZES, "Selecciona una talla de la lista.").nullable()).optional(),
   material: z.preprocess(blankAsNull, z.enum(MATERIALS, "Selecciona un material de la lista.").nullable()).optional(),

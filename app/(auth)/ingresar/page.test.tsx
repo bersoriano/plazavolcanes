@@ -9,6 +9,7 @@ vi.mock("@/lib/actions/auth", () => ({
   resendConfirmation: vi.fn(),
 }));
 vi.mock("@/lib/purchase-intent.server", () => ({ readPurchaseIntent }));
+vi.mock("@/lib/question-context.server", () => ({ questionSellerFromContinuation: async (path: string) => path?.includes("pregunta=1") ? "Cool Cats Tech" : null }));
 
 const { default: SignInPage } = await import("@/app/(auth)/ingresar/page");
 
@@ -20,6 +21,11 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("Sign-in page notices", () => {
+  it("uses buyer copy and keeps listing continuation for a drafted question", async () => {
+    render(await SignInPage({ searchParams: Promise.resolve({ continuar: "/productos/iphone?pregunta=1" }) }));
+    expect(screen.getByText(/Ingresa para enviar tu pregunta a Cool Cats Tech/)).toBeInTheDocument();
+    expect(document.querySelector('input[name="continuar"]')).toHaveValue("/productos/iphone?pregunta=1");
+  });
   it("explains a spent recovery link instead of showing a bare form", async () => {
     render(await SignInPage({ searchParams: Promise.resolve({ error: "recuperacion" }) }));
 

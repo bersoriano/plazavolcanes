@@ -4,6 +4,8 @@ export type ActionState = {
   errors?: Record<string, string[]>;
   /** Only the destination address, never signup credentials or an account identifier. */
   confirmationEmail?: string;
+  /** Present after a product question reaches its existing conversation. */
+  conversationId?: number;
   /**
    * What the person had typed. React 19 resets a form once its action settles,
    * so a rejected submit must hand the values back for the fields to restore.
