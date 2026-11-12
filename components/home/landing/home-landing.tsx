@@ -1,13 +1,6 @@
+import Link from "next/link";
+
 import { BuyerPanel } from "@/components/home/landing/buyer-panel";
-import { BenefitsBento } from "@/components/home/landing/benefits-bento";
-import { CrossingTapes } from "@/components/home/landing/crossing-tapes";
-import { FinalCta } from "@/components/home/landing/final-cta";
-import { LandingArticle } from "@/components/home/landing/landing-article";
-import { LandingStores } from "@/components/home/landing/landing-stores";
-import { SellerHero } from "@/components/home/landing/seller-hero";
-import { SellerStepsShowcase } from "@/components/home/landing/seller-steps-showcase";
-import type { FoundersProgram } from "@/lib/launch";
-import type { PostMeta } from "@/lib/posts";
 import type { CatalogFilters } from "@/lib/queries/catalog";
 import type { getCatalogStateCounts, getHomeCatalog } from "@/lib/queries/catalog.server";
 
@@ -15,41 +8,24 @@ type HomeLandingProps = {
   catalog: Awaited<ReturnType<typeof getHomeCatalog>>;
   stateCounts: Awaited<ReturnType<typeof getCatalogStateCounts>>;
   filters: CatalogFilters;
-  /** The founders promotion: whether it is open and how many spots are taken. */
-  founders: FoundersProgram;
-  /** The newest published post, briefed on the page; none while the blog is empty. */
-  latestPost: PostMeta | null;
 };
 
-/**
- * The bare home page: a seller-first landing that still lets a buyer search
- * and browse. Every filtered view of "/" keeps the catalogue screen.
- *
- * All of it reads the one home catalogue query, which is newest first: its
- * first product is the newest listing.
- */
-export function HomeLanding({ catalog, stateCounts, filters, founders, latestPost }: HomeLandingProps) {
-  const { products, categories, shops } = catalog;
-  // Read per request: the landing is rendered on demand, so the offer leaves
-  // the page the moment the promotion closes or fills.
-  const promoActive = founders.open;
-
+export function HomeLanding({ catalog, stateCounts, filters }: HomeLandingProps) {
   return (
     <>
-      <SellerHero promoActive={promoActive} spotsTaken={founders.taken} latest={products[0] ?? null} locale={filters.locale} />
-      <CrossingTapes categories={categories.map((category) => category.name)} />
-      <BenefitsBento promoActive={promoActive} />
-      <SellerStepsShowcase />
-      {latestPost ? <LandingArticle post={latestPost} /> : null}
-      <LandingStores shops={shops} />
       <BuyerPanel
-        categories={categories}
+        categories={catalog.categories}
         countryCode={filters.countryCode}
         locale={filters.locale}
-        products={products}
+        products={catalog.products}
         stateCounts={stateCounts}
       />
-      {promoActive ? <FinalCta /> : null}
+      <section className="mx-auto max-w-[1280px] px-5 pb-12 sm:px-8">
+        <p className="text-sm text-muted">
+          ¿Quieres vender en la plaza?{" "}
+          <Link className="font-semibold text-brand underline underline-offset-4" href="/vender">Conoce cómo vender</Link>
+        </p>
+      </section>
     </>
   );
 }
