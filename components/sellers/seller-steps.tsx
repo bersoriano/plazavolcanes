@@ -54,9 +54,11 @@ const ORDERS_STEP: Step = {
 export function SellerSteps({
   viewer = "signed-out",
   promoActive = false,
+  assistanceReady = false,
 }: {
   viewer?: SellerViewer;
   promoActive?: boolean;
+  assistanceReady?: boolean;
 }) {
   const steps = [...FIRST_STEPS, promoActive ? FOUNDER_STEP : ORDERS_STEP];
   const cta = (
@@ -129,6 +131,13 @@ export function SellerSteps({
         <Link className={`flex lg:hidden ${ctaClass}`} href={sellerCtaHref(viewer, "pasos")}>
           {cta}
         </Link>
+        {assistanceReady ? (
+          <div className="rounded-2xl border border-line bg-background p-5">
+            <h3 className="font-display text-xl font-semibold text-ink">¿Quieres ayuda para publicar?</h3>
+            <p className="mt-2 text-sm leading-6 text-muted">Ten a la mano fotos y precios de cinco productos. Te ayudamos a armar tu catálogo. Puedes compartir tu tienda desde el primer producto publicado.</p>
+            <Link className="mt-3 inline-flex min-h-11 items-center font-semibold text-brand underline underline-offset-4" href="/quejas-y-aclaraciones#escribenos">Quiero ayuda para publicar</Link>
+          </div>
+        ) : null}
       </div>
     </section>
   );

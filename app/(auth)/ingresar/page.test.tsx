@@ -60,6 +60,12 @@ describe("Sign-in page notices", () => {
 });
 
 describe("Sign-in page purchase continuation", () => {
+  it("explains buyer inquiry and preserves product anchor through sign-in", async () => {
+    render(await SignInPage({ searchParams: Promise.resolve({ continuar: "/productos/taza#preguntar" }) }));
+    expect(screen.getByText(/preguntar por este producto/)).toBeInTheDocument();
+    expect(document.querySelector('input[name="continuar"]')).toHaveValue("/productos/taza#preguntar");
+    expect(screen.getByRole("link", { name: "Regístrate" })).toHaveAttribute("href", "/registro?continuar=%2Fproductos%2Ftaza%23preguntar");
+  });
   it("explains why authentication is being asked for mid-purchase", async () => {
     readPurchaseIntent.mockResolvedValue({ productId: 12, quantity: 2, productPath: "/productos/taza" });
 

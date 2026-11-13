@@ -7,6 +7,7 @@ import { getFoundersProgram, viewerIsFounder } from "@/lib/queries/founders.serv
 import { viewerOwnsAnyShop } from "@/lib/queries/seller-standing.server";
 import { organizationSchema, sellerServiceSchema } from "@/lib/seo/organization";
 import { sellerViewer } from "@/lib/seller-cta";
+import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 import "./vender.css";
 
@@ -35,7 +36,7 @@ export default async function SellerPage() {
           "@graph": [organizationSchema(), sellerServiceSchema({ foundersOpen: founders.open })],
         }}
       />
-      <SellerProgram founders={founders} isFounder={isFounder} viewer={sellerViewer(signedIn, ownsShop)} />
+      <SellerProgram assistanceReady={process.env.ASSISTED_ONBOARDING_CONTACT_READY === "true" && isSupabaseConfigured()} founders={founders} isFounder={isFounder} viewer={sellerViewer(signedIn, ownsShop)} />
     </>
   );
 }

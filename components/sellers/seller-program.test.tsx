@@ -10,6 +10,14 @@ afterEach(cleanup);
 const HERO = "Abre tu tienda gratis y quédate con cada peso.";
 
 describe("SellerProgram", () => {
+  it("shows assisted publishing only when the contact queue is enabled", () => {
+    const view = render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
+    expect(screen.queryByRole("link", { name: "Quiero ayuda para publicar" })).not.toBeInTheDocument();
+    view.rerender(<SellerProgram assistanceReady founders={FOUNDERS_FALLBACK} />);
+    expect(screen.getByRole("link", { name: "Quiero ayuda para publicar" })).toHaveAttribute("href", "/quejas-y-aclaraciones#escribenos");
+    expect(screen.getByText(/fotos y precios de cinco productos/)).toBeInTheDocument();
+    expect(screen.getByText(/desde el primer producto publicado/)).toBeInTheDocument();
+  });
   it("carries the three promises as labelled regions under a single h1", () => {
     render(<SellerProgram founders={FOUNDERS_FALLBACK} />);
 

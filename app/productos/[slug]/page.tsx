@@ -191,7 +191,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
               productPath={productPath}
               unitsAvailable={product.units_available}
             />
-            <div className="mt-7 flex flex-wrap items-center gap-3">
+            <div className="mt-7 flex scroll-mt-28 flex-wrap items-center gap-3" id="preguntar">
               <StartConversationButton
                 action={messageAction}
                 isOwnShop={viewerId === product.shopOwnerId}

@@ -32,7 +32,7 @@ export default async function SignInPage({ searchParams }: { searchParams: SignI
     <>
       <p className="text-sm font-semibold uppercase tracking-[0.18em] text-brand">Bienvenido de vuelta</p>
       <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink">Entra a tu plaza</h1>
-      <p className="mb-8 mt-3 leading-7 text-muted">Administra tus tiendas y mantén tus productos al día.</p>
+      <p className="mb-8 mt-3 leading-7 text-muted">{destination?.startsWith("/productos/") && destination.includes("#preguntar") ? "Ingresa o crea tu cuenta para preguntar por este producto. Después volverás al producto para abrir la conversación con la tienda." : "Administra tus tiendas y mantén tus productos al día."}</p>
       {notice ? (
         <p
           className="mb-6 rounded-2xl bg-sale/10 px-4 py-3 text-sm font-medium text-sale"
