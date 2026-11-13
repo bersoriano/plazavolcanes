@@ -277,8 +277,6 @@ export function ProductForm({
   }, [draftSaved, shopId]);
   const [preview, setPreview] = useState(product?.imageUrl ?? null);
   const [condition, setCondition] = useState<ProductCondition>(product?.condition ?? "new");
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(product?.category_id ?? null);
-  const phoneCategory = categories.some((category) => category.children.some((child) => child.id === selectedCategoryId && child.slug === "celulares-y-accesorios"));
   const [uploading, setUploading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [recovered, setRecovered] = useState(false);
@@ -403,10 +401,7 @@ export function ProductForm({
         categories={categories}
         error={state.errors?.category_id?.[0]}
         selectedLeafId={product?.category_id}
-        onSelectionChange={(category_id) => {
-          setSelectedCategoryId(category_id);
-          setReadiness((current) => ({ ...current, category_id }));
-        }}
+        onSelectionChange={(category_id) => setReadiness((current) => ({ ...current, category_id }))}
       />
       <Field defaultValue={state.values?.name ?? product?.name} error={state.errors?.name?.[0]} label="Nombre del producto" maxLength={120} name="name" placeholder="Taza de barro" required />
       <div className="space-y-2">
@@ -441,26 +436,6 @@ export function ProductForm({
           </Select>
           {state.errors?.used_condition?.[0] ? <p className="text-sm font-medium text-sale" id="used-condition-error">{state.errors.used_condition[0]}</p> : null}
         </div>
-      ) : null}
-
-      {condition === "used" && phoneCategory ? (
-        <fieldset className="space-y-3 rounded-2xl border border-line p-4">
-          <legend className="px-1 text-sm font-semibold text-ink">Datos del celular usado (opcionales)</legend>
-          <Field defaultValue={state.values?.phone_battery_health ?? product?.phone_battery_health ?? undefined} error={state.errors?.phone_battery_health?.[0]} label="Salud de batería (%)" max="100" min="0" name="phone_battery_health" type="number" />
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-ink" htmlFor="phone_carrier_status">Bloqueo de compañía</label>
-            <Select defaultValue={state.values?.phone_carrier_status ?? product?.phone_carrier_status ?? ""} id="phone_carrier_status" name="phone_carrier_status">
-              <option value="">Sin especificar</option>
-              <option value="unlocked">Liberado</option>
-              <option value="locked">Bloqueado para otra compañía</option>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <label className="block text-sm font-semibold text-ink" htmlFor="phone_repair_history">Historial de reparaciones</label>
-            <Textarea defaultValue={state.values?.phone_repair_history ?? product?.phone_repair_history ?? ""} id="phone_repair_history" maxLength={500} name="phone_repair_history" placeholder="Cuenta qué se reparó, o indica que no ha tenido reparaciones." />
-            {state.errors?.phone_repair_history?.[0] ? <p className="text-sm text-sale">{state.errors.phone_repair_history[0]}</p> : null}
-          </div>
-        </fieldset>
       ) : null}
 
       <div className="space-y-2">

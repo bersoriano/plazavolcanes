@@ -10,7 +10,7 @@ describe("FinalCta", () => {
     render(<FinalCta />);
 
     const section = screen.getByRole("region", { name: "Sé de las primeras 100 tiendas." });
-    expect(within(section).getByText("TIENDAS FUNDADORAS")).toBeInTheDocument();
+    expect(within(section).getByText("ÚLTIMOS LUGARES FUNDADORES")).toBeInTheDocument();
     expect(within(section).getByRole("link", { name: "Abrir mi tienda gratis" })).toHaveAttribute(
       "href",
       "/registro?vender=1",

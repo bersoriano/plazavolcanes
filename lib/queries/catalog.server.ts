@@ -43,7 +43,6 @@ export type CatalogProduct = Pick<
   imageUrl: string | null;
   shop: Pick<Shop, "name" | "slug" | "country_code" | "trust_tier" | "is_premium" | "founder_since"> & {
     administrative_area_codes: string[];
-    delivery_policy?: string | null;
   };
 };
 
@@ -66,7 +65,7 @@ function readOrThrow<R extends { data: unknown; error?: { code?: string; message
 }
 
 const productSelection =
-  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, is_admin_enabled, expires_at, shops!inner(id, owner_id, name, slug, country_code, administrative_area_codes, trust_tier, is_publishing_approved, is_premium, founder_since, delivery_policy), product_translations(locale, name, description, review_status)";
+  "id, slug, name, description, price_mxn, units_available, condition, used_condition, image_path, created_at, category_id, currency_code, is_admin_enabled, expires_at, shops!inner(id, owner_id, name, slug, country_code, administrative_area_codes, trust_tier, is_publishing_approved, is_premium, founder_since), product_translations(locale, name, description, review_status)";
 
 type ProductQueryRow = {
   id: number;
@@ -94,7 +93,6 @@ type ProductQueryRow = {
     is_publishing_approved: boolean;
     is_premium: boolean;
     founder_since: string | null;
-    delivery_policy: string | null;
   };
   product_translations: {
     locale: CatalogLocale;
@@ -137,7 +135,6 @@ function mapProduct(
       trust_tier: item.shops.trust_tier,
       is_premium: item.shops.is_premium,
       founder_since: item.shops.founder_since,
-      delivery_policy: item.shops.delivery_policy,
     },
   };
 }
@@ -200,13 +197,13 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
     if (!selection.invalidCategorySelection && selection.selectedCategory) {
       read = read.in("category_id", listingCategoryIds(selection));
     }
-    const { currency, min, minInclusive, max, maxInclusive, condition, grade, waterproof } = hardFilters;
+    const { currency, min, minInclusive, max, maxInclusive, condition, grade, inStock, waterproof } = hardFilters;
     if (currency || min !== undefined || max !== undefined) read = read.eq("currency_code", "MXN");
     if (min !== undefined) read = minInclusive === false ? read.gt("price_mxn", min) : read.gte("price_mxn", min);
     if (max !== undefined) read = maxInclusive === false ? read.lt("price_mxn", max) : read.lte("price_mxn", max);
     if (condition || grade) read = read.eq("condition", condition ?? "used");
     if (grade) read = read.eq("used_condition", grade);
-    read = read.gt("units_available", 0);
+    if (inStock) read = read.gt("units_available", 0);
     if (waterproof !== undefined) read = read.eq("waterproof", waterproof);
     for (const key of ["color", "size", "material"] as const) {
       const value = hardFilters[key];
@@ -309,47 +306,13 @@ export async function getHomeCatalog(filters?: CatalogFilters | string) {
     }
   }
 
-  let browseCategories = categories;
-  if (categories.length && !selection.selectedCategory && !selection.invalidCategorySelection) {
-    const counts = new Map<number, number>();
-    let stockReadFailed = false;
-    const pageSize = 500;
-    for (let offset = 0; ; offset += pageSize) {
-      const { data: stockedRows, error: stockedError } = await supabase
-        .from("products")
-        .select("category_id, shops!inner(is_publishing_approved, country_code, administrative_area_codes)")
-        .eq("status", "published")
-        .eq("is_admin_enabled", true)
-        .eq("shops.is_publishing_approved", true)
-        .eq("shops.country_code", normalizedFilters.countryCode)
-        .gt("units_available", 0)
-        .not("expires_at", "is", null)
-        .gt("expires_at", new Date().toISOString())
-        .order("id", { ascending: true })
-        .range(offset, offset + pageSize - 1);
-      if (stockedError) { stockReadFailed = true; break; }
-      for (const row of stockedRows ?? []) {
-        const shop = row.shops as unknown as { administrative_area_codes?: string[] | null };
-        if (areaCode && !shop?.administrative_area_codes?.includes(areaCode)) continue;
-        if (row.category_id != null) counts.set(row.category_id, (counts.get(row.category_id) ?? 0) + 1);
-      }
-      if ((stockedRows?.length ?? 0) < pageSize) break;
-    }
-    if (!stockReadFailed) {
-      browseCategories = categories
-        .map((category) => ({ ...category, children: category.children.filter((child) => counts.has(child.id)).sort((a, b) => (counts.get(b.id) ?? 0) - (counts.get(a.id) ?? 0)) }))
-        .filter((category) => category.children.length > 0)
-        .sort((a, b) => b.children.reduce((sum, child) => sum + (counts.get(child.id) ?? 0), 0) - a.children.reduce((sum, child) => sum + (counts.get(child.id) ?? 0), 0));
-    }
-  }
-
   return {
     products,
     shops: shopRows.map((shop) => ({
       ...shop,
       imageUrl: shop.image_path ? (imageUrls.get(shop.image_path) ?? null) : null,
     })),
-    categories: browseCategories,
+    categories,
     selectedCategory: selection.selectedCategory,
     selectedSubcategory: selection.selectedSubcategory,
     invalidCategorySelection: selection.invalidCategorySelection,
@@ -477,9 +440,9 @@ export const getPublicProduct = cache(async function getPublicProduct(
 ) {
   if (!isSupabaseConfigured()) return null;
   const supabase = await createServerSupabaseClient();
-  const productRead = (fields: string) => supabase
+  const result = await supabase
     .from("products")
-    .select(fields)
+    .select(`other_features, ${productSelection}`)
     .eq("slug", slug)
     .eq("status", "published")
     .eq("is_admin_enabled", true)
@@ -487,15 +450,7 @@ export const getPublicProduct = cache(async function getPublicProduct(
     .not("expires_at", "is", null)
     .gt("expires_at", new Date().toISOString())
     .maybeSingle();
-  let result = await productRead(`other_features, phone_battery_health, phone_carrier_status, phone_repair_history, ${productSelection}`);
-  // Deploying code before the additive migration must leave older listings readable.
-  if (result.error?.code === "42703") result = await productRead(`other_features, ${productSelection}`);
-  const data = readOrThrow(result, "Public product") as (ProductQueryRow & {
-    other_features: string | null;
-    phone_battery_health?: number | null;
-    phone_carrier_status?: "unlocked" | "locked" | null;
-    phone_repair_history?: string | null;
-  }) | null;
+  const data = readOrThrow(result, "Public product");
   if (!data) return null;
 
   const row = data as unknown as ProductQueryRow;
@@ -517,9 +472,6 @@ export const getPublicProduct = cache(async function getPublicProduct(
   return {
     ...product,
     other_features: data.other_features,
-    phone_battery_health: data.phone_battery_health ?? null,
-    phone_carrier_status: data.phone_carrier_status ?? null,
-    phone_repair_history: data.phone_repair_history ?? null,
     images: images.length ? images : product.imageUrl ? [product.imageUrl] : [],
     // Only the detail page offers to message the shop, so the identifiers it
     // needs stay here rather than widening the type every catalog card uses.

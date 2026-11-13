@@ -27,7 +27,6 @@ type AuthFormProps = {
   /** An internal path to resume once authentication succeeds. */
   continuar?: string;
   intent?: "vender";
-  buyerSellerName?: string | null;
   mode: "signin" | "signup";
 };
 
@@ -36,7 +35,7 @@ export function AuthForm(props: AuthFormProps) {
   return <AuthAttempt key={attempt} {...props} onRestart={() => setAttempt((value) => value + 1)} />;
 }
 
-function AuthAttempt({ continuar, intent, buyerSellerName, mode, onRestart }: AuthFormProps & { onRestart: () => void }) {
+function AuthAttempt({ continuar, intent, mode, onRestart }: AuthFormProps & { onRestart: () => void }) {
   continuar = safeContinuation(continuar) ?? undefined;
   const action = mode === "signin" ? signIn : signUp;
   const [state, formAction] = useFormAction(action);
@@ -54,9 +53,9 @@ function AuthAttempt({ continuar, intent, buyerSellerName, mode, onRestart }: Au
   return (
     <>
       {!signingIn ? <>
-        <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-brand">{buyerSellerName ? "Tu pregunta está lista" : "Tu lugar empieza aquí"}</p>
+        <p className="mt-4 text-sm font-semibold uppercase tracking-[0.18em] text-brand">Tu lugar empieza aquí</p>
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink">Abre tu cuenta</h1>
-        <p className="mb-8 mt-3 leading-7 text-muted">{buyerSellerName ? `Regístrate para enviar tu pregunta a ${buyerSellerName}. Volverás al producto para revisarla antes de enviarla.` : "Crea tu cuenta con correo, contraseña, tu nombre y teléfono. Usamos tu teléfono para contactarte sobre pedidos y no es público."}</p>
+        <p className="mb-8 mt-3 leading-7 text-muted">Crea tu cuenta con correo, contraseña, tu nombre y teléfono. Usamos tu teléfono para contactarte sobre pedidos y no es público.</p>
       </> : null}
       <form action={formAction} className="space-y-5" data-analytics-event={!signingIn && (intent === "vender" || continuar === "/panel/tiendas/nueva") ? "seller_signup_submitted" : undefined} noValidate>
         {continuar ? <input name="continuar" type="hidden" value={continuar} /> : null}
