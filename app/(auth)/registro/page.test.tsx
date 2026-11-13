@@ -5,6 +5,7 @@ const readPurchaseIntent = vi.fn();
 
 vi.mock("@/lib/actions/auth", () => ({ signIn: vi.fn(), signUp: vi.fn() }));
 vi.mock("@/lib/purchase-intent.server", () => ({ readPurchaseIntent }));
+vi.mock("@/lib/question-context.server", () => ({ questionSellerFromContinuation: async (path: string) => path?.includes("pregunta=1") ? "Cool Cats Tech" : null }));
 
 const { default: SignUpPage } = await import("@/app/(auth)/registro/page");
 const { default: SignInPage } = await import("@/app/(auth)/ingresar/page");
@@ -34,6 +35,11 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("Registration onboarding", () => {
+  it("opens buyer registration with the product continuation", async () => {
+    await renderPage({ continuar: "/productos/iphone?pregunta=1" });
+    expect(screen.getByText(/Regístrate para enviar tu pregunta a Cool Cats Tech/)).toBeInTheDocument();
+    expect(document.querySelector('input[name="continuar"]')).toHaveValue("/productos/iphone?pregunta=1");
+  });
   it.each([{ vender: "1" }, { intent: "vender" }])("opens the seller form directly for %j", async (params) => {
     await renderPage(params);
 

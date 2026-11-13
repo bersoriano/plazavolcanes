@@ -5,14 +5,12 @@ import { CatalogScreen } from "@/components/catalog/catalog-screen";
 import { HomeLanding } from "@/components/home/landing/home-landing";
 import { JsonLd } from "@/components/seo/json-ld";
 import { buildCatalogHref, listedCategoryTree, listingCategoryIds, resolveCategorySelection } from "@/lib/categories";
-import { getPosts } from "@/lib/posts.server";
 import { hasCatalogSearch, normalizeCatalogFilters, submittedCatalogHref, type CatalogSearchParams } from "@/lib/queries/catalog";
 import { getCatalogStateCounts, getHomeCatalog } from "@/lib/queries/catalog.server";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
-import { getFoundersProgram } from "@/lib/queries/founders.server";
 import { getListedCategoryIds, hasPublishedProducts } from "@/lib/queries/sitemap.server";
 import { buildHomeMetadata, SITE_NAME } from "@/lib/seo/home-metadata";
-import { organizationId, organizationSchema, sellerServiceSchema } from "@/lib/seo/organization";
+import { organizationId, organizationSchema } from "@/lib/seo/organization";
 import { buildSiteUrl } from "@/lib/site-url";
 
 type HomeSearchParams = Promise<CatalogSearchParams>;
@@ -35,11 +33,8 @@ export async function generateMetadata({
   return buildHomeMetadata({ filters, selection, listed });
 }
 
-/**
- * Names the site, who runs it and what a seller gets, for search results and
- * AI answers. The founders offer only while its seats are open.
- */
-function HomeStructuredData({ foundersOpen }: { foundersOpen: boolean }) {
+/** Names the site and who runs it for search results and AI answers. */
+function HomeStructuredData() {
   const url = buildSiteUrl("/");
   const data = {
     "@context": "https://schema.org",
@@ -53,7 +48,6 @@ function HomeStructuredData({ foundersOpen }: { foundersOpen: boolean }) {
         publisher: { "@id": organizationId() },
       },
       organizationSchema(),
-      sellerServiceSchema({ foundersOpen }),
     ],
   };
 
@@ -78,26 +72,22 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
   }
 
   const landing = bareHome && !filters.invalidAreaSelection;
-  const [catalog, stateCounts, founders, listed, posts] = await Promise.all([
+  const [catalog, stateCounts, listed] = await Promise.all([
     getHomeCatalog(filters),
     getCatalogStateCounts(filters.countryCode),
-    landing ? getFoundersProgram() : null,
     landing ? getListedCategoryIds() : null,
-    landing ? getPosts() : null,
   ]);
 
-  // The bare home is the seller-first landing; anything filtered, or an
+  // The bare home is the buyer landing; anything filtered, or an
   // unknown state that fell back to all of México, keeps the catalogue.
-  if (landing && founders) {
+  if (landing) {
     return (
       <>
-        <HomeStructuredData foundersOpen={founders.open} />
+        <HomeStructuredData />
         <HomeLanding
           // Only categories with something behind them: an empty chip is a dead end.
           catalog={listed ? { ...catalog, categories: listedCategoryTree(catalog.categories, listed) } : catalog}
           filters={filters}
-          founders={founders}
-          latestPost={posts?.[0] ?? null}
           stateCounts={stateCounts}
         />
       </>
@@ -106,7 +96,7 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
 
   return (
     <>
-      {bareHome ? <HomeStructuredData foundersOpen={false} /> : null}
+      {bareHome ? <HomeStructuredData /> : null}
       <CatalogScreen catalog={catalog} filters={filters} stateCounts={stateCounts} />
     </>
   );

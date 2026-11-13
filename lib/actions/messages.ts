@@ -87,6 +87,45 @@ export async function startPreSaleConversation(
   return { conversationId: data };
 }
 
+export async function sendProductQuestion(
+  shopId: number,
+  productId: number,
+  _previousState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const parsed = messageBodySchema.safeParse(formData.get("body"));
+  const key = formData.get("idempotency_key");
+  if (!parsed.success) return { status: "error", message: parsed.error.issues[0]?.message ?? "Escribe tu pregunta." };
+  if (typeof key !== "string" || !/^[0-9a-f-]{36}$/i.test(key)) return { status: "error", message: "Vuelve a intentar el envío." };
+  if (!isSupabaseConfigured()) return { status: "error", message: "Servicio no configurado." };
+
+  const supabase = await createServerSupabaseClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  if (!claims?.claims?.sub) return { status: "error", message: "Tu sesión terminó. Ingresa nuevamente." };
+  const { data, error } = await supabase.rpc("send_product_question", {
+    p_shop_id: shopId,
+    p_product_id: productId,
+    p_body: parsed.data,
+    p_idempotency_key: key,
+  });
+  let conversationId = data;
+  if (error?.code === "PGRST202" || error?.code === "42883") {
+    // Compatibility while the additive database migration is being deployed.
+    const opened = await startPreSaleConversation(shopId, productId);
+    if ("error" in opened) return { status: "error", message: opened.error };
+    const sent = await supabase.rpc("send_conversation_message", {
+      p_conversation_id: opened.conversationId,
+      p_body: parsed.data,
+      p_idempotency_key: key,
+    });
+    if (sent.error) return { status: "error", message: readableError(sent.error, "No pudimos enviar tu pregunta. Inténtalo de nuevo.") };
+    conversationId = opened.conversationId;
+  } else if (error) return { status: "error", message: readableError(error, "No pudimos enviar tu pregunta. Inténtalo de nuevo.") };
+  if (conversationId == null) return { status: "error", message: "No pudimos enviar tu pregunta. Inténtalo de nuevo." };
+  revalidatePath(`/mensajes/${conversationId}`);
+  return { status: "success", message: "Pregunta enviada.", conversationId };
+}
+
 export async function markConversationRead(conversationId: number, lastMessageId: number) {
   if (!isSupabaseConfigured()) return;
 

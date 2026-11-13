@@ -60,6 +60,17 @@ afterEach(() => {
 });
 
 describe("ProductForm", () => {
+  it("shows phone facts only for a used phone category", () => {
+    render(<ProductForm shopId={1} action={action} categories={categories} product={{
+      name: "iPhone", description: null, price_mxn: 6500, status: "draft",
+      condition: "used", used_condition: "good", category_id: 11, imageUrl: null,
+      phone_battery_health: 87, phone_carrier_status: "unlocked", phone_repair_history: "Cambio de pantalla",
+    }} />);
+    expect(screen.getByRole("spinbutton", { name: "Salud de batería (%)" })).toHaveValue(87);
+    expect(screen.getByRole("combobox", { name: "Bloqueo de compañía" })).toHaveValue("unlocked");
+    fireEvent.change(screen.getByLabelText("Categoría"), { target: { value: "2" } });
+    expect(screen.queryByRole("spinbutton", { name: "Salud de batería (%)" })).not.toBeInTheDocument();
+  });
   it("saves new products hidden first with a single submit action", () => {
     render(<ProductForm shopId={1} action={action} categories={categories} />);
 

@@ -19,6 +19,7 @@ type SearchBarProps = {
   stateSlug?: string;
   locale?: CatalogLocale;
   countryCode?: string;
+  availableStateCodes?: string[];
   /**
    * `panel` is the home page's buyer panel: a 72px cream pill with the state and
    * the submit button inside it, the two dropping to their own row on phones.
@@ -34,6 +35,7 @@ export function SearchBar({
   stateSlug,
   locale,
   countryCode,
+  availableStateCodes,
   variant = "default",
 }: SearchBarProps) {
   // A fresh submission interprets the editable text. When the URL contains
@@ -52,7 +54,7 @@ export function SearchBar({
   const stateOptions = (
     <>
       <option value="">Todo México</option>
-      {MEXICO_ADMINISTRATIVE_AREAS.map((area) => (
+      {MEXICO_ADMINISTRATIVE_AREAS.filter((area) => !availableStateCodes || availableStateCodes.includes(area.code) || area.slug === stateSlug).map((area) => (
         <option key={area.code} value={area.slug}>{area.label}</option>
       ))}
     </>

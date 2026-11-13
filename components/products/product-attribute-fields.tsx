@@ -3,7 +3,7 @@ import type { ActionState } from "@/lib/action-state";
 import type { Product } from "@/lib/database.types";
 import { COLORS, COLOR_LABELS, MATERIALS, MATERIAL_LABELS, OTHER_FEATURES_MAX_LENGTH, SIZES } from "@/lib/search/attributes";
 
-export type ListingAttributes = Partial<Pick<Product, "color" | "size" | "material" | "waterproof" | "other_features">>;
+export type ListingAttributes = Partial<Pick<Product, "color" | "size" | "material" | "waterproof" | "other_features" | "phone_battery_health" | "phone_carrier_status" | "phone_repair_history">>;
 
 const fields = [
   { name: "color", label: "Color", options: COLORS.map((value) => ({ value, label: COLOR_LABELS[value] })) },

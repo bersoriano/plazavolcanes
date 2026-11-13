@@ -23,7 +23,7 @@ vi.mock("@/lib/queries/categories.server", () => ({
 }));
 
 const notFound = vi.hoisted(() => vi.fn());
-vi.mock("next/navigation", () => ({ notFound, redirect: vi.fn() }));
+vi.mock("next/navigation", () => ({ notFound, redirect: vi.fn(), useRouter: () => ({ push: vi.fn() }) }));
 // Both pages now resolve the viewer, to decide whether to offer the shop a
 // message. server-only does not resolve under vitest, so the client is mocked
 // rather than the pages being reshaped around the test.
@@ -63,7 +63,7 @@ describe("public sharing controls", () => {
       },
     ]);
     vi.mocked(getPublicProduct).mockResolvedValue({
-      other_features: null,
+      other_features: null, phone_battery_health: null, phone_carrier_status: null, phone_repair_history: null,
       id: 8,
       slug: "taza-volcanica",
       name: "Taza volcánica",
@@ -136,7 +136,7 @@ describe("public sharing controls", () => {
       },
     ]);
     vi.mocked(getPublicProduct).mockResolvedValue({
-      other_features: null,
+      other_features: null, phone_battery_health: null, phone_carrier_status: null, phone_repair_history: null,
       id: 8,
       slug: "taza-volcanica",
       name: "Volcanic clay mug",
@@ -246,7 +246,7 @@ describe("product slug routing", () => {
   it("looks the product up by the slug in the path", async () => {
     vi.mocked(getProductCategoryTree).mockResolvedValue([]);
     vi.mocked(getPublicProduct).mockResolvedValue({
-      other_features: null,
+      other_features: null, phone_battery_health: null, phone_carrier_status: null, phone_repair_history: null,
       id: 8,
       slug: "motorola-razr-5g",
       name: "Motorola Razr 5G",

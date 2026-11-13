@@ -6,11 +6,9 @@ import { hasCatalogSearch, type CatalogFilters } from "@/lib/queries/catalog";
 export const SITE_NAME = "Plaza Volcanes";
 
 const HOME_TITLE = "Plaza Volcanes: tiendas independientes de México";
-// The bare home page is the seller landing, so it speaks to sellers; every
-// catalogue view of "/" keeps the buyer wording above.
-const LANDING_TITLE = "Plaza Volcanes: abre tu tienda independiente en México";
+const LANDING_TITLE = "Plaza Volcanes: encuentra productos cerca de ti";
 const LANDING_DESCRIPTION =
-  "Abre tu tienda en Plaza Volcanes: 25 productos gratis y pago directo de cada cliente. Primeras 100 tiendas: 50 productos y 0% comisión fija 12 meses.";
+  "Explora productos nuevos y usados disponibles en tiendas independientes de México. Busca por categoría o estado y habla directamente con quien vende.";
 const HOME_DESCRIPTION =
   "Compra productos nuevos y usados de tiendas independientes de todo México. Revisa quién vende y acuerda pago y entrega directamente con cada tienda.";
 

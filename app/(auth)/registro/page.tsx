@@ -7,6 +7,7 @@ import { SignupChoice, SignupFlow } from "@/components/auth/signup-onboarding";
 import { resolveAuthIntent } from "@/lib/auth-intent";
 import { readPurchaseIntent } from "@/lib/purchase-intent.server";
 import { safeContinuation } from "@/lib/safe-continuation";
+import { questionSellerFromContinuation } from "@/lib/question-context.server";
 import { resolveSignupStep, signupStepHref } from "@/lib/signup-onboarding";
 
 export const metadata: Metadata = { title: "Crear cuenta" };
@@ -19,6 +20,7 @@ export default async function SignUpPage({ searchParams }: { searchParams: SignU
   const { continuar, paso, vender, intent } = await searchParams;
   const pendingPurchase = await readPurchaseIntent();
   const destination = safeContinuation(continuar) ?? undefined;
+  const buyerSellerName = await questionSellerFromContinuation(destination);
   const sellerIntent = resolveAuthIntent(paso === "vender" ? "vender" : intent, vender);
   const step = sellerIntent && !paso ? "formulario" : resolveSignupStep(paso, Boolean(pendingPurchase || destination));
 
@@ -42,7 +44,7 @@ export default async function SignUpPage({ searchParams }: { searchParams: SignU
           {PURCHASE_NOTICE}
         </p>
       ) : null}
-      <AuthForm continuar={destination} intent={sellerIntent} mode="signup" />
+      <AuthForm buyerSellerName={buyerSellerName} continuar={destination} intent={sellerIntent} mode="signup" />
     </>
   );
 }

@@ -44,26 +44,25 @@ export function BuyerPanel({
   return (
     <section
       aria-labelledby="explorar-heading"
-      className="scroll-mt-20 border-t border-line bg-surface px-5 pb-12 pt-14 sm:px-8 lg:scroll-mt-24 lg:border-0 lg:bg-transparent lg:pb-24 lg:pt-10 xl:px-20"
+      className="scroll-mt-20 border-t border-line bg-surface px-5 pb-12 pt-5 sm:px-8 lg:scroll-mt-24 lg:border-0 lg:bg-transparent lg:pb-24 lg:pt-10 xl:px-20"
       id="explorar"
     >
       <div className="mx-auto flex max-w-[1280px] flex-col gap-5 lg:gap-7 lg:rounded-panel lg:border lg:border-line lg:bg-surface lg:px-14 lg:py-16">
         <div className="flex flex-col gap-3.5 lg:gap-4">
-          <Eyebrow>¿Vienes a comprar?</Eyebrow>
-          <h2
+          <Eyebrow>Explora la plaza</Eyebrow>
+          <h1
             className="font-display text-[clamp(40px,31.1px+2.286vw,64px)] font-semibold leading-[1.01] tracking-[-0.04em] text-ink"
             id="explorar-heading"
           >
-            Encuentra productos únicos <Accent>cerca de ti.</Accent>
-          </h2>
+            Encuentra algo bueno <Accent>cerca de ti.</Accent>
+          </h1>
         </div>
 
-        <SearchBar countryCode={countryCode} locale={locale} variant="panel" />
+        <SearchBar availableStateCodes={stateCounts.filter((entry) => entry.count > 0).map((entry) => entry.code)} countryCode={countryCode} locale={locale} variant="panel" />
         <CategoryNavigation countryCode={countryCode} locale={locale} tree={categories} variant="panel" />
 
         <div className="mt-2 grid grid-cols-2 gap-x-3.5 gap-y-6 md:grid-cols-3 lg:grid-cols-4 lg:gap-5">
-          {/* Photographed listings only: a grey placeholder reads as a broken page. */}
-          {products.filter((product) => product.imageUrl).slice(0, 3).map((product, index) => (
+          {products.filter((product) => product.units_available > 0).slice(0, 3).map((product, index) => (
             <ProductCard
               key={product.id}
               locale={locale}
@@ -72,6 +71,9 @@ export function BuyerPanel({
               variant="compact"
             />
           ))}
+          {products.every((product) => product.units_available <= 0) ? (
+            <p className="col-span-2 text-sm text-muted">Todavía no hay productos disponibles. Explora todos los anuncios para ver qué se publica.</p>
+          ) : null}
           <Link
             className="flex aspect-square flex-col justify-between self-start rounded-[20px] bg-brand p-5 text-white transition-colors hover:bg-brand-hover sm:rounded-[26px] sm:p-7 md:col-span-3 md:aspect-auto md:min-h-[180px] lg:col-span-1 lg:aspect-square"
             href={ALL_PRODUCTS_HREF}

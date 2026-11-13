@@ -135,6 +135,7 @@ export function ProductCard({
             <span className="font-display text-[19px] font-bold tracking-[-0.02em] text-brand tabular-nums sm:text-[24px]">{formatCurrency(product.price_mxn, currencyCode, locale)}</span>
             <span className="text-[11px] font-semibold text-muted sm:text-[13px]">{currencyCode}</span>
           </p>
+          <p className="text-[12px] text-muted">{formatShopLocation(product.shop.country_code, product.shop.administrative_area_codes)}</p>
         </div>
       </Link>
     );
