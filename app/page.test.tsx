@@ -291,7 +291,7 @@ describe("Home conversion sections", () => {
   });
 });
 
-const LANDING_H1 = "Vende lo tuyo. Quédate con todo.";
+const LANDING_H1 = "Tu catálogo listo para compartir por WhatsApp";
 
 describe("Home landing", () => {
   it("opens the bare home page on the seller hero, with a single h1", async () => {
@@ -305,7 +305,7 @@ describe("Home landing", () => {
     expect(screen.getByText("Para tiendas independientes de México")).toBeInTheDocument();
   });
 
-  it("sends the hero's two calls to action to signup and to the buyer panel", async () => {
+  it("sends the hero's two calls to action to signup and a real shop", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products: [sampleProduct()] }));
 
     render(await Home({ searchParams: Promise.resolve({}) }));
@@ -315,7 +315,8 @@ describe("Home landing", () => {
       "href",
       "/registro?vender=1",
     );
-    expect(within(hero).getByRole("link", { name: "Explorar productos" })).toHaveAttribute("href", "#explorar");
+    expect(within(hero).getByRole("link", { name: "Ver una tienda de ejemplo" })).toHaveAttribute("href", "/tiendas/taller-volcan");
+    expect(screen.getByRole("region", { name: "Así pueden ver tus productos" })).toHaveTextContent("Taza de barro negro");
   });
 
   it("briefs the newest post from the blog", async () => {

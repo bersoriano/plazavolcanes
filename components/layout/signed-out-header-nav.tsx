@@ -9,7 +9,7 @@ import { NavLink } from "@/components/layout/nav-link";
  * landing, /vender) keep those in the page, not here.
  */
 const DESTINATIONS: HeaderMenuLink[] = [
-  { href: "/explorar", label: "Explorar" },
+  { href: "/explorar", label: "Explorar productos" },
   { href: "/como-comprar", label: "Cómo comprar" },
   { href: "/blog", label: "Blog" },
   { href: "/vender?desde=header", label: "Vender" },

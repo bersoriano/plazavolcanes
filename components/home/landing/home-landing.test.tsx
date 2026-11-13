@@ -56,7 +56,8 @@ describe("HomeLanding and the founders promotion", () => {
     expect(screen.queryByRole("heading", { level: 3, name: "0% de comisión fija 12 meses." })).not.toBeInTheDocument();
     expect(screen.queryByRole("region", { name: "Sé de las primeras 100 tiendas." })).not.toBeInTheDocument();
     // The rest of the landing stays.
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Vende lo tuyo. Quédate con todo.");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Tu catálogo listo para compartir por WhatsApp");
+    expect(screen.queryByRole("link", { name: "Ver una tienda de ejemplo" })).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Encuentra productos únicos cerca de ti." })).toBeInTheDocument();
   });
 });

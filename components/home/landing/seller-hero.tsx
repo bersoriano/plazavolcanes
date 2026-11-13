@@ -3,6 +3,7 @@ import { HeroCollage, type CollageProduct } from "@/components/home/landing/hero
 import { PrimaryCta, TYPE, VolcanoLines } from "@/components/home/landing/primitives";
 import { ButtonLink } from "@/components/ui/button";
 import type { CatalogLocale } from "@/lib/catalog-locale";
+import type { CatalogProduct } from "@/lib/queries/catalog.server";
 
 /**
  * The seller hero: the pitch and its two ways forward on the left, the
@@ -12,11 +13,13 @@ import type { CatalogLocale } from "@/lib/catalog-locale";
  */
 export function SellerHero({
   latest,
+  example,
   locale,
   promoActive = true,
   spotsTaken = null,
 }: {
   latest: CollageProduct | null;
+  example?: CatalogProduct | null;
   locale?: CatalogLocale;
   /** False once the founders promotion has ended: the card leaves the hero. */
   promoActive?: boolean;
@@ -38,30 +41,24 @@ export function SellerHero({
           </p>
 
           <h1 className={`${TYPE.h1} text-ink`} id="inicio-heading">
-            Vende lo tuyo.{" "}
-            <br />
-            <em className="italic text-brand">Quédate con</em>{" "}
-            <span className="mt-2.5 inline-block -rotate-[2.5deg] rounded-[18px] bg-accent px-[0.2em] pb-[0.08em] text-brand shadow-[0_6px_0_var(--brand)] lg:rounded-[26px]">
-              todo.
-            </span>
+            Tu catálogo listo para <em className="italic text-brand">compartir por WhatsApp</em>
           </h1>
 
           <p className="max-w-[560px] text-pretty text-[17px] leading-[1.55] text-text-body lg:text-[20px]">
-            Abre tu tienda en Plaza Volcanes, publica productos nuevos o usados y recibe el pago directo de cada cliente.
-            Sin comisión en pago directo. Sin retenciones.
+            Junta tus productos, fotos y precios en un solo enlace. Compártelo con tus clientes y recibe el pago directamente, sin comisión en pago directo.
           </p>
 
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-3.5">
             <PrimaryCta block href="/registro?vender=1">
               Abrir mi tienda gratis
             </PrimaryCta>
-            <ButtonLink
+            {example ? <ButtonLink
               variant="unstyled"
               className="inline-flex h-[58px] items-center justify-center rounded-full border-[1.5px] border-line bg-surface px-7 text-[17px] font-semibold text-ink transition-colors hover:border-brand lg:h-[62px] lg:text-[18px]"
-              href="#explorar"
+              href={`/tiendas/${example.shop.slug}`}
             >
-              Explorar productos
-            </ButtonLink>
+              Ver una tienda de ejemplo
+            </ButtonLink> : <p className="self-center text-sm text-muted">Pronto podrás ver una tienda de ejemplo.</p>}
           </div>
 
           {promoActive ? <FoundersCounter spotsTaken={spotsTaken} /> : null}
