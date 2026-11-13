@@ -62,7 +62,7 @@ export async function SiteHeader() {
           <div className="flex items-center gap-1 sm:gap-3">
             <nav aria-label="Navegación principal" className="flex items-center gap-1 sm:gap-3">
               <NavLink className={SIGNED_IN_LINK} href="/explorar">
-                Explorar
+                Explorar productos
               </NavLink>
               <NavLink className={SIGNED_IN_LINK} href="/panel">
                 Mis ventas

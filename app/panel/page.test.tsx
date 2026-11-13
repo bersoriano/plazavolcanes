@@ -96,6 +96,8 @@ describe("PanelPage", () => {
     expect(within(next).getByRole("link", { name: "Compartir por WhatsApp" }).getAttribute("href")).toContain(
       encodeURIComponent("/tiendas/casa-niebla"),
     );
+    expect(within(next).getByRole("button", { name: "Compartir mi tienda" })).toBeInTheDocument();
+    expect(within(next).getByRole("button", { name: "Copiar enlace" })).toBeInTheDocument();
   });
 
   it("lines up with the header's logo and sign-out button", async () => {

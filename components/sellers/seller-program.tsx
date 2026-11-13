@@ -24,12 +24,14 @@ export function SellerProgram({
   founders,
   viewer = "signed-out",
   isFounder = false,
+  assistanceReady = false,
 }: {
   founders: FoundersProgram;
   /** Who is looking: decides where every create-store CTA leads. */
   viewer?: SellerViewer;
   /** A signed-in owner of a founding store: sees that instead of the counter. */
   isFounder?: boolean;
+  assistanceReady?: boolean;
 }) {
   const promoActive = founders.open;
   const spotsTaken = founders.taken;
@@ -43,7 +45,7 @@ export function SellerProgram({
       <SellerBenefits />
       <SellerComparison />
       <SellerCatalog />
-      <SellerSteps promoActive={promoActive} viewer={viewer} />
+      <SellerSteps assistanceReady={assistanceReady} promoActive={promoActive} viewer={viewer} />
       <SellerTrustTiers promoActive={promoActive} />
       <SellerFaq promoActive={promoActive} />
       {promoActive ? <FoundersCta spotsTaken={spotsTaken} viewer={viewer} /> : null}

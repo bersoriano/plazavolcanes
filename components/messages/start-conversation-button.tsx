@@ -46,7 +46,7 @@ export function StartConversationButton({
     // Sending everyone to the inbox lost the page they were asking about, and with
     // it the product the thread was going to be about.
     return (
-      <Link className={STYLE} data-product-cta="question" href={`/ingresar?continuar=${encodeURIComponent(returnTo)}`}>
+      <Link className={STYLE} data-product-cta="question" href={`/ingresar?continuar=${encodeURIComponent(label === "Preguntar por este producto" ? `${returnTo}#preguntar` : returnTo)}`}>
         <MessageCircle aria-hidden="true" className="size-4" />
         {label}
       </Link>

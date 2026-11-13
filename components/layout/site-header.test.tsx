@@ -78,7 +78,7 @@ describe("SiteHeader", () => {
     // The bar carries these on a phone, so the header only shows them once
     // there is room for words instead of a row of unlabelled glyphs. At md
     // they sit closer together, which is what keeps the row inside 768px.
-    for (const name of ["Explorar", "Mis ventas", "Mis compras", "Mensajes"]) {
+    for (const name of ["Explorar productos", "Mis ventas", "Mis compras", "Mensajes"]) {
       expect(within(navigation).getByRole("link", { name })).toHaveClass(
         "hidden",
         "min-h-11",
@@ -94,7 +94,7 @@ describe("SiteHeader", () => {
 
     const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
     const links = within(navigation).getAllByRole("link");
-    expect(links[0]).toHaveTextContent("Explorar");
+    expect(links[0]).toHaveTextContent("Explorar productos");
     expect(links[0]).toHaveAttribute("href", "/explorar");
   });
 
@@ -162,7 +162,7 @@ describe("SiteHeader", () => {
 
       const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
       expect(within(navigation).getAllByRole("link").map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
-        ["Explorar", "/explorar"],
+        ["Explorar productos", "/explorar"],
         ["Cómo comprar", "/como-comprar"],
         ["Blog", "/blog"],
         ["Vender", "/vender?desde=header"],
@@ -177,7 +177,7 @@ describe("SiteHeader", () => {
 
     const navigation = screen.getByRole("navigation", { name: "Navegación principal" });
     expect(within(navigation).getByRole("link", { name: "Vender" })).toHaveAttribute("aria-current", "page");
-    expect(within(navigation).getByRole("link", { name: "Explorar" })).not.toHaveAttribute("aria-current");
+    expect(within(navigation).getByRole("link", { name: "Explorar productos" })).not.toHaveAttribute("aria-current");
   });
 
   it("marks nothing on the landing, which is home rather than a destination", async () => {
@@ -229,14 +229,14 @@ describe("SiteHeader", () => {
     const sheet = screen.getByRole("dialog", { hidden: true });
     expect(sheet).toHaveAttribute("aria-label", "Menú");
     expect(within(sheet).getAllByRole("link", { hidden: true }).map((link) => [link.textContent, link.getAttribute("href")])).toEqual([
-      ["Explorar", "/explorar"],
+      ["Explorar productos", "/explorar"],
       ["Cómo comprar", "/como-comprar"],
       ["Blog", "/blog"],
       ["Vender", "/vender?desde=header"],
       ["Ingresar", "/ingresar"],
       ["Crear mi tienda", "/registro?vender=1&desde=header"],
     ]);
-    expect(within(sheet).getByRole("link", { hidden: true, name: "Explorar" })).toHaveAttribute("aria-current", "page");
+    expect(within(sheet).getByRole("link", { hidden: true, name: "Explorar productos" })).toHaveAttribute("aria-current", "page");
   });
 
   it("leaves the signed-in header without the menu or the selling pill, on any page", async () => {

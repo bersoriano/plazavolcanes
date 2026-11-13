@@ -5,7 +5,7 @@ const sellerEvents = new Set([
   "seller_shop_submitted",
   "seller_product_submitted",
 ]);
-const allowedEvents = new Set(["$pageview", "$pageleave", "navigation_clicked", ...sellerEvents]);
+const allowedEvents = new Set(["$pageview", "$pageleave", "navigation_clicked", "seller_storefront_share_intent", ...sellerEvents]);
 
 // SDKs can derive search/campaign terms from URLs even when campaign storage
 // is disabled. Admit only the metadata these reports need, including the SDK's
@@ -24,6 +24,7 @@ const allowedProperties = new Set([
   "$prev_pageview_last_content", "$prev_pageview_last_content_percentage",
   "$prev_pageview_max_content", "$prev_pageview_max_content_percentage",
   "source_path", "destination_path", "source_section", "seller_intent", "target_section",
+  "shop_id", "share_method",
 ]);
 
 /** Auth links and search URLs can contain credentials or personal input. */
@@ -90,4 +91,10 @@ export function trackSellerSubmission(event: Event) {
   if (!(event.target instanceof HTMLFormElement)) return;
   const name = event.target.dataset.analyticsEvent;
   if (name && sellerEvents.has(name)) posthog.capture(name);
+}
+
+/** A seller chose a sharing control. This cannot confirm a send or a visit. */
+export function trackStorefrontShare(shopId: number, method: "native" | "whatsapp" | "copy") {
+  if (!Number.isSafeInteger(shopId) || shopId < 1) return;
+  posthog.capture("seller_storefront_share_intent", { shop_id: shopId, share_method: method });
 }

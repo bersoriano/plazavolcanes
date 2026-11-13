@@ -19,6 +19,20 @@ afterEach(() => {
 });
 
 describe("ShareActions", () => {
+  it("offers seller storefront link, explicit copy, and reviewable WhatsApp message", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    setNavigatorProperty("clipboard", { writeText });
+    render(<ShareActions label="Compartir Casa Niebla" title="Casa Niebla" sellerShopId={42} url="https://plazavolcanes.com/tiendas/casa-niebla" />);
+
+    expect(screen.getByRole("button", { name: "Compartir mi tienda" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Compartir por WhatsApp" })).toHaveAttribute(
+      "href",
+      "https://wa.me/?text=Aqu%C3%AD%20puedes%20ver%20mis%20productos%20y%20precios%3A%0Ahttps%3A%2F%2Fplazavolcanes.com%2Ftiendas%2Fcasa-niebla",
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Copiar enlace" }));
+    expect(await screen.findByText("Enlace copiado.")).toBeInTheDocument();
+    expect(writeText).toHaveBeenCalledWith("https://plazavolcanes.com/tiendas/casa-niebla");
+  });
   it("shares current page through native share API", async () => {
     const share = vi.fn().mockResolvedValue(undefined);
     setNavigatorProperty("share", share);

@@ -668,7 +668,7 @@ export type PrimaryAction = {
   shop: Pick<DashboardShop, "id" | "name"> | null;
   action: { label: string; href: string } | null;
   /** Set only when the next step is sharing, which needs the public address. */
-  share: Pick<DashboardShop, "name" | "slug"> | null;
+  share: Pick<DashboardShop, "id" | "name" | "slug"> | null;
 };
 
 export function choosePrimaryAction(
@@ -736,7 +736,7 @@ export function choosePrimaryAction(
   if (hasCompletedSale) {
     const next = ongoing[0];
     if (next) return { kind: "keep_selling", eyebrow: next.shop.name, title: next.title, detail: next.detail, shop: next.shop, action: next.action, share };
-    return { kind: "share_shop", eyebrow: "Todo al día", title: "Comparte tu tienda", detail: "No tienes pendientes. Recuérdale a tus clientes dónde encontrarte.", shop: shopRef, action: null, share: { name: shop.name, slug: shop.slug } };
+    return { kind: "share_shop", eyebrow: "Todo al día", title: "Comparte tu tienda", detail: "No tienes pendientes. Recuérdale a tus clientes dónde encontrarte.", shop: shopRef, action: null, share: { id: shop.id, name: shop.name, slug: shop.slug } };
   }
 
   if (focus.listingCount === 0) {
@@ -789,7 +789,7 @@ export function choosePrimaryAction(
         : "Tu tienda está lista. Envía el enlace a quien pueda interesarle.",
     shop: shopRef,
     action: null,
-    share: { name: shop.name, slug: shop.slug },
+    share: { id: shop.id, name: shop.name, slug: shop.slug },
   };
 }
 

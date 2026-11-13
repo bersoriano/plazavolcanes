@@ -45,7 +45,7 @@ test("sends a signed-out visitor back to the page they asked from", () => {
 
   expect(screen.getByRole("link", { name: /preguntar por este producto/i })).toHaveAttribute(
     "href",
-    "/ingresar?continuar=%2Fproductos%2Ftaza-de-barro",
+    "/ingresar?continuar=%2Fproductos%2Ftaza-de-barro%23preguntar",
   );
 });
 

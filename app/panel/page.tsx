@@ -9,6 +9,7 @@ import { SellerResults } from "@/components/seller-dashboard/seller-results";
 import { ShopOverview } from "@/components/seller-dashboard/shop-overview";
 import { ButtonLink } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ShareActions } from "@/components/share/share-actions";
 import { getSellerDashboard } from "@/lib/queries/seller-dashboard.server";
 import { buildSiteUrl } from "@/lib/site-url";
 
@@ -53,6 +54,13 @@ function Dashboard({ result }: { result: Extract<Awaited<ReturnType<typeof getSe
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-start">
         <div className="space-y-6">
           <PrimaryActionCard primary={dashboard.primary} />
+          {shareUrl && focus && !dashboard.primary.share ? (
+            <Card as="section" padding="md" aria-labelledby="share-shop-title">
+              <h2 className="font-display text-2xl font-semibold" id="share-shop-title">Tu tienda ya se puede compartir</h2>
+              <p className="mt-2 text-sm leading-6 text-muted">Con un producto publicado basta. Envía tu enlace a clientes que ya te conocen.</p>
+              <div className="mt-4"><ShareActions label={`Compartir ${focus.shop.name}`} title={focus.shop.name} url={shareUrl} sellerShopId={focus.shop.id} /></div>
+            </Card>
+          ) : null}
           {hasShops ? (
             <ActionQueue groups={dashboard.attentionGroups} now={now} total={dashboard.attention.length} unavailable={dashboard.unavailable} />
           ) : null}
