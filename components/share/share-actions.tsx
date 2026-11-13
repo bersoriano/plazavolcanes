@@ -4,11 +4,13 @@ import { MessageCircle, Share2 } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 
 import { Button, ButtonLink } from "@/components/ui/button";
+import { trackStorefrontShare } from "@/lib/analytics";
 
 type ShareActionsProps = {
   label: string;
   title: string;
   showWhatsApp?: boolean;
+  sellerShopId?: number;
   /**
    * The address to share. Pages that are themselves the thing being shared
    * leave it out and share where the visitor is; the seller panel shares the
@@ -29,7 +31,7 @@ function getServerLocationSnapshot() {
   return "";
 }
 
-export function ShareActions({ label, title, url, showWhatsApp = true }: ShareActionsProps) {
+export function ShareActions({ label, title, url, showWhatsApp = true, sellerShopId }: ShareActionsProps) {
   const locationUrl = useSyncExternalStore(
     subscribeToLocation,
     getLocationSnapshot,
@@ -37,9 +39,10 @@ export function ShareActions({ label, title, url, showWhatsApp = true }: ShareAc
   );
   const pageUrl = url ?? locationUrl;
   const [status, setStatus] = useState<"copied" | "error" | null>(null);
-  const shareText = `Descubre ${title} en Plaza Volcanes.`;
+  const shareText = sellerShopId ? "Aquí puedes ver mis productos y precios:" : `Descubre ${title} en Plaza Volcanes.`;
 
   async function copyLink(url: string) {
+    if (sellerShopId) trackStorefrontShare(sellerShopId, "copy");
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
       await navigator.clipboard.writeText(url);
@@ -54,6 +57,7 @@ export function ShareActions({ label, title, url, showWhatsApp = true }: ShareAc
     setStatus(null);
 
     if (navigator.share) {
+      if (sellerShopId) trackStorefrontShare(sellerShopId, "native");
       try {
         await navigator.share({ title, text: shareText, url: shareUrl });
         return;
@@ -71,14 +75,16 @@ export function ShareActions({ label, title, url, showWhatsApp = true }: ShareAc
     <div aria-label={label} className="flex flex-wrap items-center gap-3" role="group">
       <Button data-product-cta="share" onClick={share} variant="secondary">
         <Share2 aria-hidden="true" className="size-4" />
-        Compartir
+        {sellerShopId ? "Compartir mi tienda" : "Compartir"}
       </Button>
+      {sellerShopId ? <Button onClick={() => copyLink(pageUrl || window.location.href)} variant="secondary">Copiar enlace</Button> : null}
       {showWhatsApp ? (
         <ButtonLink
           aria-label="Compartir por WhatsApp"
           data-product-cta="share"
           variant="secondary"
           href={whatsappMessage ? `https://wa.me/?text=${whatsappMessage}` : "https://wa.me/"}
+          onClick={() => { if (sellerShopId) trackStorefrontShare(sellerShopId, "whatsapp"); }}
           rel="noopener noreferrer"
           target="_blank"
         >

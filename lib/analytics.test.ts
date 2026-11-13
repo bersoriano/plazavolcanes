@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { sanitizeAnalyticsEvent, trackNavigation, trackSellerSubmission } from "@/lib/analytics";
+import { sanitizeAnalyticsEvent, trackNavigation, trackSellerSubmission, trackStorefrontShare } from "@/lib/analytics";
 
 const { capture } = vi.hoisted(() => ({ capture: vi.fn() }));
 vi.mock("posthog-js", () => ({ default: { capture } }));
@@ -105,6 +105,11 @@ describe("landing navigation", () => {
 });
 
 describe("seller submissions", () => {
+  it("records shop-level share intent without message or contact details", () => {
+    trackStorefrontShare(42, "copy");
+    expect(capture).toHaveBeenCalledWith("seller_storefront_share_intent", { shop_id: 42, share_method: "copy" });
+    expect(sanitizeAnalyticsEvent({ uuid: "00000000-0000-4000-8000-000000000004", event: "seller_storefront_share_intent", properties: { shop_id: 42, share_method: "copy", message: "private", phone: "5512345678" } })?.properties).toEqual({ shop_id: 42, share_method: "copy" });
+  });
   it("records only the tagged event and never reads form fields", () => {
     document.body.innerHTML = '<form data-analytics-event="seller_signup_submitted"><input name="email" value="private@example.com"><input name="password" value="secret"></form>';
     const form = document.querySelector("form")!;

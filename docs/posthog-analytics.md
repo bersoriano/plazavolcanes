@@ -26,6 +26,7 @@ back/forward navigation without a React provider or duplicate pageview tracker.
 | `seller_signup_submitted` | Seller-intent registration form submitted | None |
 | `seller_shop_submitted` | Shop creation or editing form submitted | None |
 | `seller_product_submitted` | Product creation or editing form submitted | None |
+| `seller_storefront_share_intent` | Seller chose native share, WhatsApp, or copy on a public shop link; does not confirm send | Numeric `shop_id`, `share_method` (`native`, `whatsapp`, `copy`) |
 
 Suggested PostHog reports:
 
@@ -42,6 +43,8 @@ do not prove that an account was created, email confirmed, shop saved, product
 published, or sale completed. Successful conversion events would require a
 separate integration with those confirmed outcomes. These events do not replace
 the database-backed shop analytics shown to sellers.
+
+For the seller-first pilot, count distinct `shop_id` on `seller_storefront_share_intent` and break down by local event day to find later share attempts. Compare separately with `$pageview` paths under `/tiendas/`; pageviews prove a visit but cannot attribute it to a particular send. Shop creation and current live inventory come from database records; see `docs/seller-first-pilot.md`.
 
 Visitors are anonymous browser identities persisted in localStorage, not
 authenticated accounts. Counts are affected by shared browsers, device changes,

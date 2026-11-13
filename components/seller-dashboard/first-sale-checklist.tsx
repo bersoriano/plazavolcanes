@@ -83,14 +83,14 @@ export function FirstSaleChecklist({
 
       <ol className="mt-5 space-y-1">
         {checklist.steps.map((step) => (
-          <Step key={step.id} shareUrl={shareUrl} shopName={checklist.shop?.name ?? null} step={step} />
+          <Step key={step.id} shareUrl={shareUrl} shopId={focusShopId} shopName={checklist.shop?.name ?? null} step={step} />
         ))}
       </ol>
     </Card>
   );
 }
 
-function Step({ step, shareUrl, shopName }: { step: ChecklistStep; shareUrl: string | null; shopName: string | null }) {
+function Step({ step, shareUrl, shopId, shopName }: { step: ChecklistStep; shareUrl: string | null; shopId: number | null; shopName: string | null }) {
   const state = STATE_ICON[step.state];
   const Icon = state.icon;
 
@@ -110,9 +110,9 @@ function Step({ step, shareUrl, shopName }: { step: ChecklistStep; shareUrl: str
             ? "Cuando tengas un producto a la vista, podrás compartir el enlace de tu tienda desde aquí."
             : step.detail}
         </p>
-        {step.id === "share" && shareUrl && shopName ? (
+        {step.id === "share" && shareUrl && shopName && shopId ? (
           <div className="mt-3">
-            <ShareActions label={`Compartir ${shopName}`} title={shopName} url={shareUrl} />
+            <ShareActions label={`Compartir ${shopName}`} title={shopName} url={shareUrl} sellerShopId={shopId} />
           </div>
         ) : null}
         {step.action ? (

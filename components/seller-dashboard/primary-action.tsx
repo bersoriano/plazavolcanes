@@ -46,6 +46,7 @@ export function PrimaryActionCard({ primary }: { primary: PrimaryAction }) {
           <ShareActions
             label={`Compartir ${primary.share.name}`}
             title={primary.share.name}
+            sellerShopId={primary.share.id}
             url={buildSiteUrl(`/tiendas/${primary.share.slug}`)}
           />
         </div>
