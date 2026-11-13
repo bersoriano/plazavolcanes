@@ -184,23 +184,11 @@ describe("createProduct", () => {
       units_available: 2,
       currency_code: "MXN",
       content_locale: "es-MX",
-      phone_battery_health: null,
-      phone_carrier_status: null,
-      phone_repair_history: null,
       shop_id: 7,
       slug: "taza-volcanica",
       status: "draft",
     });
   });
-});
-
-it("clears forged phone facts outside the used phone category", async () => {
-  await expect(createProduct(7, idle, sellerForm({ phone_battery_health: "87", phone_carrier_status: "unlocked" }))).rejects.toThrow("NEXT_REDIRECT");
-  expect(mocks.insert).toHaveBeenCalledWith(expect.objectContaining({
-    phone_battery_health: null,
-    phone_carrier_status: null,
-    phone_repair_history: null,
-  }));
 });
 
 describe("createProduct with a slug somebody else holds", () => {
@@ -454,9 +442,6 @@ describe("updateProduct", () => {
       units_available: 2,
       currency_code: "MXN",
       content_locale: "es-MX",
-      phone_battery_health: null,
-      phone_carrier_status: null,
-      phone_repair_history: null,
       slug: "taza-volcanica",
       updated_at: expect.any(String),
     });

@@ -8,7 +8,7 @@ import { ProductViewBeacon } from "@/components/catalog/product-view-beacon";
 import { pageContainer } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { ShareActions } from "@/components/share/share-actions";
-import { ProductQuestionComposer } from "@/components/messages/product-question-composer";
+import { StartConversationButton } from "@/components/messages/start-conversation-button";
 import { AddToCartForm } from "@/components/orders/add-to-cart-form";
 import { PremiumBadge } from "@/components/shops/premium-badge";
 import { PremiumScope } from "@/components/shops/premium-scope";
@@ -22,14 +22,12 @@ import { buildCatalogHref, findCategorySelection } from "@/lib/categories";
 import { formatCurrency } from "@/lib/format";
 import { formatProductCondition } from "@/lib/product-condition";
 import { addToCart } from "@/lib/actions/cart";
-import { sendProductQuestion } from "@/lib/actions/messages";
+import { openConversation } from "@/lib/actions/start-conversation";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { hasCatalogSearch, normalizeCatalogFilters, type CatalogSearchParams } from "@/lib/queries/catalog";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { getPublicProduct } from "@/lib/queries/catalog.server";
-import { fetchPickupPoint } from "@/lib/queries/checkout.server";
-import { findAdministrativeAreaByCode, formatShopLocation } from "@/lib/shop-location";
 import { viewerOwnsAnyShop } from "@/lib/queries/seller-standing.server";
 import { buildProductJsonLd, buildProductMetadata } from "@/lib/seo/product-metadata";
 
@@ -39,7 +37,7 @@ const PURCHASE_NOTICES: Record<string, string> = {
   error: "No pudimos agregar el producto a tu carrito. Inténtalo de nuevo.",
 };
 
-type ProductSearchParams = Promise<CatalogSearchParams & { pregunta?: string | string[] }>;
+type ProductSearchParams = Promise<CatalogSearchParams>;
 
 type ProductPageProps = {
   params: Promise<{ slug: string }>;
@@ -71,11 +69,6 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   const leafCategory = rootCategory?.children.find(
     (category) => category.id === categorySelection.leafId,
   );
-  const pickupPoint = await fetchPickupPoint(product.shopId).catch(() => null);
-  const pickupArea = pickupPoint
-    ? `${pickupPoint.locality}, ${findAdministrativeAreaByCode(pickupPoint.administrative_area_code)?.label ?? pickupPoint.administrative_area_code}`
-    : null;
-  const isUsedPhone = product.condition === "used" && leafCategory?.slug === "celulares-y-accesorios";
   const catalogHref = buildCatalogHref({
     criteria: filters.criteria,
     stateSlug: filters.administrativeAreaSlug,
@@ -100,7 +93,7 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
   // Shop and product are bound here, from the listing this page loaded, so the
   // thread is about what the shopper is looking at and nothing the browser sends
   // can change either one.
-  const messageAction = sendProductQuestion.bind(null, product.shopId, product.id);
+  const messageAction = openConversation.bind(null, product.shopId, product.id, null);
 
   let viewerId: string | null = null;
   if (isSupabaseConfigured()) {
@@ -177,15 +170,6 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
               {formatCurrency(product.price_mxn, currencyCode, filters.locale)}{" "}
               <span className="text-sm font-medium text-muted">{currencyCode}</span>
             </p>
-            <dl className="mt-5 grid gap-2 rounded-2xl border border-line bg-surface p-4 text-sm">
-              <div><dt className="font-semibold text-ink">Vende</dt><dd className="text-muted">{product.shop.name}</dd></div>
-              <div><dt className="font-semibold text-ink">Zona aproximada</dt><dd className="text-muted">{pickupArea ?? formatShopLocation(product.shop.country_code, product.shop.administrative_area_codes)}</dd></div>
-              {pickupArea ? <div><dt className="font-semibold text-ink">Entrega</dt><dd className="text-muted">Recolección en {pickupArea}. La dirección se comparte cuando se confirme el pedido.</dd></div> : null}
-              {product.shop.delivery_policy ? <div><dt className="font-semibold text-ink">Opciones de entrega de la tienda</dt><dd className="whitespace-pre-wrap text-muted">{product.shop.delivery_policy}</dd></div> : null}
-              {isUsedPhone && product.phone_battery_health !== null ? <div><dt className="font-semibold text-ink">Salud de batería</dt><dd className="text-muted">{product.phone_battery_health}%</dd></div> : null}
-              {isUsedPhone && product.phone_carrier_status ? <div><dt className="font-semibold text-ink">Bloqueo de compañía</dt><dd className="text-muted">{product.phone_carrier_status === "unlocked" ? "Liberado" : "Bloqueado"}</dd></div> : null}
-              {isUsedPhone && product.phone_repair_history ? <div><dt className="font-semibold text-ink">Reparaciones</dt><dd className="whitespace-pre-wrap text-muted">{product.phone_repair_history}</dd></div> : null}
-            </dl>
             <div className="my-7 h-px bg-line" />
             <p className="whitespace-pre-wrap text-base leading-8 text-muted">{product.description}</p>
             {product.other_features ? (
@@ -207,18 +191,14 @@ export default async function ProductPage({ params, searchParams }: ProductPageP
               productPath={productPath}
               unitsAvailable={product.units_available}
             />
-            <p className="mt-3 text-sm leading-6 text-muted">Si solicitas la compra, acuerdas el pago directamente con la tienda. Plaza Volcanes no cobra ni retiene ese pago.</p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              {viewerId !== product.shopOwnerId ? (
-                <ProductQuestionComposer
-                  action={messageAction}
-                  productId={product.id}
-                  productPath={productPath}
-                  resume={rawSearchParams.pregunta === "1"}
-                  sellerName={product.shop.name}
-                  signedIn={Boolean(viewerId)}
-                />
-              ) : null}
+              <StartConversationButton
+                action={messageAction}
+                isOwnShop={viewerId === product.shopOwnerId}
+                label="Preguntar por este producto"
+                returnTo={productPath}
+                signedIn={Boolean(viewerId)}
+              />
               <ShareActions showWhatsApp={false} label="Compartir producto" title={product.name} />
             </div>
             <p className="mt-8 rounded-2xl border border-line bg-surface p-4 text-sm leading-6 text-muted">

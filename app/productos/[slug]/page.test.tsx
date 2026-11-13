@@ -9,12 +9,11 @@ vi.mock("@/lib/queries/categories.server", () => ({ getProductCategoryTree }));
 vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: () => false }));
 vi.mock("@/lib/supabase/server", () => ({ createServerSupabaseClient: vi.fn() }));
 vi.mock("@/lib/actions/cart", () => ({ addToCart: vi.fn() }));
-vi.mock("@/lib/actions/messages", () => ({ sendProductQuestion: vi.fn() }));
-vi.mock("@/lib/queries/checkout.server", () => ({ fetchPickupPoint: vi.fn(async () => null) }));
+vi.mock("@/lib/actions/start-conversation", () => ({ openConversation: vi.fn() }));
 // The button is replaced by a stub that hands its props back, so a test can call
 // the very action the page bound and see what it was bound to.
-vi.mock("@/components/messages/product-question-composer", () => ({
-  ProductQuestionComposer: (props: Record<string, unknown>) => {
+vi.mock("@/components/messages/start-conversation-button", () => ({
+  StartConversationButton: (props: Record<string, unknown>) => {
     conversationButtonProps = props;
     return null;
   },
@@ -29,7 +28,7 @@ vi.mock("@/lib/queries/seller-standing.server", () => ({
 let conversationButtonProps: Record<string, unknown> = {};
 
 const { default: ProductPage, generateMetadata } = await import("@/app/productos/[slug]/page");
-const { sendProductQuestion } = await import("@/lib/actions/messages");
+const { openConversation } = await import("@/lib/actions/start-conversation");
 const { notFound } = await import("next/navigation");
 
 const product = {
@@ -165,13 +164,13 @@ describe("Product page messaging", () => {
     forged.set("product_id", "999");
     await action({ status: "idle", message: "" }, forged);
 
-    expect(sendProductQuestion).toHaveBeenCalledWith(4, 12, expect.anything(), forged);
+    expect(openConversation).toHaveBeenCalledWith(4, 12, null, expect.anything(), forged);
   });
 
   it("returns a signed-out shopper to the product they asked about", async () => {
     render(await renderPage());
 
-    expect(conversationButtonProps.productPath).toBe("/productos/taza-de-barro");
+    expect(conversationButtonProps.returnTo).toBe("/productos/taza-de-barro");
   });
 });
 

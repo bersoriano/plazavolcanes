@@ -107,7 +107,6 @@ export async function getListedCategoryIds(): Promise<Set<number>> {
     .eq("status", "published")
     .eq("is_admin_enabled", true)
     .eq("shops.is_publishing_approved", true)
-    .gt("units_available", 0)
     .not("expires_at", "is", null)
     .gt("expires_at", new Date().toISOString())
     .limit(SITEMAP_ROW_LIMIT);

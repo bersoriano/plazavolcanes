@@ -16,11 +16,6 @@ const blankForm = {
 } as const;
 
 describe("productDraftSchema", () => {
-  it("validates optional used phone facts without inventing missing values", () => {
-    const parsed = productDraftSchema.safeParse({ ...blankForm, phone_battery_health: "87", phone_carrier_status: "unlocked", phone_repair_history: "Cambio de pantalla" });
-    expect(parsed.success && parsed.data).toMatchObject({ phone_battery_health: 87, phone_carrier_status: "unlocked", phone_repair_history: "Cambio de pantalla" });
-    expect(productDraftSchema.safeParse({ ...blankForm, phone_battery_health: "101" }).success).toBe(false);
-  });
   it("keeps a half-written draft as the seller left it, inventing nothing", () => {
     const result = productDraftSchema.safeParse(blankForm);
 

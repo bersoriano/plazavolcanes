@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { CatalogScreen } from "@/components/catalog/catalog-screen";
 import { hasCatalogSearch, normalizeCatalogFilters, type CatalogSearchParams } from "@/lib/queries/catalog";
-import { getCatalogStateCounts, getHomeCatalog } from "@/lib/queries/catalog.server";
+import { getHomeCatalog } from "@/lib/queries/catalog.server";
 import { findAdministrativeAreaBySlug } from "@/lib/shop-location";
 
 type StateParams = Promise<{ slug: string }>;
@@ -42,7 +42,7 @@ export default async function StatePage({
   if (!area) notFound();
 
   const filters = normalizeCatalogFilters({ ...(await searchParams), estado: slug });
-  const [catalog, stateCounts] = await Promise.all([getHomeCatalog(filters), getCatalogStateCounts(filters.countryCode)]);
+  const catalog = await getHomeCatalog(filters);
 
-  return <CatalogScreen area={area} catalog={catalog} filters={filters} stateCounts={stateCounts} />;
+  return <CatalogScreen area={area} catalog={catalog} filters={filters} />;
 }

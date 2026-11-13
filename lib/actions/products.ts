@@ -118,7 +118,7 @@ async function writeUnderFreeSlug<Result extends { error: WriteError }>(
 
 function productFormFields(formData: FormData) {
   const attributes: Record<string, FormDataEntryValue | FormDataEntryValue[]> = {};
-  for (const field of ["color", "size", "material", "waterproof", "other_features", "phone_battery_health", "phone_carrier_status", "phone_repair_history"]) {
+  for (const field of ["color", "size", "material", "waterproof", "other_features"]) {
     const values = formData.getAll(field);
     // Older forms omit these keys. An empty control explicitly clears a claim.
     // Leave repeated values as an array so scalar validation rejects them.
@@ -137,21 +137,6 @@ function productFormFields(formData: FormData) {
     content_locale: formData.get("content_locale"),
     ...attributes,
   };
-}
-
-async function phoneDetailsForCategory(
-  supabase: Awaited<ReturnType<typeof createServerSupabaseClient>>,
-  categoryId: number | null,
-  condition: "new" | "used" | null,
-  details: { phone_battery_health?: number | null; phone_carrier_status?: "unlocked" | "locked" | null; phone_repair_history?: string | null },
-) {
-  if (details.phone_battery_health == null && details.phone_carrier_status == null && !details.phone_repair_history) {
-    return { phone_battery_health: null, phone_carrier_status: null, phone_repair_history: null };
-  }
-  const { data } = categoryId ? await supabase.from("categories").select("slug").eq("id", categoryId).maybeSingle() : { data: null };
-  return condition === "used" && data?.slug === "celulares-y-accesorios"
-    ? details
-    : { phone_battery_health: null, phone_carrier_status: null, phone_repair_history: null };
 }
 
 export async function createProduct(
@@ -173,7 +158,6 @@ export async function createProduct(
   const context = await getAuthenticatedContext();
   if (!context) return authError;
   const { supabase, userId } = context;
-  const phoneDetails = await phoneDetailsForCategory(supabase, parsed.data.category_id, parsed.data.condition, parsed.data);
   const { data: shop } = await supabase.from("shops").select("slug").eq("id", shopId).eq("owner_id", userId).maybeSingle();
   if (!shop) return { status: "error", message: "No encontramos esa tienda." };
   const { data, error } = await writeUnderFreeSlug(
@@ -183,7 +167,6 @@ export async function createProduct(
         .from("products")
         .insert({
           ...parsed.data,
-          ...phoneDetails,
           shop_id: shopId,
           slug,
           status: "draft",
@@ -220,7 +203,6 @@ export async function updateProduct(
   const context = await getAuthenticatedContext();
   if (!context) return authError;
   const { supabase, userId } = context;
-  const phoneDetails = await phoneDetailsForCategory(supabase, parsed.data.category_id, parsed.data.condition, parsed.data);
   const { data: existing } = await supabase.from("products").select("shop_id, image_path, status, slug, is_admin_enabled").eq("id", productId).maybeSingle();
   if (!existing || existing.status === "deleted") return { status: "error", message: "No encontramos ese producto." };
   const { data: shop } = await supabase.from("shops").select("slug, listing_limit, is_publishing_approved, publishing_reviewed_at").eq("id", existing.shop_id).eq("owner_id", userId).maybeSingle();
@@ -273,7 +255,6 @@ export async function updateProduct(
         .from("products")
         .update({
           ...parsed.data,
-          ...phoneDetails,
           slug: candidate,
           updated_at: new Date().toISOString(),
         })

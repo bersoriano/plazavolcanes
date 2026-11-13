@@ -16,7 +16,7 @@ export function FinalCta() {
       <VolcanoLines className="pointer-events-none absolute inset-x-0 bottom-0 h-[140px] w-full text-brand opacity-[0.12] lg:h-[300px]" />
 
       <div className="relative mx-auto flex max-w-[1280px] flex-col gap-5 lg:items-center lg:gap-7 lg:text-center">
-        <p className="text-[12px] font-bold tracking-[0.14em] lg:text-[13px]">TIENDAS FUNDADORAS</p>
+        <p className="text-[12px] font-bold tracking-[0.14em] lg:text-[13px]">ÚLTIMOS LUGARES FUNDADORES</p>
         <h2
           className="font-display text-[clamp(54px,35.4px+4.762vw,104px)] font-semibold leading-[0.95] tracking-[-0.04em] text-ink"
           id="fundadoras-heading"

@@ -2,6 +2,7 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import Home, { generateMetadata } from "@/app/page";
+import { getPosts } from "@/lib/posts.server";
 import { getHomeCatalog } from "@/lib/queries/catalog.server";
 import { getProductCategoryTree } from "@/lib/queries/categories.server";
 import { getListedCategoryIds, hasPublishedProducts } from "@/lib/queries/sitemap.server";
@@ -129,6 +130,22 @@ describe("Home category fallback", () => {
     );
   });
 
+  it("keeps the fallback hero when an invalid category still returns products", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()], invalidCategorySelection: true }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({ categoria: "no-existe" }) }));
+
+    const hero = screen
+      .getByRole("heading", {
+        name: "Una plaza llena de cosas que no encuentras en cualquier lugar.",
+      })
+      .closest("section");
+    expect(hero).not.toBeNull();
+    expect(within(hero!).queryByRole("link", { name: "Explorar productos" })).not.toBeInTheDocument();
+    expect(within(hero!).queryByRole("link", { name: "Abrir mi tienda" })).not.toBeInTheDocument();
+  });
 });
 
 function catalogResult(
@@ -211,6 +228,23 @@ describe("Home conversion sections", () => {
     expect(screen.getByRole("search")).toBeInTheDocument();
   });
 
+  it("keeps the single adaptive hero on a search", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({ q: "taza" }) }));
+
+    expect(
+      screen.queryByRole("region", { name: "Vende lo tuyo. Quédate con todo." }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", {
+        name: "Una plaza llena de cosas que no encuentras en cualquier lugar.",
+      }),
+    ).toBeInTheDocument();
+  });
+
   it("leaves the open seat out of a search", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(
       catalogResult({ products: [sampleProduct()], shops: [sampleShop()] }),
@@ -222,17 +256,145 @@ describe("Home conversion sections", () => {
   });
 
 
+  it("offers the landing from the cold start block behind the fallback hero", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ invalidCategorySelection: true }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({ categoria: "no-existe" }) }));
+
+    expect(
+      screen.getAllByRole("link", { name: "Quiero vender" }).map((link) => link.getAttribute("href")),
+    ).toContain("/vender?desde=vacio");
+  });
+
+  it("hides the marketing sections while a catalog search is active", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({ products: [sampleProduct()] }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({ q: "taza" }) }));
+
+    expect(
+      screen.queryByRole("region", { name: "Antes de acordar una compra" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Vende en Plaza Volcanes." })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Sin retenciones Ni Comisiones" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Plaza Volcanes es una plataforma 100% Mexicana 🇲🇽." }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("region", { name: "Cómo comprar en la plaza." }),
+    ).not.toBeInTheDocument();
+  });
 });
 
 const LANDING_H1 = "Vende lo tuyo. Quédate con todo.";
 
 describe("Home landing", () => {
+  it("opens the bare home page on the seller hero, with a single h1", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products: [sampleProduct()] }));
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const headings = screen.getAllByRole("heading", { level: 1 });
+    expect(headings).toHaveLength(1);
+    expect(headings[0]).toHaveTextContent(LANDING_H1);
+    expect(screen.getByText("Para tiendas independientes de México")).toBeInTheDocument();
+  });
+
+  it("sends the hero's two calls to action to signup and to the buyer panel", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products: [sampleProduct()] }));
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const hero = screen.getByRole("region", { name: LANDING_H1 });
+    expect(within(hero).getByRole("link", { name: "Abrir mi tienda gratis" })).toHaveAttribute(
+      "href",
+      "/registro?vender=1",
+    );
+    expect(within(hero).getByRole("link", { name: "Explorar productos" })).toHaveAttribute("href", "#explorar");
+  });
+
+  it("briefs the newest post from the blog", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products: [sampleProduct()] }));
+    const post = { title: "", description: "", date: "2026-11-05", draft: false, body: "" };
+    vi.mocked(getPosts).mockResolvedValueOnce([
+      { ...post, slug: "la-mas-nueva", title: "La más nueva" },
+      { ...post, slug: "la-anterior", title: "La anterior" },
+    ]);
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const section = screen.getByRole("region", { name: "La más nueva" });
+    expect(within(section).getByRole("link", { name: "Leer el artículo" })).toHaveAttribute(
+      "href",
+      "/blog/la-mas-nueva",
+    );
+    expect(screen.queryByRole("region", { name: "La anterior" })).not.toBeInTheDocument();
+  });
+
+  it("names the founders offer without a tally while nothing counts the spots", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult());
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const hero = screen.getByRole("region", { name: LANDING_H1 });
+    expect(within(hero).getByText("Primeras 100 tiendas")).toBeInTheDocument();
+    expect(
+      within(hero).getByText(
+        "Publica 8 productos en tus primeros 7 días y gana tu lugar. 50 productos, insignia fundadora y 0% comisión fija 12 meses.",
+      ),
+    ).toBeInTheDocument();
+    expect(within(hero).queryByRole("progressbar")).not.toBeInTheDocument();
+  });
+
+  it("hides the collage from assistive technology and states its facts instead", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products: [sampleProduct()] }));
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const receipt = screen.getByText("Pedido confirmado");
+    expect(receipt.closest("[aria-hidden='true']")).not.toBeNull();
+    expect(
+      screen.getByText(/Ejemplo de pedido: precio de venta \$1,999\.00, comisión Plaza Volcanes \$0\.00, retención \$0\.00, tú recibes \$1,999\.00\./),
+    ).toHaveTextContent("Recién publicado: Taza de barro negro");
+  });
+
   it("leaves the newest-listing card out while nothing is published", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult());
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
     expect(screen.queryByText("RECIÉN PUBLICADO")).not.toBeInTheDocument();
+  });
+
+  it("keeps the plaza's search, state filter and categories in the buyer panel", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(
+      catalogResult({
+        products: [sampleProduct()],
+        categories: [
+          { id: 1, parentId: null, slug: "hogar-y-jardin", name: "Hogar y jardín", sortOrder: 1, isActive: true, children: [] },
+        ],
+      }),
+    );
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const panel = screen.getByRole("region", { name: "Encuentra productos únicos cerca de ti." });
+    expect(panel).toHaveAttribute("id", "explorar");
+    const search = within(panel).getByRole("search");
+    expect(search).toHaveAttribute("action", "/");
+    expect(within(search).getByRole("searchbox", { name: "Buscar productos" })).toHaveAttribute("name", "q");
+    expect(within(search).getByRole("combobox", { name: "Estado" })).toHaveAttribute("name", "estado");
+    expect(within(search).getByRole("button", { name: "Buscar" })).toHaveAttribute("type", "submit");
+    const categories = within(panel).getByRole("navigation", { name: "Categorías de productos" });
+    expect(within(categories).getByRole("link", { name: "Hogar y jardín" })).toHaveAttribute(
+      "href",
+      "/?categoria=hogar-y-jardin",
+    );
   });
 
   it("hides the categories nothing is published under", async () => {
@@ -255,6 +417,50 @@ describe("Home landing", () => {
     const categories = screen.getByRole("navigation", { name: "Categorías de productos" });
     expect(within(categories).getByRole("link", { name: "Electrónica" })).toBeInTheDocument();
     expect(within(categories).queryByRole("link", { name: "Moda" })).not.toBeInTheDocument();
+  });
+
+  it("shows only photographed products, never a grey placeholder", async () => {
+    const products = [1, 2, 3].map((id) => ({
+      ...sampleProduct(),
+      id,
+      slug: `producto-${id}`,
+      name: `Producto ${id}`,
+      imageUrl: id === 2 ? null : `https://example.com/${id}.jpg`,
+    }));
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products }));
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const panel = screen.getByRole("region", { name: "Encuentra productos únicos cerca de ti." });
+    expect(within(panel).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
+      "Producto 1",
+      "Producto 3",
+    ]);
+  });
+
+  it("shows the three newest products, then the way into the whole plaza and the guide", async () => {
+    const products = [1, 2, 3, 4].map((id) => ({
+      ...sampleProduct(),
+      id,
+      slug: `producto-${id}`,
+      name: `Producto ${id}`,
+      imageUrl: `https://example.com/${id}.jpg`,
+    }));
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products }));
+
+    render(await Home({ searchParams: Promise.resolve({}) }));
+
+    const panel = screen.getByRole("region", { name: "Encuentra productos únicos cerca de ti." });
+    expect(within(panel).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
+      "Producto 1",
+      "Producto 2",
+      "Producto 3",
+    ]);
+    expect(within(panel).getByRole("link", { name: /Ver toda la plaza/ })).toHaveAttribute("href", "/explorar");
+    expect(within(panel).getByRole("link", { name: "Cómo comprar en la plaza →" })).toHaveAttribute(
+      "href",
+      "/como-comprar",
+    );
   });
 
   it("moves the buyer guide and the state explorer off the landing", async () => {
@@ -330,6 +536,21 @@ describe("Home state parameter", () => {
     expect(screen.getByRole("status")).toHaveTextContent(
       "Estado no disponible. Mostramos todo México.",
     );
+  });
+
+  it("keeps the fallback hero when an invalid state still returns products", async () => {
+    vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products: [sampleProduct()] }));
+
+    render(await Home({ searchParams: Promise.resolve({ estado: "california" }) }));
+
+    const hero = screen
+      .getByRole("heading", {
+        name: "Una plaza llena de cosas que no encuentras en cualquier lugar.",
+      })
+      .closest("section");
+    expect(hero).not.toBeNull();
+    expect(within(hero!).queryByRole("link", { name: "Explorar productos" })).not.toBeInTheDocument();
+    expect(within(hero!).queryByRole("link", { name: "Abrir mi tienda" })).not.toBeInTheDocument();
   });
 
 });
@@ -412,6 +633,7 @@ describe("Home search metadata", () => {
             inLanguage: "es-MX",
           }),
           expect.objectContaining({ "@type": "Organization", name: "Plaza Volcanes", url: "https://plazavolcanes.com/" }),
+          expect.objectContaining({ "@type": "Service", areaServed: "MX" }),
         ],
       },
     ]);

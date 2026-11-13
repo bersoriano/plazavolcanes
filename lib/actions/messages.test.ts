@@ -9,7 +9,7 @@ vi.mock("@/lib/supabase/server", () => ({
 vi.mock("@/lib/supabase/config", () => ({ isSupabaseConfigured: () => true }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-const { sendMessage, sendProductQuestion, startPreSaleConversation } = await import("@/lib/actions/messages");
+const { sendMessage, startPreSaleConversation } = await import("@/lib/actions/messages");
 
 beforeEach(() => {
   rpc.mockReset();
@@ -24,42 +24,6 @@ function formOf(body: string) {
 }
 
 const idle = { status: "idle" as const, message: "" };
-
-test("sends a product question with the browser's retry key", async () => {
-  rpc.mockResolvedValueOnce({ data: 42, error: null });
-  const form = formOf("  ¿Está liberado?  ");
-  form.set("idempotency_key", "d73b15da-f853-4cfd-ab76-407bafc3846a");
-  const state = await sendProductQuestion(3, 12, idle, form);
-  expect(state).toMatchObject({ status: "success", conversationId: 42 });
-  expect(rpc).toHaveBeenCalledOnce();
-  expect(rpc).toHaveBeenCalledWith("send_product_question", {
-    p_shop_id: 3, p_product_id: 12, p_body: "¿Está liberado?", p_idempotency_key: "d73b15da-f853-4cfd-ab76-407bafc3846a",
-  });
-});
-
-test("does not claim a question was sent when delivery fails", async () => {
-  rpc.mockResolvedValueOnce({ data: null, error: { code: "XX000", message: "private error" } });
-  const form = formOf("¿Qué salud tiene la batería?");
-  form.set("idempotency_key", "d73b15da-f853-4cfd-ab76-407bafc3846a");
-  const state = await sendProductQuestion(3, 12, idle, form);
-  expect(state).toMatchObject({ status: "error", message: "No pudimos enviar tu pregunta. Inténtalo de nuevo." });
-  expect(state.conversationId).toBeUndefined();
-});
-
-test("keeps questions working before the atomic database function is deployed", async () => {
-  rpc.mockResolvedValueOnce({ data: null, error: { code: "PGRST202", message: "Function missing" } });
-  rpc.mockResolvedValueOnce({ data: 42, error: null });
-  rpc.mockResolvedValueOnce({ data: 91, error: null });
-  const form = formOf("¿Puedo revisarlo antes de pagar?");
-  form.set("idempotency_key", "d73b15da-f853-4cfd-ab76-407bafc3846a");
-
-  expect(await sendProductQuestion(3, 12, idle, form)).toMatchObject({ status: "success", conversationId: 42 });
-  expect(rpc).toHaveBeenNthCalledWith(3, "send_conversation_message", {
-    p_conversation_id: 42,
-    p_body: "¿Puedo revisarlo antes de pagar?",
-    p_idempotency_key: "d73b15da-f853-4cfd-ab76-407bafc3846a",
-  });
-});
 
 test("generates a fresh idempotency key on every send", async () => {
   rpc.mockResolvedValue({ error: null });
