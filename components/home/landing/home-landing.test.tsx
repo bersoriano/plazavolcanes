@@ -45,7 +45,7 @@ describe("HomeLanding and the founders promotion", () => {
 
     expect(screen.getByText("Primeras 100 tiendas")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 3, name: "0% de comisión fija 12 meses." })).toBeInTheDocument();
-    expect(screen.getByRole("region", { name: "Sé de las primeras 100 tiendas." })).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Tus reglas, desde el primer día." })).toBeInTheDocument();
   });
 
   it("takes every founders block off the page once it has ended", () => {
@@ -54,9 +54,9 @@ describe("HomeLanding and the founders promotion", () => {
 
     expect(screen.queryByText("Primeras 100 tiendas")).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { level: 3, name: "0% de comisión fija 12 meses." })).not.toBeInTheDocument();
-    expect(screen.queryByRole("region", { name: "Sé de las primeras 100 tiendas." })).not.toBeInTheDocument();
+    expect(screen.queryByRole("region", { name: "Tus reglas, desde el primer día." })).not.toBeInTheDocument();
     // The rest of the landing stays.
-    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Tu catálogo listo para compartir por WhatsApp");
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Tu tienda, tus reglas.");
     expect(screen.queryByRole("link", { name: "Ver una tienda de ejemplo" })).not.toBeInTheDocument();
     expect(screen.getByRole("region", { name: "Encuentra productos únicos cerca de ti." })).toBeInTheDocument();
   });

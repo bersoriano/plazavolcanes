@@ -1,8 +1,9 @@
 import { ImageResponse } from "next/og";
 
 // The preview a shared link shows. Pages without an image of their own inherit
-// it; since the home page became the seller landing, it carries that pitch.
-export const alt = "Plaza Volcanes: vende lo tuyo y quédate con todo";
+// it; since the home page became the seller landing, it carries that pitch:
+// the "Tu tienda, tus reglas" campaign line.
+export const alt = "Plaza Volcanes: tu tienda, tus reglas";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -30,9 +31,8 @@ export default function OpengraphImage() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", fontSize: 88, fontWeight: 700, lineHeight: 1.02, marginTop: 48 }}>
-          <span>Vende lo tuyo.</span>
-          <div style={{ alignItems: "center", display: "flex", gap: 24 }}>
-            <span style={{ color: ACCENT }}>Quédate con</span>
+          <span>Tu tienda,</span>
+          <div style={{ alignItems: "center", display: "flex", gap: 24, marginTop: 12 }}>
             <span
               style={{
                 background: ACCENT,
@@ -44,13 +44,15 @@ export default function OpengraphImage() {
                 transform: "rotate(-2.5deg)",
               }}
             >
-              todo.
+              tus reglas.
             </span>
           </div>
         </div>
 
+        {/* Evergreen on purpose: crawlers cache this image, so it must not
+            outlive an offer that can close (the founders seats). */}
         <div style={{ color: "rgba(255,255,255,0.78)", display: "flex", fontSize: 32, marginTop: 34 }}>
-          Primeras 100 tiendas: 50 productos y 0% comisión 12 meses.
+          Tus precios, tu forma de cobrar, sin comisión en pago directo.
         </div>
 
         {/* The brand's volcano line, the same paths as VolcanoMark. */}

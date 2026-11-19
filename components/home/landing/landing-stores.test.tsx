@@ -69,6 +69,7 @@ describe("LandingStores", () => {
 
     const section = screen.getByRole("region", { name: "Tiendas de la plaza." });
     expect(section).toHaveAttribute("id", "tiendas");
+    expect(section).toHaveTextContent("Tiendas reales, cada una con sus reglas, su nivel y sus reseñas.");
     const links = within(section).getAllByRole("link");
     expect(links.at(-1)).toHaveAttribute("href", "/vender?desde=tiendas");
   });

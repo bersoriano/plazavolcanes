@@ -31,11 +31,12 @@ describe("BenefitsBento", () => {
     const section = screen.getByRole("region", { name: "Lo que vendes, es tuyo." });
     expect(within(section).getAllByRole("heading", { level: 3 }).map((heading) => heading.textContent)).toEqual([
       "0% de comisión fija 12 meses.",
-      "Sin retenciones",
-      "Muestra tu reputación",
-      "Tu catálogo en un solo lugar",
-      "Todo queda por escrito",
+      "Cobras a tu manera",
+      "Tu reputación viene contigo",
+      "Tú armas tu catálogo",
+      "Tus acuerdos, por escrito",
     ]);
+    expect(within(section).getByText("Tus reglas")).toBeInTheDocument();
   });
 
   it("drops the founders block once the promotion has ended", () => {

@@ -260,7 +260,7 @@ test.describe("landing responsive and accessibility gate", () => {
         await page.goto("/");
 
         await expect(
-          page.getByRole("heading", { level: 1, name: "Vende lo tuyo. Quédate con todo." }),
+          page.getByRole("heading", { level: 1, name: "Tu tienda, tus reglas." }),
         ).toBeVisible();
         await expect(page.getByRole("link", { name: "Plaza Volcanes, inicio" })).toBeVisible();
         await expect(page.getByRole("button", { name: "Salir" })).toBeVisible();

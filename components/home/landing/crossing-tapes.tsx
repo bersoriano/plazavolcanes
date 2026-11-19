@@ -2,10 +2,11 @@ import { Fragment } from "react";
 
 export type TapePromise = { text: string; italic: boolean };
 
+/** The home page's lime tape: the "Tu tienda, tus reglas" campaign's rules. */
 const PROMISES: TapePromise[] = [
-  { text: "Sin retenciones", italic: false },
-  { text: "ni comisiones", italic: true },
-  { text: "Pago directo", italic: false },
+  { text: "Tus precios", italic: false },
+  { text: "tu forma de cobrar", italic: true },
+  { text: "Sin comisiones", italic: false },
   { text: "todo por escrito", italic: true },
   { text: "100% mexicana", italic: false },
 ];

@@ -41,9 +41,9 @@ export function HomeLanding({ catalog, stateCounts, filters, founders, latestPos
       {products[0] ? (
         <section aria-labelledby="customer-preview" className="mx-auto grid max-w-[1280px] gap-5 px-5 py-10 sm:px-8 md:grid-cols-[minmax(0,1fr)_minmax(220px,320px)] md:items-center xl:px-20">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Tu enlace, visto por clientes</p>
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Tu vitrina, a tu manera</p>
             <h2 className="mt-2 font-display text-3xl font-semibold text-ink" id="customer-preview">Así pueden ver tus productos</h2>
-            <p className="mt-3 max-w-lg leading-7 text-muted">Tu tienda muestra el nombre, fotos y precios de lo que tienes publicado. Este producto pertenece a una tienda real de la plaza.</p>
+            <p className="mt-3 max-w-lg leading-7 text-muted">Tú eliges qué publicar, con tus fotos y tus precios. Este producto pertenece a una tienda real de la plaza.</p>
           </div>
           <ProductCard product={products[0]} variant="compact" locale={filters.locale} />
         </section>

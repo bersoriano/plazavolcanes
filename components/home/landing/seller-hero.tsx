@@ -6,7 +6,9 @@ import type { CatalogLocale } from "@/lib/catalog-locale";
 import type { CatalogProduct } from "@/lib/queries/catalog.server";
 
 /**
- * The seller hero: the pitch and its two ways forward on the left, the
+ * The seller hero of the "Tu tienda, tus reglas" campaign
+ * (docs/superpowers/specs/2026-11-19-tu-tienda-tus-reglas-campaign-design.md):
+ * the pitch and its two ways forward on the left, the
  * collage on the right. The two sit side by side from xl, where the text
  * column still has room for the 100px heading; below that they stack, the
  * collage keeping its desktop composition down to sm.
@@ -40,12 +42,17 @@ export function SellerHero({
             Para tiendas independientes de México
           </p>
 
+          {/* Two lines at every width: the campaign line reads as a slogan,
+              "tus reglas." on a tilted lime marker like the share image's. */}
           <h1 className={`${TYPE.h1} text-ink`} id="inicio-heading">
-            Tu catálogo listo para <em className="italic text-brand">compartir por WhatsApp</em>
+            <span className="block">Tu tienda,</span>{" "}
+            <em className="mt-[0.06em] inline-block -rotate-2 rounded-[0.18em] bg-accent px-[0.14em] pb-[0.08em] italic text-brand shadow-cta">
+              tus reglas.
+            </em>
           </h1>
 
           <p className="max-w-[560px] text-pretty text-[17px] leading-[1.55] text-text-body lg:text-[20px]">
-            Junta tus productos, fotos y precios en un solo enlace. Compártelo con tus clientes y recibe el pago directamente, sin comisión en pago directo.
+            Tú pones los precios, eliges cómo cobrar y acuerdas la entrega con cada cliente. Plaza Volcanes no toca tu dinero: sin comisión en pago directo.
           </p>
 
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-3.5">

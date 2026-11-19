@@ -21,7 +21,7 @@ export function FinalCta() {
           className="font-display text-[clamp(54px,35.4px+4.762vw,104px)] font-semibold leading-[0.95] tracking-[-0.04em] text-ink"
           id="fundadoras-heading"
         >
-          Sé de las primeras <Accent>100 tiendas.</Accent>
+          Tus reglas, <Accent>desde el primer día.</Accent>
         </h2>
         <p className="max-w-[620px] text-[17px] font-medium leading-[1.5] lg:text-[20px]">
           {FOUNDER_OFFER} Gana tu lugar publicando 8 productos en tus primeros 7 días.

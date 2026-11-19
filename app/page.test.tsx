@@ -291,7 +291,7 @@ describe("Home conversion sections", () => {
   });
 });
 
-const LANDING_H1 = "Tu catálogo listo para compartir por WhatsApp";
+const LANDING_H1 = "Tu tienda, tus reglas.";
 
 describe("Home landing", () => {
   it("opens the bare home page on the seller hero, with a single h1", async () => {
@@ -303,6 +303,11 @@ describe("Home landing", () => {
     expect(headings).toHaveLength(1);
     expect(headings[0]).toHaveTextContent(LANDING_H1);
     expect(screen.getByText("Para tiendas independientes de México")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        "Tú pones los precios, eliges cómo cobrar y acuerdas la entrega con cada cliente. Plaza Volcanes no toca tu dinero: sin comisión en pago directo.",
+      ),
+    ).toBeInTheDocument();
   });
 
   it("sends the hero's two calls to action to signup and a real shop", async () => {
@@ -316,7 +321,9 @@ describe("Home landing", () => {
       "/registro?vender=1",
     );
     expect(within(hero).getByRole("link", { name: "Ver una tienda de ejemplo" })).toHaveAttribute("href", "/tiendas/taller-volcan");
-    expect(screen.getByRole("region", { name: "Así pueden ver tus productos" })).toHaveTextContent("Taza de barro negro");
+    const preview = screen.getByRole("region", { name: "Así pueden ver tus productos" });
+    expect(preview).toHaveTextContent("Taza de barro negro");
+    expect(within(preview).getByText("Tu vitrina, a tu manera")).toBeInTheDocument();
   });
 
   it("briefs the newest post from the blog", async () => {
@@ -357,10 +364,10 @@ describe("Home landing", () => {
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const receipt = screen.getByText("Pedido confirmado");
-    expect(receipt.closest("[aria-hidden='true']")).not.toBeNull();
+    const rules = screen.getByText("Reglas de mi tienda");
+    expect(rules.closest("[aria-hidden='true']")).not.toBeNull();
     expect(
-      screen.getByText(/Ejemplo de pedido: precio de venta \$1,999\.00, comisión Plaza Volcanes \$0\.00, retención \$0\.00, tú recibes \$1,999\.00\./),
+      screen.getByText(/Ejemplo de las reglas de una tienda: tú pones el precio, \$1,999\.00; cobras directo; comisión Plaza Volcanes \$0\.00; tú recibes \$1,999\.00\./),
     ).toHaveTextContent("Recién publicado: Taza de barro negro");
   });
 
