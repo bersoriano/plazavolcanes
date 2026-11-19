@@ -17,9 +17,9 @@ describe("CrossingTapes", () => {
     const { container } = render(<CrossingTapes categories={["Electrónica", "Moda"]} />);
 
     expect(exposedTexts(container)).toEqual([
-      "Sin retenciones",
-      "ni comisiones",
-      "Pago directo",
+      "Tus precios",
+      "tu forma de cobrar",
+      "Sin comisiones",
       "todo por escrito",
       "100% mexicana",
       "Electrónica",
@@ -37,7 +37,7 @@ describe("CrossingTapes", () => {
     const { container } = render(<CrossingTapes categories={[]} />);
 
     expect([...container.querySelectorAll("em")].slice(0, 2).map((node) => node.textContent)).toEqual([
-      "ni comisiones",
+      "tu forma de cobrar",
       "todo por escrito",
     ]);
   });

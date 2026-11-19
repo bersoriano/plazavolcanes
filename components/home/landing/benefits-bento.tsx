@@ -16,7 +16,7 @@ type Tile = {
 
 const TILES: (Tile & { shown: boolean })[] = [
   {
-    title: "Sin retenciones",
+    title: "Cobras a tu manera",
     text: "Acuerdas el método de pago con tu cliente y el dinero llega directo a ti.",
     icon: <Wallet className="size-[22px] lg:size-[26px]" strokeWidth={2} />,
     card: "bg-accent text-brand",
@@ -27,7 +27,7 @@ const TILES: (Tile & { shown: boolean })[] = [
   {
     // The first sellers' reputation is brought over by hand, so the tile only
     // names the offer.
-    title: "Muestra tu reputación",
+    title: "Tu reputación viene contigo",
     text: "Tu perfil de Mercado Libre o Facebook, visible en tu tienda desde el primer día.",
     icon: <BadgeCheck className="size-[22px] lg:size-[26px]" strokeWidth={2} />,
     card: "border border-line bg-surface text-ink",
@@ -37,8 +37,8 @@ const TILES: (Tile & { shown: boolean })[] = [
     shown: REPUTATION_IMPORT_AVAILABLE,
   },
   {
-    title: "Tu catálogo en un solo lugar",
-    text: "Nuevo o usado, todo tu inventario en una tienda que puedes compartir.",
+    title: "Tú armas tu catálogo",
+    text: "Nuevo o usado, tú eliges qué publicar y lo compartes con un solo enlace.",
     icon: <LayoutGrid className="size-[22px] lg:size-[26px]" strokeWidth={2} />,
     card: "border border-line bg-surface text-ink",
     chip: "bg-gold-tint text-premium-text",
@@ -46,7 +46,7 @@ const TILES: (Tile & { shown: boolean })[] = [
     shown: true,
   },
   {
-    title: "Todo queda por escrito",
+    title: "Tus acuerdos, por escrito",
     text: "Mensajes, acuerdos, envío y entrega quedan ligados a cada pedido.",
     icon: <FileText className="size-[22px] lg:size-[26px]" strokeWidth={2} />,
     card: "bg-coral-tint text-ink",
@@ -58,7 +58,8 @@ const TILES: (Tile & { shown: boolean })[] = [
 ];
 
 /**
- * What a seller keeps: the 0% block and four benefits. One column of rows on
+ * What a seller keeps, as the campaign's rules: the 0% block and four
+ * benefits. One column of rows on
  * a phone, two columns from md with the block across the top, and from lg the
  * handoff's 4×2 grid with the block filling the left half.
  */
@@ -78,7 +79,7 @@ export function BenefitsBento({ promoActive = true }: { promoActive?: boolean })
       <div className="mx-auto flex max-w-[1280px] flex-col gap-6 lg:gap-11">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between lg:gap-10">
           <div className="flex flex-col gap-3.5 lg:gap-4">
-            <Eyebrow>Para quien vende</Eyebrow>
+            <Eyebrow>Tus reglas</Eyebrow>
             <h2 className={`${TYPE.h2} text-ink`} id="vender-heading">
               Lo que vendes, <Accent>es tuyo.</Accent>
             </h2>

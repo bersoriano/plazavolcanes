@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
-import { Check, Mic, Wallet } from "lucide-react";
+import { Check, Mic, Tag } from "lucide-react";
 
 import { LandingPhoto } from "@/components/home/landing/landing-photo";
 import { EXAMPLE_PRICE } from "@/components/home/landing/primitives";
@@ -42,9 +42,9 @@ function cq(values: Partial<Record<CqKey, number | [number, number]>>) {
 }
 
 /**
- * The hero's right-hand picture: a seller's portrait, a receipt that shows
- * the seller keeps the whole price, a chip, a sticker and, from sm, the
- * newest listing.
+ * The hero's right-hand picture: a seller's portrait, the card of rules the
+ * seller sets (their price, how they get paid, no commission, so they keep
+ * the whole price), a chip, a sticker and, from sm, the newest listing.
  *
  * Everything is placed in container-width units (cqw) against the handoff's
  * own canvases — 350×370 on a phone, 600×700 from sm — so the composition
@@ -70,7 +70,7 @@ export function HeroCollage({
   locale?: CatalogLocale;
 }) {
   const summary = [
-    `Ejemplo de pedido: precio de venta ${EXAMPLE_PRICE}, comisión Plaza Volcanes ${ZERO}, retención ${ZERO}, tú recibes ${EXAMPLE_PRICE}.`,
+    `Ejemplo de las reglas de una tienda: tú pones el precio, ${EXAMPLE_PRICE}; cobras directo; comisión Plaza Volcanes ${ZERO}; tú recibes ${EXAMPLE_PRICE}.`,
     latest
       ? `Recién publicado: ${latest.name}, ${formatCurrency(latest.price_mxn, latest.currency_code ?? DEFAULT_CATALOG_CURRENCY, locale)}.`
       : null,
@@ -96,14 +96,14 @@ export function HeroCollage({
           />
         </div>
 
-        <Receipt />
+        <RulesCard />
 
         <span
           className="animate-rise-in absolute flex -rotate-4 items-center rounded-full bg-brand font-bold text-accent shadow-cta cq-pos cq-h cq-gap cq-px cq-text [animation-delay:240ms]"
           style={cq({ l: 4, t: [30, 34], h: [10.286, 7.333], g: [2, 1.333], px: [4, 3], fs: [3.714, 2.5] })}
         >
-          <Wallet className="hidden size-[3cqw] sm:block" strokeWidth={2} />
-          Te pagan directo
+          <Tag className="hidden size-[3cqw] sm:block" strokeWidth={2} />
+          Tú pones el precio
         </span>
 
         <span
@@ -157,7 +157,12 @@ export function HeroCollage({
   );
 }
 
-function Receipt() {
+/**
+ * The seller's rules for their shop, laid out like the receipt it replaced:
+ * the same rows in the same places, so the cqw geometry still holds. The
+ * price row only shows from sm, where the canvas has room for it.
+ */
+function RulesCard() {
   return (
     <div
       className="animate-rise-in absolute flex flex-col bg-surface leading-[1.2] text-ink shadow-float cq-pos cq-w cq-gap cq-r cq-p [animation-delay:120ms]"
@@ -169,17 +174,17 @@ function Receipt() {
         </span>
         <span className="flex flex-col">
           <span className="font-bold cq-text" style={cq({ fs: [4, 2.667] })}>
-            Pedido confirmado
+            Reglas de mi tienda
           </span>
           <span className="text-muted cq-text" style={cq({ fs: [3.429, 2.167] })}>
-            Tu tienda · Pago directo
+            Las pongo yo
           </span>
         </span>
       </div>
       <span className="h-px bg-hairline" />
-      <ReceiptRow className="hidden sm:flex" label="Precio de venta" value={EXAMPLE_PRICE} valueClassName="font-semibold" />
-      <ReceiptRow label="Comisión Plaza Volcanes" value={ZERO} valueClassName="font-bold text-success" />
-      <ReceiptRow label="Retención" value={ZERO} valueClassName="font-bold text-success" />
+      <RuleRow className="hidden sm:flex" label="Mi precio" value={EXAMPLE_PRICE} valueClassName="font-semibold" />
+      <RuleRow label="Cómo cobro" value="Directo" valueClassName="font-bold text-success" />
+      <RuleRow label="Comisión Plaza Volcanes" value={ZERO} valueClassName="font-bold text-success" />
       <span className="h-px bg-hairline" />
       <div className="flex items-baseline justify-between">
         <span className="font-bold cq-text" style={ROW_TEXT}>
@@ -195,7 +200,7 @@ function Receipt() {
 
 const ROW_TEXT = cq({ fs: [3.714, 2.5] });
 
-function ReceiptRow({
+function RuleRow({
   label,
   value,
   valueClassName,

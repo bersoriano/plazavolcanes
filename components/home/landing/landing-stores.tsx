@@ -52,7 +52,7 @@ export function LandingStores({ shops }: { shops: CatalogShop[] }) {
             </h2>
           </div>
           <p className={`${TYPE.aside} lg:max-w-[360px] lg:pb-2`}>
-            Tiendas reales, con nivel y reseñas. La siguiente puede ser la tuya.
+            Tiendas reales, cada una con sus reglas, su nivel y sus reseñas. La siguiente puede ser la tuya.
           </p>
         </div>
 

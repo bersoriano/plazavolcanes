@@ -9,7 +9,7 @@ describe("FinalCta", () => {
   it("closes on the founders offer with both ways forward", () => {
     render(<FinalCta />);
 
-    const section = screen.getByRole("region", { name: "Sé de las primeras 100 tiendas." });
+    const section = screen.getByRole("region", { name: "Tus reglas, desde el primer día." });
     expect(within(section).getByText("TIENDAS FUNDADORAS")).toBeInTheDocument();
     expect(within(section).getByRole("link", { name: "Abrir mi tienda gratis" })).toHaveAttribute(
       "href",
