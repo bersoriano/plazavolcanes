@@ -6,7 +6,7 @@ describe("home share image", () => {
   it("is a large-card PNG that says what it shows", () => {
     expect(size).toEqual({ width: 1200, height: 630 });
     expect(contentType).toBe("image/png");
-    expect(alt).toBe("Plaza Volcanes: vende lo tuyo y quédate con todo");
+    expect(alt).toBe("Plaza Volcanes: tu tienda, tus reglas");
     expect(OpengraphImage).toBeTypeOf("function");
   });
 });
