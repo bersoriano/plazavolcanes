@@ -47,7 +47,7 @@ function cq(values: Partial<Record<CqKey, number | [number, number]>>) {
  * the whole price), a chip, a sticker and, from sm, the newest listing.
  *
  * Everything is placed in container-width units (cqw) against the handoff's
- * own canvases — 350×370 on a phone, 600×700 from sm — so the composition
+ * own canvases — 350×455 on a phone, 600×700 from sm — so the composition
  * scales as one piece from a 320px phone to the desktop column instead of
  * reflowing and overlapping. Below sm one cqw is 3.5px of the phone canvas;
  * from sm it is 6px of the desktop one.
@@ -56,11 +56,12 @@ function cq(values: Partial<Record<CqKey, number | [number, number]>>) {
  * Only the cards that float over the portrait make an entrance, so the
  * portrait itself is painted at once.
  *
- * No photo is preloaded: the page's largest paint is the h1 at every width,
- * and on a phone the collage sits below the fold, where a preload only
- * competed with the stylesheet and fonts (Lighthouse mobile LCP ~4.1s with
- * it, ~3.5s without). The portrait still loads eagerly, since from xl it
- * stands beside the heading.
+ * No photo is preloaded: on a phone the collage sits below the fold and the
+ * largest paint is the hero's text, and a preload there only competed with
+ * the stylesheet and fonts (Lighthouse mobile LCP ~4.1s with it, ~3.5s
+ * without). From xl the blended portrait stands beside the heading and is
+ * the largest paint (~1.5s at 4× CPU and slow 4G, measured 2026-11-19), so
+ * it loads eagerly.
  */
 export function HeroCollage({
   latest,
@@ -81,17 +82,20 @@ export function HeroCollage({
   return (
     <div className="@container mx-auto w-full max-w-[350px] sm:max-w-[600px]">
       <p className="sr-only">{summary}</p>
-      <div aria-hidden="true" className="relative cq-h" style={cq({ h: [105.714, 116.667] })}>
+      <div aria-hidden="true" className="relative cq-h" style={cq({ h: [130, 116.667] })}>
+        {/* The portrait is not a card: it runs past the canvas and blends
+            into the hero (portrait-blend in utilities.css), so the cards
+            float beside the seller, not over a photo. */}
         <div
-          className="absolute overflow-hidden bg-photo-backdrop shadow-float cq-pos cq-w cq-h cq-r"
-          style={cq({ l: [34.286, 50], t: 0, w: [65.714, 50], h: [105.714, 108.333], r: [6.286, 4.667] })}
+          className="absolute cq-pos cq-w cq-h"
+          style={cq({ l: [8, 10], t: [-4, -10], w: [100, 96], h: [140, 136] })}
         >
           <Image
             alt=""
-            className="object-cover object-[75%_top]"
+            className="portrait-blend object-cover object-top"
             fill
             loading="eager"
-            sizes="(max-width: 639px) 230px, 330px"
+            sizes="(max-width: 639px) 330px, 580px"
             src="/mexican-woman.jpg"
           />
         </div>
@@ -100,7 +104,7 @@ export function HeroCollage({
 
         <span
           className="animate-rise-in absolute flex -rotate-4 items-center rounded-full bg-brand font-bold text-accent shadow-cta cq-pos cq-h cq-gap cq-px cq-text [animation-delay:240ms]"
-          style={cq({ l: 4, t: [30, 34], h: [10.286, 7.333], g: [2, 1.333], px: [4, 3], fs: [3.714, 2.5] })}
+          style={cq({ l: 4, t: [52, 34], h: [10.286, 7.333], g: [2, 1.333], px: [4, 3], fs: [3.714, 2.5] })}
         >
           <Tag className="hidden size-[3cqw] sm:block" strokeWidth={2} />
           Tú pones el precio
@@ -166,7 +170,7 @@ function RulesCard() {
   return (
     <div
       className="animate-rise-in absolute flex flex-col bg-surface leading-[1.2] text-ink shadow-float cq-pos cq-w cq-gap cq-r cq-p [animation-delay:120ms]"
-      style={cq({ l: [8.571, 0], t: [38.857, 46], w: [82.857, 61.667], g: [2.857, 2.333], r: [6.286, 4.667], p: [5.143, 4] })}
+      style={cq({ l: [8.571, 0], t: [64, 46], w: [82.857, 61.667], g: [2.857, 2.333], r: [6.286, 4.667], p: [5.143, 4] })}
     >
       <div className="flex items-center cq-gap" style={cq({ g: [2.857, 2] })}>
         <span className="grid shrink-0 place-items-center rounded-full bg-accent text-brand cq-size" style={cq({ s: [9.143, 6.667] })}>

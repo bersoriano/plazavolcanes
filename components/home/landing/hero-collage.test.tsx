@@ -15,6 +15,23 @@ describe("HeroCollage", () => {
     expect(images[0]).toHaveAttribute("alt", "");
   });
 
+  it("blends the portrait into the hero instead of framing it as a card", () => {
+    const { container } = render(<HeroCollage latest={null} />);
+
+    const portrait = container.querySelector("img");
+    const frame = portrait?.parentElement;
+    // Feathered edges and a darken blend: the studio backdrop takes the hero's
+    // own colour and glow, and no edge, corner or shadow outlines a box.
+    expect(frame).not.toHaveClass("shadow-float");
+    expect(frame).not.toHaveClass("cq-r");
+    expect(frame).not.toHaveClass("bg-photo-backdrop");
+    // Mask, brightness and blend all sit on the image itself: on the frame
+    // the mask would make it an isolated group, and the blend would only
+    // ever see transparency.
+    expect(frame).not.toHaveClass("portrait-blend");
+    expect(portrait).toHaveClass("portrait-blend");
+  });
+
   it("draws the seller's own rules: price, how they get paid, no commission", () => {
     const { container } = render(<HeroCollage latest={null} />);
 

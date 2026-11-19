@@ -138,6 +138,23 @@
   }
 }
 
+/*
+ * The hero portrait, blended into the hero instead of framed. Its edges
+ * feather out (in from the left, out at the right and bottom), and under the
+ * darken blend whatever is paler than the hero gives way to it. Brightened a
+ * tenth, the studio backdrop is paler than the cream and the lime glow, so
+ * both show through it; the seller, darker than either, stays as shot.
+ * Mask, filter and blend must share the element: a mask on a parent would
+ * isolate it, and the blend would only see transparency.
+ */
+@utility portrait-blend {
+  mask-image: linear-gradient(to right, transparent, #000 30%, #000 94%, transparent),
+    linear-gradient(transparent, #000 8%, #000 68%, transparent);
+  mask-composite: intersect;
+  filter: brightness(1.1);
+  mix-blend-mode: darken;
+}
+
 @utility animate-marquee {
   animation: marquee 40s linear infinite;
 }
