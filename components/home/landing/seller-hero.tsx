@@ -77,11 +77,7 @@ export function SellerHero({
         <HeroCollage latest={latest} locale={locale} />
       </div>
 
-      {/* The section is relative already: it anchors these as it is. The
-          ornaments and the seal would sit on the heading on a phone. */}
-      <Adorno className="nv--esfera nv--esfera-1 nv--solo-desktop" src="esfera-roja.svg" />
-      <Adorno className="nv--esfera nv--esfera-2 nv--solo-desktop" src="esfera-pino.svg" />
-      <Adorno className="nv--esfera nv--esfera-3 nv--solo-desktop" src="esfera-oro.svg" />
+      {/* The section is relative already: it anchors the flakes as it is. */}
       <Copos
         copos={[
           { src: "copo-pino.svg", left: "5%", top: "24%", opacity: 0.16 },
@@ -91,7 +87,6 @@ export function SellerHero({
           { src: "copo-pino.svg", left: "66%", top: "76%", opacity: 0.13 },
         ]}
       />
-      <Adorno className="nv--sello nv--solo-desktop" src="sello-navidad.svg" />
     </section>
   );
 }

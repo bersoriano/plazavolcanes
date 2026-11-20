@@ -103,10 +103,10 @@ describe("Mono", () => {
 
 describe("SoloEnInicio", () => {
   it("shows its overlays on the landing only", () => {
-    const overlay = <Adorno className="nv--guirnalda" src="guirnalda.svg" />;
+    const overlay = <Adorno className="nv--luces" src="luces.svg" />;
 
     const { container, rerender } = render(<SoloEnInicio>{overlay}</SoloEnInicio>);
-    expect(container.querySelector(".nv--guirnalda")).not.toBeNull();
+    expect(container.querySelector(".nv--luces")).not.toBeNull();
 
     route.pathname = "/explorar";
     rerender(<SoloEnInicio>{overlay}</SoloEnInicio>);

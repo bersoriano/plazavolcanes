@@ -11,8 +11,14 @@ import { NAVIDAD_ACTIVA } from "@/lib/navidad";
  * each and the optimizer has nothing to add.
  */
 
+/**
+ * The pieces the landing hangs. The garland, the ornaments, the seal and the
+ * footer's snow edge (brief rows 01, 04, 13, 11) are left out for now: the
+ * garland rode over the page on the sticky header, the hero's top pieces sat
+ * on its copy from 768 to 1280px, and nieve.svg only draws 86% of its width,
+ * which shows along the footer.
+ */
 export type Pieza =
-  | "guirnalda.svg"
   | "gorro.svg"
   | "nochebuena.svg"
   | "posada.svg"
@@ -20,11 +26,7 @@ export type Pieza =
   | "mono.svg"
   | "rama.svg"
   | "luces.svg"
-  | "nieve.svg"
-  | "sello-navidad.svg"
-  | "esfera-roja.svg"
-  | "esfera-oro.svg"
-  | "esfera-pino.svg";
+  | "nieve.svg";
 
 /**
  * The anchor class, with its leading space, for an element that is not

@@ -3,7 +3,7 @@ import { ChevronDown } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { SiteFrame } from "@/components/layout/site-frame";
-import { Adorno, Copos } from "@/components/navidad/adornos";
+import { Copos } from "@/components/navidad/adornos";
 import { SoloEnInicio } from "@/components/navidad/solo-en-inicio";
 import { LEGAL_ROUTES } from "@/lib/legal/document-types";
 
@@ -81,9 +81,8 @@ export function SiteFooter() {
         <em className="italic">Volcanes</em>
       </p>
 
-      {/* The footer is relative already: it anchors these as it is. */}
+      {/* The footer is relative already: it anchors the flakes as it is. */}
       <SoloEnInicio>
-        <Adorno className="nv--nieve-abajo" lazy src="nieve.svg" />
         <Copos
           copos={[
             { src: "copo-lima.svg", left: "6%", top: "14%", opacity: 0.2 },

@@ -6,8 +6,7 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { NavLink } from "@/components/layout/nav-link";
 import { SignedOutHeaderNav } from "@/components/layout/signed-out-header-nav";
 import { SiteFrame } from "@/components/layout/site-frame";
-import { Adorno } from "@/components/navidad/adornos";
-import { ConGorro, SoloEnInicio } from "@/components/navidad/solo-en-inicio";
+import { ConGorro } from "@/components/navidad/solo-en-inicio";
 import { Badge } from "@/components/ui/badge";
 import { fetchUnreadCount } from "@/lib/queries/messages.server";
 import { getCurrentUserAdminStatus } from "@/lib/admin-auth.server";
@@ -108,11 +107,6 @@ export async function SiteHeader() {
           <SignedOutHeaderNav />
         )}
       </SiteFrame>
-
-      {/* Sticky already positions the header, so it anchors the garland as it is. */}
-      <SoloEnInicio>
-        <Adorno className="nv--guirnalda" src="guirnalda.svg" />
-      </SoloEnInicio>
     </header>
   );
 }

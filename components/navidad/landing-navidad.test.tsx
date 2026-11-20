@@ -62,12 +62,11 @@ function pictureOf(overlay: Element) {
 const POSITIONED = /(^|\s)(?:[a-z0-9-]+:)*(?:sticky|absolute|fixed|relative)(\s|$)/;
 
 describe("the Christmas layer on the landing", () => {
-  it("hangs the garland as the header's last child, and the hat on the logo mark", async () => {
+  it("puts the hat on the header's logo mark and leaves the header itself bare", async () => {
     await renderLanding();
 
-    const garland = header().lastElementChild as HTMLElement;
-    expect(garland).toHaveClass("nv", "nv--guirnalda");
-    expect(pictureOf(garland)).toBe("/navidad/guirnalda.svg");
+    // No garland (brief row 01): on the sticky header it rode over the page.
+    expect(overlaysOf(header())).toEqual([]);
 
     const logo = screen.getByRole("link", { name: "Plaza Volcanes, inicio" });
     const wrapper = logo.firstElementChild as HTMLElement;
@@ -76,7 +75,7 @@ describe("the Christmas layer on the landing", () => {
     expect(wrapper.lastElementChild).toHaveClass("nv", "nv--gorro");
   });
 
-  it("dresses the hero: poinsettia, ornaments, flakes, seal, snow cap, holly and posada star", async () => {
+  it("dresses the hero: poinsettia, flakes, snow cap, holly and posada star", async () => {
     await renderLanding();
 
     const card = screen.getByText("Tiendas fundadoras").closest("div") as HTMLElement;
@@ -84,13 +83,10 @@ describe("the Christmas layer on the landing", () => {
     expect(card.lastElementChild).toHaveClass("nv", "nv--flor");
     expect(pictureOf(card.lastElementChild!)).toBe("/navidad/nochebuena.svg");
 
+    // No ornaments or seal (brief rows 04 and 13): they sat on the copy.
     const pieces = overlaysOf(hero());
     expect(pieces.map((piece) => [piece.className, pictureOf(piece) ?? null])).toEqual([
-      ["nv nv--esfera nv--esfera-1 nv--solo-desktop", "/navidad/esfera-roja.svg"],
-      ["nv nv--esfera nv--esfera-2 nv--solo-desktop", "/navidad/esfera-pino.svg"],
-      ["nv nv--esfera nv--esfera-3 nv--solo-desktop", "/navidad/esfera-oro.svg"],
       ["nv nv--copos", "/navidad/copo-pino.svg"],
-      ["nv nv--sello nv--solo-desktop", "/navidad/sello-navidad.svg"],
     ]);
     expect(hero().lastElementChild).toBe(pieces.at(-1));
 
@@ -134,12 +130,12 @@ describe("the Christmas layer on the landing", () => {
     ]);
   });
 
-  it("snows on the footer's top edge and over the plum bars", async () => {
+  it("snows over the plum bars, without the footer's short snow edge", async () => {
     await renderLanding();
 
+    // No snow edge (brief row 11): nieve.svg stops at 86% of its width.
     const pieces = overlaysOf(footer());
     expect(pieces.map((piece) => [piece.className, pictureOf(piece)])).toEqual([
-      ["nv nv--nieve-abajo", "/navidad/nieve.svg"],
       ["nv nv--copos", "/navidad/copo-lima.svg"],
     ]);
 
@@ -176,7 +172,7 @@ describe("the Christmas layer on the landing", () => {
     await renderLanding();
 
     const overlays = document.querySelectorAll(".nv");
-    expect(overlays.length).toBeGreaterThan(15);
+    expect(overlays.length).toBeGreaterThan(10);
     for (const overlay of overlays) {
       expect(overlay).toHaveAttribute("aria-hidden", "true");
       for (const img of overlay.querySelectorAll("img")) {
@@ -205,7 +201,7 @@ describe("the Christmas layer on the landing", () => {
     for (const img of footer().querySelectorAll(".nv img")) {
       expect(img).toHaveAttribute("loading", "lazy");
     }
-    for (const img of header().querySelectorAll(".nv img")) {
+    for (const img of [...header().querySelectorAll(".nv img"), ...hero().querySelectorAll(".nv img")]) {
       expect(img).not.toHaveAttribute("loading");
     }
   });
