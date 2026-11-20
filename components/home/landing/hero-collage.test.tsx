@@ -9,7 +9,8 @@ describe("HeroCollage", () => {
   it("stands the seller portrait behind the rules card instead of product tiles", () => {
     const { container } = render(<HeroCollage latest={null} />);
 
-    const images = [...container.querySelectorAll("img")];
+    // The seasonal decoration (components/navidad) is not a picture of the plaza.
+    const images = [...container.querySelectorAll("img")].filter((img) => !img.closest(".nv"));
     expect(images).toHaveLength(1);
     expect(decodeURIComponent(images[0].getAttribute("src") ?? "")).toContain("/mexican-woman.jpg");
     expect(images[0]).toHaveAttribute("alt", "");

@@ -1,6 +1,7 @@
 import { FoundersCounter } from "@/components/home/landing/founders-counter";
 import { HeroCollage, type CollageProduct } from "@/components/home/landing/hero-collage";
 import { PrimaryCta, TYPE, VolcanoLines } from "@/components/home/landing/primitives";
+import { Adorno, Copos, Mono, anclaje } from "@/components/navidad/adornos";
 import { ButtonLink } from "@/components/ui/button";
 import type { CatalogLocale } from "@/lib/catalog-locale";
 import type { CatalogProduct } from "@/lib/queries/catalog.server";
@@ -46,8 +47,9 @@ export function SellerHero({
               "tus reglas." on a tilted lime marker like the share image's. */}
           <h1 className={`${TYPE.h1} text-ink`} id="inicio-heading">
             <span className="block">Tu tienda,</span>{" "}
-            <em className="mt-[0.06em] inline-block -rotate-2 rounded-[0.18em] bg-accent px-[0.14em] pb-[0.08em] italic text-brand shadow-cta">
+            <em className={`mt-[0.06em] inline-block -rotate-2 rounded-[0.18em] bg-accent px-[0.14em] pb-[0.08em] italic text-brand shadow-cta${anclaje()}`}>
               tus reglas.
+              <Adorno as="span" className="nv--nieve" src="nieve.svg" />
             </em>
           </h1>
 
@@ -56,8 +58,9 @@ export function SellerHero({
           </p>
 
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-3.5">
-            <PrimaryCta block href="/registro?vender=1">
+            <PrimaryCta block className={anclaje().trim()} href="/registro?vender=1">
               Abrir mi tienda gratis
+              <Mono />
             </PrimaryCta>
             {example ? <ButtonLink
               variant="unstyled"
@@ -73,6 +76,22 @@ export function SellerHero({
 
         <HeroCollage latest={latest} locale={locale} />
       </div>
+
+      {/* The section is relative already: it anchors these as it is. The
+          ornaments and the seal would sit on the heading on a phone. */}
+      <Adorno className="nv--esfera nv--esfera-1 nv--solo-desktop" src="esfera-roja.svg" />
+      <Adorno className="nv--esfera nv--esfera-2 nv--solo-desktop" src="esfera-pino.svg" />
+      <Adorno className="nv--esfera nv--esfera-3 nv--solo-desktop" src="esfera-oro.svg" />
+      <Copos
+        copos={[
+          { src: "copo-pino.svg", left: "5%", top: "24%", opacity: 0.16 },
+          { src: "copo-pino.svg", left: "44%", top: "7%", opacity: 0.14 },
+          { src: "copo-pino.svg", left: "90%", top: "42%", opacity: 0.2 },
+          { src: "copo-pino.svg", left: "30%", top: "86%", opacity: 0.18 },
+          { src: "copo-pino.svg", left: "66%", top: "76%", opacity: 0.13 },
+        ]}
+      />
+      <Adorno className="nv--sello nv--solo-desktop" src="sello-navidad.svg" />
     </section>
   );
 }

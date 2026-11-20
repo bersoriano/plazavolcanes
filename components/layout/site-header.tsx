@@ -6,6 +6,8 @@ import { SignOutButton } from "@/components/auth/sign-out-button";
 import { NavLink } from "@/components/layout/nav-link";
 import { SignedOutHeaderNav } from "@/components/layout/signed-out-header-nav";
 import { SiteFrame } from "@/components/layout/site-frame";
+import { Adorno } from "@/components/navidad/adornos";
+import { ConGorro, SoloEnInicio } from "@/components/navidad/solo-en-inicio";
 import { Badge } from "@/components/ui/badge";
 import { fetchUnreadCount } from "@/lib/queries/messages.server";
 import { getCurrentUserAdminStatus } from "@/lib/admin-auth.server";
@@ -44,16 +46,20 @@ export async function SiteHeader() {
       >
         {signedIn ? (
           <Link className="group flex min-h-11 min-w-11 items-center gap-2.5 text-brand" href="/" aria-label="Plaza Volcanes, inicio">
-            <span className="relative grid size-9 place-items-center overflow-hidden rounded-xl bg-brand text-accent">
-              <VolcanoMark className="absolute left-1/2 top-1/2 w-12 -translate-x-1/2 -translate-y-1/2" />
-            </span>
+            <ConGorro>
+              <span className="relative grid size-9 place-items-center overflow-hidden rounded-xl bg-brand text-accent">
+                <VolcanoMark className="absolute left-1/2 top-1/2 w-12 -translate-x-1/2 -translate-y-1/2" />
+              </span>
+            </ConGorro>
             <span className="hidden font-display text-lg font-bold tracking-[-0.03em] sm:inline sm:text-xl">Plaza Volcanes</span>
           </Link>
         ) : (
           <Link className="group flex min-h-11 min-w-11 items-center gap-2.5 text-ink lg:gap-3" href="/" aria-label="Plaza Volcanes, inicio">
-            <span className="relative grid size-9 place-items-center overflow-hidden rounded-[10px] bg-brand text-accent lg:size-[42px] lg:rounded-xl">
-              <VolcanoMark className="absolute left-1/2 top-1/2 w-12 -translate-x-1/2 -translate-y-1/2 lg:w-14" />
-            </span>
+            <ConGorro>
+              <span className="relative grid size-9 place-items-center overflow-hidden rounded-[10px] bg-brand text-accent lg:size-[42px] lg:rounded-xl">
+                <VolcanoMark className="absolute left-1/2 top-1/2 w-12 -translate-x-1/2 -translate-y-1/2 lg:w-14" />
+              </span>
+            </ConGorro>
             <span className="whitespace-nowrap font-display text-[19px] font-bold tracking-[-0.02em] lg:text-[22px]">Plaza Volcanes</span>
           </Link>
         )}
@@ -102,6 +108,11 @@ export async function SiteHeader() {
           <SignedOutHeaderNav />
         )}
       </SiteFrame>
+
+      {/* Sticky already positions the header, so it anchors the garland as it is. */}
+      <SoloEnInicio>
+        <Adorno className="nv--guirnalda" src="guirnalda.svg" />
+      </SoloEnInicio>
     </header>
   );
 }

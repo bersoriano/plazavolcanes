@@ -3,6 +3,8 @@ import { ChevronDown } from "lucide-react";
 
 import { VolcanoMark } from "@/components/brand/volcano-mark";
 import { SiteFrame } from "@/components/layout/site-frame";
+import { Adorno, Copos } from "@/components/navidad/adornos";
+import { SoloEnInicio } from "@/components/navidad/solo-en-inicio";
 import { LEGAL_ROUTES } from "@/lib/legal/document-types";
 
 const LINK = "inline-flex min-h-11 items-center whitespace-nowrap text-white transition-colors hover:text-accent";
@@ -78,6 +80,20 @@ export function SiteFooter() {
         Plaza <br className="lg:hidden" />
         <em className="italic">Volcanes</em>
       </p>
+
+      {/* The footer is relative already: it anchors these as it is. */}
+      <SoloEnInicio>
+        <Adorno className="nv--nieve-abajo" lazy src="nieve.svg" />
+        <Copos
+          copos={[
+            { src: "copo-lima.svg", left: "6%", top: "14%", opacity: 0.2 },
+            { src: "copo-lima.svg", left: "48%", top: "8%", opacity: 0.14 },
+            { src: "copo-lima.svg", left: "88%", top: "26%", opacity: 0.18 },
+            { src: "copo-lima.svg", left: "72%", top: "58%", opacity: 0.13 },
+          ]}
+          lazy
+        />
+      </SoloEnInicio>
     </footer>
   );
 }

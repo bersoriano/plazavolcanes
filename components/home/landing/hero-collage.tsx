@@ -4,6 +4,7 @@ import { Check, Mic, Tag } from "lucide-react";
 
 import { LandingPhoto } from "@/components/home/landing/landing-photo";
 import { EXAMPLE_PRICE } from "@/components/home/landing/primitives";
+import { Adorno } from "@/components/navidad/adornos";
 import {
   DEFAULT_CATALOG_CURRENCY,
   DEFAULT_CATALOG_LOCALE,
@@ -123,6 +124,8 @@ export function HeroCollage({
           <span className="font-bold uppercase tracking-[0.08em] cq-text" style={cq({ fs: [3.143, 2.5] })}>
             comisión
           </span>
+          {/* The badge is absolute already: it anchors the holly as it is. */}
+          <Adorno as="span" className="nv--acebo" src="acebo.svg" />
         </span>
 
         {latest ? (
@@ -198,6 +201,8 @@ function RulesCard() {
           {EXAMPLE_PRICE}
         </span>
       </div>
+      {/* The card is absolute already: it anchors the star as it is. */}
+      <Adorno className="nv--posada" src="posada.svg" />
     </div>
   );
 }

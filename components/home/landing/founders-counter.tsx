@@ -1,3 +1,4 @@
+import { Adorno, anclaje } from "@/components/navidad/adornos";
 import { FOUNDER_EARN_RULE, FOUNDERS_CAP, resolveFoundersProgress } from "@/lib/launch";
 
 const LANDING_NOTE = `${FOUNDER_EARN_RULE} 50 productos, insignia fundadora y 0% comisión fija 12 meses.`;
@@ -45,10 +46,12 @@ export function FoundersCounter({
 }) {
   const progress = resolveFoundersProgress(spotsTaken);
   const colors = TONES[tone];
+  // The Christmas poinsettia dresses the white home-hero card only.
+  const navidad = tone === "light";
 
   return (
     <div
-      className={`flex w-full flex-col gap-3 rounded-[20px] border px-[18px] py-4 sm:max-w-[560px] lg:rounded-[22px] lg:px-[22px] lg:py-5 ${colors.card}`}
+      className={`flex w-full flex-col gap-3 rounded-[20px] border px-[18px] py-4 sm:max-w-[560px] lg:rounded-[22px] lg:px-[22px] lg:py-5 ${colors.card}${navidad ? anclaje() : ""}`}
     >
       <p className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <span className={`text-[11px] font-bold uppercase tracking-[0.12em] lg:text-[12px] ${colors.label}`}>
@@ -87,6 +90,7 @@ export function FoundersCounter({
       <p className={`text-[13px] leading-[1.5] lg:text-[14px] ${colors.note} ${compactOnPhone ? "hidden sm:block" : ""}`}>
         {note}
       </p>
+      {navidad ? <Adorno className="nv--flor" src="nochebuena.svg" /> : null}
     </div>
   );
 }
