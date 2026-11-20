@@ -19,7 +19,7 @@ const article = {
   draft: false,
 };
 
-function renderLanding(latestPost: typeof article | null = null) {
+function renderLanding(posts: (typeof article)[] = []) {
   render(
     <HomeLanding
       catalog={{
@@ -33,7 +33,7 @@ function renderLanding(latestPost: typeof article | null = null) {
       }}
       filters={normalizeCatalogFilters({})}
       founders={{ open: promo.active, taken: null, cap: 100 }}
-      latestPost={latestPost}
+      posts={posts}
       stateCounts={[]}
     />,
   );
@@ -63,15 +63,19 @@ describe("HomeLanding and the founders promotion", () => {
 });
 
 describe("HomeLanding and the blog", () => {
-  it("briefs the newest post", () => {
-    renderLanding(article);
+  it("briefs the newest post and lists the older ones", () => {
+    const older = { ...article, slug: "la-anterior", title: "La anterior", date: "2026-10-01" };
+    renderLanding([article, older]);
 
-    expect(screen.getByRole("region", { name: article.title })).toBeInTheDocument();
+    const section = screen.getByRole("region", { name: "Del blog" });
+    expect(section).toHaveTextContent(article.title);
+    expect(screen.getByRole("link", { name: /^La anterior/ })).toHaveAttribute("href", "/blog/la-anterior");
   });
 
   it("leaves the section out while nothing is published", () => {
-    renderLanding(null);
+    renderLanding([]);
 
+    expect(screen.queryByRole("region", { name: "Del blog" })).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Leer el artículo" })).not.toBeInTheDocument();
   });
 });
