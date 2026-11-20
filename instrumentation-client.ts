@@ -1,6 +1,13 @@
 import posthog from "posthog-js";
 
+import { initAnalytics } from "./lib/analytics.client";
+import { isPublicAnalyticsPath } from "./lib/analytics-pages";
 import { cleanAnalyticsUrl, sanitizeAnalyticsEvent, trackNavigation, trackSellerSubmission } from "./lib/visitor-analytics";
+
+// Google Analytics: inert unless NEXT_PUBLIC_GA_ID is set and the page is
+// served from NEXT_PUBLIC_SITE_URL's host. Public pages only; see
+// docs/google-analytics.md. Independent of PostHog below.
+initAnalytics({ isTrackablePath: isPublicAnalyticsPath });
 
 const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
 const host = process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim();

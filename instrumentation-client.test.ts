@@ -1,8 +1,9 @@
 import type { PostHogConfig } from "posthog-js";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { init, capture } = vi.hoisted(() => ({ init: vi.fn(), capture: vi.fn() }));
+const { init, capture, initAnalytics } = vi.hoisted(() => ({ init: vi.fn(), capture: vi.fn(), initAnalytics: vi.fn() }));
 vi.mock("posthog-js", () => ({ default: { init, capture } }));
+vi.mock("./lib/analytics.client", () => ({ initAnalytics }));
 
 beforeEach(() => {
   vi.resetModules();
@@ -65,5 +66,13 @@ describe("PostHog startup", () => {
     await expect(import("./instrumentation-client")).resolves.toBeDefined();
     submitSellerForm();
     expect(capture).not.toHaveBeenCalled();
+  });
+});
+
+describe("Google Analytics startup", () => {
+  it("starts once with the public-page allowlist, whether or not PostHog is configured", async () => {
+    const { isPublicAnalyticsPath } = await import("./lib/analytics-pages");
+    await import("./instrumentation-client");
+    expect(initAnalytics).toHaveBeenCalledExactlyOnceWith({ isTrackablePath: isPublicAnalyticsPath });
   });
 });
