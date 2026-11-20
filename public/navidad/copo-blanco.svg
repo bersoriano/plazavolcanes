@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img" aria-label="Copo de nieve">
+  <g fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round">
+    <path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7"/>
+    <path d="M12 6.5 9.4 4.4M12 6.5l2.6-2.1M12 17.5l-2.6 2.1M12 17.5l2.6 2.1"/>
+    <path d="M7.5 9.2 4.3 9M7.5 9.2 6.8 6M16.5 14.8l3.2.2M16.5 14.8l.7 3.2"/>
+  </g>
+</svg>

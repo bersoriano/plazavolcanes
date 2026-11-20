@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 170" width="40" height="170" role="img" aria-label="Esfera navideña colgante">
+  <path d="M20 0v104" stroke="#0A3A27" stroke-width="2"/>
+  <rect x="15" y="102" width="10" height="8" rx="2" fill="#E3A93C"/>
+  <circle cx="20" cy="132" r="19" fill="#0E4A32"/>
+  <ellipse cx="13.5" cy="125" rx="5" ry="3.4" fill="#BEF38A" opacity=".45" transform="rotate(-34 13.5 125)"/>
+</svg>

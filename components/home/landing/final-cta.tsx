@@ -1,4 +1,5 @@
 import { Accent, PrimaryCta, VolcanoLines } from "@/components/home/landing/primitives";
+import { Adorno, Copos, Mono, anclaje } from "@/components/navidad/adornos";
 import { ButtonLink } from "@/components/ui/button";
 import { FOUNDER_OFFER } from "@/lib/launch";
 
@@ -27,8 +28,9 @@ export function FinalCta() {
           {FOUNDER_OFFER} Gana tu lugar publicando 8 productos en tus primeros 7 días.
         </p>
         <div className="mt-1 flex flex-col gap-2.5 sm:flex-row sm:gap-3.5 lg:mt-1.5">
-          <PrimaryCta block href="/registro?vender=1">
+          <PrimaryCta block className={anclaje().trim()} href="/registro?vender=1">
             Abrir mi tienda gratis
+            <Mono lazy />
           </PrimaryCta>
           <ButtonLink
             variant="unstyled"
@@ -42,6 +44,19 @@ export function FinalCta() {
           Plaza Volcanes es una plataforma 100% mexicana 🇲🇽
         </p>
       </div>
+
+      {/* The section is relative already: it anchors these as it is. */}
+      <Adorno className="nv--rama nv--solo-desktop" lazy src="rama.svg" />
+      <Adorno className="nv--luces" lazy src="luces.svg" />
+      <Copos
+        copos={[
+          { src: "copo-pino.svg", left: "6%", top: "34%", opacity: 0.18 },
+          { src: "copo-pino.svg", left: "84%", top: "20%", opacity: 0.15 },
+          { src: "copo-pino.svg", left: "90%", top: "66%", opacity: 0.2 },
+          { src: "copo-pino.svg", left: "22%", top: "82%", opacity: 0.14 },
+        ]}
+        lazy
+      />
     </section>
   );
 }

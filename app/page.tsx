@@ -15,6 +15,11 @@ import { buildHomeMetadata, SITE_NAME } from "@/lib/seo/home-metadata";
 import { organizationId, organizationSchema, sellerServiceSchema } from "@/lib/seo/organization";
 import { buildSiteUrl } from "@/lib/site-url";
 
+// The Christmas layer (lib/navidad.ts), as delivered. Loaded by the landing
+// route only, so the shared stylesheet keeps its headroom under the 100 KiB
+// mark where Turbopack would split the fonts out.
+import "../public/navidad/navidad.css";
+
 type HomeSearchParams = Promise<CatalogSearchParams>;
 
 export async function generateMetadata({

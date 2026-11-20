@@ -4,7 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 
+import { Copos } from "@/components/navidad/adornos";
 import { Button } from "@/components/ui/button";
+import { NAVIDAD_ACTIVA } from "@/lib/navidad";
 import { isLaunchBarRoute } from "@/lib/launch-bar";
 
 /**
@@ -30,11 +32,13 @@ export function LaunchBarFrame({
 }) {
   const pathname = usePathname();
   if (!isLaunchBarRoute(pathname)) return null;
+  // The Christmas flakes belong to the landing (components/navidad).
+  const navidad = NAVIDAD_ACTIVA && pathname === "/";
 
   return (
     <aside
       aria-label="Promoción de lanzamiento"
-      className="bg-brand pt-[env(safe-area-inset-top)] text-[13px] font-semibold text-accent sm:text-sm"
+      className={`bg-brand pt-[env(safe-area-inset-top)] text-[13px] font-semibold text-accent sm:text-sm${navidad ? " nv-anclaje" : ""}`}
       data-launch-bar
       data-surface="dark"
     >
@@ -75,6 +79,18 @@ export function LaunchBarFrame({
           </Button>
         </form>
       </div>
+
+      {navidad ? (
+        // The bar does not clip: every flake stays left of 90%.
+        <Copos
+          copos={[
+            { src: "copo-lima.svg", left: "3%", top: "20%", opacity: 0.2 },
+            { src: "copo-lima.svg", left: "28%", top: "4%", opacity: 0.14 },
+            { src: "copo-lima.svg", left: "64%", top: "30%", opacity: 0.18 },
+            { src: "copo-lima.svg", left: "88%", top: "8%", opacity: 0.15 },
+          ]}
+        />
+      ) : null}
     </aside>
   );
 }

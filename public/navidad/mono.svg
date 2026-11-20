@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" width="64" height="48" role="img" aria-label="Moño de regalo">
+  <path d="M32 30C22 30 8 26 7 17c-.6-6 6-8 11-4 5 3.6 10 10 14 17z" fill="#C8322B"/>
+  <path d="M32 30c10 0 24-4 25-13 .6-6-6-8-11-4-5 3.6-10 10-14 17z" fill="#C8322B"/>
+  <path d="M32 30c-4-7-9-13.4-14-17 7 1 13 7 14 17z" fill="#9E201C"/>
+  <path d="M32 30c4-7 9-13.4 14-17-7 1-13 7-14 17z" fill="#9E201C"/>
+  <path d="M32 30l-9 15 12-5 11 3-7-13z" fill="#C8322B"/>
+  <ellipse cx="32" cy="30" rx="8" ry="6" fill="#E3A93C"/>
+</svg>

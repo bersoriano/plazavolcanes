@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 62" width="1280" height="62" role="img" aria-label="Serie de luces navideñas">
+  <path d="M0 4Q80 48 160 10T320 10T480 10T640 10T800 10T960 10T1120 10T1280 4" fill="none" stroke="#0A3A27" stroke-width="2.6"/>
+  <rect x="75" y="23" width="10" height="7" rx="2" fill="#0A3A27"/><path d="M80 29c7 0 11 5 11 11s-5 10-11 10-11-4-11-10 4-11 11-11z" fill="#C8322B"/>
+  <rect x="235" y="25" width="10" height="7" rx="2" fill="#0A3A27"/><path d="M240 31c7 0 11 5 11 11s-5 10-11 10-11-4-11-10 4-11 11-11z" fill="#E3A93C"/>
+  <rect x="395" y="25" width="10" height="7" rx="2" fill="#0A3A27"/><path d="M400 31c7 0 11 5 11 11s-5 10-11 10-11-4-11-10 4-11 11-11z" fill="#BEF38A"/>
+  <rect x="555" y="25" width="10" height="7" rx="2" fill="#0A3A27"/><path d="M560 31c7 0 11 5 11 11s-5 10-11 10-11-4-11-10 4-11 11-11z" fill="#ffffff"/>
+  <rect x="715" y="25" width="10" height="7" rx="2" fill="#0A3A27"/><path d="M720 31c7 0 11 5 11 11s-5 10-11 10-11-4-11-10 4-11 11-11z" fill="#C8322B"/>
+  <rect x="875" y="25" width="10" height="7" rx="2" fill="#0A3A27"/><path d="M880 31c7 0 11 5 11 11s-5 10-11 10-11-4-11-10 4-11 11-11z" fill="#E3A93C"/>
+  <rect x="1035" y="25" width="10" height="7" rx="2" fill="#0A3A27"/><path d="M1040 31c7 0 11 5 11 11s-5 10-11 10-11-4-11-10 4-11 11-11z" fill="#BEF38A"/>
+  <rect x="1195" y="25" width="10" height="7" rx="2" fill="#0A3A27"/><path d="M1200 31c7 0 11 5 11 11s-5 10-11 10-11-4-11-10 4-11 11-11z" fill="#ffffff"/>
+</svg>
