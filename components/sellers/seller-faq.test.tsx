@@ -60,3 +60,19 @@ describe("SellerFaq", () => {
     ).toEqual(answers);
   });
 });
+
+describe("SellerFaq analytics markup", () => {
+  const ids = () => [...document.querySelectorAll<HTMLElement>("details")].map((item) => [item.dataset.contentType, item.dataset.contentId]);
+
+  it("gives every question a stable id, whether or not the founders questions show", () => {
+    const { unmount } = render(<SellerFaq promoActive />);
+    const withPromo = ids();
+    unmount();
+    render(<SellerFaq promoActive={false} />);
+    const withoutPromo = ids();
+
+    expect(withPromo.map(([, id]) => id)).toEqual(["fundadora", "comision", "productos", "compradores", "pago", "cliente", "fraude", "mes-13", "salir"]);
+    expect(withoutPromo.map(([, id]) => id)).toEqual(["comision", "productos", "compradores", "pago", "cliente", "fraude", "salir"]);
+    for (const [type] of [...withPromo, ...withoutPromo]) expect(type).toBe("faq");
+  });
+});

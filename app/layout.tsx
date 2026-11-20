@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque, Fraunces, Instrument_Sans } from "next/font/google";
 
+import { ContentAnalytics } from "@/components/analytics/content-analytics";
 import { PageAnalytics } from "@/components/analytics/page-analytics";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { LaunchBar } from "@/components/layout/launch-bar";
@@ -75,6 +76,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <BottomNav />
         </div>
         <PageAnalytics />
+        <ContentAnalytics />
       </body>
     </html>
   );
