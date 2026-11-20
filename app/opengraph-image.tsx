@@ -8,7 +8,7 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
 const BRAND = "#32174d";
-const ACCENT = "#b8ff6a";
+const ACCENT = "#bef38a";
 
 export default function OpengraphImage() {
   return new ImageResponse(

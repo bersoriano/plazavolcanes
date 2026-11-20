@@ -132,9 +132,9 @@
 
 /* The hero's lime glow, from the top-right corner. */
 @utility hero-glow {
-  background-image: radial-gradient(circle at 100% 0%, rgb(184 255 106 / 0.5), transparent 55%);
+  background-image: radial-gradient(circle at 100% 0%, rgb(190 243 138 / 0.5), transparent 55%);
   @variant xl {
-    background-image: radial-gradient(circle at 88% 8%, rgb(184 255 106 / 0.45), transparent 42%);
+    background-image: radial-gradient(circle at 88% 8%, rgb(190 243 138 / 0.45), transparent 42%);
   }
 }
 

@@ -17,7 +17,7 @@
 :root {
   --brand: #32174d;
   --brand-hover: #241035;
-  --accent: #b8ff6a;
+  --accent: #bef38a;
   --background: #fbf8f4;
   --surface: #ffffff;
   --text: #19171b;
@@ -43,7 +43,7 @@
   /* Shared landing-page color tokens. */
   /* Long paragraphs on cream, at AA contrast. */
   --text-body: #4f4a55;
-  --lime-tint: #eaffd2;
+  --lime-tint: #ecfad9;
   --lilac-tint: #ece4f6;
   --coral-tint: #ffe3de;
   /* Icons on coral-tint. */
