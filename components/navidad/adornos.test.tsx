@@ -1,7 +1,7 @@
 import { cleanup, render } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { Adorno, ConMono, Copos, anclaje } from "@/components/navidad/adornos";
+import { Adorno, Copos, Mono, anclaje } from "@/components/navidad/adornos";
 import { ConGorro, SoloEnInicio } from "@/components/navidad/solo-en-inicio";
 
 const season = { on: true };
@@ -90,31 +90,14 @@ describe("anclaje", () => {
   });
 });
 
-describe("ConMono", () => {
-  it("wraps the button in a positioned flex span and ties the bow on", () => {
-    const { container } = render(
-      <ConMono>
-        <a href="/registro">Abrir mi tienda gratis</a>
-      </ConMono>,
-    );
+describe("Mono", () => {
+  it("is a bow that fits inside the link it decorates", () => {
+    const { container } = render(<Mono lazy />);
 
-    const wrapper = container.firstElementChild as HTMLElement;
-    expect(wrapper.tagName).toBe("SPAN");
-    expect(wrapper).toHaveClass("nv-anclaje", "flex", "flex-col");
-    expect(wrapper.firstElementChild?.tagName).toBe("A");
-    expect(wrapper.lastElementChild).toHaveClass("nv", "nv--mono");
-    expect(wrapper.lastElementChild?.tagName).toBe("SPAN");
-  });
-
-  it("leaves the button exactly where it was out of season", () => {
-    season.on = false;
-    const { container } = render(
-      <ConMono>
-        <a href="/registro">Abrir mi tienda gratis</a>
-      </ConMono>,
-    );
-
-    expect(container.innerHTML).toBe('<a href="/registro">Abrir mi tienda gratis</a>');
+    const overlay = container.firstElementChild as HTMLElement;
+    expect(overlay.tagName).toBe("SPAN");
+    expect(overlay).toHaveClass("nv", "nv--mono");
+    expect(overlay.querySelector("img")).toHaveAttribute("loading", "lazy");
   });
 });
 

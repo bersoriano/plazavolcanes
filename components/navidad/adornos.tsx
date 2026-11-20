@@ -1,5 +1,3 @@
-import type { ReactNode } from "react";
-
 import { NAVIDAD_ACTIVA } from "@/lib/navidad";
 
 /**
@@ -90,18 +88,12 @@ export function Copos({ copos, lazy = false }: { copos: readonly Copo[]; lazy?: 
 }
 
 /**
- * The bow on an "Abrir mi tienda gratis" button. The button is wrapped, not
- * restyled: a positioned span that is itself a column flexbox, so the link
- * inside stretches across a phone's column exactly as it did as a direct
- * flex item, and sits on no line box that could add height.
+ * The bow on an "Abrir mi tienda gratis" button, hung from the link itself:
+ * pass `anclaje().trim()` as the button's className and this as its last
+ * child. A wrapper would have been the gentler touch, but beside "Ver una
+ * tienda de ejemplo" at 1280px Chrome shares the row's shrink differently
+ * between a wrapper and the bare link, and both buttons moved 3.5px.
  */
-export function ConMono({ children, lazy = false }: { children: ReactNode; lazy?: boolean }) {
-  if (!NAVIDAD_ACTIVA) return children;
-
-  return (
-    <span className="nv-anclaje flex flex-col">
-      {children}
-      <Adorno as="span" className="nv--mono" lazy={lazy} src="mono.svg" />
-    </span>
-  );
+export function Mono({ lazy = false }: { lazy?: boolean }) {
+  return <Adorno as="span" className="nv--mono" lazy={lazy} src="mono.svg" />;
 }
