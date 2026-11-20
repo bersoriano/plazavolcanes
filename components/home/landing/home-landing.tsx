@@ -39,7 +39,7 @@ export function HomeLanding({ catalog, stateCounts, filters, founders, posts }: 
     <>
       <SellerHero promoActive={promoActive} spotsTaken={founders.taken} latest={products[0] ?? null} example={products[0] ?? null} locale={filters.locale} />
       {products[0] ? (
-        <section aria-labelledby="customer-preview" className="mx-auto grid max-w-[1280px] gap-5 px-5 py-10 sm:px-8 md:grid-cols-[minmax(0,1fr)_minmax(220px,320px)] md:items-center xl:px-20">
+        <section data-analytics-section="vista-previa" aria-labelledby="customer-preview" className="mx-auto grid max-w-[1280px] gap-5 px-5 py-10 sm:px-8 md:grid-cols-[minmax(0,1fr)_minmax(220px,320px)] md:items-center xl:px-20">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand">Tu vitrina, a tu manera</p>
             <h2 className="mt-2 font-display text-3xl font-semibold text-ink" id="customer-preview">Así pueden ver tus productos</h2>

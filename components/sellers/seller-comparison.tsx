@@ -62,6 +62,7 @@ const FOOTNOTE = `Resumen general de las condiciones públicas de cada plataform
 export function SellerComparison() {
   return (
     <section
+      data-analytics-section="compara"
       aria-labelledby="compara-heading"
       className="scroll-mt-20 px-5 pb-16 pt-4 sm:px-8 lg:scroll-mt-24 lg:pb-20 xl:px-20"
       id="compara"

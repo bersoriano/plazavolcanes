@@ -1,3 +1,5 @@
+import type { CtaType } from "@/lib/analytics";
+
 /**
  * Who is looking at /vender, as far as its calls to action care.
  *
@@ -26,3 +28,13 @@ export function sellerCtaHref(viewer: SellerViewer, location: SellerCtaLocation)
 }
 
 export const OWNER_CTA_LABEL = "Ir a mi panel";
+
+/**
+ * The `data-cta` a create-store CTA reports to Google Analytics: a signup for a
+ * visitor, a store creation for a signed-in visitor. An owner's "Ir a mi
+ * panel" is navigation, not a conversion step, so it reports nothing.
+ */
+export function sellerCtaType(viewer: SellerViewer): Extract<CtaType, "signup" | "create_shop"> | undefined {
+  if (viewer === "owner") return undefined;
+  return viewer === "no-shop" ? "create_shop" : "signup";
+}

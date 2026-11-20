@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
+import type { CtaType } from "@/lib/analytics";
 
 /**
  * The landing's shared pieces. Type sizes interpolate between the handoff's
@@ -66,11 +67,14 @@ export function PrimaryCta({
   children,
   block = false,
   className = "",
+  cta,
 }: {
   href: string;
   children: ReactNode;
   block?: boolean;
   className?: string;
+  /** Reported as cta_type when clicked (see components/analytics/page-analytics.tsx). */
+  cta?: CtaType;
 }) {
   return (
     <ButtonLink
@@ -78,6 +82,7 @@ export function PrimaryCta({
       className={`inline-flex h-[58px] items-center gap-4 rounded-full bg-brand pl-6 pr-2 text-[17px] font-semibold text-white shadow-cta transition-colors hover:bg-brand-hover lg:h-[62px] lg:pl-[30px] lg:pr-2.5 lg:text-[18px] ${
         block ? "justify-between sm:justify-start" : ""
       } ${className}`}
+      data-cta={cta}
       href={href}
     >
       {children}

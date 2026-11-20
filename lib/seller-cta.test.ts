@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { sellerCtaHref, sellerViewer } from "@/lib/seller-cta";
+import { sellerCtaHref, sellerCtaType, sellerViewer } from "@/lib/seller-cta";
 
 describe("sellerViewer", () => {
   it("tells a visitor, a signed-in visitor without a store and an owner apart", () => {
@@ -22,5 +22,13 @@ describe("sellerCtaHref", () => {
 
   it("sends an owner to their panel", () => {
     expect(sellerCtaHref("owner", "pasos")).toBe("/panel");
+  });
+});
+
+describe("sellerCtaType", () => {
+  it("reports a signup, a store creation, or nothing for an owner's panel link", () => {
+    expect(sellerCtaType("signed-out")).toBe("signup");
+    expect(sellerCtaType("no-shop")).toBe("create_shop");
+    expect(sellerCtaType("owner")).toBeUndefined();
   });
 });

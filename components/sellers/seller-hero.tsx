@@ -6,7 +6,7 @@ import { FounderSeal } from "@/components/sellers/founder-seal";
 import { Badge } from "@/components/ui/badge";
 import { ButtonLink } from "@/components/ui/button";
 import { BASE_LISTING_LIMIT, FOUNDER_EARN_RULE, FOUNDERS_CAP, REPUTATION_IMPORT_AVAILABLE } from "@/lib/launch";
-import { OWNER_CTA_LABEL, sellerCtaHref, type SellerViewer } from "@/lib/seller-cta";
+import { OWNER_CTA_LABEL, sellerCtaHref, sellerCtaType, type SellerViewer } from "@/lib/seller-cta";
 
 /** What every shop gets, shown once the founders offer is over. */
 const CHECKLIST = [
@@ -62,6 +62,7 @@ export function SellerHero({
 
   return (
     <section
+      data-analytics-section="inicio"
       aria-labelledby="vender-heading"
       className="relative overflow-hidden bg-brand bg-[radial-gradient(circle_at_90%_55%,rgb(122_78_168/0.55),transparent_50%)] px-5 pb-12 pt-7 text-white sm:px-8 lg:pb-20 lg:pt-[72px] xl:bg-[radial-gradient(circle_at_78%_30%,rgb(122_78_168/0.55),transparent_45%)] xl:px-20"
     >
@@ -93,6 +94,7 @@ export function SellerHero({
             <ButtonLink
               variant="unstyled"
               className="flex h-[58px] items-center justify-between gap-4 self-stretch rounded-full bg-accent pl-6 pr-2 text-[17px] font-bold text-brand shadow-[0_16px_36px_-14px] shadow-accent/55 sm:self-auto lg:h-[62px] lg:pl-[30px] lg:pr-2.5 lg:text-[18px]"
+              data-cta={sellerCtaType(viewer)}
               data-hero-cta
               href={sellerCtaHref(viewer, "hero")}
             >

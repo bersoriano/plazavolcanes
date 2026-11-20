@@ -85,6 +85,7 @@ export function SellerFaq({ promoActive = true }: { promoActive?: boolean }) {
 
   return (
     <section
+      data-analytics-section="preguntas"
       aria-labelledby="preguntas-heading"
       className="scroll-mt-20 border-t border-line bg-surface px-5 py-14 sm:px-8 lg:scroll-mt-24 lg:py-[88px] xl:px-20"
       id="preguntas"

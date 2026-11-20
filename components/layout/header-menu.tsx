@@ -5,8 +5,10 @@ import { ArrowRight, Menu, X } from "lucide-react";
 
 import { NavLink } from "@/components/layout/nav-link";
 import { Button } from "@/components/ui/button";
+import type { CtaType } from "@/lib/analytics";
 
-export type HeaderMenuLink = { href: string; label: string };
+/** `cta` marks a call to action for Google Analytics (cta_click). */
+export type HeaderMenuLink = { href: string; label: string; cta?: CtaType };
 
 /**
  * The signed-out header's sheet below lg, built on the Popover API: the
@@ -50,10 +52,11 @@ export function HeaderMenu({ cta, links }: { cta: HeaderMenuLink; links: HeaderM
             <X aria-hidden="true" className="size-6" />
           </Button>
         </div>
-        <nav aria-label="Menú principal" className="flex flex-col px-4 pb-6 sm:px-8">
+        <nav aria-label="Menú principal" className="flex flex-col px-4 pb-6 sm:px-8" data-cta-location="menu">
           {links.map((link) => (
             <NavLink
               className="flex min-h-14 items-center border-t border-brand/10 font-display text-[22px] font-semibold tracking-[-0.02em] decoration-2 underline-offset-8 aria-[current=page]:underline"
+              data-cta={link.cta}
               href={link.href}
               key={link.href}
               onClick={close}
@@ -63,6 +66,7 @@ export function HeaderMenu({ cta, links }: { cta: HeaderMenuLink; links: HeaderM
           ))}
           <NavLink
             className="mt-4 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-brand px-6 text-[15px] font-semibold text-white transition-colors hover:bg-brand-hover"
+            data-cta={cta.cta}
             href={cta.href}
             onClick={close}
           >

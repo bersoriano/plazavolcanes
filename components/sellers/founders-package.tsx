@@ -24,6 +24,7 @@ const EXAMPLE_PUBLISHED = 12;
 export function FoundersPackage() {
   return (
     <section
+      data-analytics-section="fundadoras"
       aria-labelledby="fundadoras-paquete-heading"
       className="scroll-mt-20 px-5 pb-16 pt-14 sm:px-8 lg:scroll-mt-24 lg:pb-24 lg:pt-20 xl:px-20"
       id="fundadoras"

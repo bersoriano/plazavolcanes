@@ -12,7 +12,7 @@ import {
   FOUNDER_QUALIFY_DAYS,
 } from "@/lib/launch";
 import { Badge } from "@/components/ui/badge";
-import { OWNER_CTA_LABEL, sellerCtaHref, type SellerViewer } from "@/lib/seller-cta";
+import { OWNER_CTA_LABEL, sellerCtaHref, sellerCtaType, type SellerViewer } from "@/lib/seller-cta";
 
 /** `phonePreview` false: the drawing only appears from lg, as in the phone mockup. */
 type Step = { title: string; description: string; preview: ReactNode; highlight?: boolean; phonePreview?: boolean };
@@ -72,6 +72,7 @@ export function SellerSteps({
 
   return (
     <section
+      data-analytics-section="pasos"
       aria-labelledby="como-empezar-heading"
       className="scroll-mt-20 border-y border-line bg-surface px-5 pb-14 pt-14 sm:px-8 lg:scroll-mt-24 lg:pb-20 lg:pt-[88px] xl:px-20"
       id="pasos"
@@ -84,7 +85,7 @@ export function SellerSteps({
               De cero a tienda en <Accent>tres pasos.</Accent>
             </h2>
           </div>
-          <Link className={`hidden lg:inline-flex ${ctaClass}`} href={sellerCtaHref(viewer, "pasos")}>
+          <Link className={`hidden lg:inline-flex ${ctaClass}`} data-cta={sellerCtaType(viewer)} href={sellerCtaHref(viewer, "pasos")}>
             {cta}
           </Link>
         </div>
@@ -128,14 +129,14 @@ export function SellerSteps({
           ))}
         </ol>
 
-        <Link className={`flex lg:hidden ${ctaClass}`} href={sellerCtaHref(viewer, "pasos")}>
+        <Link className={`flex lg:hidden ${ctaClass}`} data-cta={sellerCtaType(viewer)} href={sellerCtaHref(viewer, "pasos")}>
           {cta}
         </Link>
         {assistanceReady ? (
           <div className="rounded-2xl border border-line bg-background p-5">
             <h3 className="font-display text-xl font-semibold text-ink">¿Quieres ayuda para publicar?</h3>
             <p className="mt-2 text-sm leading-6 text-muted">Ten a la mano fotos y precios de cinco productos. Te ayudamos a armar tu catálogo. Puedes compartir tu tienda desde el primer producto publicado.</p>
-            <Link className="mt-3 inline-flex min-h-11 items-center font-semibold text-brand underline underline-offset-4" href="/quejas-y-aclaraciones#escribenos">Quiero ayuda para publicar</Link>
+            <Link className="mt-3 inline-flex min-h-11 items-center font-semibold text-brand underline underline-offset-4" data-cta="form" href="/quejas-y-aclaraciones#escribenos">Quiero ayuda para publicar</Link>
           </div>
         ) : null}
       </div>
