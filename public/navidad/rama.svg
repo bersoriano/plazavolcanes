@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 180" width="260" height="180" role="img" aria-label="Rama de pino con piñas y frutos">
+  <g fill="none" stroke-linecap="round">
+    <path d="M2 176C60 160 120 120 186 36" stroke="#0A3A27" stroke-width="16"/>
+    <path d="M2 176C60 160 120 120 186 36" stroke="#14583B" stroke-width="30" stroke-dasharray="3 12"/>
+    <path d="M8 182C60 150 110 110 160 20" stroke="#1F6B45" stroke-width="26" stroke-dasharray="2 14"/>
+    <path d="M0 160C56 152 118 132 196 70" stroke="#2A8A58" stroke-width="22" stroke-dasharray="2 16" opacity=".85"/>
+    <path d="M40 180C78 150 104 116 128 62" stroke="#14583B" stroke-width="20" stroke-dasharray="2 13"/>
+  </g>
+  <ellipse cx="96" cy="128" rx="11" ry="17" fill="#7A4A22" transform="rotate(-28 96 128)"/>
+  <ellipse cx="96" cy="128" rx="6" ry="11" fill="#9A6533" transform="rotate(-28 96 128)"/>
+  <ellipse cx="150" cy="78" rx="9" ry="14" fill="#7A4A22" transform="rotate(-34 150 78)"/>
+  <circle cx="58" cy="150" r="7" fill="#C8322B"/><circle cx="72" cy="160" r="5.5" fill="#9E201C"/><circle cx="122" cy="104" r="6" fill="#C8322B"/>
+  <path d="M176 30l2.6 7.4 7.8.3-6.1 4.8 2.1 7.5L176 45.6 169.6 50l2.1-7.5-6.1-4.8 7.8-.3z" fill="#E3A93C"/>
+</svg>

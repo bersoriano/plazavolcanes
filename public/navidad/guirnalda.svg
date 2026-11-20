@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 130" width="1280" height="130" role="img" aria-label="Guirnalda de pino con esferas">
+  <g fill="none" stroke-linecap="round">
+    <path d="M0 10Q160 96 320 10T640 10T960 10T1280 10" stroke="#0A3A27" stroke-width="26"/>
+    <path d="M0 4Q160 90 320 4T640 4T960 4T1280 4" stroke="#14583B" stroke-width="22" stroke-dasharray="3 11"/>
+    <path d="M0 16Q160 102 320 16T640 16T960 16T1280 16" stroke="#14583B" stroke-width="22" stroke-dasharray="3 13"/>
+    <path d="M0 10Q160 96 320 10T640 10T960 10T1280 10" stroke="#2A7F55" stroke-width="15" stroke-dasharray="2 12"/>
+    <path d="M0 10Q160 96 320 10T640 10T960 10T1280 10" stroke="#3E9C69" stroke-width="7" stroke-dasharray="1 17" opacity=".8"/>
+  </g>
+  <g stroke="#0A3A27" stroke-width="2.5">
+    <path d="M160 54v16"/><path d="M480 54v22"/><path d="M800 54v14"/><path d="M1120 54v20"/>
+  </g>
+  <circle cx="160" cy="82" r="13" fill="#C8322B"/><circle cx="156" cy="78" r="4" fill="#fff" opacity=".5"/>
+  <circle cx="480" cy="90" r="14" fill="#E3A93C"/><circle cx="476" cy="86" r="4.5" fill="#fff" opacity=".55"/>
+  <circle cx="800" cy="80" r="12" fill="#ffffff"/><circle cx="797" cy="77" r="3.5" fill="#BEF38A" opacity=".8"/>
+  <circle cx="1120" cy="88" r="13" fill="#C8322B"/><circle cx="1116" cy="84" r="4" fill="#fff" opacity=".5"/>
+  <path d="M320 46l1.8 5.2 5.4.2-4.2 3.4 1.5 5.3-4.5-3-4.5 3 1.5-5.3-4.2-3.4 5.4-.2z" fill="#E3A93C"/>
+  <path d="M640 46l1.8 5.2 5.4.2-4.2 3.4 1.5 5.3-4.5-3-4.5 3 1.5-5.3-4.2-3.4 5.4-.2z" fill="#E3A93C"/>
+  <path d="M960 46l1.8 5.2 5.4.2-4.2 3.4 1.5 5.3-4.5-3-4.5 3 1.5-5.3-4.2-3.4 5.4-.2z" fill="#E3A93C"/>
+</svg>
