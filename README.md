@@ -61,27 +61,29 @@ Abre [http://localhost:3000](http://localhost:3000).
 
 ## Analítica con PostHog
 
-La analítica es opcional. Para activarla, agrega ambas variables en `.env.local`
-y en el entorno de producción; usa el token público del proyecto, nunca una
-clave personal de administración:
+Opcional. PostHog recibe los mismos eventos que Google Analytics, con las mismas
+reglas: solo desde el host de `NEXT_PUBLIC_SITE_URL`, solo páginas públicas,
+sin cookies ni almacenamiento en el navegador. Usa el token público del
+proyecto (`phc_`), nunca una clave personal:
 
 ```dotenv
-NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN=phc_TU_TOKEN_PUBLICO
-NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+NEXT_PUBLIC_POSTHOG_KEY=phc_TU_TOKEN_PUBLICO
+NEXT_PUBLIC_POSTHOG_HOST=/ingest
+NEXT_PUBLIC_POSTHOG_REGION=us
+# Solo en Preview o local, y con la clave de un proyecto de prueba.
+NEXT_PUBLIC_POSTHOG_DEBUG=false
 ```
 
-Para proyectos de la región europea usa `https://eu.i.posthog.com`. Sin ambas
-variables no se inicializa PostHog ni se registran eventos. Los cambios requieren
-reiniciar desarrollo o generar un nuevo despliegue.
-
-Se registran visitas, navegación de las páginas de inicio y venta, e intentos de
-registro y actividad de vendedores. Replay, captura automática de formularios e
-identificación de personas están desactivados. Consulta [eventos, privacidad y
-verificación](docs/posthog-analytics.md) antes de activar producción.
+`/ingest` es el proxy de `proxy.ts` hacia PostHog. En `localhost` y en las
+vistas previas no se envía nada salvo con `NEXT_PUBLIC_POSTHOG_DEBUG=true`; en
+ese caso usa la clave de un proyecto de prueba, no la de producción. Antes del
+primer despliegue hay que activar el modo sin cookies del proyecto en PostHog,
+o descarta todos los eventos. Consulta [eventos, privacidad y
+verificación](docs/posthog-analytics.md).
 
 ## Analítica con Google Analytics
 
-También es opcional e independiente de PostHog. Se activa con el ID de
+También es opcional. Comparte el código y las reglas con PostHog y se activa con el ID de
 medición de GA4 y solo envía datos desde el host de `NEXT_PUBLIC_SITE_URL`
 (nunca desde `localhost` ni las vistas previas de Vercel):
 

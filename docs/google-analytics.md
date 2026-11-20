@@ -1,9 +1,9 @@
 # Google Analytics (GA4)
 
 Google Analytics measures the public site: which pages bring visitors, which
-calls to action they use, and how many become seller accounts. It runs next to
-PostHog (`docs/posthog-analytics.md`) and does not replace it or the
-database-backed seller statistics.
+calls to action they use, and how many become seller accounts. PostHog
+receives the same events through the same core (`docs/posthog-analytics.md`).
+Neither replaces the database-backed seller statistics.
 
 The code is the shared core of the `landing-page-ga` skill, copied in on
 2026-11-20 (`ANALYTICS_CORE_VERSION` in `lib/analytics.client.ts`). Keep the
@@ -18,7 +18,7 @@ site's choices live in the files marked "site" below.
 | `lib/analytics-pages.ts` | Public-page allowlist and `page_type` (site) |
 | `lib/analytics-forms.ts` | Form events for signup and contact (site) |
 | `components/analytics/read-progress.tsx`, `content-analytics.tsx` | Blog reading depth, FAQ opens (site) |
-| `instrumentation-client.ts` | Starts GA once, before hydration, then PostHog |
+| `instrumentation-client.ts` | Starts the core once, before hydration, with PostHog as its second destination |
 
 ## Activation
 
@@ -93,25 +93,19 @@ sites. Started 2026-11-20; there is no earlier GA series to reconcile.
 | `select_content` | A `/vender` FAQ question opened by the visitor | `content_type: faq`, `content_id`: `fundadora`, `comision`, `productos`, `compradores`, `pago`, `cliente`, `fraude`, `mes-13`, `salir` |
 
 `seller_signup` is a signup from a seller entry point (`?vender=1`, or
-continuing to `/panel/tiendas/nueva`), the same condition as PostHog's
-`seller_signup_submitted`. Signing in sends no form events.
+continuing to `/panel/tiendas/nueva`). Signing in sends no form events.
 
 To mark a new call to action, add `data-cta="<CtaType>"` to the link (and
 `data-analytics-section` to its section); no click handler is needed. Add new
 values to the unions in `lib/analytics.ts`. Components call `track()` from
 `lib/analytics.client.ts`, never `gtag()`.
 
-### PostHog equivalents
+### PostHog
 
-| PostHog | GA |
-| --- | --- |
-| `$pageview` | `page_view` (GA: public pages only; PostHog also sees the signed-in app) |
-| `navigation_clicked` with `seller_intent` | `cta_click` with `cta_type` `signup` / `create_shop` |
-| `seller_signup_submitted` (attempt) | `form_submit` with `form_name: seller_signup`; the confirmed account is `sign_up` |
-| `seller_shop_submitted`, `seller_product_submitted`, `seller_storefront_share_intent` | none: signed-in seller activity stays out of GA |
-
-The two tools will not report the same totals (different gates, blockers,
-identities). Compare rates and trends.
+PostHog gets every event above under the same name and parameters, except
+`page_view`, which it calls `$pageview`. Both use the same gates, so totals
+should track closely; a large gap means one destination is not loading.
+Details and the events PostHog used before 2026-11-20: `docs/posthog-analytics.md`.
 
 ## GA Admin (manual, someone with Editor access)
 
