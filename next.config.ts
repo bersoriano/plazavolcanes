@@ -53,6 +53,10 @@ const posts = ["./content/posts/**/*.mdx"];
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["127.0.0.1"],
+  // PostHog's API paths end in "/" and reach it through /ingest (proxy.ts);
+  // Next's own slash redirect would answer each call with a 308. proxy.ts
+  // keeps the /path/ → /path redirect for every page.
+  skipTrailingSlashRedirect: true,
   outputFileTracingIncludes: {
     "/": posts,
     "/blog": posts,
