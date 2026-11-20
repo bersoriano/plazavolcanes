@@ -51,7 +51,7 @@ export const metadata: Metadata = {
 // zero, and the quick-access bar sits in the home indicator's lane.
 export const viewport: Viewport = {
   initialScale: 1,
-  themeColor: "#b8ff6a",
+  themeColor: "#bef38a",
   viewportFit: "cover",
   width: "device-width",
 };

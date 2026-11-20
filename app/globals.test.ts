@@ -72,7 +72,7 @@ describe("premium scope", () => {
 describe("landing v2 tokens", () => {
   it("adds the handoff's tints to :root with their exact values", () => {
     expect(token(":root", "--text-body")).toBe("#4f4a55");
-    expect(token(":root", "--lime-tint")).toBe("#eaffd2");
+    expect(token(":root", "--lime-tint")).toBe("#ecfad9");
     expect(token(":root", "--lilac-tint")).toBe("#ece4f6");
     expect(token(":root", "--coral-tint")).toBe("#ffe3de");
     expect(token(":root", "--coral-ink")).toBe("#b23a2e");
@@ -84,7 +84,7 @@ describe("landing v2 tokens", () => {
 
   it("keeps the existing tokens as they were", () => {
     expect(token(":root", "--brand")).toBe("#32174d");
-    expect(token(":root", "--accent")).toBe("#b8ff6a");
+    expect(token(":root", "--accent")).toBe("#bef38a");
     expect(token(":root", "--background")).toBe("#fbf8f4");
   });
 
@@ -98,6 +98,29 @@ describe("landing v2 tokens", () => {
     const rule = css.slice(start, css.indexOf("\n}", start));
 
     expect(rule).toMatch(/\.animate-marquee,\s*\.animate-marquee-reverse,\s*\.animate-rise-in\s*\{\s*animation:\s*none !important;/);
+  });
+});
+
+describe("accent colour", () => {
+  // Places that cannot read var(--accent) carry the colour as a literal: the
+  // browser's theme colour, the share images (rendered outside the
+  // stylesheet) and the hero glow's translucent rgb(). They must move with it.
+  const accent = token(":root", "--accent")!;
+  const rgb = [1, 3, 5].map((i) => parseInt(accent.slice(i, i + 2), 16)).join(" ");
+
+  it.each(["./layout.tsx", "./opengraph-image.tsx", "./blog/[slug]/opengraph-image.tsx"])(
+    "%s uses the current accent",
+    (file) => {
+      expect(read(file).toLowerCase()).toContain(`"${accent}"`);
+    },
+  );
+
+  it("tints the hero glow with the current accent", () => {
+    const glow = read("./utilities.css").match(/@utility hero-glow \{[\s\S]*?\n\}/)?.[0] ?? "";
+    const tints = [...glow.matchAll(/rgb\((\d+ \d+ \d+) \//g)].map((m) => m[1]);
+
+    expect(tints.length).toBeGreaterThan(0);
+    for (const tint of tints) expect(tint).toBe(rgb);
   });
 });
 
