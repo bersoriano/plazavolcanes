@@ -1,5 +1,8 @@
 # PostHog analytics
 
+Google Analytics runs alongside with its own gates and public pages only; see
+`docs/google-analytics.md`. The PostHog helpers live in `lib/visitor-analytics.ts`.
+
 ## Activation
 
 Set both `NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN` and `NEXT_PUBLIC_POSTHOG_HOST` in

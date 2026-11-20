@@ -79,6 +79,23 @@ registro y actividad de vendedores. Replay, captura automática de formularios e
 identificación de personas están desactivados. Consulta [eventos, privacidad y
 verificación](docs/posthog-analytics.md) antes de activar producción.
 
+## Analítica con Google Analytics
+
+También es opcional e independiente de PostHog. Se activa con el ID de
+medición de GA4 y solo envía datos desde el host de `NEXT_PUBLIC_SITE_URL`
+(nunca desde `localhost` ni las vistas previas de Vercel):
+
+```dotenv
+NEXT_PUBLIC_GA_ID=G-XXXXXXXXXX
+# Solo en Preview o local, para ver los eventos en DebugView. En producción se ignora.
+NEXT_PUBLIC_GA_DEBUG=false
+```
+
+Como las demás `NEXT_PUBLIC_*`, se incrusta durante el build: un cambio necesita
+un nuevo despliegue. Antes del primer despliegue con el ID hay que **apagar la
+medición mejorada** del flujo web en GA4, o cada página se cuenta dos veces.
+Consulta [eventos, privacidad y pasos en GA4](docs/google-analytics.md).
+
 ## Producción
 
 El sitio vive en [plazavolcanes.com](https://plazavolcanes.com).
