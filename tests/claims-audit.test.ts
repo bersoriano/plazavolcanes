@@ -21,8 +21,8 @@ const FORBIDDEN = [
 const TRACKERS = ["googletagmanager", "gtag(", "next/script", "hotjar", "posthog", "facebook.net"];
 
 // PostHog is the explicitly configured exception. Runtime guards and privacy
-// behavior are covered by instrumentation-client.test.ts and analytics.test.ts.
-const POSTHOG_FILES = new Set(["lib/analytics.ts", "instrumentation-client.ts"]);
+// behavior are covered by instrumentation-client.test.ts and visitor-analytics.test.ts (lib/visitor-analytics.ts is the PostHog module).
+const POSTHOG_FILES = new Set(["lib/visitor-analytics.ts", "instrumentation-client.ts"]);
 
 const ROOTS = ["app", "components", "lib"];
 const EXTENSIONS = new Set([".ts", ".tsx"]);

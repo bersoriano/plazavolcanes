@@ -11,7 +11,7 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
-  const { trackNavigation, trackSellerSubmission } = await import("./lib/analytics");
+  const { trackNavigation, trackSellerSubmission } = await import("./lib/visitor-analytics");
   document.removeEventListener("click", trackNavigation);
   document.removeEventListener("submit", trackSellerSubmission, true);
   document.body.innerHTML = "";

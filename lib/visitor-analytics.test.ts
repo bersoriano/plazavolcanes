@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { sanitizeAnalyticsEvent, trackNavigation, trackSellerSubmission, trackStorefrontShare } from "@/lib/analytics";
+import { sanitizeAnalyticsEvent, trackNavigation, trackSellerSubmission, trackStorefrontShare } from "@/lib/visitor-analytics";
 
 const { capture } = vi.hoisted(() => ({ capture: vi.fn() }));
 vi.mock("posthog-js", () => ({ default: { capture } }));

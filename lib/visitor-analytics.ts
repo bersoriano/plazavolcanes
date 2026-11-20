@@ -1,3 +1,7 @@
+/**
+ * PostHog capture helpers: URL sanitizing, the send filter and the custom
+ * PostHog events. Google Analytics lives in lib/analytics.client.ts.
+ */
 import posthog, { type CaptureResult } from "posthog-js";
 
 const sellerEvents = new Set([

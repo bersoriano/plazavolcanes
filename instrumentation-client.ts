@@ -1,6 +1,6 @@
 import posthog from "posthog-js";
 
-import { cleanAnalyticsUrl, sanitizeAnalyticsEvent, trackNavigation, trackSellerSubmission } from "./lib/analytics";
+import { cleanAnalyticsUrl, sanitizeAnalyticsEvent, trackNavigation, trackSellerSubmission } from "./lib/visitor-analytics";
 
 const projectToken = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN?.trim();
 const host = process.env.NEXT_PUBLIC_POSTHOG_HOST?.trim();

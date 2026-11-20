@@ -4,7 +4,7 @@ import { MessageCircle, Share2 } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 
 import { Button, ButtonLink } from "@/components/ui/button";
-import { trackStorefrontShare } from "@/lib/analytics";
+import { trackStorefrontShare } from "@/lib/visitor-analytics";
 
 type ShareActionsProps = {
   label: string;
