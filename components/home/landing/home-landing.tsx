@@ -18,8 +18,8 @@ type HomeLandingProps = {
   filters: CatalogFilters;
   /** The founders promotion: whether it is open and how many spots are taken. */
   founders: FoundersProgram;
-  /** The newest published post, briefed on the page; none while the blog is empty. */
-  latestPost: PostMeta | null;
+  /** Published posts, newest first; the section briefs the newest few and is left out while the blog is empty. */
+  posts: PostMeta[];
 };
 
 /**
@@ -29,7 +29,7 @@ type HomeLandingProps = {
  * All of it reads the one home catalogue query, which is newest first: its
  * first product is the newest listing.
  */
-export function HomeLanding({ catalog, stateCounts, filters, founders, latestPost }: HomeLandingProps) {
+export function HomeLanding({ catalog, stateCounts, filters, founders, posts }: HomeLandingProps) {
   const { products, categories, shops } = catalog;
   // Read per request: the landing is rendered on demand, so the offer leaves
   // the page the moment the promotion closes or fills.
@@ -51,7 +51,7 @@ export function HomeLanding({ catalog, stateCounts, filters, founders, latestPos
       <CrossingTapes categories={categories.map((category) => category.name)} />
       <BenefitsBento promoActive={promoActive} />
       <SellerStepsShowcase />
-      {latestPost ? <LandingArticle post={latestPost} /> : null}
+      <LandingArticle posts={posts} />
       <LandingStores shops={shops} />
       <BuyerPanel
         categories={categories}

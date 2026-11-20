@@ -97,7 +97,7 @@ export default async function Home({ searchParams }: { searchParams: HomeSearchP
           catalog={listed ? { ...catalog, categories: listedCategoryTree(catalog.categories, listed) } : catalog}
           filters={filters}
           founders={founders}
-          latestPost={posts?.[0] ?? null}
+          posts={posts ?? []}
           stateCounts={stateCounts}
         />
       </>

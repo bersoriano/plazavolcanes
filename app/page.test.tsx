@@ -326,7 +326,7 @@ describe("Home landing", () => {
     expect(within(preview).getByText("Tu vitrina, a tu manera")).toBeInTheDocument();
   });
 
-  it("briefs the newest post from the blog", async () => {
+  it("briefs the newest post from the blog and lists the ones before it", async () => {
     vi.mocked(getHomeCatalog).mockResolvedValue(catalogResult({ products: [sampleProduct()] }));
     const post = { title: "", description: "", date: "2026-11-05", draft: false, body: "" };
     vi.mocked(getPosts).mockResolvedValueOnce([
@@ -336,12 +336,13 @@ describe("Home landing", () => {
 
     render(await Home({ searchParams: Promise.resolve({}) }));
 
-    const section = screen.getByRole("region", { name: "La más nueva" });
+    const section = screen.getByRole("region", { name: "Del blog" });
+    expect(within(section).getByRole("heading", { level: 2, name: "La más nueva" })).toBeInTheDocument();
     expect(within(section).getByRole("link", { name: "Leer el artículo" })).toHaveAttribute(
       "href",
       "/blog/la-mas-nueva",
     );
-    expect(screen.queryByRole("region", { name: "La anterior" })).not.toBeInTheDocument();
+    expect(within(section).getByRole("link", { name: /^La anterior/ })).toHaveAttribute("href", "/blog/la-anterior");
   });
 
   it("names the founders offer without a tally while nothing counts the spots", async () => {
