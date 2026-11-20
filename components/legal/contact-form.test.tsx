@@ -7,6 +7,9 @@ const { submitContactMessage } = vi.hoisted(() => ({ submitContactMessage: vi.fn
 
 vi.mock("@/lib/actions/contact", () => ({ submitContactMessage }));
 
+const { track } = vi.hoisted(() => ({ track: vi.fn() }));
+vi.mock("@/lib/analytics.client", () => ({ track }));
+
 const received = "Recibimos tu mensaje. Te responderemos por correo o teléfono.";
 
 afterEach(cleanup);
@@ -101,5 +104,27 @@ describe("ContactForm", () => {
 
     await waitFor(() => expect(message()).toHaveAttribute("aria-invalid", "true"));
     expect(message()).toHaveAccessibleDescription("Escribe un mensaje de entre 10 y 2000 caracteres.");
+  });
+});
+
+describe("ContactForm analytics", () => {
+  it("reports a received message as a lead, without its contents", async () => {
+    render(<ContactForm signedIn />);
+    fireEvent.focus(message());
+    fireEvent.change(message(), { target: { value: "Quiero ayuda para publicar." } });
+    send();
+    await waitFor(() => expect(track).toHaveBeenCalledWith("generate_lead", { form_name: "contact" }));
+
+    expect(track.mock.calls.map(([event]) => event)).toEqual(["form_start", "form_submit", "generate_lead"]);
+    expect(JSON.stringify(track.mock.calls)).not.toContain("ayuda");
+  });
+
+  it("reports a refused message as an error, not a lead", async () => {
+    submitContactMessage.mockResolvedValue({ status: "error", message: "Revisa los campos marcados.", errors: { message: ["Escribe tu mensaje."] } });
+    render(<ContactForm signedIn />);
+    send();
+    await waitFor(() => expect(track).toHaveBeenCalledWith("form_error", { form_name: "contact", error_type: "validation" }));
+
+    expect(track).not.toHaveBeenCalledWith("generate_lead", expect.anything());
   });
 });
