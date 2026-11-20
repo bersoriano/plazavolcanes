@@ -378,7 +378,7 @@ export function ProductForm({
     // select's change event, snapping the controlled category selects back.
     // CategoryFields reports category_id itself; the DOM still holds the old
     // subcategory until it re-renders.
-    <form action={formAction} className="space-y-6" data-analytics-event="seller_product_submitted" noValidate onChange={() => {
+    <form action={formAction} className="space-y-6" noValidate onChange={() => {
       saveDraft();
       const next = formReadiness(formRef.current, images.length + uploadedKeys.length);
       setReadiness((current) => ({ ...next, category_id: current.category_id }));

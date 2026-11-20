@@ -20,12 +20,12 @@ const FORBIDDEN = [
 
 const TRACKERS = ["googletagmanager", "gtag(", "next/script", "hotjar", "posthog", "facebook.net"];
 
-// PostHog and Google Analytics are the explicitly configured exceptions, each
-// confined to its own module. Runtime guards and privacy behavior are covered
-// by instrumentation-client.test.ts, visitor-analytics.test.ts (PostHog) and
-// analytics.test.ts (Google Analytics).
+// Google Analytics and PostHog are the explicitly configured exceptions: one
+// shared core (lib/analytics.client.ts), the PostHog destination and its proxy.
+// Runtime guards and privacy behavior are covered by analytics.test.ts,
+// analytics.posthog.test.ts, posthog-proxy.test.ts and instrumentation-client.test.ts.
 const APPROVED: Record<string, Set<string>> = {
-  posthog: new Set(["lib/visitor-analytics.ts", "instrumentation-client.ts", "lib/analytics.client.ts"]),
+  posthog: new Set(["lib/analytics.client.ts", "lib/analytics.posthog.ts", "lib/posthog-proxy.ts", "instrumentation-client.ts"]),
   googletagmanager: new Set(["lib/analytics.client.ts"]),
   "gtag(": new Set(["lib/analytics.client.ts"]),
 };
