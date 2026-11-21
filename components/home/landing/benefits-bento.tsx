@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ArrowRight, BadgeCheck, FileText, LayoutGrid, Wallet } from "lucide-react";
 
 import { Accent, EXAMPLE_PRICE, Eyebrow, TYPE, VolcanoLines } from "@/components/home/landing/primitives";
+import { Adorno, Copos, anclaje } from "@/components/navidad/adornos";
 import { FOUNDER_OFFER, REPUTATION_IMPORT_AVAILABLE } from "@/lib/launch";
 
 type Tile = {
@@ -99,7 +100,7 @@ export function BenefitsBento({ promoActive = true }: { promoActive?: boolean })
             <article
               className={`flex items-start gap-4 rounded-[24px] p-5 md:flex-col md:justify-between md:gap-8 md:rounded-[32px] md:p-7 lg:p-8 ${tile.card} ${
                 tiles.length === 3 && index === 2 ? "md:col-span-2" : ""
-              }`}
+              }${index === 1 ? anclaje() : ""}`}
               key={tile.title}
             >
               <span
@@ -112,6 +113,10 @@ export function BenefitsBento({ promoActive = true }: { promoActive?: boolean })
                 <h3 className={TYPE.h3}>{tile.title}</h3>
                 <p className={`text-[15px] leading-[1.5] lg:text-[16px] ${tile.body}`}>{tile.text}</p>
               </div>
+              {/* The second tile is the top-right one from md (and lg) up. On a
+                  phone every tile runs edge to edge and the flower would widen
+                  the page, hence desktop only. */}
+              {index === 1 ? <Adorno className="nv--flor nv--solo-desktop" lazy src="nochebuena.svg" /> : null}
             </article>
           ))}
         </div>
@@ -129,8 +134,9 @@ function FoundersBlock() {
       </p>
       <div className="relative flex flex-col gap-1.5">
         <h3 className="flex flex-col gap-1.5">
-          <span className="font-display text-[clamp(150px,106px+11.4vw,250px)] font-extrabold leading-[0.8] tracking-[-0.045em] text-accent">
+          <span className={`font-display text-[clamp(150px,106px+11.4vw,250px)] font-extrabold leading-[0.8] tracking-[-0.045em] text-accent${anclaje()}`}>
             0%
+            <Adorno as="span" className="nv--acebo" lazy src="acebo.svg" />
           </span>{" "}
           <span className="font-display text-[28px] font-medium leading-[1.1] tracking-[-0.03em] lg:text-[40px]">
             de comisión <Accent className="text-accent">fija 12 meses.</Accent>
@@ -151,6 +157,15 @@ function FoundersBlock() {
           <span className="font-display text-[22px] font-bold text-accent lg:text-[30px]">{EXAMPLE_PRICE}</span>
         </p>
       </div>
+      {/* The block is relative and clips already: it holds the flakes as it is. */}
+      <Copos
+        copos={[
+          { src: "copo-lima.svg", left: "62%", top: "4%", opacity: 0.16 },
+          { src: "copo-lima.svg", left: "86%", top: "12%", opacity: 0.2 },
+          { src: "copo-lima.svg", left: "84%", top: "30%", opacity: 0.14 },
+        ]}
+        lazy
+      />
     </article>
   );
 }

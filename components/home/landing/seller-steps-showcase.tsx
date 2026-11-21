@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { ArrowRight, Check, Headphones, Plus, Watch } from "lucide-react";
 
 import { Accent, Eyebrow, TYPE } from "@/components/home/landing/primitives";
+import { Copos, Mono, anclaje } from "@/components/navidad/adornos";
 
 const SIGNUP_HREF = "/registro?vender=1";
 
@@ -37,7 +38,7 @@ export function SellerStepsShowcase() {
   return (
     <section
       aria-labelledby="pasos-heading"
-      className="scroll-mt-20 border-y border-line bg-surface px-5 pb-14 pt-14 sm:px-8 lg:scroll-mt-24 lg:pb-20 lg:pt-[88px] xl:px-20"
+      className={`scroll-mt-20 border-y border-line bg-surface px-5 pb-14 pt-14 sm:px-8 lg:scroll-mt-24 lg:pb-20 lg:pt-[88px] xl:px-20${anclaje()}`}
       id="pasos"
     >
       <div className="mx-auto flex max-w-[1280px] flex-col gap-6 lg:gap-12">
@@ -84,6 +85,17 @@ export function SellerStepsShowcase() {
 
         <StepsCta className="flex lg:hidden" />
       </div>
+
+      <Copos
+        copos={[
+          { src: "copo-pino.svg", left: "46%", top: "4%", opacity: 0.14 },
+          { src: "copo-pino.svg", left: "84%", top: "3%", opacity: 0.18 },
+          { src: "copo-pino.svg", left: "4%", top: "44%", opacity: 0.16 },
+          { src: "copo-pino.svg", left: "88%", top: "60%", opacity: 0.2 },
+          { src: "copo-pino.svg", left: "30%", top: "88%", opacity: 0.15 },
+        ]}
+        lazy
+      />
     </section>
   );
 }
@@ -91,11 +103,12 @@ export function SellerStepsShowcase() {
 function StepsCta({ className }: { className: string }) {
   return (
     <Link
-      className={`h-[58px] shrink-0 items-center justify-center gap-2.5 rounded-full bg-brand px-7 text-[17px] font-semibold text-white transition-colors hover:bg-brand-hover ${className}`}
+      className={`h-[58px] shrink-0 items-center justify-center gap-2.5 rounded-full bg-brand px-7 text-[17px] font-semibold text-white transition-colors hover:bg-brand-hover ${className}${anclaje()}`}
       href={SIGNUP_HREF}
     >
       Crear mi tienda gratis
       <ArrowRight aria-hidden="true" className="size-[18px] text-accent" strokeWidth={2.2} />
+      <Mono lazy />
     </Link>
   );
 }
