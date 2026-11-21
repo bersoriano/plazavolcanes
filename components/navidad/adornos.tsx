@@ -90,7 +90,8 @@ export function Copos({ copos, lazy = false }: { copos: readonly Copo[]; lazy?: 
 }
 
 /**
- * The bow on an "Abrir mi tienda gratis" button, hung from the link itself:
+ * The bow on a signup button ("Abrir mi tienda gratis", "Crear mi tienda
+ * gratis"), hung from the link itself:
  * pass `anclaje().trim()` as the button's className and this as its last
  * child. A wrapper would have been the gentler touch, but beside "Ver una
  * tienda de ejemplo" at 1280px Chrome shares the row's shrink differently

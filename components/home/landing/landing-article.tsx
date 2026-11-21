@@ -2,6 +2,7 @@ import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import { Eyebrow, TYPE } from "@/components/home/landing/primitives";
+import { Adorno, Copos, anclaje } from "@/components/navidad/adornos";
 import { ButtonLink } from "@/components/ui/button";
 import { formatPostDate, type PostMeta } from "@/lib/posts";
 import { BLOG_PATH, postPath } from "@/lib/seo/blog";
@@ -24,7 +25,7 @@ export function LandingArticle({ posts }: { posts: PostMeta[] }) {
       className="scroll-mt-20 px-5 pt-14 sm:px-8 lg:scroll-mt-24 lg:pt-24 xl:px-20"
       id="articulo"
     >
-      <div className="mx-auto max-w-[1280px] rounded-[28px] bg-lime-tint p-6 sm:p-8 lg:p-12">
+      <div className={`mx-auto max-w-[1280px] rounded-[28px] bg-lime-tint p-6 sm:p-8 lg:p-12${anclaje()}`}>
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between lg:gap-12">
           <div className="flex flex-col gap-3.5 lg:max-w-[760px] lg:gap-4">
             <Eyebrow>Del blog</Eyebrow>
@@ -55,6 +56,17 @@ export function LandingArticle({ posts }: { posts: PostMeta[] }) {
             ))}
           </ul>
         ) : null}
+        {/* On a phone the card runs edge to edge and the flower would widen the page. */}
+        <Adorno className="nv--flor nv--solo-desktop" lazy src="nochebuena.svg" />
+        <Copos
+          copos={[
+            { src: "copo-pino.svg", left: "40%", top: "2%", opacity: 0.15 },
+            { src: "copo-pino.svg", left: "70%", top: "2%", opacity: 0.16 },
+            { src: "copo-pino.svg", left: "84%", top: "14%", opacity: 0.2 },
+            { src: "copo-pino.svg", left: "72%", top: "62%", opacity: 0.14 },
+          ]}
+          lazy
+        />
       </div>
       <div className="mx-auto mt-5 flex max-w-[1280px] justify-end">
         <Link className="inline-flex items-center gap-2 font-semibold text-brand underline-offset-4 hover:underline" href={BLOG_PATH}>
