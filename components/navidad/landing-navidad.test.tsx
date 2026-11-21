@@ -103,6 +103,16 @@ describe("the Christmas layer on the landing", () => {
     expect(rules.lastElementChild).toHaveClass("nv", "nv--posada");
   });
 
+  it("opens the hero with the season's legend, beside the audience pill", async () => {
+    await renderLanding();
+
+    const legend = within(hero()).getByText("¡Prepárate para Navidad!");
+    expect(legend.tagName).toBe("P");
+    expect(legend).not.toHaveAttribute("aria-hidden");
+    expect(legend.nextElementSibling).toHaveTextContent("Para tiendas independientes de México");
+    expect(legend.parentElement).toHaveClass("flex", "flex-wrap");
+  });
+
   it("ties a bow on both 'Abrir mi tienda gratis' buttons, hung from the link itself", async () => {
     await renderLanding();
 
@@ -236,6 +246,9 @@ describe("the Christmas layer on the landing", () => {
     );
     expect(classed).toEqual([]);
     expect(document.querySelectorAll("img[src^='/navidad/']")).toHaveLength(0);
+    expect(screen.queryByText(/Navidad/)).toBeNull();
+    // The audience pill is back as the column's first child, unwrapped.
+    expect(screen.getByText("Para tiendas independientes de México").parentElement).toHaveClass("items-start", "flex-col");
 
     // Byte for byte the button the landing had before the layer.
     const plain = render(

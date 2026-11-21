@@ -4,6 +4,7 @@ import { PrimaryCta, TYPE, VolcanoLines } from "@/components/home/landing/primit
 import { Adorno, Copos, Mono, anclaje } from "@/components/navidad/adornos";
 import { ButtonLink } from "@/components/ui/button";
 import type { CatalogLocale } from "@/lib/catalog-locale";
+import { NAVIDAD_ACTIVA } from "@/lib/navidad";
 import type { CatalogProduct } from "@/lib/queries/catalog.server";
 
 /**
@@ -29,6 +30,13 @@ export function SellerHero({
   /** Founding spots taken, when there is a count to show. */
   spotsTaken?: number | null;
 }) {
+  const audience = (
+    <p className="flex h-[30px] items-center gap-2 rounded-full border border-brand/10 bg-lime-tint px-3 text-[11px] font-bold uppercase tracking-[0.1em] text-brand lg:h-[34px] lg:gap-2.5 lg:px-4 lg:text-[12px] lg:tracking-[0.12em]">
+      <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-brand lg:size-[7px]" />
+      Para tiendas independientes de México
+    </p>
+  );
+
   return (
     <section
       aria-labelledby="inicio-heading"
@@ -38,10 +46,19 @@ export function SellerHero({
 
       <div className="relative mx-auto flex max-w-[1280px] flex-col gap-[22px] xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,600px)] xl:items-start xl:gap-10">
         <div className="flex flex-col items-start gap-[22px] lg:gap-[30px]">
-          <p className="flex h-[30px] items-center gap-2 rounded-full border border-brand/10 bg-lime-tint px-3 text-[11px] font-bold uppercase tracking-[0.1em] text-brand lg:h-[34px] lg:gap-2.5 lg:px-4 lg:text-[12px] lg:tracking-[0.12em]">
-            <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-brand lg:size-[7px]" />
-            Para tiendas independientes de México
-          </p>
+          {/* The season's legend sits beside the audience pill, wrapping
+              under it on a phone, and leaves with NAVIDAD_ACTIVA. Plum on the
+              sale coral reaches 4.6:1; white would not. */}
+          {NAVIDAD_ACTIVA ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="flex h-[30px] items-center rounded-full bg-sale px-3 text-[11px] font-bold uppercase tracking-[0.1em] text-brand lg:h-[34px] lg:px-4 lg:text-[12px] lg:tracking-[0.12em]">
+                ¡Prepárate para Navidad!
+              </p>
+              {audience}
+            </div>
+          ) : (
+            audience
+          )}
 
           {/* Two lines at every width: the campaign line reads as a slogan,
               "tus reglas." on a tilted lime marker like the share image's. */}
