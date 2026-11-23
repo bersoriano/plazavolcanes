@@ -37,6 +37,7 @@ const STEPS: { number: string; title: string; text: string; snippet: ReactNode; 
 export function SellerStepsShowcase() {
   return (
     <section
+      data-analytics-section="pasos"
       aria-labelledby="pasos-heading"
       className={`scroll-mt-20 border-y border-line bg-surface px-5 pb-14 pt-14 sm:px-8 lg:scroll-mt-24 lg:pb-20 lg:pt-[88px] xl:px-20${anclaje()}`}
       id="pasos"
@@ -104,6 +105,7 @@ function StepsCta({ className }: { className: string }) {
   return (
     <Link
       className={`h-[58px] shrink-0 items-center justify-center gap-2.5 rounded-full bg-brand px-7 text-[17px] font-semibold text-white transition-colors hover:bg-brand-hover ${className}${anclaje()}`}
+      data-cta="signup"
       href={SIGNUP_HREF}
     >
       Crear mi tienda gratis

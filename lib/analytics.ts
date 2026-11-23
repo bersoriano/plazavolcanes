@@ -1,100 +1,100 @@
-import posthog, { type CaptureResult } from "posthog-js";
+/**
+ * Pure analytics helpers: no DOM, no SDK, safe to unit test and to import on
+ * the server. Copy to `lib/analytics.ts` and adapt the taxonomy unions.
+ *
+ * Shared landing-page taxonomy: see the skill's references/events.md.
+ */
 
-const sellerEvents = new Set([
-  "seller_signup_submitted",
-  "seller_shop_submitted",
-  "seller_product_submitted",
-]);
-const allowedEvents = new Set(["$pageview", "$pageleave", "navigation_clicked", "seller_storefront_share_intent", ...sellerEvents]);
+export const ANALYTICS_EVENTS = [
+  "page_view",
+  "cta_click",
+  "form_start",
+  "form_submit",
+  "generate_lead",
+  "form_error",
+  "sign_up",
+  "section_view",
+  "read_progress",
+  "select_content",
+  "language_change",
+] as const;
+export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[number];
 
-// SDKs can derive search/campaign terms from URLs even when campaign storage
-// is disabled. Admit only the metadata these reports need, including the SDK's
-// ingestion and session identifiers; unknown future fields stay local.
-const allowedProperties = new Set([
-  "token", "distinct_id", "$device_id", "$session_id", "$window_id",
-  "$is_identified", "$process_person_profile", "$lib", "$lib_version",
-  "$insert_id", "$time", "$sent_at", "$current_url", "$host", "$pathname",
-  "$referrer", "$referring_domain", "$browser", "$browser_version", "$browser_type",
-  "$os", "$os_version", "$device", "$device_type", "$screen_height", "$screen_width",
-  "$viewport_height", "$viewport_width", "$session_entry_url", "$session_entry_host",
-  "$session_entry_pathname", "$session_entry_referrer", "$session_entry_referring_domain",
-  "$pageview_id", "$prev_pageview_id", "$prev_pageview_pathname", "$prev_pageview_duration",
-  "$prev_pageview_last_scroll", "$prev_pageview_last_scroll_percentage",
-  "$prev_pageview_max_scroll", "$prev_pageview_max_scroll_percentage",
-  "$prev_pageview_last_content", "$prev_pageview_last_content_percentage",
-  "$prev_pageview_max_content", "$prev_pageview_max_content_percentage",
-  "source_path", "destination_path", "source_section", "seller_intent", "target_section",
-  "shop_id", "share_method",
-]);
+export type CtaType =
+  | "booking" | "whatsapp" | "phone" | "email" | "form" | "signup" | "login" | "demo" | "directions" | "pricing"
+  // Plaza Volcanes: a signed-in visitor without a shop goes straight to creating one.
+  | "create_shop";
 
-/** Auth links and search URLs can contain credentials or personal input. */
-export function cleanAnalyticsUrl(value: string): string {
-  if (value === "$direct") return value;
-  if (value.startsWith("/")) return value.split(/[?#]/, 1)[0];
+/** Page grouping sent as `page_type`; the marketplace adds catalogue, product, shop and auth pages. */
+export type PageType =
+  | "landing" | "blog_index" | "blog_post" | "supporting" | "legal"
+  | "catalog" | "product" | "shop" | "auth";
+
+/** Parameter values: short strings or finite numbers. Never PII, never form contents. */
+export type AnalyticsParams = Record<string, string | number | boolean | undefined>;
+
+/** Only campaign tags survive in addresses sent to analytics. */
+export const CAMPAIGN_TAGS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"] as const;
+
+export const GA_ID_PATTERN = /^G-[A-Z0-9]{6,12}$/;
+
+/** A page address with every query parameter removed except campaign tags; never a fragment. */
+export function campaignUrl(href: string): string {
   try {
-    const url = new URL(value);
-    if (url.protocol !== "https:" && url.protocol !== "http:") return "";
-    return `${url.origin}${url.pathname}`;
+    const url = new URL(href);
+    const kept = new URLSearchParams();
+    for (const key of CAMPAIGN_TAGS) {
+      const value = url.searchParams.get(key)?.trim().slice(0, 100);
+      if (value) kept.set(key, value);
+    }
+    const query = kept.toString();
+    return `${url.origin}${url.pathname}${query ? `?${query}` : ""}`;
   } catch {
     return "";
   }
 }
 
-/** Keep automatic SDK metadata from reintroducing tokens or person updates. */
-export function sanitizeAnalyticsEvent(event: CaptureResult | null): CaptureResult | null {
-  if (!event || !allowedEvents.has(event.event)) return null;
-  const properties = { ...event.properties };
-  for (const [key, value] of Object.entries(properties)) {
-    if (!allowedProperties.has(key)) {
-      delete properties[key];
-    } else if (typeof value === "string" && /(?:url|referrer|pathname|path)$/i.test(key)) {
-      properties[key] = cleanAnalyticsUrl(value);
-    }
+/**
+ * Referrer safe to send: same-site referrers keep their path (no query),
+ * other sites only their origin. Empty or invalid means direct traffic.
+ */
+export function cleanReferrer(referrer: string, currentHref: string): string {
+  try {
+    const source = new URL(referrer);
+    if (source.protocol !== "http:" && source.protocol !== "https:") return "";
+    return source.origin === new URL(currentHref).origin ? `${source.origin}${source.pathname}` : source.origin;
+  } catch {
+    return "";
   }
-  const sanitized = { ...event, properties };
-  delete sanitized.$set;
-  delete sanitized.$set_once;
-  delete sanitized.$unset;
-  return sanitized;
 }
 
-/** Only public landing links; link text and arbitrary attributes stay local. */
-export function trackNavigation(event: MouseEvent) {
-  const sourcePath = window.location.pathname;
-  if (sourcePath !== "/" && sourcePath !== "/vender") return;
-  if (!(event.target instanceof Element)) return;
-  const link = event.target.closest("a[href]");
-  if (!(link instanceof HTMLAnchorElement)) return;
-  const destination = new URL(link.href);
-  if (destination.origin !== window.location.origin) return;
-
-  const section = link.closest("section[id], header, footer, nav");
-  const properties: Record<string, string | boolean> = {
-    source_path: sourcePath,
-    destination_path: destination.pathname,
-    source_section: section?.id || section?.tagName.toLowerCase() || "page",
-    seller_intent: destination.pathname === "/panel/tiendas/nueva" ||
-      (destination.pathname === "/registro" &&
-        (destination.searchParams.get("vender") === "1" || destination.searchParams.get("intent") === "vender")),
-  };
-  // Record only real document anchors, never arbitrary URL fragments.
-  const targetSection = destination.hash.slice(1);
-  if (destination.pathname === sourcePath && /^[a-z][a-z0-9-]{0,63}$/.test(targetSection) &&
-      document.getElementById(targetSection)) {
-    properties.target_section = targetSection;
+/**
+ * Collect only on the canonical host. Gating on NODE_ENV or VERCEL_ENV is not
+ * enough: production builds also answer on *.pages.dev, *.vercel.app and
+ * per-deployment URLs.
+ */
+export function isProductionHost(href: string, siteUrl: string | undefined): boolean {
+  if (!siteUrl) return false;
+  try {
+    return new URL(href).hostname === new URL(siteUrl).hostname;
+  } catch {
+    return false;
   }
-  posthog.capture("navigation_clicked", properties);
 }
 
-/** These are attempts, not proof of a successful account, shop or listing. */
-export function trackSellerSubmission(event: Event) {
-  if (!(event.target instanceof HTMLFormElement)) return;
-  const name = event.target.dataset.analyticsEvent;
-  if (name && sellerEvents.has(name)) posthog.capture(name);
+/** Do Not Track or Global Privacy Control turned on. */
+export function privacySignal(nav: { doNotTrack?: string | null; globalPrivacyControl?: boolean } | undefined): boolean {
+  return nav?.doNotTrack === "1" || nav?.doNotTrack === "yes" || nav?.globalPrivacyControl === true;
 }
 
-/** A seller chose a sharing control. This cannot confirm a send or a visit. */
-export function trackStorefrontShare(shopId: number, method: "native" | "whatsapp" | "copy") {
-  if (!Number.isSafeInteger(shopId) || shopId < 1) return;
-  posthog.capture("seller_storefront_share_intent", { shop_id: shopId, share_method: method });
+/** GA limits: event/param names <= 40 chars, string values <= 100 chars, <= 25 params. */
+export function limitParams(params: AnalyticsParams): Record<string, string | number | boolean> {
+  const out: Record<string, string | number | boolean> = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (Object.keys(out).length >= 25) break;
+    if (value === undefined || key.length > 40) continue;
+    if (typeof value === "number" && !Number.isFinite(value)) continue;
+    out[key] = typeof value === "string" ? value.slice(0, 100) : value;
+  }
+  return out;
 }

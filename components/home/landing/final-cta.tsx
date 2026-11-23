@@ -10,6 +10,7 @@ import { FOUNDER_OFFER } from "@/lib/launch";
 export function FinalCta() {
   return (
     <section
+      data-analytics-section="fundadoras"
       aria-labelledby="fundadoras-heading"
       data-closing-band
       className="relative overflow-hidden bg-accent px-5 pb-16 pt-[60px] text-brand sm:px-8 lg:pb-24 lg:pt-[88px]"
@@ -28,7 +29,7 @@ export function FinalCta() {
           {FOUNDER_OFFER} Gana tu lugar publicando 8 productos en tus primeros 7 días.
         </p>
         <div className="mt-1 flex flex-col gap-2.5 sm:flex-row sm:gap-3.5 lg:mt-1.5">
-          <PrimaryCta block className={anclaje().trim()} href="/registro?vender=1">
+          <PrimaryCta block className={anclaje().trim()} cta="signup" href="/registro?vender=1">
             Abrir mi tienda gratis
             <Mono lazy />
           </PrimaryCta>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { ReadProgress } from "@/components/analytics/read-progress";
 import { pageContainer } from "@/components/layout/container";
 import { JsonLd } from "@/components/seo/json-ld";
 import { Badge } from "@/components/ui/badge";
@@ -48,7 +49,8 @@ export default async function BlogPostPage({ params }: Props) {
           <span aria-current="page">{post.title}</span>
         </nav>
 
-        <article className="mt-6">
+        <article className="mt-6" data-read-progress>
+          <ReadProgress key={post.slug} />
           <header className="border-b border-line pb-7">
             {post.draft ? <Badge className="mb-3">Borrador</Badge> : null}
             <h1 className="font-display text-4xl font-semibold tracking-[-0.03em] text-ink">{post.title}</h1>

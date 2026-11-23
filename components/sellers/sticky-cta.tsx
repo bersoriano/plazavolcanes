@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 
 import { ButtonLink } from "@/components/ui/button";
+import type { CtaType } from "@/lib/analytics";
 import { FOUNDERS_CAP, resolveFoundersProgress } from "@/lib/launch";
 
 /**
@@ -17,7 +18,7 @@ import { FOUNDERS_CAP, resolveFoundersProgress } from "@/lib/launch";
  * It starts hidden, so the server HTML never flashes it; hidden, it is out of
  * the tab order and the accessibility tree.
  */
-export function StickyCta({ href, spotsTaken }: { href: string; spotsTaken: number | null }) {
+export function StickyCta({ cta, href, spotsTaken }: { cta?: CtaType; href: string; spotsTaken: number | null }) {
   const [heroGone, setHeroGone] = useState(false);
   const [finalReached, setFinalReached] = useState(false);
   const progress = resolveFoundersProgress(spotsTaken);
@@ -46,6 +47,7 @@ export function StickyCta({ href, spotsTaken }: { href: string; spotsTaken: numb
     <aside
       aria-label="Tiendas fundadoras"
       className="fixed inset-x-0 bottom-[calc(4.5rem+1px+env(safe-area-inset-bottom))] z-30 border-t border-line bg-background/90 px-3 py-3 backdrop-blur-md md:hidden"
+      data-cta-location="sticky"
       data-sticky-cta
       hidden={!shown}
     >
@@ -65,6 +67,7 @@ export function StickyCta({ href, spotsTaken }: { href: string; spotsTaken: numb
         <ButtonLink
           variant="unstyled"
           className="flex h-[52px] shrink-0 items-center gap-1.5 rounded-full bg-accent px-5 text-[15px] font-bold text-brand"
+          data-cta={cta}
           href={href}
         >
           Crear mi tienda

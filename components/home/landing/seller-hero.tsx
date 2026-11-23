@@ -39,6 +39,7 @@ export function SellerHero({
 
   return (
     <section
+      data-analytics-section="inicio"
       aria-labelledby="inicio-heading"
       className="relative overflow-hidden px-5 pb-12 pt-7 sm:px-8 lg:pb-16 lg:pt-16 hero-glow xl:px-20"
     >
@@ -75,7 +76,7 @@ export function SellerHero({
           </p>
 
           <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center sm:gap-3.5">
-            <PrimaryCta block className={anclaje().trim()} href="/registro?vender=1">
+            <PrimaryCta block className={anclaje().trim()} cta="signup" href="/registro?vender=1">
               Abrir mi tienda gratis
               <Mono />
             </PrimaryCta>

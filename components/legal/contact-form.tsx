@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Field } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/input";
 import { submitContactMessage } from "@/lib/actions/contact";
+import { trackFormAction, useFormStart } from "@/lib/analytics-forms";
 import { useFormAction } from "@/lib/use-form-action";
 
 function SubmitButton() {
@@ -39,7 +40,8 @@ export function ContactForm({ signedIn }: { signedIn: boolean }) {
 }
 
 function ContactAttempt({ onRestart, signedIn }: { onRestart: () => void; signedIn: boolean }) {
-  const [state, formAction] = useFormAction(submitContactMessage);
+  const [state, formAction] = useFormAction(trackFormAction(submitContactMessage, "contact", "generate_lead"));
+  const startForm = useFormStart("contact");
 
   if (state.status === "success") {
     return (
@@ -57,7 +59,7 @@ function ContactAttempt({ onRestart, signedIn }: { onRestart: () => void; signed
   const messageError = state.errors?.message?.[0];
 
   return (
-    <form action={formAction} className="space-y-5" noValidate>
+    <form action={formAction} className="space-y-5" noValidate onFocus={startForm}>
       {signedIn ? (
         <p className="text-sm leading-6 text-muted">
           Te responderemos usando los datos de contacto de tu cuenta.

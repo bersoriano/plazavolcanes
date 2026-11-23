@@ -10,6 +10,7 @@ import { REPUTATION_IMPORT_AVAILABLE } from "@/lib/launch";
 export function SellerBenefits() {
   return (
     <section
+      data-analytics-section="beneficios"
       aria-labelledby="beneficios-heading"
       className="px-5 pb-16 pt-14 sm:px-8 lg:pb-20 lg:pt-20 xl:px-20"
       id="beneficios"

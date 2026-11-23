@@ -10,14 +10,14 @@ Set `NEXT_PUBLIC_SITE_URL` to the canonical public origin before launch. Seller 
 
 Targets: **10 seller conversations, 5 shops with live inventory, 3 owners who share with customers.** Log conversations and confirmed sends manually. A WhatsApp click, native share attempt, or copy click proves intent only. Count actual customer opens separately from `$pageview` on `/tiendas/[slug]`; a pageview does not identify the sender and includes seller/self visits.
 
-Use existing PostHog events:
+Use these sources (PostHog events since 2026-11-20; see `docs/posthog-analytics.md` → Change log):
 
 | Stage | Source | Meaning |
 | --- | --- | --- |
-| Signup intent | `seller_signup_submitted` | Form attempt; may fail validation or email confirmation. |
+| Signup intent | `form_submit` with `form_name = seller_signup`; `sign_up` with the same `form_name` once the account opens | `form_submit` is an attempt; `sign_up` is sent when the server created the account. |
 | Shop created | `public.shops.created_at` | Saved shop, unique by `id`; account signup itself is not inferred. |
 | First live inventory | Current `public.products` joined to approved shop | Unique shop with at least one currently public product; historical first-publish timestamp is not stored. |
-| Share/copy intent | `seller_storefront_share_intent`, distinct `shop_id` | Method is `native`, `whatsapp`, or `copy`. Repeated actions on later days remain visible by shop and event day. |
+| Share/copy intent | Not measured since 2026-11-20 | It happened in the signed-in panel, which analytics no longer sees. Ask owners, or log confirmed sends manually. Older `seller_storefront_share_intent` events stay in PostHog. |
 | Opened storefront | `$pageview` path `/tiendas/[slug]` | Actual page visit, separate from share intent; not unique buyers. |
 
 Use this read-only SQL in an administrator database console for current live inventory and later inventory edits. It returns only shop IDs, slugs, counts and dates:
@@ -34,7 +34,7 @@ group by s.id, s.slug, s.created_at
 order by s.created_at;
 ```
 
-Filter `live_products > 0` for active shops. Compare `last_inventory_edit_day` with `shop_created_day` to review later inventory activity; the timestamp can include moderation or automatic updates, so inspect product records before attributing an edit to an owner. In PostHog, group `seller_storefront_share_intent` by `shop_id` and local event date to find shops with another share/copy attempt on a later day. Never send message text, contact details, or form values to analytics.
+Filter `live_products > 0` for active shops. Compare `last_inventory_edit_day` with `shop_created_day` to review later inventory activity; the timestamp can include moderation or automatic updates, so inspect product records before attributing an edit to an owner. For share attempts before 2026-11-20, group PostHog's `seller_storefront_share_intent` by `shop_id` and local event date to find shops with another share/copy attempt on a later day; later attempts are not recorded. Never send message text, contact details, or form values to analytics.
 
 ## Flow checks
 

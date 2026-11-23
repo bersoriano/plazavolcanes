@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { signUp, resendConfirmation } from "@/lib/actions/auth";
+import { signIn, signUp, resendConfirmation } from "@/lib/actions/auth";
 import { AuthForm } from "@/components/auth/auth-form";
 
 vi.mock("@/lib/actions/auth", () => ({
@@ -9,6 +9,9 @@ vi.mock("@/lib/actions/auth", () => ({
   signUp: vi.fn(),
   resendConfirmation: vi.fn(),
 }));
+
+const { track } = vi.hoisted(() => ({ track: vi.fn() }));
+vi.mock("@/lib/analytics.client", () => ({ track }));
 
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.clearAllMocks(); });
 
@@ -159,4 +162,31 @@ it("allows another resend after the uniform cooldown expires", async () => {
   expect(screen.getByRole("button", { name: "Espera 60 s" })).toBeDisabled();
   await act(async () => { vi.advanceTimersByTime(60_000); });
   expect(screen.getByRole("button", { name: "Reenviar confirmación" })).toBeEnabled();
+});
+
+describe("AuthForm analytics", () => {
+  it.each([
+    [{ intent: "vender" as const }, "seller_signup"],
+    [{ continuar: "/panel/tiendas/nueva" }, "seller_signup"],
+    [{}, "signup"],
+  ])("reports a confirmed signup (%o) as sign_up from %s", async (props, formName) => {
+    vi.mocked(signUp).mockResolvedValue({ status: "success", message: "Revisa tu correo.", confirmationEmail: "ana@correo.com" });
+    render(<AuthForm mode="signup" {...props} />);
+    fireEvent.focus(screen.getByLabelText("Correo electrónico"));
+    fireEvent.click(screen.getByRole("button", { name: "Crear cuenta" }));
+    await waitFor(() => expect(track).toHaveBeenCalledWith("sign_up", { method: "email", form_name: formName }));
+
+    expect(track.mock.calls.map(([event]) => event)).toEqual(["form_start", "form_submit", "sign_up"]);
+    expect(JSON.stringify(track.mock.calls)).not.toContain("ana@correo.com");
+  });
+
+  it("leaves signing in out of the form events", async () => {
+    vi.mocked(signIn).mockResolvedValue({ status: "error", message: "Correo o contraseña incorrectos." });
+    render(<AuthForm mode="signin" />);
+    fireEvent.focus(screen.getByLabelText("Correo electrónico"));
+    fireEvent.click(screen.getByRole("button", { name: "Ingresar" }));
+    await act(async () => {});
+
+    expect(track).not.toHaveBeenCalled();
+  });
 });

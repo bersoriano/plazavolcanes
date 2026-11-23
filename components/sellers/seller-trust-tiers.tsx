@@ -65,6 +65,7 @@ const RUNGS: { tier: TrustTier; description: string; shows: string; card: string
 export function SellerTrustTiers({ promoActive = true }: { promoActive?: boolean }) {
   return (
     <section
+      data-analytics-section="niveles"
       aria-labelledby="niveles-heading"
       className="scroll-mt-20 px-5 pb-16 pt-14 sm:px-8 lg:scroll-mt-24 lg:pb-24 lg:pt-24 xl:px-20"
       id="niveles"

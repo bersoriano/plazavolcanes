@@ -4,12 +4,12 @@ import { MessageCircle, Share2 } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
 
 import { Button, ButtonLink } from "@/components/ui/button";
-import { trackStorefrontShare } from "@/lib/analytics";
 
 type ShareActionsProps = {
   label: string;
   title: string;
   showWhatsApp?: boolean;
+  /** The seller's own shop: switches to the seller's wording and adds "Copiar enlace". */
   sellerShopId?: number;
   /**
    * The address to share. Pages that are themselves the thing being shared
@@ -42,7 +42,6 @@ export function ShareActions({ label, title, url, showWhatsApp = true, sellerSho
   const shareText = sellerShopId ? "Aquí puedes ver mis productos y precios:" : `Descubre ${title} en Plaza Volcanes.`;
 
   async function copyLink(url: string) {
-    if (sellerShopId) trackStorefrontShare(sellerShopId, "copy");
     try {
       if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
       await navigator.clipboard.writeText(url);
@@ -57,7 +56,6 @@ export function ShareActions({ label, title, url, showWhatsApp = true, sellerSho
     setStatus(null);
 
     if (navigator.share) {
-      if (sellerShopId) trackStorefrontShare(sellerShopId, "native");
       try {
         await navigator.share({ title, text: shareText, url: shareUrl });
         return;
@@ -84,7 +82,6 @@ export function ShareActions({ label, title, url, showWhatsApp = true, sellerSho
           data-product-cta="share"
           variant="secondary"
           href={whatsappMessage ? `https://wa.me/?text=${whatsappMessage}` : "https://wa.me/"}
-          onClick={() => { if (sellerShopId) trackStorefrontShare(sellerShopId, "whatsapp"); }}
           rel="noopener noreferrer"
           target="_blank"
         >

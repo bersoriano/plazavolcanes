@@ -21,6 +21,7 @@ export function LandingArticle({ posts }: { posts: PostMeta[] }) {
 
   return (
     <section
+      data-analytics-section="articulo"
       aria-label="Del blog"
       className="scroll-mt-20 px-5 pt-14 sm:px-8 lg:scroll-mt-24 lg:pt-24 xl:px-20"
       id="articulo"

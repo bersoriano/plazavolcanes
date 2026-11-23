@@ -39,6 +39,7 @@ export function LandingStores({ shops }: { shops: CatalogShop[] }) {
 
   return (
     <section
+      data-analytics-section="tiendas"
       aria-labelledby="tiendas-heading"
       className="scroll-mt-20 pb-10 pt-14 lg:scroll-mt-24 lg:px-8 lg:pb-12 lg:pt-24 xl:px-20"
       id="tiendas"

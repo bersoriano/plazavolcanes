@@ -11,7 +11,7 @@ import { SellerTapes } from "@/components/sellers/seller-tapes";
 import { StickyCta } from "@/components/sellers/sticky-cta";
 import { SellerTrustTiers } from "@/components/sellers/seller-trust-tiers";
 import type { FoundersProgram } from "@/lib/launch";
-import { sellerCtaHref, type SellerViewer } from "@/lib/seller-cta";
+import { sellerCtaHref, sellerCtaType, type SellerViewer } from "@/lib/seller-cta";
 
 /**
  * /vender, end to end.
@@ -51,7 +51,7 @@ export function SellerProgram({
       {promoActive ? <FoundersCta spotsTaken={spotsTaken} viewer={viewer} /> : null}
       {/* Only for somebody who could still open a founding store. */}
       {promoActive && viewer !== "owner" ? (
-        <StickyCta href={sellerCtaHref(viewer, "sticky")} spotsTaken={spotsTaken} />
+        <StickyCta cta={sellerCtaType(viewer)} href={sellerCtaHref(viewer, "sticky")} spotsTaken={spotsTaken} />
       ) : null}
     </>
   );

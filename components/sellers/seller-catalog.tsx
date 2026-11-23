@@ -17,6 +17,7 @@ const CATALOG_POINTS = [
 export function SellerCatalog() {
   return (
     <section
+      data-analytics-section="catalogo"
       aria-labelledby="catalogo-heading"
       className="scroll-mt-20 px-5 pb-16 sm:px-8 lg:scroll-mt-24 lg:pb-20 xl:px-20"
       id="catalogo"

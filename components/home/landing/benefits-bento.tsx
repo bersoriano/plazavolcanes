@@ -73,6 +73,7 @@ export function BenefitsBento({ promoActive = true }: { promoActive?: boolean })
 
   return (
     <section
+      data-analytics-section="vender"
       aria-labelledby="vender-heading"
       className="scroll-mt-20 px-5 pb-16 pt-14 sm:px-8 lg:scroll-mt-24 lg:pb-24 lg:pt-[88px] xl:px-20"
       id="vender"

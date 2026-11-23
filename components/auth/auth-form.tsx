@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { signIn, signUp } from "@/lib/actions/auth";
+import { trackFormAction, useFormStart } from "@/lib/analytics-forms";
 import { useFormAction } from "@/lib/use-form-action";
 import { SignupConfirmation } from "@/components/auth/signup-confirmation";
 import { safeContinuation } from "@/lib/safe-continuation";
@@ -37,9 +38,13 @@ export function AuthForm(props: AuthFormProps) {
 
 function AuthAttempt({ continuar, intent, mode, onRestart }: AuthFormProps & { onRestart: () => void }) {
   continuar = safeContinuation(continuar) ?? undefined;
-  const action = mode === "signin" ? signIn : signUp;
-  const [state, formAction] = useFormAction(action);
   const signingIn = mode === "signin";
+  const sellerSignup = !signingIn && (intent === "vender" || continuar === "/panel/tiendas/nueva");
+  // Google Analytics form_name; signing in sends no form events.
+  const formName = sellerSignup ? "seller_signup" : "signup";
+  const action = signingIn ? signIn : trackFormAction(signUp, formName, "sign_up");
+  const [state, formAction] = useFormAction(action);
+  const startForm = useFormStart(formName);
   const alternative = signingIn ? "/registro" : "/ingresar";
   const alternativeParams = new URLSearchParams();
   if (continuar) alternativeParams.set("continuar", continuar);
@@ -57,7 +62,7 @@ function AuthAttempt({ continuar, intent, mode, onRestart }: AuthFormProps & { o
         <h1 className="mt-3 font-display text-4xl font-semibold tracking-[-0.04em] text-ink">Abre tu cuenta</h1>
         <p className="mb-8 mt-3 leading-7 text-muted">Crea tu cuenta con correo, contraseña, tu nombre y teléfono. Usamos tu teléfono para contactarte sobre pedidos y no es público.</p>
       </> : null}
-      <form action={formAction} className="space-y-5" data-analytics-event={!signingIn && (intent === "vender" || continuar === "/panel/tiendas/nueva") ? "seller_signup_submitted" : undefined} noValidate>
+      <form action={formAction} className="space-y-5" noValidate onFocus={signingIn ? undefined : startForm}>
         {continuar ? <input name="continuar" type="hidden" value={continuar} /> : null}
         {intent ? <input name="intent" type="hidden" value={intent} /> : null}
         <Field

@@ -251,3 +251,14 @@ describe("SiteHeader", () => {
     }
   });
 });
+
+describe("SiteHeader analytics markup", () => {
+  it("marks the signed-out sign-in and create-store calls to action", async () => {
+    await renderHeader(false);
+
+    for (const link of document.querySelectorAll("a[href='/ingresar']")) expect(link).toHaveAttribute("data-cta", "login");
+    const signups = [...document.querySelectorAll("a[href^='/registro']")];
+    expect(signups.length).toBeGreaterThan(0);
+    for (const link of signups) expect(link).toHaveAttribute("data-cta", "signup");
+  });
+});

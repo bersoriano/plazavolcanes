@@ -15,6 +15,7 @@ describe("SellerProgram", () => {
     expect(screen.queryByRole("link", { name: "Quiero ayuda para publicar" })).not.toBeInTheDocument();
     view.rerender(<SellerProgram assistanceReady founders={FOUNDERS_FALLBACK} />);
     expect(screen.getByRole("link", { name: "Quiero ayuda para publicar" })).toHaveAttribute("href", "/quejas-y-aclaraciones#escribenos");
+    expect(screen.getByRole("link", { name: "Quiero ayuda para publicar" })).toHaveAttribute("data-cta", "form");
     expect(screen.getByText(/fotos y precios de cinco productos/)).toBeInTheDocument();
     expect(screen.getByText(/desde el primer producto publicado/)).toBeInTheDocument();
   });
@@ -146,5 +147,39 @@ describe("SellerProgram", () => {
     expect(document.body).not.toHaveTextContent(
       /compra protegida|pago seguro|garantizamos|garantía|reembolso garantizado/i,
     );
+  });
+});
+
+describe("SellerProgram analytics markup", () => {
+  const founders = { open: true, taken: null, cap: 100 };
+
+  it.each([
+    ["signed-out", "signup"],
+    ["no-shop", "create_shop"],
+  ] as const)("marks every create-store CTA a %s visitor sees as %s", (viewer, cta) => {
+    render(<SellerProgram founders={founders} viewer={viewer} />);
+
+    const ctas = [...document.querySelectorAll("a[href^='/registro'], a[href^='/panel/tiendas/nueva']")];
+    // Hero, both step links, the closing band and the sticky bar.
+    expect(ctas).toHaveLength(5);
+    for (const link of ctas) expect(link).toHaveAttribute("data-cta", cta);
+    expect(document.querySelector("[data-cta-location='sticky'] [data-cta]")).not.toBeNull();
+  });
+
+  it("leaves an owner's panel links unmarked", () => {
+    render(<SellerProgram founders={founders} viewer="owner" />);
+
+    const panelLinks = [...document.querySelectorAll("a[href='/panel']")];
+    expect(panelLinks.length).toBeGreaterThan(0);
+    for (const link of panelLinks) expect(link).not.toHaveAttribute("data-cta");
+  });
+
+  it("marks the sign-in link and names each section once", () => {
+    render(<SellerProgram founders={founders} viewer="signed-out" />);
+
+    expect(document.querySelector("a[href='/ingresar?intent=vender']")).toHaveAttribute("data-cta", "login");
+    const sections = [...document.querySelectorAll<HTMLElement>("[data-analytics-section]")].map((section) => section.dataset.analyticsSection);
+    expect(sections).toEqual(expect.arrayContaining(["inicio", "fundadoras", "beneficios", "compara", "catalogo", "pasos", "niveles", "preguntas", "final"]));
+    expect(new Set(sections).size).toBe(sections.length);
   });
 });

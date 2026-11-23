@@ -79,3 +79,17 @@ describe("HomeLanding and the blog", () => {
     expect(screen.queryByRole("link", { name: "Leer el artículo" })).not.toBeInTheDocument();
   });
 });
+
+describe("HomeLanding analytics markup", () => {
+  it("names its sections once each and marks every seller signup", () => {
+    renderLanding([article]);
+
+    const sections = [...document.querySelectorAll<HTMLElement>("[data-analytics-section]")].map((section) => section.dataset.analyticsSection);
+    expect(sections).toEqual(expect.arrayContaining(["inicio", "vender", "pasos", "articulo", "explorar", "fundadoras"]));
+    expect(new Set(sections).size).toBe(sections.length);
+
+    const signups = [...document.querySelectorAll("a[href^='/registro']")];
+    expect(signups.length).toBeGreaterThanOrEqual(3);
+    for (const link of signups) expect(link).toHaveAttribute("data-cta", "signup");
+  });
+});

@@ -252,7 +252,7 @@ describe("the Christmas layer on the landing", () => {
 
     // Byte for byte the button the landing had before the layer.
     const plain = render(
-      <PrimaryCta block href="/registro?vender=1">
+      <PrimaryCta block cta="signup" href="/registro?vender=1">
         Abrir mi tienda gratis
       </PrimaryCta>,
     ).container.innerHTML;

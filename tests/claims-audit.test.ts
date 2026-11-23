@@ -20,9 +20,15 @@ const FORBIDDEN = [
 
 const TRACKERS = ["googletagmanager", "gtag(", "next/script", "hotjar", "posthog", "facebook.net"];
 
-// PostHog is the explicitly configured exception. Runtime guards and privacy
-// behavior are covered by instrumentation-client.test.ts and analytics.test.ts.
-const POSTHOG_FILES = new Set(["lib/analytics.ts", "instrumentation-client.ts"]);
+// Google Analytics and PostHog are the explicitly configured exceptions: one
+// shared core (lib/analytics.client.ts), the PostHog destination and its proxy.
+// Runtime guards and privacy behavior are covered by analytics.test.ts,
+// analytics.posthog.test.ts, posthog-proxy.test.ts and instrumentation-client.test.ts.
+const APPROVED: Record<string, Set<string>> = {
+  posthog: new Set(["lib/analytics.client.ts", "lib/analytics.posthog.ts", "lib/posthog-proxy.ts", "instrumentation-client.ts"]),
+  googletagmanager: new Set(["lib/analytics.client.ts"]),
+  "gtag(": new Set(["lib/analytics.client.ts"]),
+};
 
 const ROOTS = ["app", "components", "lib"];
 const EXTENSIONS = new Set([".ts", ".tsx"]);
@@ -67,7 +73,7 @@ describe("claims audit", () => {
     expect(offences).toEqual([]);
   });
 
-  it("limits tracking to the approved optional PostHog integration", async () => {
+  it("limits tracking to the approved PostHog and Google Analytics modules", async () => {
     const files = [...(await Promise.all(ROOTS.map(sourceFiles))).flat(), "instrumentation-client.ts"];
     const offences: string[] = [];
 
@@ -81,7 +87,7 @@ describe("claims audit", () => {
       // Normalize whitespace to catch phrases split across lines
       const contents = (await readFile(file, "utf8")).toLowerCase().replace(/\s+/g, " ");
       for (const tracker of TRACKERS) {
-        if (tracker === "posthog" && POSTHOG_FILES.has(file)) continue;
+        if (APPROVED[tracker]?.has(file)) continue;
         if (contents.includes(tracker)) offences.push(`${file}: "${tracker}"`);
       }
     }

@@ -43,6 +43,7 @@ export function BuyerPanel({
 
   return (
     <section
+      data-analytics-section="explorar"
       aria-labelledby="explorar-heading"
       className="scroll-mt-20 border-t border-line bg-surface px-5 pb-12 pt-14 sm:px-8 lg:scroll-mt-24 lg:border-0 lg:bg-transparent lg:pb-24 lg:pt-10 xl:px-20"
       id="explorar"

@@ -19,9 +19,9 @@ const DESTINATIONS: HeaderMenuLink[] = [
  * Says what it does: signup, already marked as a seller. "Vender" beside it is
  * the way for somebody who wants to read the offer first.
  */
-const CREATE_STORE: HeaderMenuLink = { href: "/registro?vender=1&desde=header", label: "Crear mi tienda" };
+const CREATE_STORE: HeaderMenuLink = { href: "/registro?vender=1&desde=header", label: "Crear mi tienda", cta: "signup" };
 
-const SIGN_IN: HeaderMenuLink = { href: "/ingresar", label: "Ingresar" };
+const SIGN_IN: HeaderMenuLink = { href: "/ingresar", label: "Ingresar", cta: "login" };
 
 /**
  * The signed-out half of the header: the destinations inline from lg, then
@@ -48,12 +48,14 @@ export function SignedOutHeaderNav() {
         <NavLink
           aria-label={SIGN_IN.label}
           className="hidden min-h-11 items-center rounded-full px-4 text-[15px] font-semibold text-brand transition-colors hover:bg-background sm:inline-flex lg:px-5"
+          data-cta={SIGN_IN.cta}
           href={SIGN_IN.href}
         >
           {SIGN_IN.label}
         </NavLink>
         <NavLink
           className="hidden h-12 items-center gap-2 rounded-full bg-brand px-6 text-[15px] font-semibold text-white transition-colors hover:bg-brand-hover sm:inline-flex"
+          data-cta={CREATE_STORE.cta}
           href={CREATE_STORE.href}
         >
           {CREATE_STORE.label}
